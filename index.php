@@ -97,7 +97,7 @@ require_once "engine/login_engine.php"; // Include login engine
         }
 
         body {
-            background: linear-gradient(135deg,rgb(43, 85, 201),rgb(142, 55, 213));
+            background: linear-gradient(135deg, rgb(43, 85, 201), rgb(142, 55, 213));
         }
 
         .card {
@@ -188,15 +188,48 @@ require_once "engine/login_engine.php"; // Include login engine
     <div class="container-fluid">
         <div class="row min-vh-100">
 
-            <!-- Left Container (Vacant Space with Background and Typing Text) -->
-            <div class="col-md-6 d-flex align-items-center justify-content-center text-white position-relative bg-cover bg-center" style="background-image: url('img/pilar.jpg');">
-                <div class="text-center px-4 z-1">
-                    <h1 class="fw-bold mb-3">Welcome!</h1>
-                    <p id="typing-text" class="fs-5"></p>
+            <!-- Left Container (Carousel with Background and Typing Text) -->
+            <div class="col-md-6 p-0">
+                <div id="welcomeCarousel" class="carousel slide h-100" data-bs-ride="carousel" data-bs-interval="5000">
+                    <div class="carousel-inner h-100">
+
+                        <!-- Slide 1 -->
+                        <div class="carousel-item active h-100 position-relative bg-cover bg-center" style="background-image: url('img/pilar.jpg');">
+                            <div class="position-absolute top-0 start-0 w-100 h-100" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1;"></div>
+                            <div class="d-flex align-items-center justify-content-center h-100 z-2 position-relative text-white text-center px-4">
+                                <div>
+                                    <h1 class="fw-bold mb-3">Welcome!</h1>
+                                    <p class="fs-5 typing-text" data-text="to the Pilar Inventory Management System. Please log in to continue."></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slide 2 -->
+                        <div class="carousel-item h-100 position-relative bg-cover bg-center" style="background-image: url('img/chess.jpg');">
+                            <div class="position-absolute top-0 start-0 w-100 h-100" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1;"></div>
+                            <div class="d-flex align-items-center justify-content-center h-100 z-2 position-relative text-white text-center px-4">
+                                <div>
+                                    <h1 class="fw-bold mb-3">Efficient Tracking</h1>
+                                    <p class="fs-5 typing-text" data-text="Keep your inventory organized and accessible."></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slide 3 -->
+                        <div class="carousel-item h-100 position-relative bg-cover bg-center" style="background-image: url('img/pilar\ 2.jpg');">
+                            <div class="position-absolute top-0 start-0 w-100 h-100" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1;"></div>
+                            <div class="d-flex align-items-center justify-content-center h-100 z-2 position-relative text-white text-center px-4">
+                                <div>
+                                    <h1 class="fw-bold mb-3">Team Collaboration</h1>
+                                    <p class="fs-5 typing-text" data-text="Work together with your team seamlessly."></p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
-                <!-- Overlay (optional for readability) -->
-                <div class="position-absolute top-0 start-0 w-100 h-100" style="background-color: rgba(0, 0, 0, 0.5);"></div>
             </div>
+
 
 
             <!-- Right Container (Login Form) -->
@@ -259,19 +292,32 @@ require_once "engine/login_engine.php"; // Include login engine
             }
         });
 
-        const text = "to the Pilar Inventory Management System. Please log in to continue.";
-        const typingElement = document.getElementById("typing-text");
-        let index = 0;
+        const typingElements = document.querySelectorAll('.typing-text');
 
-        function typeWriter() {
-            if (index < text.length) {
-                typingElement.textContent += text.charAt(index);
-                index++;
-                setTimeout(typeWriter, 50); // typing speed
-            }
+    function typeText(element, text, index = 0) {
+        if (index < text.length) {
+            element.textContent += text.charAt(index);
+            setTimeout(() => typeText(element, text, index + 1), 40);
         }
+    }
 
-        typeWriter();
+    function resetAndType(activeSlide) {
+        typingElements.forEach(el => el.textContent = ''); // Clear all
+        const activeTextEl = activeSlide.querySelector('.typing-text');
+        const text = activeTextEl.getAttribute('data-text');
+        typeText(activeTextEl, text);
+    }
+
+    // Initial typing
+    const firstSlide = document.querySelector('.carousel-item.active');
+    resetAndType(firstSlide);
+
+    // Handle typing on slide change
+    const carousel = document.getElementById('welcomeCarousel');
+    carousel.addEventListener('slid.bs.carousel', () => {
+        const activeSlide = document.querySelector('.carousel-item.active');
+        resetAndType(activeSlide);
+    });
     </script>
 </body>
 
