@@ -220,13 +220,15 @@ $stmt->close();
   <div class="main">
 
     <div class="topbar d-flex justify-content-between align-items-center p-2">
+      <!-- Sidebar Toggle Button -->
       <div class="text-end p-2">
         <button id="toggleSidebar" class="btn btn-outline-primary">
           <i class="bi bi-chevron-left" id="toggleIcon"></i>
         </button>
       </div>
 
-      <h3 class=" text-start m-0">Inventory Dashboard</h3>
+      <!-- Dashboard Title -->
+      <h3 class="text-start m-0">Inventory Dashboard</h3>
 
       <!-- Right-side Icons + DateTime -->
       <div class="d-flex align-items-center gap-3">
@@ -238,6 +240,26 @@ $stmt->close();
         <a href="scan_qr.php" class="text-dark text-decoration-none" title="Scan QR">
           <i class="bi bi-qr-code-scan" style="font-size: 1.8rem;"></i>
         </a>
+
+        <!-- Notification Bell Icon with Dropdown -->
+        <div class="dropdown">
+          <a href="#" class="text-dark text-decoration-none position-relative" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+            <i class="bi bi-bell" style="font-size: 1.8rem;"></i>
+            <!-- Notification badge (optional) -->
+            <!-- <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+          3
+          <span class="visually-hidden">unread notifications</span>
+        </span> -->
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="min-width: 300px;">
+            <li class="dropdown-header fw-bold">Notifications</li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li><a class="dropdown-item small text-muted" href="#">No new notifications</a></li>
+            <!-- You can dynamically populate this list from PHP -->
+          </ul>
+        </div>
 
         <!-- Profile Menu -->
         <div class="dropdown">
@@ -259,8 +281,6 @@ $stmt->close();
         </div>
       </div>
     </div>
-
-
 
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
@@ -288,33 +308,45 @@ $stmt->close();
         <div class="row mb-4">
           <div class="col-md-3">
             <div class="card shadow-sm">
-              <div class="card-body">
-                <h5>Total</h5>
-                <h3><?= $total ?></h3>
+              <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                  <h5>Total</h5>
+                  <h3><?= $total ?></h3>
+                </div>
+                <i class="bi bi-box-seam text-primary fs-2"></i>
               </div>
             </div>
           </div>
           <div class="col-md-3">
             <div class="card shadow-sm">
-              <div class="card-body">
-                <h5>Available</h5>
-                <h3><?= $active ?></h3>
+              <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                  <h5>Available</h5>
+                  <h3><?= $active ?></h3>
+                </div>
+                <i class="bi bi-check-circle text-info fs-2"></i>
               </div>
             </div>
           </div>
           <div class="col-md-3">
             <div class="card shadow-sm">
-              <div class="card-body">
-                <h5>Borrowed</h5>
-                <h3><?= $borrowed ?></h3>
+              <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                  <h5>Borrowed</h5>
+                  <h3><?= $borrowed ?></h3>
+                </div>
+                <i class="bi bi-arrow-left-right text-primary fs-2"></i>
               </div>
             </div>
           </div>
           <div class="col-md-3">
             <div class="card shadow-sm">
-              <div class="card-body">
-                <h5>Red-Tagged</h5>
-                <h3><?= $red_tagged ?></h3>
+              <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                  <h5>Red-Tagged</h5>
+                  <h3><?= $red_tagged ?></h3>
+                </div>
+                <i class="bi bi-exclamation-triangle text-info fs-2"></i>
               </div>
             </div>
           </div>
@@ -369,8 +401,8 @@ $stmt->close();
                       </span>
                     </td>
                     <td>&#8369; <?= number_format($row['value'], 2) ?></td>
-                    <td><?= $row['acquisition_date'] ?></td>
-                    <td><?= $row['last_updated'] ?></td>
+                    <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
+                    <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
                   </tr>
                 <?php endwhile; ?>
               </tbody>
@@ -464,7 +496,7 @@ $stmt->close();
                   $is_low = $row['quantity'] <= $threshold;
                 ?>
                   <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
-                    <td><img src="<?= $row['qr_code'] ?>" width="50"></td>
+                    <td><img src="../img/<?= $row['qr_code'] ?>" width="50"></td>
                     <td><?= htmlspecialchars($row['asset_name']) ?></td>
                     <td><?= htmlspecialchars($row['category_name']) ?></td>
                     <td><?= htmlspecialchars($row['description']) ?></td>
@@ -478,8 +510,8 @@ $stmt->close();
                       </span>
                     </td>
                     <td>&#8369; <?= number_format($row['value'], 2) ?></td>
-                    <td><?= $row['acquisition_date'] ?></td>
-                    <td><?= $row['last_updated'] ?></td>
+                    <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
+                    <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
                   </tr>
                 <?php endwhile; ?>
               </tbody>
