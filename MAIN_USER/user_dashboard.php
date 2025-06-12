@@ -183,6 +183,130 @@ $stmt->close();
     .main-expanded {
       margin-left: 0 !important;
     }
+
+    /* Base dark mode */
+  .dark-mode {
+    background-color: #121212 !important;
+    color: #f1f1f1 !important;
+  }
+
+  /* For all cards */
+  .dark-mode .card {
+    background-color: #1e1e1e !important;
+    color: #f1f1f1 !important;
+    border-color: #2c2c2c;
+  }
+
+  /* For tables */
+  .dark-mode table {
+    color: #f1f1f1 !important;
+  }
+  .dark-mode table thead {
+    background-color: #2a2a2a !important;
+  }
+  .dark-mode table tbody tr {
+    background-color: #1e1e1e !important;
+    border-bottom: 1px solid #2c2c2c;
+  }
+
+  /* Navbar / Topbar / Sidebar */
+  .dark-mode .topbar,
+  .dark-mode .sidebar,
+  .dark-mode .navbar {
+    background-color: #1f1f1f !important;
+    color: #f1f1f1 !important;
+    border-color: #333 !important;
+  }
+
+  /* Forms */
+  .dark-mode input,
+  .dark-mode select,
+  .dark-mode textarea {
+    background-color: #2a2a2a !important;
+    color: #fff !important;
+    border-color: #444 !important;
+  }
+
+  /* Dropdowns */
+  .dark-mode .dropdown-menu {
+    background-color: #2a2a2a !important;
+    color: #fff !important;
+  }
+
+  .dark-mode .dropdown-item {
+    color: #fff !important;
+  }
+  .dark-mode .dropdown-item:hover {
+    background-color: #3a3a3a;
+  }
+
+  /* Buttons */
+  .dark-mode .btn {
+    background-color: #333 !important;
+    color: #fff !important;
+    border-color: #444 !important;
+  }
+
+  .dark-mode .btn-outline-primary {
+    color: #cce5ff !important;
+    border-color: #cce5ff !important;
+  }
+
+  /* DataTables override */
+  .dark-mode .dataTables_wrapper {
+    color: #f1f1f1;
+  }
+  .dark-mode .dataTables_filter input,
+  .dark-mode .dataTables_length select {
+    background-color: #2a2a2a;
+    color: #fff;
+    border: 1px solid #444;
+  }
+
+  /* Scrollbar */
+  .dark-mode ::-webkit-scrollbar {
+    width: 10px;
+  }
+  .dark-mode ::-webkit-scrollbar-track {
+    background: #1e1e1e;
+  }
+  .dark-mode ::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border-radius: 10px;
+  }
+
+  /* Apply dark background to all major layout wrappers */
+.dark-mode .container,
+.dark-mode .main,
+.dark-mode .card-header,
+.dark-mode .container-fluid,
+.dark-mode .row,
+.dark-mode .col,
+.dark-mode .content,
+.dark-mode main,
+.dark-mode section {
+  background-color: #121212 !important;
+  color: #f1f1f1 !important;
+}
+
+.dark-mode #datetime {
+  color: #ffffff !important;
+}
+
+.dark-mode #profileIcon {
+  color: #ffffff;
+}
+
+body, .container, .card, .navbar, .table, input, select, textarea, .dropdown-menu, .datetime {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+
+
+.dark-mode .topbar {
+  background: linear-gradient(90deg, #00BFFF, #e3f2fd);
+}
+
   </style>
 </head>
 
@@ -219,7 +343,7 @@ $stmt->close();
 
   <div class="main">
 
-    <div class="topbar d-flex justify-content-between align-items-center p-2">
+    <div class="topbar d-flex justify-content-between align-items-center p-2 ">
       <!-- Sidebar Toggle Button -->
       <div class="text-end p-2">
         <button id="toggleSidebar" class="btn btn-outline-primary">
@@ -238,13 +362,18 @@ $stmt->close();
 
         <!-- Scan QR Icon -->
         <a href="scan_qr.php" class="text-dark text-decoration-none" title="Scan QR">
-          <i class="bi bi-qr-code-scan" style="font-size: 1.8rem;"></i>
+          <i class="bi bi-qr-code-scan text-primary" style="font-size: 1.8rem;"></i>
         </a>
+
+        <!-- Night/Day Mode Toggle Icon -->
+        <button id="themeToggle" class="btn btn-sm text-dark" title="Toggle Night Mode">
+          <i id="themeIcon" class="bi bi-moon-fill text-info" style="font-size: 1.5rem;"></i>
+        </button>
 
         <!-- Notification Bell Icon with Dropdown -->
         <div class="dropdown">
           <a href="#" class="text-dark text-decoration-none position-relative" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
-            <i class="bi bi-bell" style="font-size: 1.8rem;"></i>
+            <i class="bi bi-bell text-primary" style="font-size: 1.8rem;"></i>
             <!-- Notification badge (optional) -->
             <!-- <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
           3
@@ -264,7 +393,7 @@ $stmt->close();
         <!-- Profile Menu -->
         <div class="dropdown">
           <a href="#" class="d-flex align-items-center text-dark text-decoration-none" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-person-circle" style="font-size: 1.8rem;"></i>
+            <i class="bi bi-person-circle" id="profileIcon" style="font-size: 1.8rem;"></i>
           </a>
           <ul class="dropdown-menu dropdown-menu-end text-center" aria-labelledby="profileDropdown" style="min-width: 200px;">
             <li class="dropdown-header fw-bold text-dark"><?php echo htmlspecialchars($fullname); ?></li>
@@ -597,6 +726,27 @@ $stmt->close();
         }
       });
     });
+
+    const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+
+  // Load saved mode
+  if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-mode');
+    themeIcon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+  }
+
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+
+    // Swap icons
+    themeIcon.classList.toggle('bi-moon-stars-fill', !isDark);
+    themeIcon.classList.toggle('bi-sun-fill', isDark);
+
+    // Save preference
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
   </script>
 
 </body>
