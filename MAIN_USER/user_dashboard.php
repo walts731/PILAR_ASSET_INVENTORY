@@ -133,40 +133,37 @@ $stmt->close();
 
 
   <div class="main">
-    <div class="topbar d-flex justify-content-between align-items-center p-2 bg-light">
-      <h3 class="m-0">Inventory Dashboard</h3>
+    <div class="topbar d-flex justify-content-between align-items-center p-2">
+  <h3 class="m-0">Inventory Dashboard</h3>
 
-      <!-- Profile Menu -->
-      <div class="dropdown">
-        <a href="#" class="d-flex align-items-center text-dark text-decoration-none" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          <i class="bi bi-person-circle me-2" style="font-size: 1.8rem;"></i>
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end text-center" aria-labelledby="profileDropdown" style="min-width: 200px;">
-          <!-- Centered Full Name -->
-          <li class="dropdown-header fw-bold text-dark"><?php echo htmlspecialchars($fullname); ?></li>
-          <li>
-            <hr class="dropdown-divider">
-          </li>
+  <!-- Right-side Icons + DateTime -->
+  <div class="d-flex align-items-center gap-3">
 
-          <!-- Dropdown Items with Icons -->
-          <li><a class="dropdown-item d-flex align-items-center" href="view_profile.php">
-              <i class="bi bi-person me-2"></i> Profile
-            </a></li>
+    <!-- Date and Time -->
+    <div id="datetime" class="text-end text-dark small fw-semibold"></div>
 
-          <li><a class="dropdown-item d-flex align-items-center" href="manage_password.php">
-              <i class="bi bi-key me-2"></i> Manage Password
-            </a></li>
+    <!-- Scan QR Icon -->
+    <a href="scan_qr.php" class="text-dark text-decoration-none" title="Scan QR">
+      <i class="bi bi-qr-code-scan" style="font-size: 1.8rem;"></i>
+    </a>
 
-          <li>
-            <hr class="dropdown-divider">
-          </li>
-
-          <li><a class="dropdown-item d-flex align-items-center text-danger" href="../logout.php">
-              <i class="bi bi-box-arrow-right me-2"></i> Sign Out
-            </a></li>
-        </ul>
-      </div>
+    <!-- Profile Menu -->
+    <div class="dropdown">
+      <a href="#" class="d-flex align-items-center text-dark text-decoration-none" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-person-circle" style="font-size: 1.8rem;"></i>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end text-center" aria-labelledby="profileDropdown" style="min-width: 200px;">
+        <li class="dropdown-header fw-bold text-dark"><?php echo htmlspecialchars($fullname); ?></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item d-flex align-items-center" href="view_profile.php"><i class="bi bi-person me-2"></i> Profile</a></li>
+        <li><a class="dropdown-item d-flex align-items-center" href="manage_password.php"><i class="bi bi-key me-2"></i> Manage Password</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item d-flex align-items-center text-danger" href="../logout.php"><i class="bi bi-box-arrow-right me-2"></i> Sign Out</a></li>
+      </ul>
     </div>
+  </div>
+</div>
+
 
 
     <!-- Tab Navigation -->
@@ -381,6 +378,25 @@ $stmt->close();
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  function updateDateTime() {
+    const now = new Date();
+    const formatted = now.toLocaleString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+    document.getElementById('datetime').textContent = formatted;
+  }
+  setInterval(updateDateTime, 1000);
+  updateDateTime(); // Initial call
+</script>
+
 </body>
 
 </html>
