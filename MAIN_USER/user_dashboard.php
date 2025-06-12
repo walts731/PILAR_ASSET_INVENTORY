@@ -19,6 +19,15 @@ if (!isset($_SESSION['office_id'])) {
   }
   $stmt->close();
 }
+
+// Fetch full name
+$user_name = '';
+$stmt = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
+$stmt->bind_param("i", $_SESSION['user_id']);
+$stmt->execute();
+$stmt->bind_result($fullname);
+$stmt->fetch();
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -124,9 +133,41 @@ if (!isset($_SESSION['office_id'])) {
 
 
   <div class="main">
-    <div class="topbar d-flex justify-content-between align-items-center">
-      <h3>Inventory Dashboard</h3>
+    <div class="topbar d-flex justify-content-between align-items-center p-2 bg-light">
+      <h3 class="m-0">Inventory Dashboard</h3>
+
+      <!-- Profile Menu -->
+      <div class="dropdown">
+        <a href="#" class="d-flex align-items-center text-dark text-decoration-none" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-person-circle me-2" style="font-size: 1.8rem;"></i>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end text-center" aria-labelledby="profileDropdown" style="min-width: 200px;">
+          <!-- Centered Full Name -->
+          <li class="dropdown-header fw-bold text-dark"><?php echo htmlspecialchars($fullname); ?></li>
+          <li>
+            <hr class="dropdown-divider">
+          </li>
+
+          <!-- Dropdown Items with Icons -->
+          <li><a class="dropdown-item d-flex align-items-center" href="view_profile.php">
+              <i class="bi bi-person me-2"></i> Profile
+            </a></li>
+
+          <li><a class="dropdown-item d-flex align-items-center" href="manage_password.php">
+              <i class="bi bi-key me-2"></i> Manage Password
+            </a></li>
+
+          <li>
+            <hr class="dropdown-divider">
+          </li>
+
+          <li><a class="dropdown-item d-flex align-items-center text-danger" href="../logout.php">
+              <i class="bi bi-box-arrow-right me-2"></i> Sign Out
+            </a></li>
+        </ul>
+      </div>
     </div>
+
 
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
@@ -215,7 +256,7 @@ if (!isset($_SESSION['office_id'])) {
                 while ($row = $stmt->fetch_assoc()):
                 ?>
                   <tr>
-                    <td><img src="<?= $row['qr_code'] ?>" width="50"></td>
+                    <td><img src="../img/<?= $row['qr_code'] ?>" width="50"></td>
                     <td><?= htmlspecialchars($row['asset_name']) ?></td>
                     <td><?= htmlspecialchars($row['category_name']) ?></td>
                     <td><?= htmlspecialchars($row['description']) ?></td>
