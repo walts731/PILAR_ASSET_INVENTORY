@@ -96,6 +96,19 @@ if ($office_id) {
             margin-left: auto;
             margin-top: 30px;
         }
+
+        .alert {
+            opacity: 0;
+            transform: translateY(-10px);
+            animation: fadeInSlide 0.5s ease forwards;
+        }
+
+        @keyframes fadeInSlide {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 
@@ -103,6 +116,21 @@ if ($office_id) {
     <?php include 'includes/sidebar.php'; ?>
     <div class="main">
         <?php include 'includes/topbar.php'; ?>
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+                <?= $_SESSION['success'];
+                unset($_SESSION['success']); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+                <?= $_SESSION['error'];
+                unset($_SESSION['error']); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
 
         <!-- Cover -->
         <div class="cover-photo"></div>
@@ -170,7 +198,18 @@ if ($office_id) {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="js/dashboard.js"></script>
+    <script>
+        setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.classList.remove('show');
+            alert.classList.add('fade');
+        });
+    }, 4000); // 4 seconds
+    </script>
 </body>
-
 </html>
