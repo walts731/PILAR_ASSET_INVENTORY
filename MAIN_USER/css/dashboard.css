@@ -256,8 +256,11 @@ body, .container, .card, .navbar, .table, input, select, textarea, .dropdown-men
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-
-
 .dark-mode .topbar {
   background: linear-gradient(90deg, #00BFFF, #e3f2fd);
 }
+
+.highlight-row {
+    background-color: #fff3cd !important;
+    transition: background-color 0.5s ease-in-out;
+  }

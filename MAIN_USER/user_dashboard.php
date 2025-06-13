@@ -211,12 +211,13 @@ $stmt->close();
             </div>
           </div>
           <div class="col-12 col-sm-6 col-md-4 mb-3">
-            <div class="card shadow-sm border-warning h-100">
+            <div id="lowStockCard" class="card shadow-sm border-warning h-100" style="cursor: pointer;">
               <div class="card-body">
                 <h5>Low Stock</h5>
                 <h3><?= $clow_stock ?></h3>
               </div>
             </div>
+
           </div>
         </div>
 
