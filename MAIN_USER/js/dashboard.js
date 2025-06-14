@@ -88,3 +88,15 @@ function updateDateTime() {
       // Save preference
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
+
+    $(document).ready(function () {
+    // For Asset tab
+    $('#selectAllAssets').click(function () {
+      $('.asset-checkbox').prop('checked', this.checked);
+    });
+
+    // For Consumable tab
+    $('#selectAllConsumables').click(function () {
+      $('.consumable-checkbox').prop('checked', this.checked);
+    });
+  });

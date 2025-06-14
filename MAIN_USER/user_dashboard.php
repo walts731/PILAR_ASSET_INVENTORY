@@ -122,61 +122,65 @@ $stmt->close();
         </div>
 
         <div class="card shadow-sm mb-4">
-          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 class="mb-0">Asset List</h5>
-            <a href="generate_report.php?type=asset" class="btn btn-outline-secondary btn-sm">
-              <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
-            </a>
-          </div>
-          <div class="card-body table-responsive">
-            <table id="assetTable" class="table table-hover align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>QR</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Description</th>
-                  <th>Qty</th>
-                  <th>Unit</th>
-                  <th>Status</th>
-                  <th>Value</th>
-                  <th>Acquired</th>
-                  <th>Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php
-                $stmt = $conn->query("SELECT a.*, c.category_name FROM assets a JOIN categories c ON a.category = c.id WHERE a.type = 'asset'");
-                while ($row = $stmt->fetch_assoc()):
-                ?>
+          <form action="generate_selected_report.php" method="POST" target="_blank">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <h5 class="mb-0">Asset List</h5>
+              <button type="submit" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
+              </button>
+            </div>
+            <div class="card-body table-responsive">
+              <table id="assetTable" class="table table-hover align-middle">
+                <thead class="table-light">
                   <tr>
-                    <td><img src="../img/<?= $row['qr_code'] ?>" width="50"></td>
-                    <td><?= htmlspecialchars($row['asset_name']) ?></td>
-                    <td><?= htmlspecialchars($row['category_name']) ?></td>
-                    <td><?= htmlspecialchars($row['description']) ?></td>
-                    <td><?= $row['quantity'] ?></td>
-                    <td><?= $row['unit'] ?></td>
-                    <td>
-                      <?php
-                      $status_class = match ($row['status']) {
-                        'available' => 'success',
-                        'borrowed' => 'warning',
-                        default => 'secondary',
-                      };
-                      if ($row['red_tagged']) $status_class = 'danger';
-                      ?>
-                      <span class="badge bg-<?= $status_class ?> status-badge">
-                        <?= $row['red_tagged'] ? 'Red-Tagged' : ucfirst($row['status']) ?>
-                      </span>
-                    </td>
-                    <td>&#8369; <?= number_format($row['value'], 2) ?></td>
-                    <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
-                    <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
+                    <th><input type="checkbox" id="selectAllAssets" /></th>
+                    <th>QR</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>Unit</th>
+                    <th>Status</th>
+                    <th>Value</th>
+                    <th>Acquired</th>
+                    <th>Updated</th>
                   </tr>
-                <?php endwhile; ?>
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  <?php
+                  $stmt = $conn->query("SELECT a.*, c.category_name FROM assets a JOIN categories c ON a.category = c.id WHERE a.type = 'asset'");
+                  while ($row = $stmt->fetch_assoc()):
+                  ?>
+                    <tr>
+                      <td><input type="checkbox" class="asset-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
+                      <td><img src="../img/<?= $row['qr_code'] ?>" width="50"></td>
+                      <td><?= htmlspecialchars($row['asset_name']) ?></td>
+                      <td><?= htmlspecialchars($row['category_name']) ?></td>
+                      <td><?= htmlspecialchars($row['description']) ?></td>
+                      <td><?= $row['quantity'] ?></td>
+                      <td><?= $row['unit'] ?></td>
+                      <td>
+                        <?php
+                        $status_class = match ($row['status']) {
+                          'available' => 'success',
+                          'borrowed' => 'warning',
+                          default => 'secondary',
+                        };
+                        if ($row['red_tagged']) $status_class = 'danger';
+                        ?>
+                        <span class="badge bg-<?= $status_class ?> status-badge">
+                          <?= $row['red_tagged'] ? 'Red-Tagged' : ucfirst($row['status']) ?>
+                        </span>
+                      </td>
+                      <td>&#8369; <?= number_format($row['value'], 2) ?></td>
+                      <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
+                      <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
+                    </tr>
+                  <?php endwhile; ?>
+                </tbody>
+              </table>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -222,69 +226,74 @@ $stmt->close();
         </div>
 
         <div class="card shadow-sm">
-          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 class="mb-0">Consumable List</h5>
-            <div>
-              <select id="stockFilter" class="form-select form-select-sm d-inline-block w-auto me-2">
-                <option value="">All Items</option>
-                <option value="low">Low Stock</option>
-              </select>
-              <a href="generate_report.php?type=consumable" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
-              </a>
-            </div>
-          </div>
+          <form action="generate_selected_report.php" method="POST" target="_blank">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <h5 class="mb-0">Consumable List</h5>
+              <div>
+                <select id="stockFilter" class="form-select form-select-sm d-inline-block w-auto me-2">
+                  <option value="">All Items</option>
+                  <option value="low">Low Stock</option>
+                </select>
 
-          <div class="card-body table-responsive">
-            <table id="consumablesTable" class="table table-hover align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>QR</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Description</th>
-                  <th>Qty</th>
-                  <th>Unit</th>
-                  <th>Status</th>
-                  <th>Value</th>
-                  <th>Acquired</th>
-                  <th>Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php
-                $stmt = $conn->query("
-                  SELECT a.*, c.category_name 
-                  FROM assets a 
-                  JOIN categories c ON a.category = c.id 
-                  WHERE a.type = 'consumable'
-                ");
-                while ($row = $stmt->fetch_assoc()):
-                  $is_low = $row['quantity'] <= $threshold;
-                ?>
-                  <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
-                    <td><img src="../img/<?= $row['qr_code'] ?>" width="50"></td>
-                    <td><?= htmlspecialchars($row['asset_name']) ?></td>
-                    <td><?= htmlspecialchars($row['category_name']) ?></td>
-                    <td><?= htmlspecialchars($row['description']) ?></td>
-                    <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>">
-                      <?= $row['quantity'] ?>
-                    </td>
-                    <td><?= $row['unit'] ?></td>
-                    <td>
-                      <span class="badge bg-<?= $row['status'] === 'available' ? 'success' : 'secondary' ?>">
-                        <?= ucfirst($row['status']) ?>
-                      </span>
-                    </td>
-                    <td>&#8369; <?= number_format($row['value'], 2) ?></td>
-                    <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
-                    <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
+                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
+                </button>
+              </div>
+            </div>
+
+            <div class="card-body table-responsive">
+              <table id="consumablesTable" class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th><input type="checkbox" id="selectAllConsumables" /></th>
+                    <th>QR</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>Unit</th>
+                    <th>Status</th>
+                    <th>Value</th>
+                    <th>Acquired</th>
+                    <th>Updated</th>
                   </tr>
-                <?php endwhile; ?>
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  <?php
+                  $threshold = 5; // adjust threshold if needed
+                  $stmt = $conn->query("
+            SELECT a.*, c.category_name 
+            FROM assets a 
+            JOIN categories c ON a.category = c.id 
+            WHERE a.type = 'consumable'
+          ");
+                  while ($row = $stmt->fetch_assoc()):
+                    $is_low = $row['quantity'] <= $threshold;
+                  ?>
+                    <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
+                      <td><input type="checkbox" class="consumable-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
+                      <td><img src="../img/<?= $row['qr_code'] ?>" width="50"></td>
+                      <td><?= htmlspecialchars($row['asset_name']) ?></td>
+                      <td><?= htmlspecialchars($row['category_name']) ?></td>
+                      <td><?= htmlspecialchars($row['description']) ?></td>
+                      <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['quantity'] ?></td>
+                      <td><?= $row['unit'] ?></td>
+                      <td>
+                        <span class="badge bg-<?= $row['status'] === 'available' ? 'success' : 'secondary' ?>">
+                          <?= ucfirst($row['status']) ?>
+                        </span>
+                      </td>
+                      <td>&#8369; <?= number_format($row['value'], 2) ?></td>
+                      <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
+                      <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
+                    </tr>
+                  <?php endwhile; ?>
+                </tbody>
+              </table>
+            </div>
+          </form>
         </div>
+
       </div>
     </div>
   </div>
