@@ -9,6 +9,27 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
+// Handle profile update form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fullname'], $_POST['email'])) {
+    $new_fullname = trim($_POST['fullname']);
+    $new_email = trim($_POST['email']);
+
+    if (!empty($new_fullname) && filter_var($new_email, FILTER_VALIDATE_EMAIL)) {
+        $stmt = $conn->prepare("UPDATE users SET fullname = ?, email = ? WHERE id = ?");
+        $stmt->bind_param("ssi", $new_fullname, $new_email, $user_id);
+        if ($stmt->execute()) {
+            $_SESSION['success'] = "Profile updated successfully.";
+            header("Location: profile.php");
+            exit();
+        } else {
+            $_SESSION['error'] = "Failed to update profile. Please try again.";
+        }
+        $stmt->close();
+    } else {
+        $_SESSION['error'] = "Please provide a valid name and email.";
+    }
+}
+
 // Fetch user info
 $stmt = $conn->prepare("SELECT fullname, email, profile_picture, office_id, role FROM users WHERE id = ?");
 $stmt->bind_param("i", $user_id);
@@ -44,7 +65,6 @@ if ($office_id) {
             height: 300px;
             background: url('../img/pilar3.jpg') no-repeat center center;
             background-size: cover;
-            /* This ensures the image fills the area proportionally */
             position: relative;
             border-radius: 10px;
         }
@@ -116,6 +136,7 @@ if ($office_id) {
     <?php include 'includes/sidebar.php'; ?>
     <div class="main">
         <?php include 'includes/topbar.php'; ?>
+
         <?php if (isset($_SESSION['success'])): ?>
             <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
                 <?= $_SESSION['success'];
@@ -169,47 +190,20 @@ if ($office_id) {
         </div>
 
         <!-- Edit Profile Modal -->
-        <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form action="update_profile.php" method="POST">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label for="fullname" class="form-label">Full Name</label>
-                                <input type="text" class="form-control" name="fullname" value="<?= htmlspecialchars($fullname) ?>" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($email) ?>" required>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+        <?php include 'modals/update_profile_modal.php'; ?>
     </div>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script src="js/dashboard.js"></script>
     <script>
+        // Fade out alerts after 4 seconds
         setTimeout(() => {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(alert => {
-            alert.classList.remove('show');
-            alert.classList.add('fade');
-        });
-    }, 4000); // 4 seconds
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.classList.remove('show');
+                alert.classList.add('fade');
+            });
+        }, 4000);
     </script>
 </body>
 </html>

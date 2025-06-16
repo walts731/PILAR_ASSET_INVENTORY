@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets'])) 
     ");
 
     $reportDate = date('F Y');
+    $reportFilename = 'Inventory_Report_' . date('Ymd_His') . '.pdf';
     $logoPath = '../img/PILAR LOGO TRANSPARENT.png';
     $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
 
@@ -28,54 +29,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets'])) 
             margin: 0;
             padding: 20px;
         }
-
         .header-row {
             display: table;
             width: 100%;
             margin-bottom: 20px;
         }
-
         .header-col {
             display: table-cell;
             vertical-align: top;
         }
-
         .left-col {
             width: 20%;
             text-align: left;
         }
-
         .center-col {
             width: 60%;
             text-align: center;
         }
-
         .right-col {
             width: 20%;
         }
-
         .logo {
             height: 80px;
         }
-
         .center-col h4, .center-col h2, .center-col p {
             margin: 2px 0;
             line-height: 1.3;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 11px;
             margin-top: 10px;
         }
-
         th, td {
             border: 1px solid #000;
             padding: 6px;
             text-align: left;
         }
-
         th {
             background-color: #f2f2f2;
         }
@@ -131,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets'])) 
 
     $html .= '</tbody></table>';
 
-    // Render PDF
+    // Generate PDF
     $options = new Options();
     $options->set('defaultFont', 'DejaVu Sans');
     $options->set('isRemoteEnabled', true);
@@ -140,7 +131,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets'])) 
     $dompdf->loadHtml($html);
     $dompdf->setPaper('A4', 'landscape');
     $dompdf->render();
-    $dompdf->stream('Inventory_Report_' . date('Ymd') . '.pdf', ['Attachment' => false]);
+
+    // Save the PDF to a directory
+    $pdfOutput = $dompdf->output();
+    $savePath = '../generated_reports/' . $reportFilename;
+    file_put_contents($savePath, $pdfOutput);
+
+    // Optional: Insert log into reports table
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    $userId = $_SESSION['user_id'] ?? null;
+    if ($userId) {
+        $insert = $conn->prepare("INSERT INTO generated_reports (user_id, filename, generated_at) VALUES (?, ?, NOW())");
+        $insert->bind_param("is", $userId, $reportFilename);
+        $insert->execute();
+    }
+
+    // Output PDF to browser
+    $dompdf->stream($reportFilename, ['Attachment' => false]);
     exit;
 } else {
     echo "No assets selected.";

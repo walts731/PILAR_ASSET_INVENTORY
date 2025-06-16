@@ -260,7 +260,31 @@ body, .container, .card, .navbar, .table, input, select, textarea, .dropdown-men
   background: linear-gradient(90deg, #00BFFF, #e3f2fd);
 }
 
+.dark-mode .card-header {
+  background: linear-gradient(90deg, #00BFFF, #e3f2fd);
+}
+
 .highlight-row {
     background-color: #fff3cd !important;
     transition: background-color 0.5s ease-in-out;
   }
+
+.alert {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 0.5s ease, max-height 0.5s ease;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  margin-left: 10px;
+  margin-right: 10px
+}
+
+.alert.show {
+  opacity: 1;
+  max-height: 200px;
+}

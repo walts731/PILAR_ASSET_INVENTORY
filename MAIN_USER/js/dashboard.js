@@ -100,3 +100,22 @@ function updateDateTime() {
       $('.consumable-checkbox').prop('checked', this.checked);
     });
   });
+
+  document.querySelectorAll("form").forEach(form => {
+    const alertBox = form.querySelector("#checkboxAlert");
+
+    form.addEventListener("submit", function (e) {
+      const checkboxes = form.querySelectorAll("input[type='checkbox'][name='selected_assets[]']");
+      const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+
+      if (!anyChecked) {
+        e.preventDefault();
+        alertBox.classList.add("show"); // Show with transition
+
+        // Optional: Auto-hide after 3 seconds
+        setTimeout(() => {
+          alertBox.classList.remove("show");
+        }, 3000);
+      }
+    });
+  });

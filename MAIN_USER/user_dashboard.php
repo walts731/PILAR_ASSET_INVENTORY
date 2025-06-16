@@ -125,10 +125,14 @@ $stmt->close();
           <form action="generate_selected_report.php" method="POST" target="_blank">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
               <h5 class="mb-0">Asset List</h5>
-              <button type="submit" class="btn btn-outline-secondary btn-sm">
+              <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm ">
                 <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
               </button>
             </div>
+            <div class="alert alert-danger" role="alert" id="checkboxAlert">
+              Please select at least one item to generate a report.
+            </div>
+
             <div class="card-body table-responsive">
               <table id="assetTable" class="table table-hover align-middle">
                 <thead class="table-light">
@@ -235,10 +239,14 @@ $stmt->close();
                   <option value="low">Low Stock</option>
                 </select>
 
-                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm">
                   <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
                 </button>
               </div>
+            </div>
+
+            <div class="alert alert-danger" role="alert" id="checkboxAlert">
+              Please select at least one item to generate a report.
             </div>
 
             <div class="card-body table-responsive">
@@ -253,7 +261,6 @@ $stmt->close();
                     <th>Qty</th>
                     <th>Unit</th>
                     <th>Status</th>
-                    <th>Value</th>
                     <th>Acquired</th>
                     <th>Updated</th>
                   </tr>
@@ -283,7 +290,6 @@ $stmt->close();
                           <?= ucfirst($row['status']) ?>
                         </span>
                       </td>
-                      <td>&#8369; <?= number_format($row['value'], 2) ?></td>
                       <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
                       <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
                     </tr>
