@@ -18,6 +18,13 @@ if (!isset($_SESSION['office_id'])) {
     $_SESSION['office_id'] = $office_id;
   }
   $stmt->close();
+
+  // TABLES
+  // SELECT `id`, `user_id`, `filename`, `generated_at` FROM `generated_reports` 
+  // SELECT `id`, `username`, `fullname`, `email`, `password`, `role`, `status`, `created_at`, `reset_token`, `reset_token_expiry`, `office_id`, `profile_picture`, `session_timeout` FROM `users` 
+  // SELECT `id`, `office_name`, `icon` FROM `offices` 
+  // SELECT `id`, `category_name`, `type` FROM `categories` 
+  // SELECT `id`, `asset_name`, `category`, `description`, `quantity`, `unit`, `status`, `acquisition_date`, `office_id`, `red_tagged`, `last_updated`, `value`, `qr_code`, `type` FROM `assets` 
 }
 
 // Fetch full name

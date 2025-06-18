@@ -45,16 +45,15 @@ if (!isset($_SESSION['office_id'])) {
     $stmt->close();
 }
 
-// Handle form submission
+// Handle session timeout setting
 $setting_updated = false;
 $error = '';
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['session_timeout'])) {
     $timeout = (int) $_POST['session_timeout'];
-    if ($timeout >= 60) { // Allow 1 minute and up
+    if ($timeout >= 60) {
         $_SESSION['timeout_duration'] = $timeout;
         $setting_updated = true;
 
-        // Save to DB
         $stmt = $conn->prepare("UPDATE users SET session_timeout = ? WHERE id = ?");
         $stmt->bind_param("ii", $timeout, $user_id);
         $stmt->execute();
@@ -63,6 +62,36 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['session_timeout'])) {
         $error = "Minimum allowed timeout is 1 minute.";
     }
 }
+
+// Handle auto report generation settings
+$report_saved = false;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['report_frequency'])) {
+    $frequency = $_POST['report_frequency'];
+    $day_of_week = $_POST['day_of_week'] ?? null;
+    $day_of_month = $_POST['day_of_month'] ?? null;
+
+    $check = $conn->query("SELECT id FROM report_generation_settings LIMIT 1");
+    if ($check->num_rows > 0) {
+        $stmt = $conn->prepare("UPDATE report_generation_settings SET frequency=?, day_of_week=?, day_of_month=?");
+        $stmt->bind_param("ssi", $frequency, $day_of_week, $day_of_month);
+        $stmt->execute();
+        $stmt->close();
+    } else {
+        $stmt = $conn->prepare("INSERT INTO report_generation_settings (frequency, day_of_week, day_of_month) VALUES (?, ?, ?)");
+        $stmt->bind_param("ssi", $frequency, $day_of_week, $day_of_month);
+        $stmt->execute();
+        $stmt->close();
+    }
+    $report_saved = true;
+}
+
+// Fetch current report settings
+$setting_result = $conn->query("SELECT * FROM report_generation_settings LIMIT 1");
+$report_setting = $setting_result->fetch_assoc() ?? [
+    'frequency' => 'weekly',
+    'day_of_week' => 'Monday',
+    'day_of_month' => 1
+];
 
 // Get user's full name
 $stmt = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
@@ -78,10 +107,10 @@ $stmt->close();
 
 <head>
     <meta charset="UTF-8">
-    <title>Session Settings</title>
+    <title>Settings</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/dashboard.css" />
     <style>
         .save-btn {
             background-color: rgb(44, 110, 215);
@@ -107,29 +136,26 @@ $stmt->close();
     <?php include 'includes/sidebar.php'; ?>
     <div class="main">
         <?php include 'includes/topbar.php'; ?>
-
         <div class="container mt-4">
+            <!-- Session Timeout Card -->
             <div class="card shadow-sm">
-                <div class="card-header ">
+                <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-gear-fill"></i> Session Timeout Settings</h5>
                 </div>
                 <div class="card-body">
-
                     <?php if ($setting_updated): ?>
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             Timeout updated successfully!
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     <?php endif; ?>
-
                     <?php if (!empty($error)): ?>
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <?= $error ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     <?php endif; ?>
-
-                    <form method="POST" action="">
+                    <form method="POST">
                         <div class="mb-3">
                             <label for="session_timeout" class="form-label">Auto Logout Time</label>
                             <select name="session_timeout" id="session_timeout" class="form-select">
@@ -141,60 +167,72 @@ $stmt->close();
                         </div>
                         <button type="submit" class="btn rounded-pill save-btn"><i class="bi bi-save"></i> Save</button>
                     </form>
-
-                    <div class="mt-4">
-                        <small class="text-muted">
-                            Current timeout: <?= $_SESSION['timeout_duration'] / 60 ?> minutes<br>
-                            Last activity: <?= date('Y-m-d H:i:s', $_SESSION['last_activity']) ?>
-                        </small>
+                    <div class="mt-4 text-muted">
+                        Current timeout: <?= $_SESSION['timeout_duration'] / 60 ?> minutes<br>
+                        Last activity: <?= date('M j, Y h:i A', $_SESSION['last_activity']) ?>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Bootstrap and Modal Script -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script>
-        const timeout = <?= $_SESSION['timeout_duration'] ?> * 1000;
-        let logoutTimer;
-
-        function resetTimer() {
-            clearTimeout(logoutTimer);
-            logoutTimer = setTimeout(() => {
-                const logoutModal = new bootstrap.Modal(document.getElementById('logoutModal'));
-                logoutModal.show();
-
-                setTimeout(() => {
-                    window.location.href = '../logout.php';
-                }, 3000);
-            }, timeout);
-        }
-
-        ['click', 'mousemove', 'keydown', 'scroll', 'touchstart'].forEach(event => {
-            window.addEventListener(event, resetTimer);
-        });
-
-        resetTimer(); // Start timer on page load
-    </script>
-
-    <!-- Logout Modal -->
-    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-danger">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="logoutModalLabel">Session Expired</h5>
+            <!-- Auto Report Generation Card -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Auto Report Generation Settings</h5>
                 </div>
-                <div class="modal-body">
-                    You have been logged out due to inactivity. Redirecting...
+                <div class="card-body">
+                    <?php if ($report_saved): ?>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            Auto report generation settings saved!
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="report_frequency" class="form-label">Frequency</label>
+                            <select name="report_frequency" id="report_frequency" class="form-select" onchange="toggleScheduleFields()">
+                                <option value="daily" <?= $report_setting['frequency'] === 'daily' ? 'selected' : '' ?>>Daily</option>
+                                <option value="weekly" <?= $report_setting['frequency'] === 'weekly' ? 'selected' : '' ?>>Weekly</option>
+                                <option value="monthly" <?= $report_setting['frequency'] === 'monthly' ? 'selected' : '' ?>>Monthly</option>
+                            </select>
+
+                        </div>
+
+                        <div class="mb-3" id="weeklyField">
+                            <label>Day of the Week</label>
+                            <select name="day_of_week" class="form-select">
+                                <?php
+                                $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                                foreach ($days as $day) {
+                                    $selected = ($report_setting['day_of_week'] === $day) ? 'selected' : '';
+                                    echo "<option value='$day' $selected>$day</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="monthlyField">
+                            <label>Day of the Month (1–28)</label>
+                            <input type="number" name="day_of_month" class="form-control" min="1" max="28"
+                                value="<?= $report_setting['day_of_month'] ?>">
+                        </div>
+
+                        <button type="submit" class="btn rounded-pill save-btn"><i class="bi bi-save"></i> Save Report Settings</button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- JS scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleScheduleFields() {
+            const freq = document.getElementById('report_frequency').value;
+            document.getElementById('weeklyField').style.display = freq === 'weekly' ? 'block' : 'none';
+            document.getElementById('monthlyField').style.display = freq === 'monthly' ? 'block' : 'none';
+        }
+        toggleScheduleFields();
+    </script>
 </body>
 
 </html>
