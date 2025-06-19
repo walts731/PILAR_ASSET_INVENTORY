@@ -1,0 +1,290 @@
+body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #eaf4fc;
+      margin: 0;
+    }
+
+    .sidebar {
+      height: 100vh;
+      background-color: #2196f3;
+      color: white;
+      position: fixed;
+      width: 240px;
+      padding: 20px;
+    }
+
+    .sidebar h4 {
+      font-weight: bold;
+    }
+
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      display: block;
+      margin: 12px 0;
+      font-weight: 500;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .sidebar a:hover {
+      color: #bbdefb;
+      padding-left: 10px;
+    }
+
+    .main {
+      margin-left: 260px;
+      padding: 30px;
+      background-color: #fdfefe;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background-color: #e3f2fd;
+      padding: 15px 30px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      margin-bottom: 30px;
+      border-radius: 0.5rem;
+    }
+
+    .status-badge {
+      font-size: 0.75rem;
+      padding: 0.3em 0.5em;
+    }
+
+    .card {
+      border-radius: 0.75rem;
+      border: none;
+      background-color: #ffffff;
+    }
+
+    .card-header {
+      background-color: #f0f9ff;
+      border-bottom: 1px solid #dee2e6;
+      border-top-left-radius: 0.75rem;
+      border-top-right-radius: 0.75rem;
+    }
+
+    .table th,
+    .table td {
+      vertical-align: middle;
+    }
+
+    .table-hover tbody tr:hover {
+      background-color: #f1f9ff;
+    }
+
+    .nav-link.active {
+      background-color: #f0f0f0;
+      font-weight: bold;
+      border-left: 4px solid #0d6efd;
+    }
+
+    .sidebar .nav {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 30px;
+    }
+
+    .sidebar a {
+      width: 100%;
+      text-align: left;
+      padding: 10px 15px;
+      border-radius: 10px;
+      margin: 5px 0;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar a.active {
+      background-color: white;
+      color: #2196f3 !important;
+      font-weight: bold;
+      border-left: 4px solid #0d6efd;
+    }
+
+    .sidebar a:not(.active) {
+      color: white;
+    }
+
+    .sidebar a:hover:not(.active) {
+      background-color: rgba(255, 255, 255, 0.2);
+      padding-left: 20px;
+    }
+
+    .sidebar.collapsed {
+      margin-left: -240px;
+      transition: margin 0.3s ease;
+    }
+
+    .main-expanded {
+      margin-left: 0 !important;
+      transition: margin 0.3s ease;
+    }
+
+    /* Sidebar hidden animation */
+    .sidebar {
+      transition: margin-left 0.3s ease;
+    }
+
+    .sidebar-hidden {
+      margin-left: -240px;
+      /* Same as sidebar width */
+    }
+
+    /* Main area expands when sidebar is hidden */
+    .main {
+      transition: margin-left 0.3s ease;
+    }
+
+    .main-expanded {
+      margin-left: 0 !important;
+    }
+
+    /* Base dark mode */
+  .dark-mode {
+    background-color: #121212 !important;
+    color: #f1f1f1 !important;
+  }
+
+  /* For all cards */
+  .dark-mode .card {
+    background-color: #1e1e1e !important;
+    color: #f1f1f1 !important;
+    border-color: #2c2c2c;
+  }
+
+  /* For tables */
+  .dark-mode table {
+    color: #f1f1f1 !important;
+  }
+  .dark-mode table thead {
+    background-color: #2a2a2a !important;
+  }
+  .dark-mode table tbody tr {
+    background-color: #1e1e1e !important;
+    border-bottom: 1px solid #2c2c2c;
+  }
+
+  /* Navbar / Topbar / Sidebar */
+  .dark-mode .topbar,
+  .dark-mode .sidebar,
+  .dark-mode .navbar {
+    background-color: #1f1f1f !important;
+    color: #f1f1f1 !important;
+    border-color: #333 !important;
+  }
+
+  /* Forms */
+  .dark-mode input,
+  .dark-mode select,
+  .dark-mode textarea {
+    background-color: #2a2a2a !important;
+    color: #fff !important;
+    border-color: #444 !important;
+  }
+
+  /* Dropdowns */
+  .dark-mode .dropdown-menu {
+    background-color: #2a2a2a !important;
+    color: #fff !important;
+  }
+
+  .dark-mode .dropdown-item {
+    color: #fff !important;
+  }
+  .dark-mode .dropdown-item:hover {
+    background-color: #3a3a3a;
+  }
+
+  /* Buttons */
+  .dark-mode .btn {
+    background-color: #333 !important;
+    color: #fff !important;
+    border-color: #444 !important;
+  }
+
+  .dark-mode .btn-outline-primary {
+    color: #cce5ff !important;
+    border-color: #cce5ff !important;
+  }
+
+  /* DataTables override */
+  .dark-mode .dataTables_wrapper {
+    color: #f1f1f1;
+  }
+  .dark-mode .dataTables_filter input,
+  .dark-mode .dataTables_length select {
+    background-color: #2a2a2a;
+    color: #fff;
+    border: 1px solid #444;
+  }
+
+  /* Scrollbar */
+  .dark-mode ::-webkit-scrollbar {
+    width: 10px;
+  }
+  .dark-mode ::-webkit-scrollbar-track {
+    background: #1e1e1e;
+  }
+  .dark-mode ::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border-radius: 10px;
+  }
+
+  /* Apply dark background to all major layout wrappers */
+.dark-mode .main,
+.dark-mode .card-header,
+.dark-mode .container-fluid,
+.dark-mode .row,
+.dark-mode .col,
+.dark-mode .content,
+.dark-mode main,
+.dark-mode section {
+  background-color: #121212 !important;
+  color: #f1f1f1 !important;
+}
+
+.dark-mode #datetime {
+  color: #ffffff !important;
+}
+
+.dark-mode #profileIcon {
+  color: #ffffff;
+}
+
+body, .container, .card, .navbar, .table, input, select, textarea, .dropdown-menu, .datetime {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark-mode .topbar {
+  background: linear-gradient(90deg, #00BFFF, #e3f2fd);
+}
+
+.dark-mode .card-header {
+  background: linear-gradient(90deg, #00BFFF, #e3f2fd);
+}
+
+.highlight-row {
+    background-color: #fff3cd !important;
+    transition: background-color 0.5s ease-in-out;
+  }
+
+.alert {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 0.5s ease, max-height 0.5s ease;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  margin-left: 10px;
+  margin-right: 10px
+}
+
+.alert.show {
+  opacity: 1;
+  max-height: 200px;
+}
