@@ -10,6 +10,9 @@
         ?>
         <nav class="nav flex-column">
             <a href="../MAIN_ADMIN/admin_dashboard.php" class="nav-link <?= ($page == 'admin_dashboard') ? 'active' : '' ?>">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a href="inventory.php" class="nav-link <?= ($page == 'inventory') ? 'active' : '' ?>">
                 <i class="bi bi-box-seam"></i> Inventory
             </a>
             <a href="reports.php" class="nav-link <?= ($page == 'reports') ? 'active' : '' ?>">

@@ -18,6 +18,7 @@ $custom_titles = [
   "scan_qr" => "Scan QR",
   "settings" => "Settings",
   "reports" => "Reports",
+  "inventory" => "Inventory Management",
 ];
 
 if (array_key_exists($current_page, $custom_titles)) {
