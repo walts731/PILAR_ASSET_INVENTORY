@@ -254,7 +254,6 @@ $stmt->close();
                 <thead class="table-light">
                   <tr>
                     <th><input type="checkbox" id="selectAllConsumables" /></th>
-                    <th>QR</th>
                     <th>Name</th>
                     <th>Category</th>
                     <th>Description</th>
@@ -279,7 +278,6 @@ $stmt->close();
                   ?>
                     <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
                       <td><input type="checkbox" class="consumable-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
-                      <td><img src="../img/<?= $row['qr_code'] ?>" width="50"></td>
                       <td><?= htmlspecialchars($row['asset_name']) ?></td>
                       <td><?= htmlspecialchars($row['category_name']) ?></td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
