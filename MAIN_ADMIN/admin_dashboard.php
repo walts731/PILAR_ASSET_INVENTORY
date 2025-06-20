@@ -208,28 +208,38 @@ $stmt->close();
         <div class="row mb-4">
           <div class="col-12 col-sm-6 col-md-4 mb-3">
             <div class="card shadow-sm h-100">
-              <div class="card-body">
-                <h5>Total</h5>
-                <h3><?= $ctotal ?></h3>
+              <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                  <h5>Total</h5>
+                  <h3><?= $ctotal ?></h3>
+                </div>
+                <i class="bi bi-box-seam text-primary fs-2"></i>
               </div>
             </div>
           </div>
+
           <div class="col-12 col-sm-6 col-md-4 mb-3">
             <div class="card shadow-sm h-100">
-              <div class="card-body">
-                <h5>Available</h5>
-                <h3><?= $cactive ?></h3>
+              <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                  <h5>Available</h5>
+                  <h3><?= $cactive ?></h3>
+                </div>
+                <i class="bi bi-check-circle text-info fs-2"></i>
               </div>
             </div>
           </div>
+
           <div class="col-12 col-sm-6 col-md-4 mb-3">
             <div id="lowStockCard" class="card shadow-sm border-warning h-100" style="cursor: pointer;">
-              <div class="card-body">
-                <h5>Low Stock</h5>
-                <h3><?= $clow_stock ?></h3>
+              <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                  <h5>Low Stock</h5>
+                  <h3><?= $clow_stock ?></h3>
+                </div>
+                <i class="bi bi-exclamation-triangle text-primary fs-2"></i>
               </div>
             </div>
-
           </div>
         </div>
 

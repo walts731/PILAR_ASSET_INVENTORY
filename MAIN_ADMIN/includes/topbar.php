@@ -87,7 +87,7 @@ $low_stock_count = count($low_stock_items);
           <?php foreach ($low_stock_items as $item): ?>
             <li>
               <a class="dropdown-item small text-danger d-flex justify-content-between align-items-center"
-                 href="user_dashboard.php?id=<?php echo $item['id']; ?>">
+                 href="admin_dashboard.php?id=<?php echo $item['id']; ?>">
                 <span><?php echo htmlspecialchars($item['product_name']); ?></span>
                 <span class="badge bg-danger"><?php echo $item['stock']; ?> left</span>
               </a>

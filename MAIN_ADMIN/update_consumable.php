@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             WHERE id = $id";
 
     if ($conn->query($sql)) {
-      header("Location: admin_dashboard.php?tab=update=success");
+      header("Location: admin_dashboard.php?update=success");
       exit();
     } else {
       echo "Failed to update: " . $conn->error;
