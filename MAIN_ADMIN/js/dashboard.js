@@ -102,20 +102,32 @@ function updateDateTime() {
   });
 
   document.querySelectorAll("form").forEach(form => {
-    const alertBox = form.querySelector("#checkboxAlert");
+  // Skip validation if form does not contain any 'selected_assets[]' checkboxes
+  const checkboxes = form.querySelectorAll("input[type='checkbox'][name='selected_assets[]']");
+  if (checkboxes.length === 0) return; // Skip this form
 
-    form.addEventListener("submit", function (e) {
-      const checkboxes = form.querySelectorAll("input[type='checkbox'][name='selected_assets[]']");
-      const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+  const alertBox = form.querySelector("#checkboxAlert");
 
-      if (!anyChecked) {
-        e.preventDefault();
-        alertBox.classList.add("show"); // Show with transition
+  form.addEventListener("submit", function (e) {
+    const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
 
-        // Optional: Auto-hide after 3 seconds
-        setTimeout(() => {
-          alertBox.classList.remove("show");
-        }, 3000);
+    if (!anyChecked) {
+      e.preventDefault();
+      if (alertBox) {
+        alertBox.classList.add("show");
+        setTimeout(() => alertBox.classList.remove("show"), 3000);
+      } else {
+        alert("Please select at least one item.");
       }
-    });
+    }
   });
+});
+
+
+$(document).ready(function() {
+      $('.updateConsumableBtn').on('click', function() {
+        $('#consumable_id').val($(this).data('id'));
+        $('#edit_quantity').val($(this).data('qty'));
+        $('#edit_status').val($(this).data('status'));
+      });
+    });
