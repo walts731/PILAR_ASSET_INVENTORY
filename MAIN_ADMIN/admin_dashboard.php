@@ -51,6 +51,10 @@ $stmt->close();
 
     <?php include 'includes/topbar.php' ?>
 
+    <?php if (isset($_GET['update']) && $_GET['update'] === 'success'): ?>
+      <div class="alert alert-success">Consumable updated successfully!</div>
+    <?php endif; ?>
+
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
       <li class="nav-item" role="presentation">
@@ -249,6 +253,10 @@ $stmt->close();
               Please select at least one item to generate a report.
             </div>
 
+            <?php if (isset($_GET['update']) && $_GET['update'] === 'success'): ?>
+              <div class="alert alert-success">Consumable updated successfully!</div>
+            <?php endif; ?>
+
             <div class="card-body table-responsive">
               <table id="consumablesTable" class="table table-hover align-middle">
                 <thead class="table-light">
@@ -262,6 +270,7 @@ $stmt->close();
                     <th>Status</th>
                     <th>Acquired</th>
                     <th>Updated</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -290,6 +299,17 @@ $stmt->close();
                       </td>
                       <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
                       <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
+                      <td>
+                        <button type="button"
+                          class="btn btn-sm btn-primary updateConsumableBtn"
+                          data-id="<?= $row['id'] ?>"
+                          data-qty="<?= $row['quantity'] ?>"
+                          data-status="<?= $row['status'] ?>"
+                          data-bs-toggle="modal"
+                          data-bs-target="#updateConsumableModal">
+                          <i class="bi bi-pencil-square"></i>
+                        </button>
+                      </td>
                     </tr>
                   <?php endwhile; ?>
                 </tbody>
@@ -301,12 +321,22 @@ $stmt->close();
       </div>
     </div>
   </div>
+  <?php include 'modals/update_consumable_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <script src="js/dashboard.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('.updateConsumableBtn').on('click', function() {
+        $('#consumable_id').val($(this).data('id'));
+        $('#edit_quantity').val($(this).data('qty'));
+        $('#edit_status').val($(this).data('status'));
+      });
+    });
+  </script>
 </body>
 
 </html>

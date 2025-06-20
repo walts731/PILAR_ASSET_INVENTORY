@@ -9,7 +9,7 @@
         $page = basename($_SERVER['PHP_SELF'], ".php"); // detects current PHP filename
         ?>
         <nav class="nav flex-column">
-            <a href="../MAIN_USER/user_dashboard.php" class="nav-link <?= ($page == 'user_dashboard') ? 'active' : '' ?>">
+            <a href="../MAIN_ADMIN/admin_dashboard.php" class="nav-link <?= ($page == 'admin_dashboard') ? 'active' : '' ?>">
                 <i class="bi bi-box-seam"></i> Inventory
             </a>
             <a href="reports.php" class="nav-link <?= ($page == 'reports') ? 'active' : '' ?>">
