@@ -193,13 +193,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php include 'modals/delete_archived_modal.php'; ?>
 
 <!-- Restore All Modal for Each Type -->
-<?php foreach ($types as $type => $label): ?>
-<?php include "modals/restore_all_modal.php"; ?>
+    <?php foreach ($types as $type => $label): ?>
+    <div class="modal fade" id="restoreAllModal<?= $type ?>" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="POST">
+                <input type="hidden" name="restore_all" value="1">
+                <input type="hidden" name="type" value="<?= $type ?>">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Restore All Archived <?= $label ?></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to restore all archived <?= strtolower($label) ?>?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Yes, Restore All</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 <?php endforeach; ?>
 
 <!-- Delete All Modal for Each Type -->
 <?php foreach ($types as $type => $label): ?>
-<?php include "modals/delete_all_archive_modal.php"; ?>
+    <div class="modal fade" id="deleteAllModal<?= $type ?>" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="POST">
+                <input type="hidden" name="delete_all" value="1">
+                <input type="hidden" name="type" value="<?= $type ?>">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-danger">Delete All Archived <?= $label ?></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to permanently delete <strong>all</strong> archived <?= strtolower($label) ?>? This action cannot be undone.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Yes, Delete All</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 <?php endforeach; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -211,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $(document).ready(function () {
         $('.archiveTable').DataTable();
 
-        // Pass values to confirmation modals
+        // Restore Single
         const restoreModal = document.getElementById('restoreModal');
         restoreModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
@@ -221,6 +261,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             restoreModal.querySelector('.asset-name').textContent = name;
         });
 
+        // Delete Single
         const deleteModal = document.getElementById('deleteModal');
         deleteModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
@@ -228,6 +269,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const name = button.getAttribute('data-name');
             deleteModal.querySelector('input[name="delete_id"]').value = id;
             deleteModal.querySelector('.asset-name').textContent = name;
+        });
+
+        // Restore All (loop through types)
+        ['consumable', 'asset'].forEach(function(type) {
+            const restoreAllModal = document.getElementById('restoreAllModal' + type);
+            if (restoreAllModal) {
+                restoreAllModal.addEventListener('show.bs.modal', function () {
+                    restoreAllModal.querySelector('input[name="type"]').value = type;
+                });
+            }
+
+            const deleteAllModal = document.getElementById('deleteAllModal' + type);
+            if (deleteAllModal) {
+                deleteAllModal.addEventListener('show.bs.modal', function () {
+                    deleteAllModal.querySelector('input[name="type"]').value = type;
+                });
+            }
         });
     });
 </script>
