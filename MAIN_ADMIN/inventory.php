@@ -59,6 +59,14 @@ $stmt->close();
       <div class="alert alert-success">Consumable updated successfully!</div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['update']) && $_GET['update'] === 'success'): ?>
+      <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        Asset updated successfully!
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <?php endif; ?>
+
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
       <li class="nav-item" role="presentation">
@@ -156,6 +164,7 @@ $stmt->close();
                     <th>Value</th>
                     <th>Acquired</th>
                     <th>Updated</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -187,6 +196,33 @@ $stmt->close();
                       <td>&#8369; <?= number_format($row['value'], 2) ?></td>
                       <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
                       <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
+                      <td>
+                        <button type="button"
+                          class="btn btn-sm btn-outline-primary updateAssetBtn"
+                          data-id="<?= $row['id'] ?>"
+                          data-name="<?= htmlspecialchars($row['asset_name']) ?>"
+                          data-category="<?= $row['category'] ?>"
+                          data-description="<?= htmlspecialchars($row['description']) ?>"
+                          data-qty="<?= $row['quantity'] ?>"
+                          data-unit="<?= $row['unit'] ?>"
+                          data-status="<?= $row['status'] ?>"
+                          data-bs-toggle="modal"
+                          data-bs-target="#updateAssetModal">
+                          <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <?php if ($row['status'] !== 'borrowed'): ?>
+                          <button type="button"
+                            class="btn btn-sm btn-outline-danger deleteAssetBtn"
+                            data-id="<?= $row['id'] ?>"
+                            data-name="<?= htmlspecialchars($row['asset_name']) ?>"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteAssetModal">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        <?php else: ?>
+                          <span class="text-muted small"><i class="bi bi-lock"></i></span>
+                        <?php endif; ?>
+                      </td>
                     </tr>
                   <?php endwhile; ?>
                 </tbody>
@@ -199,18 +235,19 @@ $stmt->close();
       <!-- Consumables Tab -->
       <div class="tab-pane fade" id="consumables" role="tabpanel">
         <?php
-        $ctotal = $cactive = $clow_stock = 0;
+        $ctotal = $cactive = $clow_stock = $cunavailable = 0;
         $threshold = 5;
         $cres = $conn->query("SELECT status, quantity FROM assets WHERE type = 'consumable'");
         while ($r = $cres->fetch_assoc()) {
           $ctotal++;
           if ($r['status'] === 'available') $cactive++;
+          if ($r['status'] === 'unavailable') $cunavailable++;
           if ((int)$r['quantity'] <= $threshold) $clow_stock++;
         }
         ?>
 
         <div class="row mb-4">
-          <div class="col-12 col-sm-6 col-md-4 mb-3">
+          <div class="col-12 col-sm-6 col-md-3 mb-3">
             <div class="card shadow-sm h-100">
               <div class="card-body d-flex justify-content-between align-items-center">
                 <div>
@@ -222,7 +259,7 @@ $stmt->close();
             </div>
           </div>
 
-          <div class="col-12 col-sm-6 col-md-4 mb-3">
+          <div class="col-12 col-sm-6 col-md-3 mb-3">
             <div class="card shadow-sm h-100">
               <div class="card-body d-flex justify-content-between align-items-center">
                 <div>
@@ -234,14 +271,26 @@ $stmt->close();
             </div>
           </div>
 
-          <div class="col-12 col-sm-6 col-md-4 mb-3">
+          <div class="col-12 col-sm-6 col-md-3 mb-3">
+            <div id="lowStockCard" class="card shadow-sm border-warning h-100" style="cursor: pointer;">
+              <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                  <h5>Unavailable</h5>
+                  <h3><?= $cunavailable ?></h3>
+                </div>
+                <i class="bi bi-slash-circle text-primary fs-2"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-3 mb-3">
             <div id="lowStockCard" class="card shadow-sm border-warning h-100" style="cursor: pointer;">
               <div class="card-body d-flex justify-content-between align-items-center">
                 <div>
                   <h5>Low Stock</h5>
                   <h3><?= $clow_stock ?></h3>
                 </div>
-                <i class="bi bi-exclamation-triangle text-primary fs-2"></i>
+                <i class="bi bi-exclamation-triangle text-info fs-2"></i>
               </div>
             </div>
           </div>
@@ -353,6 +402,8 @@ $stmt->close();
   </div>
   <?php include 'modals/update_consumable_modal.php'; ?>
   <?php include 'modals/delete_consumable_modal.php'; ?>
+  <?php include 'modals/update_asset_modal.php'; ?>
+  <?php include 'modals/delete_asset_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>

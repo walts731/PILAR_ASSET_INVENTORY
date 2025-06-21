@@ -15,13 +15,12 @@ if (!isset($_SESSION['office_id'])) {
     }
 }
 
-// Restore single asset
+// Handle POST actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['restore_id'])) {
         $restore_id = (int) $_POST['restore_id'];
-
-        $result = $conn->query("SELECT * FROM assets_archive WHERE archive_id = $restore_id");
-        if ($asset = $result->fetch_assoc()) {
+        $res = $conn->query("SELECT * FROM assets_archive WHERE archive_id = $restore_id");
+        if ($asset = $res->fetch_assoc()) {
             $insert = "INSERT INTO assets (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, red_tagged, last_updated, value, qr_code, type)
                 VALUES (
                     '{$conn->real_escape_string($asset['asset_name'])}',
@@ -38,7 +37,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     '{$conn->real_escape_string($asset['qr_code'])}',
                     '{$conn->real_escape_string($asset['type'])}'
                 )";
-
             if ($conn->query($insert)) {
                 $conn->query("DELETE FROM assets_archive WHERE archive_id = $restore_id");
                 header("Location: asset_archive.php?restore=success");
@@ -47,11 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Restore all
-    if (isset($_POST['restore_all'])) {
-        $result = $conn->query("SELECT * FROM assets_archive WHERE type = 'consumable'");
+    if (isset($_POST['restore_all']) && isset($_POST['type'])) {
+        $type = $conn->real_escape_string($_POST['type']);
+        $result = $conn->query("SELECT * FROM assets_archive WHERE type = '$type'");
         while ($asset = $result->fetch_assoc()) {
-            $insert = "INSERT INTO assets (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, red_tagged, last_updated, value, qr_code, type)
+            $conn->query("INSERT INTO assets (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, red_tagged, last_updated, value, qr_code, type)
                 VALUES (
                     '{$conn->real_escape_string($asset['asset_name'])}',
                     {$asset['category']},
@@ -66,15 +64,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     {$asset['value']},
                     '{$conn->real_escape_string($asset['qr_code'])}',
                     '{$conn->real_escape_string($asset['type'])}'
-                )";
-            $conn->query($insert);
+                )");
         }
-        $conn->query("DELETE FROM assets_archive WHERE type = 'consumable'");
+        $conn->query("DELETE FROM assets_archive WHERE type = '$type'");
         header("Location: asset_archive.php?restore_all=success");
         exit();
     }
 
-    // Delete single
     if (isset($_POST['delete_id'])) {
         $delete_id = (int) $_POST['delete_id'];
         $conn->query("DELETE FROM assets_archive WHERE archive_id = $delete_id");
@@ -82,26 +78,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // Delete all
-    if (isset($_POST['delete_all'])) {
-        $conn->query("DELETE FROM assets_archive WHERE type = 'consumable'");
+    if (isset($_POST['delete_all']) && isset($_POST['type'])) {
+        $type = $conn->real_escape_string($_POST['type']);
+        $conn->query("DELETE FROM assets_archive WHERE type = '$type'");
         header("Location: asset_archive.php?delete_all=success");
         exit();
     }
 }
 ?>
 
-<!-- HTML below -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Archived Consumables</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
-    <link rel="stylesheet" href="css/dashboard.css" />
+    <meta charset="UTF-8">
+    <title>Archived Assets</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
 <?php include 'includes/sidebar.php'; ?>
@@ -119,81 +114,122 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="alert alert-warning">Asset permanently deleted!</div>
         <?php endif; ?>
         <?php if (isset($_GET['delete_all'])): ?>
-            <div class="alert alert-danger">All archived consumables permanently deleted!</div>
+            <div class="alert alert-danger">All archived items permanently deleted!</div>
         <?php endif; ?>
 
-        <div class="card shadow-sm mt-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5>Archived Assets</h5>
-                <div>
-                    <button class="btn btn-sm btn-outline-danger me-2 rounded-pill" data-bs-toggle="modal" data-bs-target="#deleteAllModal">
-                        <i class="bi bi-trash3"></i> Delete All
-                    </button>
-                    <button class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#restoreAllModal">
-                        <i class="bi bi-arrow-clockwise"></i> Restore All
-                    </button>
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="archiveTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="consumables-tab" data-bs-toggle="tab" data-bs-target="#consumables" type="button" role="tab">Consumables</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="assets-tab" data-bs-toggle="tab" data-bs-target="#assets" type="button" role="tab">Assets</button>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3" id="archiveTabsContent">
+            <?php
+            $types = ['consumable' => 'Consumables', 'asset' => 'Assets'];
+            foreach ($types as $type => $label):
+                $tabId = $type === 'consumable' ? 'consumables' : 'assets';
+                $isActive = $type === 'consumable' ? 'show active' : '';
+            ?>
+            <div class="tab-pane fade <?= $isActive ?>" id="<?= $tabId ?>" role="tabpanel">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><?= $label ?> Archive</h5>
+                        <div>
+                            <button class="btn btn-sm btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#deleteAllModal<?= $type ?>"><i class="bi bi-trash3"></i> Delete All</button>
+                            <button class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#restoreAllModal<?= $type ?>"><i class="bi bi-arrow-clockwise"></i> Restore All</button>
+                        </div>
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table class="table table-hover align-middle archiveTable" id="table_<?= $type ?>">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Qty</th>
+                                    <th>Unit</th>
+                                    <th>Status</th>
+                                    <th>Archived At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            $q = $conn->query("SELECT a.*, c.category_name FROM assets_archive a LEFT JOIN categories c ON a.category = c.id WHERE a.type = '$type'");
+                            while ($row = $q->fetch_assoc()):
+                            ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($row['asset_name']) ?></td>
+                                    <td><?= htmlspecialchars($row['category_name']) ?></td>
+                                    <td><?= htmlspecialchars($row['description']) ?></td>
+                                    <td><?= $row['quantity'] ?></td>
+                                    <td><?= $row['unit'] ?></td>
+                                    <td><span class="badge bg-<?= $row['status'] === 'available' ? 'success' : 'secondary' ?>"><?= ucfirst($row['status']) ?></span></td>
+                                    <td><?= date('F j, Y', strtotime($row['archived_at'])) ?></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#restoreModal" data-id="<?= $row['archive_id'] ?>" data-name="<?= htmlspecialchars($row['asset_name']) ?>"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="<?= $row['archive_id'] ?>" data-name="<?= htmlspecialchars($row['asset_name']) ?>"><i class="bi bi-trash"></i> Delete</button>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            <div class="card-body table-responsive">
-                <table id="archiveTable" class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Name</th>
-                            <th>Category</th>
-                            <th>Description</th>
-                            <th>Qty</th>
-                            <th>Unit</th>
-                            <th>Status</th>
-                            <th>Archived At</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $result = $conn->query("SELECT a.*, c.category_name FROM assets_archive a LEFT JOIN categories c ON a.category = c.id WHERE a.type = 'consumable'");
-                        while ($row = $result->fetch_assoc()): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($row['asset_name']) ?></td>
-                                <td><?= htmlspecialchars($row['category_name']) ?></td>
-                                <td><?= htmlspecialchars($row['description']) ?></td>
-                                <td><?= $row['quantity'] ?></td>
-                                <td><?= $row['unit'] ?></td>
-                                <td><span class="badge bg-<?= $row['status'] === 'available' ? 'success' : 'secondary' ?>"><?= ucfirst($row['status']) ?></span></td>
-                                <td><?= date('F j, Y', strtotime($row['archived_at'])) ?></td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#restoreModal" data-id="<?= $row['archive_id'] ?>" data-name="<?= htmlspecialchars($row['asset_name']) ?>">
-                                        <i class="bi bi-arrow-counterclockwise"></i> Restore
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="<?= $row['archive_id'] ?>" data-name="<?= htmlspecialchars($row['asset_name']) ?>">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </button>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
-            </div>
+            <?php endforeach; ?>
         </div>
     </div>
 </div>
 
-<!-- Restore Modal -->
+<!-- Restore Single Modal -->
 <?php include 'modals/restore_modal.php'; ?>
 
 <!-- Delete Single Modal -->
 <?php include 'modals/delete_archived_modal.php'; ?>
 
-<!-- Restore All Modal -->
-<?php include 'modals/restore_all_modal.php'; ?>
+<!-- Restore All Modal for Each Type -->
+<?php foreach ($types as $type => $label): ?>
+<?php include "modals/restore_all_modal.php"; ?>
+<?php endforeach; ?>
 
-<!-- Delete All Modal -->
-<?php include 'modals/delete_all_archive_modal.php'; ?>
+<!-- Delete All Modal for Each Type -->
+<?php foreach ($types as $type => $label): ?>
+<?php include "modals/delete_all_archive_modal.php"; ?>
+<?php endforeach; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script src="js/dashboard.js"></script>
-<script src="js/archive.js"></script>
+<script>
+    $(document).ready(function () {
+        $('.archiveTable').DataTable();
+
+        // Pass values to confirmation modals
+        const restoreModal = document.getElementById('restoreModal');
+        restoreModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const name = button.getAttribute('data-name');
+            restoreModal.querySelector('input[name="restore_id"]').value = id;
+            restoreModal.querySelector('.asset-name').textContent = name;
+        });
+
+        const deleteModal = document.getElementById('deleteModal');
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const name = button.getAttribute('data-name');
+            deleteModal.querySelector('input[name="delete_id"]').value = id;
+            deleteModal.querySelector('.asset-name').textContent = name;
+        });
+    });
+</script>
 </body>
 </html>

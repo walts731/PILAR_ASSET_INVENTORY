@@ -146,3 +146,20 @@ $(document).ready(function() {
             $('#archiveTable').DataTable();
         });
 
+$(document).on("click", ".updateAssetBtn", function () {
+  $("#asset_id").val($(this).data("id"));
+  $("#edit_asset_name").val($(this).data("name"));
+  $("#edit_asset_category").val($(this).data("category"));
+  $("#edit_asset_description").val($(this).data("description"));
+  $("#edit_asset_quantity").val($(this).data("qty"));
+  $("#edit_asset_unit").val($(this).data("unit"));
+  $("#edit_asset_status").val($(this).data("status"));
+});
+
+$(document).ready(function () {
+  $('.deleteAssetBtn').on('click', function () {
+    $('#delete_asset_id').val($(this).data('id'));
+    $('#delete_asset_name').text($(this).data('name'));
+  });
+});
+

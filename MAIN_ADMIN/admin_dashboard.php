@@ -125,12 +125,13 @@ $stmt->close();
             </div>
             <div class="card-body">
               <?php
-              $ctotal = $cactive = $clow_stock = 0;
+              $ctotal = $cactive = $clow_stock = $cunavailable = 0;
               $threshold = 5;
               $cres = $conn->query("SELECT status, quantity FROM assets WHERE type = 'consumable'");
               while ($r = $cres->fetch_assoc()) {
                 $ctotal++;
                 if ($r['status'] === 'available') $cactive++;
+                if ($r['status'] === 'unavailable') $cunavailable++;
                 if ((int)$r['quantity'] <= $threshold) $clow_stock++;
               }
               ?>
@@ -164,7 +165,18 @@ $stmt->close();
                         <h6>Low Stock (&le; <?= $threshold ?>)</h6>
                         <h4><?= $clow_stock ?></h4>
                       </div>
-                      <i class="bi bi-exclamation-circle text-primary fs-2"></i>
+                      <i class="bi bi-exclamation-circle text-info fs-2"></i>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-6 mb-3">
+                  <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                      <div>
+                        <h6>Unavailable</h6>
+                        <h4><?= $cunavailable ?></h4>
+                      </div>
+                      <i class="bi bi-slash-circle text-primary fs-2"></i>
                     </div>
                   </div>
                 </div>
