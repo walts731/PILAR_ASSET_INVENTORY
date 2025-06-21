@@ -123,7 +123,6 @@ function updateDateTime() {
   });
 });
 
-
 $(document).ready(function () {
   $('.updateConsumableBtn').on('click', function () {
     $('#consumable_id').val($(this).data('id'));
@@ -135,4 +134,15 @@ $(document).ready(function () {
     $('#edit_status').val($(this).data('status'));
   });
 });
+
+$(document).ready(function () {
+  $('.deleteConsumableBtn').on('click', function () {
+    $('#deleteConsumableId').val($(this).data('id'));
+    $('#deleteConsumableName').text($(this).data('name'));
+  });
+});
+
+$(document).ready(function() {
+            $('#archiveTable').DataTable();
+        });
 

@@ -51,6 +51,10 @@ $stmt->close();
 
     <?php include 'includes/topbar.php' ?>
 
+    <?php if (isset($_GET['delete']) && $_GET['delete'] === 'success'): ?>
+      <div class="alert alert-success">Consumable deleted and archived successfully!</div>
+    <?php endif; ?>
+
     <?php if (isset($_GET['update']) && $_GET['update'] === 'success'): ?>
       <div class="alert alert-success">Consumable updated successfully!</div>
     <?php endif; ?>
@@ -311,7 +315,7 @@ $stmt->close();
                       <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
                       <td>
                         <button type="button"
-                          class="btn btn-sm btn-primary updateConsumableBtn"
+                          class="btn btn-sm btn-outline-primary updateConsumableBtn"
                           data-id="<?= $row['id'] ?>"
                           data-name="<?= htmlspecialchars($row['asset_name']) ?>"
                           data-category="<?= $row['category'] ?>"
@@ -323,6 +327,18 @@ $stmt->close();
                           data-bs-target="#updateConsumableModal">
                           <i class="bi bi-pencil-square"></i>
                         </button>
+                        <?php if ($row['status'] !== 'borrowed'): ?>
+                          <button type="button"
+                            class="btn btn-sm btn-outline-danger deleteConsumableBtn"
+                            data-id="<?= $row['id'] ?>"
+                            data-name="<?= htmlspecialchars($row['asset_name']) ?>"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteConsumableModal">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        <?php else: ?>
+                          <span class="text-muted small"><i class="bi bi-lock"></i></span>
+                        <?php endif; ?>
                       </td>
                     </tr>
                   <?php endwhile; ?>
@@ -336,6 +352,7 @@ $stmt->close();
     </div>
   </div>
   <?php include 'modals/update_consumable_modal.php'; ?>
+  <?php include 'modals/delete_consumable_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>

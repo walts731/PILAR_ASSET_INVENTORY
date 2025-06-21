@@ -19,6 +19,7 @@ $custom_titles = [
   "settings" => "Settings",
   "reports" => "Reports",
   "inventory" => "Inventory Management",
+  "asset_archive" => "Archive",
 ];
 
 if (array_key_exists($current_page, $custom_titles)) {
