@@ -124,10 +124,15 @@ function updateDateTime() {
 });
 
 
-$(document).ready(function() {
-      $('.updateConsumableBtn').on('click', function() {
-        $('#consumable_id').val($(this).data('id'));
-        $('#edit_quantity').val($(this).data('qty'));
-        $('#edit_status').val($(this).data('status'));
-      });
-    });
+$(document).ready(function () {
+  $('.updateConsumableBtn').on('click', function () {
+    $('#consumable_id').val($(this).data('id'));
+    $('#edit_name').val($(this).data('name'));
+    $('#edit_category').val($(this).data('category'));
+    $('#edit_description').val($(this).data('description'));
+    $('#edit_unit').val($(this).data('unit'));
+    $('#edit_quantity').val($(this).data('qty'));
+    $('#edit_status').val($(this).data('status'));
+  });
+});
+

@@ -7,13 +7,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
   $quantity = isset($_GET['quantity']) ? (int)$_GET['quantity'] : 0;
   $status = isset($_GET['status']) ? $conn->real_escape_string($_GET['status']) : '';
+  $name = isset($_GET['asset_name']) ? $conn->real_escape_string(trim($_GET['asset_name'])) : '';
+  $category = isset($_GET['category']) ? (int)$_GET['category'] : 0;
+  $description = isset($_GET['description']) ? $conn->real_escape_string(trim($_GET['description'])) : '';
+  $unit = isset($_GET['unit']) ? $conn->real_escape_string(trim($_GET['unit'])) : '';
 
-  if ($id > 0 && $status !== '') {
-    $sql = "UPDATE assets 
-            SET quantity = $quantity, 
-                status = '$status', 
-                last_updated = NOW() 
-            WHERE id = $id";
+  // Validate required fields
+  if ($id > 0 && $status !== '' && $name !== '' && $category > 0 && $unit !== '') {
+    $sql = "
+      UPDATE assets 
+      SET 
+        asset_name = '$name',
+        category = $category,
+        description = '$description',
+        unit = '$unit',
+        quantity = $quantity,
+        status = '$status',
+        last_updated = NOW()
+      WHERE id = $id
+    ";
 
     if ($conn->query($sql)) {
       header("Location: inventory.php?update=success");
