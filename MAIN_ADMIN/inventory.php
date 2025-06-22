@@ -67,6 +67,29 @@ $stmt->close();
       </div>
     <?php endif; ?>
 
+    <?php
+    // Get list of offices for dropdown
+    $offices = $conn->query("SELECT id, office_name FROM offices");
+
+    // Get selected office from GET or default to user's office
+    $selected_office = $_GET['office'] ?? $_SESSION['office_id'];
+    ?>
+    <div class="card shadow-sm mb-3">
+      <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0">Filter Assets and Consumables</h5>
+        <form method="GET" class="d-flex align-items-center gap-2">
+          <label for="officeFilter" class="form-label mb-0">Office</label>
+          <select name="office" id="officeFilter" class="form-select form-select-sm" onchange="this.form.submit()">
+            <?php while ($office = $offices->fetch_assoc()): ?>
+              <option value="<?= $office['id'] ?>" <?= $office['id'] == $selected_office ? 'selected' : '' ?>>
+                <?= htmlspecialchars($office['office_name']) ?>
+              </option>
+            <?php endwhile; ?>
+          </select>
+        </form>
+      </div>
+    </div>
+
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
       <li class="nav-item" role="presentation">
@@ -82,8 +105,11 @@ $stmt->close();
       <div class="tab-pane fade show active" id="assets" role="tabpanel">
         <?php
         $total = $active = $borrowed = $red_tagged = 0;
-        $res = $conn->query("SELECT status, red_tagged FROM assets WHERE type = 'asset'");
-        while ($r = $res->fetch_assoc()) {
+        $res = $conn->prepare("SELECT status, red_tagged FROM assets WHERE type = 'asset' AND office_id = ?");
+        $res->bind_param("i", $selected_office);
+        $res->execute();
+        $resResult = $res->get_result();
+        while ($r = $resResult->fetch_assoc()) {
           $total++;
           if ($r['status'] === 'available') $active++;
           if ($r['status'] === 'borrowed') $borrowed++;
@@ -169,8 +195,17 @@ $stmt->close();
                 </thead>
                 <tbody>
                   <?php
-                  $stmt = $conn->query("SELECT a.*, c.category_name FROM assets a JOIN categories c ON a.category = c.id WHERE a.type = 'asset'");
-                  while ($row = $stmt->fetch_assoc()):
+                  $stmt = $conn->prepare("
+                          SELECT a.*, c.category_name 
+                          FROM assets a 
+                          JOIN categories c ON a.category = c.id 
+                          WHERE a.type = 'asset' AND a.office_id = ?
+                        ");
+                  $stmt->bind_param("i", $selected_office);
+                  $stmt->execute();
+                  $result = $stmt->get_result();
+                  while ($row = $result->fetch_assoc()):
+
                   ?>
                     <tr>
                       <td><input type="checkbox" class="asset-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
@@ -237,8 +272,11 @@ $stmt->close();
         <?php
         $ctotal = $cactive = $clow_stock = $cunavailable = 0;
         $threshold = 5;
-        $cres = $conn->query("SELECT status, quantity FROM assets WHERE type = 'consumable'");
-        while ($r = $cres->fetch_assoc()) {
+        $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable' AND office_id = ?");
+        $cres->bind_param("i", $selected_office);
+        $cres->execute();
+        $cresResult = $cres->get_result();
+        while ($r = $cresResult->fetch_assoc()) {
           $ctotal++;
           if ($r['status'] === 'available') $cactive++;
           if ($r['status'] === 'unavailable') $cunavailable++;
@@ -339,13 +377,16 @@ $stmt->close();
                 <tbody>
                   <?php
                   $threshold = 5; // adjust threshold if needed
-                  $stmt = $conn->query("
-            SELECT a.*, c.category_name 
-            FROM assets a 
-            JOIN categories c ON a.category = c.id 
-            WHERE a.type = 'consumable'
-          ");
-                  while ($row = $stmt->fetch_assoc()):
+                  $stmt = $conn->prepare("
+                            SELECT a.*, c.category_name 
+                            FROM assets a 
+                            JOIN categories c ON a.category = c.id 
+                            WHERE a.type = 'consumable' AND a.office_id = ?
+                          ");
+                  $stmt->bind_param("i", $selected_office);
+                  $stmt->execute();
+                  $result = $stmt->get_result();
+                  while ($row = $result->fetch_assoc()):
                     $is_low = $row['quantity'] <= $threshold;
                   ?>
                     <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
