@@ -18,6 +18,9 @@
             <a href="reports.php" class="nav-link <?= ($page == 'reports') ? 'active' : '' ?>">
                 <i class="bi bi-bar-chart-line"></i> Reports
             </a>
+             <a href="user.php" class="nav-link <?= ($page == 'user') ? 'active' : '' ?>">
+                <i class="bi bi-person"></i> Users
+            </a>
             <a href="asset_archive.php" class="nav-link <?= ($page == 'asset_archive') ? 'active' : '' ?>">
                 <i class="bi bi-archive"></i> Archive
             </a>

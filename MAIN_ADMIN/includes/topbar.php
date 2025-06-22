@@ -20,6 +20,7 @@ $custom_titles = [
   "reports" => "Reports",
   "inventory" => "Inventory Management",
   "asset_archive" => "Archive",
+  "user" => "User Management",
 ];
 
 if (array_key_exists($current_page, $custom_titles)) {
