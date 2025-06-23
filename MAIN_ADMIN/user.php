@@ -75,13 +75,29 @@ $stmt->close();
     <?php include 'includes/topbar.php' ?>
 
     <?php if (isset($_GET['update']) && $_GET['update'] === 'success'): ?>
-  <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
-    <i class="bi bi-check-circle-fill me-2"></i>
-    User updated successfully!
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-<?php endif; ?>
+      <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        User updated successfully!
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <?php endif; ?>
 
+    <?php if (isset($_GET['delete']) && $_GET['delete'] === 'success'): ?>
+      <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> User deleted successfully!
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php elseif (isset($_GET['delete']) && $_GET['delete'] === 'locked'): ?>
+      <div class="alert alert-warning alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-lock-fill me-2"></i> This user cannot be deleted because it's referenced in other records.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php elseif (isset($_GET['delete']) && $_GET['delete'] === 'error'): ?>
+      <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-x-circle-fill me-2"></i> An error occurred while deleting the user.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php endif; ?>
 
     <!-- User Management Card with Office Filter -->
     <div class="card shadow-sm mb-4 mt-4">
@@ -137,14 +153,42 @@ $stmt->close();
                     data-email="<?= htmlspecialchars($user['email']) ?>"
                     data-role="<?= $user['role'] ?>"
                     data-status="<?= $user['status'] ?>"
-                    data-office="<?= $selected_office ?>"
                     data-bs-toggle="modal"
                     data-bs-target="#editUserModal">
                     <i class="bi bi-pencil-square"></i>
                   </button>
-                  <button class="btn btn-sm btn-outline-danger" title="Delete User">
-                    <i class="bi bi-trash"></i>
-                  </button>
+
+                  <?php
+                  // Check if user is deletable — this can be based on a separate query
+                  $isDeletable = true;
+
+                  try {
+                    // Attempt a test delete inside a transaction (no commit)
+                    $conn->begin_transaction();
+                    $testStmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+                    $testStmt->bind_param("i", $user['id']);
+                    $testStmt->execute();
+                    $affected = $testStmt->affected_rows;
+                    $conn->rollback(); // Rollback test delete
+                    $isDeletable = $affected > 0;
+                  } catch (Exception $e) {
+                    $conn->rollback();
+                    $isDeletable = false;
+                  }
+                  ?>
+
+                  <?php if ($isDeletable): ?>
+                    <button class="btn btn-sm btn-outline-danger deleteUserBtn"
+                      data-id="<?= $user['id'] ?>"
+                      data-name="<?= htmlspecialchars($user['fullname']) ?>"
+                      title="Delete User">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  <?php else: ?>
+                    <span class="text-muted small" title="User cannot be deleted">
+                      <i class="bi bi-lock-fill"></i>
+                    </span>
+                  <?php endif; ?>
                 </td>
               </tr>
             <?php endwhile; ?>
@@ -155,65 +199,86 @@ $stmt->close();
   </div>
 
   <!-- Edit User Modal -->
-<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg"> <!-- Wider modal -->
-    <form action="update_user.php" method="POST" class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="editUserLabel"><i class="bi bi-person-gear me-2"></i>Edit User</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
+  <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg"> <!-- Wider modal -->
+      <form action="update_user.php" method="POST" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editUserLabel"><i class="bi bi-person-gear me-2"></i>Edit User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
 
-      <div class="modal-body">
-        <input type="hidden" name="user_id" id="editUserId">
+        <div class="modal-body">
+          <input type="hidden" name="user_id" id="editUserId">
 
-        <div class="row g-3">
-          <!-- Left Column -->
-          <div class="col-md-6">
-            <div class="mb-3">
-              <label for="editFullname" class="form-label">Full Name</label>
-              <input type="text" class="form-control" name="fullname" id="editFullname" required>
+          <div class="row g-3">
+            <!-- Left Column -->
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="editFullname" class="form-label">Full Name</label>
+                <input type="text" class="form-control" name="fullname" id="editFullname" required>
+              </div>
+
+              <div class="mb-3">
+                <label for="editUsername" class="form-label">Username</label>
+                <input type="text" class="form-control" name="username" id="editUsername" required>
+              </div>
+
+              <div class="mb-3">
+                <label for="editEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" name="email" id="editEmail" required>
+              </div>
             </div>
 
-            <div class="mb-3">
-              <label for="editUsername" class="form-label">Username</label>
-              <input type="text" class="form-control" name="username" id="editUsername" required>
-            </div>
+            <!-- Right Column -->
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="editRole" class="form-label">Role</label>
+                <select class="form-select" name="role" id="editRole" required>
+                  <option value="admin">Admin</option>
+                  <option value="user">User</option>
+                </select>
+              </div>
 
-            <div class="mb-3">
-              <label for="editEmail" class="form-label">Email</label>
-              <input type="email" class="form-control" name="email" id="editEmail" required>
-            </div>
-          </div>
-
-          <!-- Right Column -->
-          <div class="col-md-6">
-            <div class="mb-3">
-              <label for="editRole" class="form-label">Role</label>
-              <select class="form-select" name="role" id="editRole" required>
-                <option value="admin">Admin</option>
-                <option value="user">User</option>
-              </select>
-            </div>
-
-            <div class="mb-3">
-              <label for="editStatus" class="form-label">Status</label>
-              <select class="form-select" name="status" id="editStatus" required>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+              <div class="mb-3">
+                <label for="editStatus" class="form-label">Status</label>
+                <select class="form-select" name="status" id="editStatus" required>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Update</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-      </div>
-    </form>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Update</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
 
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" id="confirmDeleteUserModal" tabindex="-1" aria-labelledby="confirmDeleteUserLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form id="deleteUserForm" method="GET" action="delete_user.php" class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="confirmDeleteUserLabel">
+            <i class="bi bi-exclamation-triangle me-2"></i> Confirm Deletion
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete <strong id="deleteUserName"></strong>? This action cannot be undone.
+          <input type="hidden" name="id" id="deleteUserId">
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">Yes, Delete</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -227,14 +292,27 @@ $stmt->close();
       });
     });
 
-    $(document).on('click', '.editUserBtn', function () {
-    const btn = $(this);
-    $('#editUserId').val(btn.data('id'));
-    $('#editFullname').val(btn.data('fullname'));
-    $('#editUsername').val(btn.data('username'));
-    $('#editEmail').val(btn.data('email'));
-    $('#editRole').val(btn.data('role'));
-    $('#editStatus').val(btn.data('status'));
+    $(document).on('click', '.editUserBtn', function() {
+      const btn = $(this);
+      $('#editUserId').val(btn.data('id'));
+      $('#editFullname').val(btn.data('fullname'));
+      $('#editUsername').val(btn.data('username'));
+      $('#editEmail').val(btn.data('email'));
+      $('#editRole').val(btn.data('role'));
+      $('#editStatus').val(btn.data('status'));
+    });
+
+    $(document).ready(function () {
+    // Delete button opens modal
+    $('.deleteUserBtn').on('click', function () {
+      const userId = $(this).data('id');
+      const userName = $(this).data('name');
+
+      $('#deleteUserId').val(userId);
+      $('#deleteUserName').text(userName);
+      const modal = new bootstrap.Modal(document.getElementById('confirmDeleteUserModal'));
+      modal.show();
+    });
   });
   </script>
 </body>
