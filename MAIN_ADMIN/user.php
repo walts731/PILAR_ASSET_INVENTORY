@@ -74,6 +74,15 @@ $stmt->close();
   <div class="main">
     <?php include 'includes/topbar.php' ?>
 
+    <?php if (isset($_GET['update']) && $_GET['update'] === 'success'): ?>
+  <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    User updated successfully!
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<?php endif; ?>
+
+
     <!-- User Management Card with Office Filter -->
     <div class="card shadow-sm mb-4 mt-4">
       <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -121,7 +130,16 @@ $stmt->close();
                 <td><?= htmlspecialchars($user['office_name']) ?></td>
                 <td><?= date('F j, Y', strtotime($user['created_at'])) ?></td>
                 <td>
-                  <button class="btn btn-sm btn-outline-primary" title="Edit User">
+                  <button class="btn btn-sm btn-outline-primary editUserBtn"
+                    data-id="<?= $user['id'] ?>"
+                    data-fullname="<?= htmlspecialchars($user['fullname']) ?>"
+                    data-username="<?= htmlspecialchars($user['username']) ?>"
+                    data-email="<?= htmlspecialchars($user['email']) ?>"
+                    data-role="<?= $user['role'] ?>"
+                    data-status="<?= $user['status'] ?>"
+                    data-office="<?= $selected_office ?>"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editUserModal">
                     <i class="bi bi-pencil-square"></i>
                   </button>
                   <button class="btn btn-sm btn-outline-danger" title="Delete User">
@@ -136,18 +154,89 @@ $stmt->close();
     </div>
   </div>
 
+  <!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg"> <!-- Wider modal -->
+    <form action="update_user.php" method="POST" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editUserLabel"><i class="bi bi-person-gear me-2"></i>Edit User</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" name="user_id" id="editUserId">
+
+        <div class="row g-3">
+          <!-- Left Column -->
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="editFullname" class="form-label">Full Name</label>
+              <input type="text" class="form-control" name="fullname" id="editFullname" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="editUsername" class="form-label">Username</label>
+              <input type="text" class="form-control" name="username" id="editUsername" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="editEmail" class="form-label">Email</label>
+              <input type="email" class="form-control" name="email" id="editEmail" required>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="editRole" class="form-label">Role</label>
+              <select class="form-select" name="role" id="editRole" required>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="editStatus" class="form-label">Status</label>
+              <select class="form-select" name="status" id="editStatus" required>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Update</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <script src="js/dashboard.js"></script>
   <script>
-  $(document).ready(function() {
-    $('#userTable').DataTable({
-      "pageLength": 10
+    $(document).ready(function() {
+      $('#userTable').DataTable({
+        "pageLength": 10
+      });
     });
+
+    $(document).on('click', '.editUserBtn', function () {
+    const btn = $(this);
+    $('#editUserId').val(btn.data('id'));
+    $('#editFullname').val(btn.data('fullname'));
+    $('#editUsername').val(btn.data('username'));
+    $('#editEmail').val(btn.data('email'));
+    $('#editRole').val(btn.data('role'));
+    $('#editStatus').val(btn.data('status'));
   });
-</script>
+  </script>
 </body>
 
 </html>
