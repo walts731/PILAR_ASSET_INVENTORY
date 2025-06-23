@@ -35,13 +35,6 @@ if (!isset($_SESSION['office_id'])) {
     $_SESSION['office_id'] = $office_id;
   }
   $stmt->close();
-
-  // TABLES
-  // SELECT `id`, `user_id`, `filename`, `generated_at` FROM `generated_reports` 
-  // SELECT `id`, `username`, `fullname`, `email`, `password`, `role`, `status`, `created_at`, `reset_token`, `reset_token_expiry`, `office_id`, `profile_picture`, `session_timeout` FROM `users` 
-  // SELECT `id`, `office_name`, `icon` FROM `offices` 
-  // SELECT `id`, `category_name`, `type` FROM `categories` 
-  // SELECT `id`, `asset_name`, `category`, `description`, `quantity`, `unit`, `status`, `acquisition_date`, `office_id`, `red_tagged`, `last_updated`, `value`, `qr_code`, `type` FROM `assets` 
 }
 
 // Fetch full name
@@ -199,122 +192,17 @@ $stmt->close();
   </div>
 
   <!-- Edit User Modal -->
-  <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg"> <!-- Wider modal -->
-      <form action="update_user.php" method="POST" class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="editUserLabel"><i class="bi bi-person-gear me-2"></i>Edit User</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-
-        <div class="modal-body">
-          <input type="hidden" name="user_id" id="editUserId">
-
-          <div class="row g-3">
-            <!-- Left Column -->
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label for="editFullname" class="form-label">Full Name</label>
-                <input type="text" class="form-control" name="fullname" id="editFullname" required>
-              </div>
-
-              <div class="mb-3">
-                <label for="editUsername" class="form-label">Username</label>
-                <input type="text" class="form-control" name="username" id="editUsername" required>
-              </div>
-
-              <div class="mb-3">
-                <label for="editEmail" class="form-label">Email</label>
-                <input type="email" class="form-control" name="email" id="editEmail" required>
-              </div>
-            </div>
-
-            <!-- Right Column -->
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label for="editRole" class="form-label">Role</label>
-                <select class="form-select" name="role" id="editRole" required>
-                  <option value="admin">Admin</option>
-                  <option value="user">User</option>
-                </select>
-              </div>
-
-              <div class="mb-3">
-                <label for="editStatus" class="form-label">Status</label>
-                <select class="form-select" name="status" id="editStatus" required>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Update</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <?php include 'modals/edit_user_modal.php'; ?>
 
   <!-- Delete Confirmation Modal -->
-  <div class="modal fade" id="confirmDeleteUserModal" tabindex="-1" aria-labelledby="confirmDeleteUserLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <form id="deleteUserForm" method="GET" action="delete_user.php" class="modal-content">
-        <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title" id="confirmDeleteUserLabel">
-            <i class="bi bi-exclamation-triangle me-2"></i> Confirm Deletion
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Are you sure you want to delete <strong id="deleteUserName"></strong>? This action cannot be undone.
-          <input type="hidden" name="id" id="deleteUserId">
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-danger">Yes, Delete</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <?php include 'modals/delete_user_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <script src="js/dashboard.js"></script>
-  <script>
-    $(document).ready(function() {
-      $('#userTable').DataTable({
-        "pageLength": 10
-      });
-    });
-
-    $(document).on('click', '.editUserBtn', function() {
-      const btn = $(this);
-      $('#editUserId').val(btn.data('id'));
-      $('#editFullname').val(btn.data('fullname'));
-      $('#editUsername').val(btn.data('username'));
-      $('#editEmail').val(btn.data('email'));
-      $('#editRole').val(btn.data('role'));
-      $('#editStatus').val(btn.data('status'));
-    });
-
-    $(document).ready(function () {
-    // Delete button opens modal
-    $('.deleteUserBtn').on('click', function () {
-      const userId = $(this).data('id');
-      const userName = $(this).data('name');
-
-      $('#deleteUserId').val(userId);
-      $('#deleteUserName').text(userName);
-      const modal = new bootstrap.Modal(document.getElementById('confirmDeleteUserModal'));
-      modal.show();
-    });
-  });
-  </script>
+  <script src="js/user.js"></script>
 </body>
 
 </html>
