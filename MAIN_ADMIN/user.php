@@ -92,10 +92,28 @@ $stmt->close();
       </div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['office_add']) && $_GET['office_add'] === 'success'): ?>
+      <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> New office created successfully!
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php elseif (isset($_GET['office_add']) && $_GET['office_add'] === 'error'): ?>
+      <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-x-circle-fill me-2"></i> Failed to create office. Try again.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php elseif (isset($_GET['office_add']) && $_GET['office_add'] === 'empty'): ?>
+      <div class="alert alert-warning alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> Office name cannot be empty.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php endif; ?>
+
     <!-- User Management Card with Office Filter -->
     <div class="card shadow-sm mb-4 mt-4">
-      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="card-header d-flex  align-items-center flex-wrap gap-2">
         <h5 class="mb-0">User Management</h5>
+
         <form method="GET" class="d-flex align-items-center gap-2">
           <label for="officeFilter" class="form-label mb-0">Office</label>
           <select name="office" id="officeFilter" class="form-select form-select-sm" onchange="this.form.submit()">
@@ -106,6 +124,15 @@ $stmt->close();
             <?php endwhile; ?>
           </select>
         </form>
+
+        <a href="#" class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#addOfficeModal">
+          <i class="bi bi-plus-circle me-1"></i> New Office
+        </a>
+
+        <a href="#" class="btn btn-sm btn-outline-success rounded-pill" data-bs-toggle="modal" data-bs-target="#addUserModal">
+          <i class="bi bi-person-plus-fill me-1"></i> New User
+        </a>
+
       </div>
 
       <div class="card-body table-responsive">
@@ -196,6 +223,9 @@ $stmt->close();
 
   <!-- Delete Confirmation Modal -->
   <?php include 'modals/delete_user_modal.php'; ?>
+
+  <!-- Add Office Modal -->
+  <?php include 'modals/add_office_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
