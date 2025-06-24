@@ -109,30 +109,59 @@ $stmt->close();
       </div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['user_add']) && $_GET['user_add'] === 'success'): ?>
+      <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> New user added successfully!
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php elseif (isset($_GET['user_add']) && $_GET['user_add'] === 'error'): ?>
+      <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-x-circle-fill me-2"></i> Failed to add user. Please try again.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php elseif (isset($_GET['user_add']) && $_GET['user_add'] === 'empty'): ?>
+      <div class="alert alert-warning alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> Please fill in all required fields.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php endif; ?>
+    <?php if (isset($_GET['user_add']) && $_GET['user_add'] === 'duplicate'): ?>
+      <div class="alert alert-warning alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-exclamation-circle-fill me-2"></i> Username already exists. Choose another one.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php elseif (isset($_GET['user_add']) && $_GET['user_add'] === 'weak_password'): ?>
+      <div class="alert alert-warning alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> Password must be at least 8 characters long and include at least 1 number, 1 uppercase and 1 lowercase letter.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php endif; ?>
+
     <!-- User Management Card with Office Filter -->
     <div class="card shadow-sm mb-4 mt-4">
-      <div class="card-header d-flex  align-items-center flex-wrap gap-2">
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h5 class="mb-0">User Management</h5>
 
-        <form method="GET" class="d-flex align-items-center gap-2">
-          <label for="officeFilter" class="form-label mb-0">Office</label>
-          <select name="office" id="officeFilter" class="form-select form-select-sm" onchange="this.form.submit()">
-            <?php while ($office = $officeQuery->fetch_assoc()): ?>
-              <option value="<?= $office['id'] ?>" <?= $office['id'] == $selected_office ? 'selected' : '' ?>>
-                <?= htmlspecialchars($office['office_name']) ?>
-              </option>
-            <?php endwhile; ?>
-          </select>
-        </form>
+        <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
+          <form method="GET" class="d-flex align-items-center gap-2 mb-0">
+            <label for="officeFilter" class="form-label mb-0">Office</label>
+            <select name="office" id="officeFilter" class="form-select form-select-sm" onchange="this.form.submit()">
+              <?php while ($office = $officeQuery->fetch_assoc()): ?>
+                <option value="<?= $office['id'] ?>" <?= $office['id'] == $selected_office ? 'selected' : '' ?>>
+                  <?= htmlspecialchars($office['office_name']) ?>
+                </option>
+              <?php endwhile; ?>
+            </select>
+          </form>
 
-        <a href="#" class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#addOfficeModal">
-          <i class="bi bi-plus-circle me-1"></i> New Office
-        </a>
+          <a href="#" class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#addOfficeModal">
+            <i class="bi bi-plus-circle me-1"></i> New Office
+          </a>
 
-        <a href="#" class="btn btn-sm btn-outline-success rounded-pill" data-bs-toggle="modal" data-bs-target="#addUserModal">
-          <i class="bi bi-person-plus-fill me-1"></i> New User
-        </a>
-
+          <a href="#" class="btn btn-sm btn-outline-success rounded-pill" data-bs-toggle="modal" data-bs-target="#addUserModal">
+            <i class="bi bi-person-plus-fill me-1"></i> New User
+          </a>
+        </div>
       </div>
 
       <div class="card-body table-responsive">
@@ -226,6 +255,9 @@ $stmt->close();
 
   <!-- Add Office Modal -->
   <?php include 'modals/add_office_modal.php'; ?>
+
+  <!-- Add User Modal -->
+  <?php include 'modals/add_user_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
