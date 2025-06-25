@@ -128,7 +128,7 @@ $stmt->close();
                 <td><?= htmlspecialchars($user['office_name']) ?></td>
                 <td><?= date('F j, Y', strtotime($user['created_at'])) ?></td>
                 <td>
-                  <button class="btn btn-sm btn-outline-primary editUserBtn"
+                  <button class="btn btn-sm btn-outline-primary editUserBtn rounded-pill"
                     data-id="<?= $user['id'] ?>"
                     data-fullname="<?= htmlspecialchars($user['fullname']) ?>"
                     data-username="<?= htmlspecialchars($user['username']) ?>"
@@ -160,7 +160,7 @@ $stmt->close();
                   ?>
 
                   <?php if ($isDeletable): ?>
-                    <button class="btn btn-sm btn-outline-danger deleteUserBtn"
+                    <button class="btn btn-sm btn-outline-danger deleteUserBtn rounded-pill"
                       data-id="<?= $user['id'] ?>"
                       data-name="<?= htmlspecialchars($user['fullname']) ?>"
                       title="Delete User">

@@ -171,8 +171,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <td><span class="badge bg-<?= $row['status'] === 'available' ? 'success' : 'secondary' ?>"><?= ucfirst($row['status']) ?></span></td>
                                     <td><?= date('F j, Y', strtotime($row['archived_at'])) ?></td>
                                     <td>
-                                        <button class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#restoreModal" data-id="<?= $row['archive_id'] ?>" data-name="<?= htmlspecialchars($row['asset_name']) ?>"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
-                                        <button class="btn btn-sm btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="<?= $row['archive_id'] ?>" data-name="<?= htmlspecialchars($row['asset_name']) ?>"><i class="bi bi-trash"></i> Delete</button>
+                                        <button class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#restoreModal" data-id="<?= $row['archive_id'] ?>" data-name="<?= htmlspecialchars($row['asset_name']) ?>"><i class="bi bi-arrow-counterclockwise"></i> </button>
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="<?= $row['archive_id'] ?>" data-name="<?= htmlspecialchars($row['asset_name']) ?>"><i class="bi bi-trash"></i> </button>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>

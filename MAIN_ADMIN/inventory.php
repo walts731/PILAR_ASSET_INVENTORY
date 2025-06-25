@@ -164,6 +164,12 @@ $stmt->close();
         </div>
 
         <div class="card shadow-sm mb-4">
+          <div class="mb-3 text-end">
+            <button class="btn btn-success rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
+              <i class="bi bi-plus-circle"></i> Add Asset
+            </button>
+          </div>
+
           <form action="generate_selected_report.php" method="POST" target="_blank">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
               <h5 class="mb-0">Asset List</h5>
@@ -233,7 +239,7 @@ $stmt->close();
                       <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
                       <td>
                         <button type="button"
-                          class="btn btn-sm btn-outline-primary updateAssetBtn"
+                          class="btn btn-sm btn-outline-primary updateAssetBtn rounded-pill"
                           data-id="<?= $row['id'] ?>"
                           data-name="<?= htmlspecialchars($row['asset_name']) ?>"
                           data-category="<?= $row['category'] ?>"
@@ -247,7 +253,7 @@ $stmt->close();
                         </button>
                         <?php if ($row['status'] !== 'borrowed'): ?>
                           <button type="button"
-                            class="btn btn-sm btn-outline-danger deleteAssetBtn"
+                            class="btn btn-sm btn-outline-danger deleteAssetBtn rounded-pill"
                             data-id="<?= $row['id'] ?>"
                             data-name="<?= htmlspecialchars($row['asset_name']) ?>"
                             data-bs-toggle="modal"
@@ -405,7 +411,7 @@ $stmt->close();
                       <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
                       <td>
                         <button type="button"
-                          class="btn btn-sm btn-outline-primary updateConsumableBtn"
+                          class="btn btn-sm btn-outline-primary updateConsumableBtn rounded-pill"
                           data-id="<?= $row['id'] ?>"
                           data-name="<?= htmlspecialchars($row['asset_name']) ?>"
                           data-category="<?= $row['category'] ?>"
@@ -419,7 +425,7 @@ $stmt->close();
                         </button>
                         <?php if ($row['status'] !== 'borrowed'): ?>
                           <button type="button"
-                            class="btn btn-sm btn-outline-danger deleteConsumableBtn"
+                            class="btn btn-sm btn-outline-danger deleteConsumableBtn rounded-pill"
                             data-id="<?= $row['id'] ?>"
                             data-name="<?= htmlspecialchars($row['asset_name']) ?>"
                             data-bs-toggle="modal"
