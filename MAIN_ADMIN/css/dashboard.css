@@ -307,3 +307,7 @@ body, .container, .card, .navbar, .table, input, select, textarea, .dropdown-men
 .table thead th {
         border-bottom: none;
     }
+
+  body {
+    font-family: 'Poppins', sans-serif !important;
+  }

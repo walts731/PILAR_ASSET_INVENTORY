@@ -57,6 +57,7 @@ $stmt->close();
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/dashboard.css" />
 </head>
 
@@ -68,7 +69,7 @@ $stmt->close();
     <?php include 'includes/topbar.php' ?>
 
     <!-- User Alerts -->
-     <?php include 'alerts/user_alerts.php'?>
+    <?php include 'alerts/user_alerts.php' ?>
 
     <!-- User Management Card with Office Filter -->
     <div class="card shadow-sm mb-4 mt-4">
