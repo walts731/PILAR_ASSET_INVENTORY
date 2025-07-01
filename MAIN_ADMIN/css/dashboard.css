@@ -64,6 +64,13 @@ body {
       border-top-right-radius: 0.75rem;
     }
 
+    .card-filter {
+      background-color: #f0f9ff;
+      border-bottom: 1px solid #dee2e6;
+      border-top-left-radius: 0.75rem;
+      border-top-right-radius: 0.75rem;
+    }
+
     .table th,
     .table td {
       vertical-align: middle;
@@ -261,6 +268,10 @@ body, .container, .card, .navbar, .table, input, select, textarea, .dropdown-men
 }
 
 .dark-mode .card-header {
+  background: linear-gradient(90deg, #00BFFF, #e3f2fd);
+}
+
+.dark-mode .card-filter {
   background: linear-gradient(90deg, #00BFFF, #e3f2fd);
 }
 
