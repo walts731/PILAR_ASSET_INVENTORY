@@ -70,7 +70,7 @@ $nextAssetId = ($nextIdRes && $row = $nextIdRes->fetch_assoc()) ? $row['next_id'
                     </select>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label for="office_id" class="form-label">Office</label>
                     <select name="office_id" id="office_id" class="form-select" required>
                         <option value="" disabled selected>Select Office</option>
@@ -80,7 +80,7 @@ $nextAssetId = ($nextIdRes && $row = $nextIdRes->fetch_assoc()) ? $row['next_id'
                     </select>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label for="type" class="form-label">Type</label>
                     <select name="type" id="type" class="form-select" required>
                         <option value="asset">Asset</option>
@@ -88,14 +88,14 @@ $nextAssetId = ($nextIdRes && $row = $nextIdRes->fetch_assoc()) ? $row['next_id'
                     </select>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label for="qr_code" class="form-label">QR Code (auto)</label>
                     <input type="text" name="qr_code" id="qr_code" class="form-control" value="<?= $nextAssetId ?>" readonly>
                 </div>
             </div>
 
             <div class="modal-footer">
-                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save</button>
+                <button type="submit" class="btn btn-info"><i class="bi bi-save"></i> Save</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             </div>
         </form>

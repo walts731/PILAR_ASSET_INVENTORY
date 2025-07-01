@@ -51,29 +51,7 @@ $stmt->close();
 
     <?php include 'includes/topbar.php' ?>
 
-    <?php if (isset($_GET['delete']) && $_GET['delete'] === 'success'): ?>
-      <div class="alert alert-success">Consumable deleted and archived successfully!</div>
-    <?php endif; ?>
-
-    <?php if (isset($_GET['update']) && $_GET['update'] === 'success'): ?>
-      <div class="alert alert-success">Consumable updated successfully!</div>
-    <?php endif; ?>
-
-    <?php if (isset($_GET['add']) && $_GET['add'] === 'success'): ?>
-      <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-        Asset added successfully!
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-    <?php endif; ?>
-
-    <?php if (isset($_GET['update']) && $_GET['update'] === 'success'): ?>
-      <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-        Asset updated successfully!
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-    <?php endif; ?>
+    <?php include 'alerts/inventory_alerts.php'; ?>
 
     <?php
     // Get list of offices for dropdown
@@ -222,7 +200,11 @@ $stmt->close();
                   ?>
                     <tr>
                       <td><input type="checkbox" class="asset-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
-                      <td><img src="../img/<?= $row['qr_code'] ?>" width="50"></td>
+                      <td>
+                        <a href="../img/<?= $row['qr_code'] ?>" download="<?= $row['asset_name'] ?>_QR.png" title="Download QR">
+                          <img src="../img/<?= $row['qr_code'] ?>" width="50" alt="QR Code" />
+                        </a>
+                      </td>
                       <td><?= htmlspecialchars($row['asset_name']) ?></td>
                       <td><?= htmlspecialchars($row['category_name']) ?></td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
