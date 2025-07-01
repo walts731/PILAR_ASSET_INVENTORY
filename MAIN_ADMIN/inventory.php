@@ -59,6 +59,14 @@ $stmt->close();
       <div class="alert alert-success">Consumable updated successfully!</div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['add']) && $_GET['add'] === 'success'): ?>
+      <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        Asset added successfully!
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <?php endif; ?>
+
     <?php if (isset($_GET['update']) && $_GET['update'] === 'success'): ?>
       <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
@@ -94,7 +102,6 @@ $stmt->close();
         </div>
       </div>
     </div>
-
 
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
@@ -451,12 +458,15 @@ $stmt->close();
   <?php include 'modals/delete_consumable_modal.php'; ?>
   <?php include 'modals/update_asset_modal.php'; ?>
   <?php include 'modals/delete_asset_modal.php'; ?>
+  <?php include 'modals/add_asset_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <script src="js/dashboard.js"></script>
+
+
 </body>
 
 </html>
