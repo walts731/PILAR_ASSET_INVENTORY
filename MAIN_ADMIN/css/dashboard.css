@@ -299,3 +299,11 @@ body, .container, .card, .navbar, .table, input, select, textarea, .dropdown-men
   opacity: 1;
   max-height: 200px;
 }
+
+.table thead.table-light-blue {
+        background-color: #e0f0ff; /* soft light blue */
+    }
+
+.table thead th {
+        border-bottom: none;
+    }

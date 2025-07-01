@@ -73,7 +73,12 @@ $stmt->close();
             <?php endwhile; ?>
           </select>
         </form>
+
         <div class="ms-auto">
+          <button class="btn btn-outline-secondary rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#manageCategoriesModal">
+            <i class="bi bi-tags"></i> Manage Categories
+          </button>
+
           <button class="btn btn-outline-primary rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
             <i class="bi bi-plus-circle"></i> Add Asset
           </button>
@@ -441,6 +446,7 @@ $stmt->close();
   <?php include 'modals/update_asset_modal.php'; ?>
   <?php include 'modals/delete_asset_modal.php'; ?>
   <?php include 'modals/add_asset_modal.php'; ?>
+  <?php include 'modals/manage_categories_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
