@@ -103,10 +103,10 @@ $stmt->close();
             <a href="transfer_asset.php?id=<?= $row['id'] ?>" class="btn btn-outline-primary btn-sm rounded-pill">
               <i class="bi bi-arrow-left-right"></i> Transfer
             </a>
-            <a href="borrow_asset.php?id=<?= $row['id'] ?>" class="btn btn-outline-success btn-sm rounded-pill">
+            <a href="borrow_asset.php?id=<?= $row['id'] ?>" class="btn btn-outline-warning btn-sm rounded-pill">
               <i class="bi bi-box-arrow-in-right"></i> Borrow
             </a>
-            <a href="release_asset.php?id=<?= $row['id'] ?>" class="btn btn-outline-warning btn-sm rounded-pill">
+            <a href="release_asset.php?id=<?= $row['id'] ?>" class="btn btn-outline-info btn-sm rounded-pill">
               <i class="bi bi-box-arrow-up"></i> Release
             </a>
             <a href="return_asset.php?id=<?= $row['id'] ?>" class="btn btn-outline-secondary btn-sm rounded-pill">
