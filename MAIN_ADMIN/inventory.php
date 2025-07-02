@@ -233,32 +233,66 @@ $stmt->close();
                       <td>&#8369; <?= number_format($row['value'], 2) ?></td>
                       <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
                       <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
-                      <td>
-                        <button type="button"
-                          class="btn btn-sm btn-outline-primary updateAssetBtn rounded-pill"
-                          data-id="<?= $row['id'] ?>"
-                          data-name="<?= htmlspecialchars($row['asset_name']) ?>"
-                          data-category="<?= $row['category'] ?>"
-                          data-description="<?= htmlspecialchars($row['description']) ?>"
-                          data-qty="<?= $row['quantity'] ?>"
-                          data-unit="<?= $row['unit'] ?>"
-                          data-status="<?= $row['status'] ?>"
-                          data-bs-toggle="modal"
-                          data-bs-target="#updateAssetModal">
-                          <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <?php if ($row['status'] !== 'borrowed'): ?>
+                      <td class="text-nowrap">
+                        <div class="btn-group" role="group">
+                          <!-- Dropdown Actions -->
+                          <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                              <i class="bi bi-list"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                              <li>
+                                <a class="dropdown-item" href="transfer_asset.php?id=<?= $row['id'] ?>">
+                                  <i class="bi bi-arrow-left-right text-primary me-2"></i> Transfer
+                                </a>
+                              </li>
+                              <li>
+                                <a class="dropdown-item" href="borrow_asset.php?id=<?= $row['id'] ?>">
+                                  <i class="bi bi-box-arrow-in-right text-success me-2"></i> Borrow
+                                </a>
+                              </li>
+                              <li>
+                                <a class="dropdown-item" href="release_asset.php?id=<?= $row['id'] ?>">
+                                  <i class="bi bi-box-arrow-up text-warning me-2"></i> Release
+                                </a>
+                              </li>
+                              <li>
+                                <a class="dropdown-item" href="return_asset.php?id=<?= $row['id'] ?>">
+                                  <i class="bi bi-box-arrow-in-left text-secondary me-2"></i> Return
+                                </a>
+                              </li>
+                            </ul>
+                          </div>
+
+                          <!-- Edit Button -->
                           <button type="button"
-                            class="btn btn-sm btn-outline-danger deleteAssetBtn rounded-pill"
+                            class="btn btn-sm btn-outline-primary rounded-pill updateAssetBtn"
                             data-id="<?= $row['id'] ?>"
                             data-name="<?= htmlspecialchars($row['asset_name']) ?>"
+                            data-category="<?= $row['category'] ?>"
+                            data-description="<?= htmlspecialchars($row['description']) ?>"
+                            data-qty="<?= $row['quantity'] ?>"
+                            data-unit="<?= $row['unit'] ?>"
+                            data-status="<?= $row['status'] ?>"
                             data-bs-toggle="modal"
-                            data-bs-target="#deleteAssetModal">
-                            <i class="bi bi-trash"></i>
+                            data-bs-target="#updateAssetModal">
+                            <i class="bi bi-pencil-square"></i>
                           </button>
-                        <?php else: ?>
-                          <span class="text-muted small"><i class="bi bi-lock"></i></span>
-                        <?php endif; ?>
+
+                          <!-- Delete Button or Lock -->
+                          <?php if ($row['status'] !== 'borrowed'): ?>
+                            <button type="button"
+                              class="btn btn-sm btn-outline-danger rounded-pill deleteAssetBtn"
+                              data-id="<?= $row['id'] ?>"
+                              data-name="<?= htmlspecialchars($row['asset_name']) ?>"
+                              data-bs-toggle="modal"
+                              data-bs-target="#deleteAssetModal">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          <?php else: ?>
+                            <span class="text-muted small d-inline-flex align-items-center ms-2"><i class="bi bi-lock"></i></span>
+                          <?php endif; ?>
+                        </div>
                       </td>
                     </tr>
                   <?php endwhile; ?>
