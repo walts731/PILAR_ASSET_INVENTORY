@@ -9,6 +9,7 @@
 
       <div class="modal-body">
         <input type="hidden" name="id" id="asset_id">
+        <input type="hidden" name="office" id="edit_asset_office">
 
         <div class="row g-3">
           <div class="col-md-6">

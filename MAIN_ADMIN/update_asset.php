@@ -5,7 +5,7 @@ session_start();
 // Check if all required GET parameters are set
 if (
     isset($_GET['id'], $_GET['asset_name'], $_GET['category'], $_GET['description'],
-          $_GET['quantity'], $_GET['unit'], $_GET['status'])
+          $_GET['quantity'], $_GET['unit'], $_GET['status'], $_GET['office'])
 ) {
     // Sanitize and assign variables
     $id = intval($_GET['id']);
@@ -15,6 +15,7 @@ if (
     $quantity = intval($_GET['quantity']);
     $unit = mysqli_real_escape_string($conn, $_GET['unit']);
     $status = mysqli_real_escape_string($conn, $_GET['status']);
+    $office = intval($_GET['office']);
 
     // Build SQL query
     $sql = "
@@ -32,7 +33,7 @@ if (
 
     // Execute and redirect or show error
     if (mysqli_query($conn, $sql)) {
-        header("Location: inventory.php?update=success");
+        header("Location: inventory.php?update=success&office=$office");
         exit();
     } else {
         echo "Error updating asset: " . mysqli_error($conn);

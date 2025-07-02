@@ -292,6 +292,7 @@ $stmt->close();
                             data-qty="<?= $row['quantity'] ?>"
                             data-unit="<?= $row['unit'] ?>"
                             data-status="<?= $row['status'] ?>"
+                            data-office="<?= $row['office_id'] ?>"
                             data-bs-toggle="modal"
                             data-bs-target="#updateAssetModal">
                             <i class="bi bi-pencil-square"></i>

@@ -154,7 +154,9 @@ $(document).on("click", ".updateAssetBtn", function () {
   $("#edit_asset_quantity").val($(this).data("qty"));
   $("#edit_asset_unit").val($(this).data("unit"));
   $("#edit_asset_status").val($(this).data("status"));
+  $("#edit_asset_office").val($(this).data("office")); // <-- Add this line
 });
+
 
 $(document).ready(function () {
   $('.deleteAssetBtn').on('click', function () {
