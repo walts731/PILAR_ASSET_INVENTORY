@@ -64,18 +64,19 @@ $stmt->close();
     <div class="card card-filter shadow-sm mb-3">
       <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h5 class="mb-0 me-3">Filter Assets and Consumables</h5>
-        <form method="GET" class="d-flex align-items-center gap-2 mb-0">
-          <label for="officeFilter" class="form-label mb-0">Office</label>
-          <select name="office" id="officeFilter" class="form-select form-select-sm" onchange="this.form.submit()">
-            <?php while ($office = $offices->fetch_assoc()): ?>
-              <option value="<?= $office['id'] ?>" <?= $office['id'] == $selected_office ? 'selected' : '' ?>>
-                <?= htmlspecialchars($office['office_name']) ?>
-              </option>
-            <?php endwhile; ?>
-          </select>
-        </form>
 
-        <div class="ms-auto">
+        <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
+          <form method="GET" class="d-flex align-items-center gap-2 mb-0">
+            <label for="officeFilter" class="form-label mb-0">Office</label>
+            <select name="office" id="officeFilter" class="form-select form-select-sm" onchange="this.form.submit()">
+              <?php while ($office = $offices->fetch_assoc()): ?>
+                <option value="<?= $office['id'] ?>" <?= $office['id'] == $selected_office ? 'selected' : '' ?>>
+                  <?= htmlspecialchars($office['office_name']) ?>
+                </option>
+              <?php endwhile; ?>
+            </select>
+          </form>
+
           <button class="btn btn-outline-secondary rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#manageCategoriesModal">
             <i class="bi bi-tags"></i> Manage Categories
           </button>
