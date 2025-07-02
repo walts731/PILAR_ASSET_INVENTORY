@@ -163,3 +163,38 @@ $(document).ready(function () {
   });
 });
 
+// Helper function to collect selected asset IDs
+function getSelectedAssetIds() {
+  const checkboxes = document.querySelectorAll('.asset-checkbox:checked');
+  return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function handleBulkAction(action) {
+  const selectedIds = getSelectedAssetIds();
+  const alertBox = document.getElementById('bulkActionAlert');
+
+  if (selectedIds.length === 0) {
+    alertBox.classList.remove('d-none');
+    setTimeout(() => alertBox.classList.add('show'), 10);
+    alertBox.innerText = "Please select at least one asset to perform this action.";
+    return;
+  } else {
+    alertBox.classList.add('d-none'); // Hide alert if it was previously shown
+  }
+
+  // Get selected office from the dropdown
+  const office = document.getElementById('officeFilter').value;
+
+  // Redirect to action with selected IDs and office
+  const ids = selectedIds.join(',');
+  window.location.href = `${action}_bulk.php?ids=${encodeURIComponent(ids)}&office=${encodeURIComponent(office)}`;
+}
+
+document.getElementById('bulkBorrowBtn').addEventListener('click', () => handleBulkAction('borrow'));
+document.getElementById('bulkReleaseBtn').addEventListener('click', () => handleBulkAction('release'));
+document.getElementById('bulkTransferBtn').addEventListener('click', () => handleBulkAction('transfer'));
+document.getElementById('bulkReturnBtn').addEventListener('click', () => handleBulkAction('return'));
+
+setTimeout(() => {
+  alertBox.classList.add('d-none');
+}, 4000);

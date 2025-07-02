@@ -49,3 +49,16 @@
     </div>
   <?php endif; ?>
 <?php endif; ?>
+<?php if (isset($_GET['bulk']) && $_GET['bulk'] === 'success'): ?>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    Selected assets were successfully processed.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<?php endif; ?>
+<div id="bulkActionAlert" class="alert alert-danger alert-dismissible fade d-none" role="alert">
+  <span id="bulkActionAlertMsg">Please select at least one asset to perform this action.</span>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+
+

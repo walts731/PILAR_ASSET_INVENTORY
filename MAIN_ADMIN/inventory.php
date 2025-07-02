@@ -165,9 +165,27 @@ $stmt->close();
           <form action="generate_selected_report.php" method="POST" target="_blank">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
               <h5 class="mb-0">Asset List</h5>
-              <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm ">
-                <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
-              </button>
+
+              <div class="d-flex flex-wrap gap-2">
+                <!-- Bulk Actions -->
+                <button type="button" class="btn btn-outline-success btn-sm rounded-pill" id="bulkBorrowBtn">
+                  <i class="bi bi-box-arrow-in-right"></i> Borrow Selected
+                </button>
+                <button type="button" class="btn btn-outline-warning btn-sm rounded-pill" id="bulkReleaseBtn">
+                  <i class="bi bi-box-arrow-up"></i> Release Selected
+                </button>
+                <button type="button" class="btn btn-outline-info btn-sm rounded-pill" id="bulkTransferBtn">
+                  <i class="bi bi-arrow-left-right"></i> Transfer Selected
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" id="bulkReturnBtn">
+                  <i class="bi bi-box-arrow-in-left"></i> Return Selected
+                </button>
+
+                <!-- Existing Generate Report Button -->
+                <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm">
+                  <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
+                </button>
+              </div>
             </div>
             <div class="alert alert-danger" role="alert" id="checkboxAlert">
               Please select at least one item to generate a report.
