@@ -59,6 +59,12 @@
   <span id="bulkActionAlertMsg">Please select at least one asset to perform this action.</span>
   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
+<?php if (isset($_GET['bulk_release']) && $_GET['bulk_release'] === 'success'): ?>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    Selected assets have been successfully released.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<?php endif; ?>
 
 
 

@@ -123,6 +123,7 @@ function updateDateTime() {
   });
 });
 
+// Update Consumable Modal
 $(document).ready(function () {
   $('.updateConsumableBtn').on('click', function () {
     $('#consumable_id').val($(this).data('id'));
@@ -135,6 +136,7 @@ $(document).ready(function () {
   });
 });
 
+// Delete Consumable Modal
 $(document).ready(function () {
   $('.deleteConsumableBtn').on('click', function () {
     $('#deleteConsumableId').val($(this).data('id'));
@@ -142,10 +144,12 @@ $(document).ready(function () {
   });
 });
 
+// Initialize DataTable for the archive table
 $(document).ready(function() {
             $('#archiveTable').DataTable();
         });
 
+// Update Asset Modal
 $(document).on("click", ".updateAssetBtn", function () {
   $("#asset_id").val($(this).data("id"));
   $("#edit_asset_name").val($(this).data("name"));
@@ -154,10 +158,10 @@ $(document).on("click", ".updateAssetBtn", function () {
   $("#edit_asset_quantity").val($(this).data("qty"));
   $("#edit_asset_unit").val($(this).data("unit"));
   $("#edit_asset_status").val($(this).data("status"));
-  $("#edit_asset_office").val($(this).data("office")); // <-- Add this line
+  $("#edit_asset_office").val($(this).data("office")); 
 });
 
-
+// Delete Asset Modal
 $(document).ready(function () {
   $('.deleteAssetBtn').on('click', function () {
     $('#delete_asset_id').val($(this).data('id'));
@@ -165,6 +169,8 @@ $(document).ready(function () {
   });
 });
 
+
+// BORROW
 // Helper function to collect selected asset IDs
 function getSelectedAssetIds() {
   const checkboxes = document.querySelectorAll('.asset-checkbox:checked');
@@ -200,3 +206,26 @@ document.getElementById('bulkReturnBtn').addEventListener('click', () => handleB
 setTimeout(() => {
   alertBox.classList.add('d-none');
 }, 4000);
+
+// RELEASE
+function getSelectedAssetIds() {
+    const checkboxes = document.querySelectorAll('.asset-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+  }
+
+  function handleBulkAction(action) {
+    const selectedIds = getSelectedAssetIds();
+    const alertBox = document.getElementById("bulkActionAlert");
+
+    if (selectedIds.length === 0) {
+      alertBox.classList.remove("d-none");
+      return;
+    }
+
+    alertBox.classList.add("d-none"); // hide if visible
+    const ids = selectedIds.join(',');
+    const office = new URLSearchParams(window.location.search).get("office") || "";
+    window.location.href = `${action}_bulk.php?ids=${encodeURIComponent(ids)}&office=${encodeURIComponent(office)}`;
+  }
+
+  document.getElementById('bulkReleaseBtn').addEventListener('click', () => handleBulkAction('release'));
