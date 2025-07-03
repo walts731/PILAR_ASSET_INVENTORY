@@ -163,6 +163,7 @@ $stmt->close();
 
         <div class="card shadow-sm mb-4">
           <form action="generate_selected_report.php" method="POST" target="_blank">
+            <input type="hidden" name="office" value="<?= $selected_office ?>">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
               <h5 class="mb-0">Asset List</h5>
 
@@ -253,34 +254,7 @@ $stmt->close();
                       <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
                       <td class="text-nowrap">
                         <div class="btn-group" role="group">
-                          <!-- Dropdown Actions -->
-                          <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                              <i class="bi bi-list"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                              <li>
-                                <a class="dropdown-item" href="transfer_asset.php?id=<?= $row['id'] ?>">
-                                  <i class="bi bi-arrow-left-right text-primary me-2"></i> Transfer
-                                </a>
-                              </li>
-                              <li>
-                                <a class="dropdown-item" href="borrow_asset.php?id=<?= $row['id'] ?>">
-                                  <i class="bi bi-box-arrow-in-right text-success me-2"></i> Borrow
-                                </a>
-                              </li>
-                              <li>
-                                <a class="dropdown-item" href="release_asset.php?id=<?= $row['id'] ?>">
-                                  <i class="bi bi-box-arrow-up text-warning me-2"></i> Release
-                                </a>
-                              </li>
-                              <li>
-                                <a class="dropdown-item" href="return_asset.php?id=<?= $row['id'] ?>">
-                                  <i class="bi bi-box-arrow-in-left text-secondary me-2"></i> Return
-                                </a>
-                              </li>
-                            </ul>
-                          </div>
+                          
 
                           <!-- Edit Button -->
                           <button type="button"
@@ -390,7 +364,8 @@ $stmt->close();
         </div>
 
         <div class="card shadow-sm">
-          <form action="generate_selected_report.php" method="POST" target="_blank">
+          <form action="generate_selected_report.php" method="POST" >
+            <input type="hidden" name="office" value="<?= $selected_office ?>">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
               <h5 class="mb-0">Consumable List</h5>
               <div>

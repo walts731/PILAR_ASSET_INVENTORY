@@ -65,6 +65,12 @@
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
 <?php endif; ?>
+<?php if (isset($_GET['report']) && $_GET['report'] === 'none'): ?>
+  <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <strong>No assets selected.</strong> Please select at least one asset to generate a report.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<?php endif; ?>
 
 
 

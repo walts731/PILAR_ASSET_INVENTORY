@@ -152,6 +152,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets'])) 
     $dompdf->stream($reportFilename, ['Attachment' => false]);
     exit;
 } else {
-    echo "No assets selected.";
+    $office_id = $_GET['office'] ?? ($_POST['office'] ?? '');
+$redirectUrl = "inventory.php?report=none";
+if (!empty($office_id)) {
+    $redirectUrl .= "&office=" . urlencode($office_id);
+}
+header("Location: $redirectUrl");
+exit();
 }
 ?>
