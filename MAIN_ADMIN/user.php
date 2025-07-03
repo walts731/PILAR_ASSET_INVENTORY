@@ -160,17 +160,28 @@ $stmt->close();
                   }
                   ?>
 
-                  <?php if ($isDeletable): ?>
-                    <button class="btn btn-sm btn-outline-danger deleteUserBtn rounded-pill"
-                      data-id="<?= $user['id'] ?>"
-                      data-name="<?= htmlspecialchars($user['fullname']) ?>"
-                      title="Delete User">
-                      <i class="bi bi-trash"></i>
-                    </button>
+                  <?php if ($user['status'] === 'active'): ?>
+                    <?php if ($user['role'] === 'admin'): ?>
+                      <span class="text-muted small" title="Admins cannot be deactivated">
+                        <i class="bi bi-shield-lock-fill"></i>
+                      </span>
+                    <?php else: ?>
+                      <form method="POST" action="deactivate_user.php" class="d-inline">
+                        <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
+                        <input type="hidden" name="office" value="<?= $selected_office ?>">
+                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Deactivate User">
+                          <i class="bi bi-person-dash"></i>
+                        </button>
+                      </form>
+                    <?php endif; ?>
                   <?php else: ?>
-                    <span class="text-muted small" title="User cannot be deleted">
-                      <i class="bi bi-lock-fill"></i>
-                    </span>
+                    <form method="POST" action="activate_user.php" class="d-inline">
+                      <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
+                      <input type="hidden" name="office" value="<?= $selected_office ?>">
+                      <button type="submit" class="btn btn-sm btn-outline-success rounded-pill" title="Activate User">
+                        <i class="bi bi-person-check"></i>
+                      </button>
+                    </form>
                   <?php endif; ?>
                 </td>
               </tr>
