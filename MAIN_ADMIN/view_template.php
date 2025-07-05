@@ -17,7 +17,7 @@ function renderContent($html) {
     $currentYear = date("Y");
     $currentMonth = date("F");
 
-    return str_replace(
+    $html = str_replace(
         ['[blank]', '$dynamic_year', '$dynamic_month'],
         [
             '<span style="display:inline-block; min-width:100px; border-bottom:1px solid #000;">&nbsp;</span>',
@@ -26,7 +26,10 @@ function renderContent($html) {
         ],
         $html
     );
+
+    return $html; // Styles remain untouched
 }
+
 ?>
 
 <?php if ($row = $result->fetch_assoc()): ?>
@@ -120,7 +123,7 @@ function renderContent($html) {
         </div>
 
         <!-- Footer -->
-        <div class="text-end mt-4">
+        <div class="mt-4">
             <?= renderContent($row['footer_html']) ?>
         </div>
     </div>

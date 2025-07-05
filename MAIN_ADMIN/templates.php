@@ -114,6 +114,16 @@ $stmt->close();
                         </div>
                         <div class="card-body">
                             <form id="templateForm" method="POST" enctype="multipart/form-data" action="save_template.php">
+                                <!-- Hidden inputs for fonts and sizes -->
+                                <input type="hidden" name="header_font_family" id="header_font_family">
+                                <input type="hidden" name="header_font_size" id="header_font_size">
+
+                                <input type="hidden" name="subheader_font_family" id="subheader_font_family">
+                                <input type="hidden" name="subheader_font_size" id="subheader_font_size">
+
+                                <input type="hidden" name="footer_font_family" id="footer_font_family">
+                                <input type="hidden" name="footer_font_size" id="footer_font_size">
+
                                 <div class="mb-3">
                                     <label class="form-label">Template Name</label>
                                     <input type="text" name="template_name" class="form-control" required />
@@ -167,10 +177,10 @@ $stmt->close();
                                 <div class="col-6 text-center">
                                     <div id="headerPreview"></div>
                                 </div>
+                                <div class="col-3 text-end" id="rightLogoBox"></div>
                                 <div class="col-12 mt-2">
                                     <div id="subheaderPreview" class="text-muted"></div>
                                 </div>
-                                <div class="col-3 text-end" id="rightLogoBox"></div>
                             </div>
                             <hr />
                             <div class="mt-3" id="footerPreview"></div>
@@ -216,20 +226,35 @@ $stmt->close();
             const subheaderPreview = document.getElementById('subheaderPreview');
             const footerPreview = document.getElementById('footerPreview');
 
-            // Apply innerHTML and inline styles
+            // Set previews
             headerPreview.innerHTML = parseSpecial(header.innerHTML);
-            headerPreview.style.cssText = header.style.cssText;
-
             subheaderPreview.innerHTML = parseSpecial(subheader.innerHTML);
-            subheaderPreview.style.cssText = subheader.style.cssText;
-
             footerPreview.innerHTML = parseSpecial(footer.innerHTML);
+
+            headerPreview.style.cssText = header.style.cssText;
+            subheaderPreview.style.cssText = subheader.style.cssText;
             footerPreview.style.cssText = footer.style.cssText;
 
-            // Update hidden fields for submission
-            document.getElementById('header_hidden').value = header.innerHTML;
-            document.getElementById('subheader_hidden').value = subheader.innerHTML;
-            document.getElementById('footer_hidden').value = footer.innerHTML;
+            // Set hidden HTML content
+            // Wrap with inline style
+            document.getElementById('header_hidden').value =
+                `<div style="font-family:${header.style.fontFamily}; font-size:${header.style.fontSize}; text-align:${header.style.textAlign};">${header.innerHTML}</div>`;
+
+            document.getElementById('subheader_hidden').value =
+                `<div style="font-family:${subheader.style.fontFamily}; font-size:${subheader.style.fontSize}; text-align:${subheader.style.textAlign};">${subheader.innerHTML}</div>`;
+
+            document.getElementById('footer_hidden').value =
+                `<div style="font-family:${footer.style.fontFamily}; font-size:${footer.style.fontSize}; text-align:${footer.style.textAlign};">${footer.innerHTML}</div>`;
+
+            // Set font family and size hidden inputs
+            document.getElementById('header_font_family').value = header.style.fontFamily || '';
+            document.getElementById('header_font_size').value = header.style.fontSize || '';
+
+            document.getElementById('subheader_font_family').value = subheader.style.fontFamily || '';
+            document.getElementById('subheader_font_size').value = subheader.style.fontSize || '';
+
+            document.getElementById('footer_font_family').value = footer.style.fontFamily || '';
+            document.getElementById('footer_font_size').value = footer.style.fontSize || '';
         }
 
         updatePreview();
