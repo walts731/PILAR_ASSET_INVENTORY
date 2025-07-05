@@ -15,7 +15,7 @@ $result = $stmt->get_result();
 
 function renderContent($html) {
     $currentYear = date("Y");
-    $currentMonth = date("F"); // Full month name
+    $currentMonth = date("F");
 
     return str_replace(
         ['[blank]', '$dynamic_year', '$dynamic_month'],
@@ -27,44 +27,106 @@ function renderContent($html) {
         $html
     );
 }
+?>
 
-if ($row = $result->fetch_assoc()) {
-    echo '<div class="container-fluid">';
-    echo '<div class="row mb-3">';
+<?php if ($row = $result->fetch_assoc()): ?>
+    <style>
+        .bordered-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 2px solid #000;
+            margin-top: 30px;
+        }
 
-    // Left logo
-    if ($row['left_logo_path']) {
-        echo '<div class="col-3 text-start"><img src="' . htmlspecialchars($row['left_logo_path']) . '" style="height:60px;"></div>';
-    } else {
-        echo '<div class="col-3"></div>';
-    }
+        .bordered-table th,
+        .bordered-table td {
+            border-right: 1px solid #000;
+            padding: 10px;
+            height: 40px;
+        }
 
-    // Header center
-    echo '<div class="col-6 text-center">';
-    echo '<div>' . renderContent($row['header_html']) . '</div>';
-    echo '</div>';
+        .bordered-table th:last-child,
+        .bordered-table td:last-child {
+            border-right: none;
+        }
 
-    // Right logo
-    if ($row['right_logo_path']) {
-        echo '<div class="col-3 text-end"><img src="' . htmlspecialchars($row['right_logo_path']) . '" style="height:60px;"></div>';
-    } else {
-        echo '<div class="col-3"></div>';
-    }
+        .bordered-table thead th {
+            border-bottom: 1px solid #000;
+            text-align: left;
+            background: #f8f9fa;
+        }
 
-    echo '</div>'; // end of row
+        .bordered-table tr:not(:last-child) td {
+            border-bottom: none;
+        }
+    </style>
 
-    // Subheader - full width
-    echo '<div class="row mb-2">';
-    echo '<div class="col-md-12 text-muted">' . renderContent($row['subheader_html']) . '</div>';
-    echo '</div>';
+    <div class="container-fluid">
+        <div class="row mb-3">
+            <!-- Left logo -->
+            <div class="col-3 text-start">
+                <?php if ($row['left_logo_path']): ?>
+                    <img src="<?= htmlspecialchars($row['left_logo_path']) ?>" style="height:60px;">
+                <?php endif; ?>
+            </div>
 
-    echo '<hr>';
+            <!-- Header -->
+            <div class="col-6 text-center">
+                <div><?= renderContent($row['header_html']) ?></div>
+            </div>
 
-    // Footer
-    echo '<div class="text-end">' . renderContent($row['footer_html']) . '</div>';
-    echo '</div>';
-} else {
-    echo "Template not found.";
-}
+            <!-- Right logo -->
+            <div class="col-3 text-end">
+                <?php if ($row['right_logo_path']): ?>
+                    <img src="<?= htmlspecialchars($row['right_logo_path']) ?>" style="height:60px;">
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Subheader full-width -->
+        <div class="row mb-2">
+            <div class="col-md-12 text-muted">
+                <?= renderContent($row['subheader_html']) ?>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- Sample table with outer and vertical borders -->
+        <div class="table-responsive mb-4">
+            <table class="bordered-table">
+                <thead>
+                    <tr>
+                        <th style="width:5%;">#</th>
+                        <th>Description</th>
+                        <th style="width:15%;">Quantity</th>
+                        <th style="width:15%;">Unit</th>
+                        <th style="width:20%;">Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                    <?php endfor; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-end mt-4">
+            <?= renderContent($row['footer_html']) ?>
+        </div>
+    </div>
+<?php else: ?>
+    <p>Template not found.</p>
+<?php endif;
 
 $stmt->close();
+?>
