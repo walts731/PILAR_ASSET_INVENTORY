@@ -41,20 +41,20 @@ $result = $conn->query($sql);
                         <?php while ($row = $result->fetch_assoc()): ?>
                             <tr>
                                 <td><?= htmlspecialchars($row['template_name']) ?></td>
-                                <td><?= date('Y-m-d H:i', strtotime($row['created_at'])) ?></td>
+                                <td><?= date('F j, Y', strtotime($row['created_at'])) ?></td>
                                 <td>
-                                    <?= $row['updated_at'] ? date('Y-m-d H:i', strtotime($row['updated_at'])) : 'N/A' ?>
+                                    <?= $row['updated_at'] ? date('F j, Y', strtotime($row['updated_at'])) : 'N/A' ?>
                                 </td>
                                 <td><?= htmlspecialchars($row['created_by'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['updated_by'] ?? 'N/A') ?></td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewModal" data-id="<?= $row['id'] ?>">
+                                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewModal" data-id="<?= $row['id'] ?>">
                                         <i class="bi bi-eye"></i>
                                     </button>
-                                    <a href="edit_template.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-warning">
+                                    <a href="edit_template.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-outline-warning">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
-                                    <a href="delete_template.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this template?');">
+                                    <a href="delete_template.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this template?');">
                                         <i class="bi bi-trash"></i>
                                     </a>
                                 </td>
@@ -73,38 +73,38 @@ $result = $conn->query($sql);
 
 <!-- View Modal -->
 <div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
-      <div class="modal-header bg-info text-white">
-        <h5 class="modal-title" id="viewModalLabel">View Template</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body" id="viewModalContent">
-        <div class="text-center p-3">Loading...</div>
-      </div>
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="viewModalLabel">View Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewModalContent">
+                <div class="text-center p-3">Loading...</div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const viewModal = document.getElementById('viewModal');
-    viewModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const templateId = button.getAttribute('data-id');
+    document.addEventListener('DOMContentLoaded', () => {
+        const viewModal = document.getElementById('viewModal');
+        viewModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const templateId = button.getAttribute('data-id');
 
-        const modalBody = viewModal.querySelector('#viewModalContent');
-        modalBody.innerHTML = '<div class="text-center p-3">Loading...</div>';
+            const modalBody = viewModal.querySelector('#viewModalContent');
+            modalBody.innerHTML = '<div class="text-center p-3">Loading...</div>';
 
-        fetch('view_template.php?id=' + templateId)
-            .then(response => response.text())
-            .then(data => {
-                modalBody.innerHTML = data;
-            })
-            .catch(error => {
-                modalBody.innerHTML = '<div class="text-danger text-center">Failed to load template.</div>';
-                console.error('Error loading template:', error);
-            });
+            fetch('view_template.php?id=' + templateId)
+                .then(response => response.text())
+                .then(data => {
+                    modalBody.innerHTML = data;
+                })
+                .catch(error => {
+                    modalBody.innerHTML = '<div class="text-danger text-center">Failed to load template.</div>';
+                    console.error('Error loading template:', error);
+                });
+        });
     });
-});
 </script>
