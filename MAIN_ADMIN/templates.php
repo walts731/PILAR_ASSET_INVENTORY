@@ -63,6 +63,12 @@ $stmt->close();
             min-width: 100px;
             border-bottom: 1px solid #000;
         }
+
+        .toolbar .btn.active {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
     </style>
 </head>
 
@@ -76,9 +82,31 @@ $stmt->close();
                     <div class="card shadow-sm mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Create Report Template</h5>
+                            <!-- Inside the .toolbar div -->
                             <div class="toolbar">
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="format('bold')">Bold</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="format('italic')">Italic</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-command="bold" onclick="toggleCommand(this, 'bold')">B</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-command="italic" onclick="toggleCommand(this, 'italic')">I</button>
+                                <!-- Font Size -->
+                                <select class="form-select form-select-sm d-inline-block w-auto me-2" onchange="setFontSize(this.value)">
+                                    <option value="">Font Size</option>
+                                    <option value="12px">12px</option>
+                                    <option value="14px">14px</option>
+                                    <option value="16px">16px</option>
+                                    <option value="18px">18px</option>
+                                    <option value="24px">24px</option>
+                                    <option value="32px">32px</option>
+                                </select>
+
+                                <!-- Font Family -->
+                                <select class="form-select form-select-sm d-inline-block w-auto" onchange="setFontFamily(this.value)">
+                                    <option value="">Font Family</option>
+                                    <option value="Arial">Arial</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Tahoma">Tahoma</option>
+                                    <option value="Times New Roman">Times New Roman</option>
+                                    <option value="Verdana">Verdana</option>
+                                </select>
+
                                 <button type="button" class="btn btn-sm btn-outline-dark" onclick="insertSpecial('[blank]')">Add Blank</button>
                                 <button type="button" class="btn btn-sm btn-outline-info" onclick="insertSpecial('$dynamic_year')">Year</button>
                                 <button type="button" class="btn btn-sm btn-outline-info" onclick="insertSpecial('$dynamic_month')">Month</button>
@@ -180,20 +208,32 @@ $stmt->close();
         }
 
         function updatePreview() {
-            document.getElementById('headerPreview').innerHTML = parseSpecial(document.getElementById('header').innerHTML);
-
+            const header = document.getElementById('header');
             const subheader = document.getElementById('subheader');
-            document.getElementById('subheaderPreview').innerHTML = parseSpecial(subheader.innerHTML);
-            document.getElementById('subheaderPreview').style.textAlign = subheader.style.textAlign;
-
             const footer = document.getElementById('footer');
-            document.getElementById('footerPreview').innerHTML = parseSpecial(footer.innerHTML);
-            document.getElementById('footerPreview').style.textAlign = footer.style.textAlign;
 
-            document.getElementById('header_hidden').value = document.getElementById('header').innerHTML;
+            const headerPreview = document.getElementById('headerPreview');
+            const subheaderPreview = document.getElementById('subheaderPreview');
+            const footerPreview = document.getElementById('footerPreview');
+
+            // Apply innerHTML and inline styles
+            headerPreview.innerHTML = parseSpecial(header.innerHTML);
+            headerPreview.style.cssText = header.style.cssText;
+
+            subheaderPreview.innerHTML = parseSpecial(subheader.innerHTML);
+            subheaderPreview.style.cssText = subheader.style.cssText;
+
+            footerPreview.innerHTML = parseSpecial(footer.innerHTML);
+            footerPreview.style.cssText = footer.style.cssText;
+
+            // Update hidden fields for submission
+            document.getElementById('header_hidden').value = header.innerHTML;
             document.getElementById('subheader_hidden').value = subheader.innerHTML;
             document.getElementById('footer_hidden').value = footer.innerHTML;
         }
+
+        updatePreview();
+
 
         function parseSpecial(html) {
             return html
@@ -213,6 +253,40 @@ $stmt->close();
         }
 
         updatePreview();
+
+        function toggleCommand(button, command) {
+            document.execCommand(command, false, null);
+            button.classList.toggle("active"); // Toggle highlight
+            updatePreview();
+        }
+
+        function setFontSize(size) {
+            const activeSection = getActiveSection();
+            if (activeSection) {
+                activeSection.style.fontSize = size;
+                updatePreview();
+            }
+        }
+
+        function setFontFamily(family) {
+            const activeSection = getActiveSection();
+            if (activeSection) {
+                activeSection.style.fontFamily = family;
+                updatePreview();
+            }
+        }
+
+        // Detect which section the user is editing
+        let activeEditable = null;
+        document.addEventListener("focusin", function(e) {
+            if (e.target.classList.contains("rich-input")) {
+                activeEditable = e.target;
+            }
+        });
+
+        function getActiveSection() {
+            return activeEditable;
+        }
     </script>
 </body>
 
