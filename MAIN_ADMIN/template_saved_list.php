@@ -25,7 +25,7 @@ $result = $conn->query($sql);
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle">
+            <table id="templateTable" class="table table-bordered table-hover align-middle">
                 <thead class="table-light">
                     <tr>
                         <th>Template Name</th>
@@ -87,6 +87,18 @@ $result = $conn->query($sql);
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize DataTables
+        $('#templateTable').DataTable({
+            responsive: true,
+            pageLength: 10,
+            order: [], // disables default ordering on the first column
+            columnDefs: [
+                { orderable: false, targets: -1 } // disable ordering on the "Actions" column
+            ]
+        });
+    });
+    
     document.addEventListener('DOMContentLoaded', () => {
         const viewModal = document.getElementById('viewModal');
         viewModal.addEventListener('show.bs.modal', function(event) {

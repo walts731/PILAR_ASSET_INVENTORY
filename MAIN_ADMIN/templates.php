@@ -38,6 +38,7 @@ $stmt->close();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css" />
     <style>
         .preview-box {
@@ -80,36 +81,51 @@ $stmt->close();
             <div class="row">
                 <div class="col-md-6">
                     <div class="card shadow-sm mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Create Report Template</h5>
-                            <!-- Inside the .toolbar div -->
-                            <div class="toolbar">
-                                <button type="button" class="btn btn-sm btn-outline-primary" data-command="bold" onclick="toggleCommand(this, 'bold')">B</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-command="italic" onclick="toggleCommand(this, 'italic')">I</button>
-                                <!-- Font Size -->
-                                <select class="form-select form-select-sm d-inline-block w-auto me-2" onchange="setFontSize(this.value)">
-                                    <option value="">Font Size</option>
-                                    <option value="12px">12px</option>
-                                    <option value="14px">14px</option>
-                                    <option value="16px">16px</option>
-                                    <option value="18px">18px</option>
-                                    <option value="24px">24px</option>
-                                    <option value="32px">32px</option>
-                                </select>
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <h5 class="mb-0">Create Report Template</h5>
 
-                                <!-- Font Family -->
-                                <select class="form-select form-select-sm d-inline-block w-auto" onchange="setFontFamily(this.value)">
-                                    <option value="">Font Family</option>
-                                    <option value="Arial">Arial</option>
-                                    <option value="Georgia">Georgia</option>
-                                    <option value="Tahoma">Tahoma</option>
-                                    <option value="Times New Roman">Times New Roman</option>
-                                    <option value="Verdana">Verdana</option>
-                                </select>
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <!-- Text Formatting Buttons -->
+                                    <div class="toolbar btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleCommand(this, 'bold')">B</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleCommand(this, 'italic')">I</button>
+                                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="toggleCommand(this, 'underline')"><u>U</u></button>
+                                    </div>
 
-                                <button type="button" class="btn btn-sm btn-outline-dark" onclick="insertSpecial('[blank]')">Add Blank</button>
-                                <button type="button" class="btn btn-sm btn-outline-info" onclick="insertSpecial('$dynamic_year')">Year</button>
-                                <button type="button" class="btn btn-sm btn-outline-info" onclick="insertSpecial('$dynamic_month')">Month</button>
+                                    <!-- Font Size Dropdown -->
+                                    <select class="form-select form-select-sm" style="width: auto;" onchange="setFontSize(this.value)">
+                                        <option value="">Font Size</option>
+                                        <option value="12px">12px</option>
+                                        <option value="14px">14px</option>
+                                        <option value="16px">16px</option>
+                                        <option value="18px">18px</option>
+                                        <option value="24px">24px</option>
+                                        <option value="32px">32px</option>
+                                    </select>
+
+                                    <!-- Font Family Dropdown -->
+                                    <select class="form-select form-select-sm" style="width: auto;" onchange="setFontFamily(this.value)">
+                                        <option value="">Font Family</option>
+                                        <option value="Arial">Arial</option>
+                                        <option value="Georgia">Georgia</option>
+                                        <option value="Tahoma">Tahoma</option>
+                                        <option value="Times New Roman">Times New Roman</option>
+                                        <option value="Verdana">Verdana</option>
+                                    </select>
+
+                                    <!-- Special Inserts -->
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-dark" onclick="insertSpecial('[blank]')">Blank</button>
+                                        <button type="button" class="btn btn-sm btn-outline-info" onclick="insertSpecial('$dynamic_year')">Year</button>
+                                        <button type="button" class="btn btn-sm btn-outline-info" onclick="insertSpecial('$dynamic_month')">Month</button>
+                                    </div>
+
+                                    <!-- Trigger Upload Modal -->
+                                    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#uploadFormatModal">
+                                        <i class="bi bi-upload"></i> Upload Template
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="card-body">
@@ -191,7 +207,37 @@ $stmt->close();
             <?php include 'template_saved_list.php'; ?>
         </div>
     </div>
-
+    <!-- Upload Format Modal -->
+    <div class="modal fade" id="uploadFormatModal" tabindex="-1" aria-labelledby="uploadFormatModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="uploadFormatModalLabel">Template Format Guide</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Before uploading, please ensure your file includes the following comment blocks:</p>
+                    <ul class="list-unstyled">
+                        <li><code>&lt;!-- HEADER_START --&gt;</code> ... <code>&lt;!-- HEADER_END --&gt;</code></li>
+                        <li><code>&lt;!-- SUBHEADER_START --&gt;</code> ... <code>&lt;!-- SUBHEADER_END --&gt;</code></li>
+                        <li><code>&lt;!-- FOOTER_START --&gt;</code> ... <code>&lt;!-- FOOTER_END --&gt;</code></li>
+                    </ul>
+                    <form id="uploadTemplateForm" action="upload_template.php" method="POST" enctype="multipart/form-data">
+                        <input type="file" name="template_file" id="templateFileInput" class="form-control mb-2" accept=".docx,.txt,.html" hidden onchange="document.getElementById('uploadTemplateForm').submit();">
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-success" onclick="document.getElementById('templateFileInput').click();">Continue</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- jQuery, Bootstrap JS, and DataTables JS (before </body>) -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script>
