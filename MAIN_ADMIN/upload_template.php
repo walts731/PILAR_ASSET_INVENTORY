@@ -3,20 +3,59 @@ require_once '../connect.php';
 require_once '../vendor/autoload.php';
 session_start();
 
+use PhpOffice\PhpWord\IOFactory;
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../index.php");
     exit();
 }
 
-function extractDocxText($filePath) {
-    $zip = new ZipArchive;
-    if ($zip->open($filePath) === TRUE) {
-        $xml = $zip->getFromName('word/document.xml');
-        $zip->close();
-        preg_match_all('/<w:t[^>]*>(.*?)<\/w:t>/', $xml, $matches);
-        return html_entity_decode(implode("", $matches[1]));
+// Extract DOCX content as formatted HTML and extract up to 2 images as logos
+function extractDocxText($filePath, &$left_logo_path, &$right_logo_path) {
+    try {
+        $phpWord = IOFactory::load($filePath, 'Word2007');
+        $writer = IOFactory::createWriter($phpWord, 'HTML');
+
+        ob_start();
+        $writer->save('php://output');
+        $html = ob_get_clean();
+
+        $html = preg_replace('/<!DOCTYPE.+?>/is', '', $html);
+        $html = preg_replace('/<html>|<\/html>|<body>|<\/body>/i', '', $html);
+
+        // Handle embedded images
+        $uploadDir = '../uploads/logos/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        preg_match_all('/<img[^>]+src="([^"]+)"[^>]*>/i', $html, $matches);
+        $imageSources = $matches[1] ?? [];
+        $storedImagePaths = [];
+
+        foreach ($imageSources as $index => $src) {
+            if (strpos($src, 'data:image/') === 0) {
+                preg_match('/data:image\/(\w+);base64,/', $src, $typeMatch);
+                $imgType = $typeMatch[1];
+                $imgData = base64_decode(preg_replace('/^data:image\/\w+;base64,/', '', $src));
+                $imgName = uniqid('logo_') . '.' . $imgType;
+                $imgPath = $uploadDir . $imgName;
+
+                file_put_contents($imgPath, $imgData);
+                $storedImagePaths[] = $imgPath;
+
+                // Remove image data from HTML
+                $html = str_replace($src, '', $html);
+            }
+        }
+
+        $left_logo_path = $storedImagePaths[0] ?? '';
+        $right_logo_path = $storedImagePaths[1] ?? '';
+
+        return trim($html);
+    } catch (Exception $e) {
+        return '';
     }
-    return '';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['template_file'])) {
@@ -27,8 +66,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['template_file'])) {
     $allowedExtensions = ['html', 'txt', 'docx'];
 
     if (!in_array($fileExtension, $allowedExtensions)) {
-        die("Unsupported file type.");
+        header("Location: templates.php?error=" . urlencode("Unsupported file type."));
+        exit();
     }
+
+    $left_logo_path = $right_logo_path = '';
 
     switch ($fileExtension) {
         case 'txt':
@@ -36,30 +78,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['template_file'])) {
             $content = file_get_contents($fileTmpPath);
             break;
         case 'docx':
-            $content = extractDocxText($fileTmpPath);
+            $content = extractDocxText($fileTmpPath, $left_logo_path, $right_logo_path);
             break;
         default:
-            die("Unsupported file type.");
+            header("Location: templates.php?error=" . urlencode("Unsupported file type."));
+            exit();
     }
 
     $header_html = $subheader_html = $footer_html = '';
 
-    if (preg_match('/<!-- HEADER_START -->(.*?)<!-- HEADER_END -->/is', $content, $matches)) {
-        $header_html = trim($matches[1]);
+    if (preg_match('/&lt;!-- HEADER_START --&gt;(.*?)&lt;!-- HEADER_END --&gt;/is', $content, $matches)) {
+        $header_html = html_entity_decode(trim($matches[1]));
+        $header_html = preg_replace('/<img[^>]*>/i', '', $header_html);
     }
-    if (preg_match('/<!-- SUBHEADER_START -->(.*?)<!-- SUBHEADER_END -->/is', $content, $matches)) {
-        $subheader_html = trim($matches[1]);
+
+    if (preg_match('/&lt;!-- SUBHEADER_START --&gt;(.*?)&lt;!-- SUBHEADER_END --&gt;/is', $content, $matches)) {
+        $subheader_html = html_entity_decode(trim($matches[1]));
     }
-    if (preg_match('/<!-- FOOTER_START -->(.*?)<!-- FOOTER_END -->/is', $content, $matches)) {
-        $footer_html = trim($matches[1]);
+
+    if (preg_match('/&lt;!-- FOOTER_START --&gt;(.*?)&lt;!-- FOOTER_END --&gt;/is', $content, $matches)) {
+        $footer_html = html_entity_decode(trim($matches[1]));
     }
 
     if (empty($header_html) && empty($subheader_html) && empty($footer_html)) {
-        echo "<pre>" . htmlentities($content) . "</pre>";
-        die("❌ Your template is missing required comment markers.");
+        header("Location: templates.php?error=" . urlencode("Your template is missing required encoded comment markers."));
+        exit();
     }
 
-    $left_logo_path = $right_logo_path = '';
+    // Manual logo override
     $uploadDir = '../uploads/logos/';
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0777, true);
@@ -81,7 +127,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['template_file'])) {
         }
     }
 
-    // Insert into database (with uploaded_at and uploaded_by)
     $stmt = $conn->prepare("INSERT INTO report_templates 
         (template_name, header_html, subheader_html, footer_html, left_logo_path, right_logo_path, created_by, updated_at, updated_by) 
         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)");
@@ -95,10 +140,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['template_file'])) {
         header("Location: templates.php?upload=success");
         exit();
     } else {
-        echo "Database error: " . $stmt->error;
+        header("Location: templates.php?error=" . urlencode("Database error: " . $stmt->error));
+        exit();
     }
+
     $stmt->close();
 } else {
-    echo "No file uploaded.";
+    header("Location: templates.php?error=" . urlencode("No file uploaded."));
+    exit();
 }
 ?>

@@ -11,3 +11,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <?php endif; ?>
+<?php if (isset($_GET['error'])): ?>
+    <div style="background-color: #f8d7da; color: #721c24; padding: 10px; border: 1px solid #f5c6cb; margin-bottom: 15px;">
+        ❌ <?= htmlspecialchars($_GET['error']) ?>
+    </div>
+<?php endif; ?>
