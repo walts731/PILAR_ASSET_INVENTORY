@@ -54,9 +54,10 @@ $result = $conn->query($sql);
                                     <a href="edit_template.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-outline-warning">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
-                                    <a href="delete_template.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this template?');">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                        data-id="<?= $row['id'] ?>" data-name="<?= htmlspecialchars($row['template_name']) ?>">
                                         <i class="bi bi-trash"></i>
-                                    </a>
+                                    </button>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -72,33 +73,42 @@ $result = $conn->query($sql);
 </div>
 
 <!-- View Modal -->
-<div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title" id="viewModalLabel">View Template</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="viewModalContent">
-                <div class="text-center p-3">Loading...</div>
-            </div>
-        </div>
-    </div>
-</div>
+<?php include 'modals/view_template_modal.php'; ?>
+
+<!-- Delete Confirmation Modal -->
+<?php include 'modals/delete_template_modal.php'; ?>
 
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const deleteModal = document.getElementById('deleteModal');
+
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const templateId = button.getAttribute('data-id');
+            const templateName = button.getAttribute('data-name');
+
+            const modalTemplateName = deleteModal.querySelector('#templateName');
+            const deleteTemplateId = deleteModal.querySelector('#deleteTemplateId');
+
+            modalTemplateName.textContent = templateName;
+            deleteTemplateId.value = templateId;
+        });
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
         // Initialize DataTables
         $('#templateTable').DataTable({
             responsive: true,
             pageLength: 10,
             order: [], // disables default ordering on the first column
-            columnDefs: [
-                { orderable: false, targets: -1 } // disable ordering on the "Actions" column
+            columnDefs: [{
+                    orderable: false,
+                    targets: -1
+                } // disable ordering on the "Actions" column
             ]
         });
     });
-    
+
     document.addEventListener('DOMContentLoaded', () => {
         const viewModal = document.getElementById('viewModal');
         viewModal.addEventListener('show.bs.modal', function(event) {

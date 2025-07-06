@@ -77,6 +77,7 @@ $stmt->close();
     <?php include 'includes/sidebar.php' ?>
     <div class="main">
         <?php include 'includes/topbar.php' ?>
+        <?php include 'alerts/templates_alert.php'?>
         <div class="container-fluid py-4">
             <div class="row">
                 <div class="col-md-6">
