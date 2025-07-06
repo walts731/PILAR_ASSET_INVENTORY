@@ -40,37 +40,7 @@ $stmt->close();
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css" />
-    <style>
-        .preview-box {
-            border: 1px solid #ccc;
-            padding: 20px;
-            background-color: #fff;
-            height: 100%;
-        }
-
-        .toolbar button {
-            margin-right: 5px;
-        }
-
-        .rich-input {
-            border: 1px solid #ccc;
-            padding: 10px;
-            min-height: 100px;
-            background: #fff;
-        }
-
-        .blank {
-            display: inline-block;
-            min-width: 100px;
-            border-bottom: 1px solid #000;
-        }
-
-        .toolbar .btn.active {
-            background-color: #0d6efd;
-            color: white;
-            border-color: #0d6efd;
-        }
-    </style>
+    <link rel="stylesheet" href="css/templates.css" />
 </head>
 
 <body>
@@ -209,31 +179,7 @@ $stmt->close();
         </div>
     </div>
     <!-- Upload Format Modal -->
-    <div class="modal fade" id="uploadFormatModal" tabindex="-1" aria-labelledby="uploadFormatModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-md">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title" id="uploadFormatModalLabel">Template Format Guide</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Before uploading, please ensure your file includes the following comment blocks:</p>
-                    <ul class="list-unstyled">
-                        <li><code>&lt;!-- HEADER_START --&gt;</code> ... <code>&lt;!-- HEADER_END --&gt;</code></li>
-                        <li><code>&lt;!-- SUBHEADER_START --&gt;</code> ... <code>&lt;!-- SUBHEADER_END --&gt;</code></li>
-                        <li><code>&lt;!-- FOOTER_START --&gt;</code> ... <code>&lt;!-- FOOTER_END --&gt;</code></li>
-                    </ul>
-                    <form id="uploadTemplateForm" action="upload_template.php" method="POST" enctype="multipart/form-data">
-                        <input type="file" name="template_file" id="templateFileInput" class="form-control mb-2" accept=".docx,.txt,.html" hidden onchange="document.getElementById('uploadTemplateForm').submit();">
-                        <div class="d-flex justify-content-end">
-                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-success" onclick="document.getElementById('templateFileInput').click();">Continue</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    <?php include 'modals/upload_template_modal.php'; ?>
     <!-- jQuery, Bootstrap JS, and DataTables JS (before </body>) -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -241,125 +187,8 @@ $stmt->close();
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script>
-        function format(command) {
-            document.execCommand(command, false, null);
-            updatePreview();
-        }
-
-        function insertSpecial(text) {
-            const sel = window.getSelection();
-            if (!sel.rangeCount) return;
-            const range = sel.getRangeAt(0);
-            range.deleteContents();
-            range.insertNode(document.createTextNode(text));
-            updatePreview();
-        }
-
-        function setAlignment(section, alignment) {
-            const el = document.getElementById(section);
-            if (el) {
-                el.style.textAlign = alignment;
-                updatePreview();
-            }
-        }
-
-        function updatePreview() {
-            const header = document.getElementById('header');
-            const subheader = document.getElementById('subheader');
-            const footer = document.getElementById('footer');
-
-            const headerPreview = document.getElementById('headerPreview');
-            const subheaderPreview = document.getElementById('subheaderPreview');
-            const footerPreview = document.getElementById('footerPreview');
-
-            // Set previews
-            headerPreview.innerHTML = parseSpecial(header.innerHTML);
-            subheaderPreview.innerHTML = parseSpecial(subheader.innerHTML);
-            footerPreview.innerHTML = parseSpecial(footer.innerHTML);
-
-            headerPreview.style.cssText = header.style.cssText;
-            subheaderPreview.style.cssText = subheader.style.cssText;
-            footerPreview.style.cssText = footer.style.cssText;
-
-            // Set hidden HTML content
-            // Wrap with inline style
-            document.getElementById('header_hidden').value =
-                `<div style="font-family:${header.style.fontFamily}; font-size:${header.style.fontSize}; text-align:${header.style.textAlign};">${header.innerHTML}</div>`;
-
-            document.getElementById('subheader_hidden').value =
-                `<div style="font-family:${subheader.style.fontFamily}; font-size:${subheader.style.fontSize}; text-align:${subheader.style.textAlign};">${subheader.innerHTML}</div>`;
-
-            document.getElementById('footer_hidden').value =
-                `<div style="font-family:${footer.style.fontFamily}; font-size:${footer.style.fontSize}; text-align:${footer.style.textAlign};">${footer.innerHTML}</div>`;
-
-            // Set font family and size hidden inputs
-            document.getElementById('header_font_family').value = header.style.fontFamily || '';
-            document.getElementById('header_font_size').value = header.style.fontSize || '';
-
-            document.getElementById('subheader_font_family').value = subheader.style.fontFamily || '';
-            document.getElementById('subheader_font_size').value = subheader.style.fontSize || '';
-
-            document.getElementById('footer_font_family').value = footer.style.fontFamily || '';
-            document.getElementById('footer_font_size').value = footer.style.fontSize || '';
-        }
-
-        updatePreview();
-
-
-        function parseSpecial(html) {
-            return html
-                .replace(/\$dynamic_year/g, new Date().getFullYear())
-                .replace(/\$dynamic_month/g, new Date().toLocaleString('default', {
-                    month: 'long'
-                }))
-                .replace(/\[blank\]/g, '<span class="blank">&nbsp;</span>');
-        }
-
-        function previewImage(event, targetId) {
-            const reader = new FileReader();
-            reader.onload = function() {
-                document.getElementById(targetId).innerHTML = `<img src="${reader.result}" style="height: 60px;">`;
-            }
-            reader.readAsDataURL(event.target.files[0]);
-        }
-
-        updatePreview();
-
-        function toggleCommand(button, command) {
-            document.execCommand(command, false, null);
-            button.classList.toggle("active"); // Toggle highlight
-            updatePreview();
-        }
-
-        function setFontSize(size) {
-            const activeSection = getActiveSection();
-            if (activeSection) {
-                activeSection.style.fontSize = size;
-                updatePreview();
-            }
-        }
-
-        function setFontFamily(family) {
-            const activeSection = getActiveSection();
-            if (activeSection) {
-                activeSection.style.fontFamily = family;
-                updatePreview();
-            }
-        }
-
-        // Detect which section the user is editing
-        let activeEditable = null;
-        document.addEventListener("focusin", function(e) {
-            if (e.target.classList.contains("rich-input")) {
-                activeEditable = e.target;
-            }
-        });
-
-        function getActiveSection() {
-            return activeEditable;
-        }
-    </script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/templates.js"></script>
 </body>
 
 </html>

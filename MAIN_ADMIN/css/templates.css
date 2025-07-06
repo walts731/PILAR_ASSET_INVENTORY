@@ -1,0 +1,29 @@
+        .preview-box {
+            border: 1px solid #ccc;
+            padding: 20px;
+            background-color: #fff;
+            height: 100%;
+        }
+
+        .toolbar button {
+            margin-right: 5px;
+        }
+
+        .rich-input {
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 100px;
+            background: #fff;
+        }
+
+        .blank {
+            display: inline-block;
+            min-width: 100px;
+            border-bottom: 1px solid #000;
+        }
+
+        .toolbar .btn.active {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
