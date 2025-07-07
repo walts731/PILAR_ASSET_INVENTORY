@@ -43,9 +43,10 @@ if (!$template) die("Template not found.");
         }
 
         .preview-box {
-            background: #f8f9fa;
-            padding: 15px;
-            border: 1px solid #dee2e6;
+            border: 1px solid #ccc;
+            padding: 20px;
+            background-color: #fff;
+            height: 100%;
         }
 
         .blank {
@@ -64,7 +65,7 @@ if (!$template) die("Template not found.");
     <div class="main">
         <?php include 'includes/topbar.php' ?>
         <div class="container py-4">
-            <h4 class="mb-3">Edit Template: <?= htmlspecialchars($template['template_name']) ?></h4>
+            <h4 class="mb-3">Edit Template <?= htmlspecialchars($template['template_name']) ?></h4>
 
             <!-- Toolbar -->
             <div class="mb-3 d-flex flex-wrap gap-2">
@@ -158,17 +159,37 @@ if (!$template) die("Template not found.");
                         <div class="card shadow-sm">
                             <div class="card-header"><strong>Live Preview</strong></div>
                             <div class="card-body preview-box">
-                                <div class="row align-items-center">
-                                    <div class="col-2 text-start preview-logo" id="leftLogoBox"></div>
-                                    <div class="col-8 text-center" id="headerPreview"></div>
-                                    <div class="col-2 text-end preview-logo" id="rightLogoBox"></div>
+                                <div class="row">
+                                    <!-- Left Logo -->
+                                    <div class="col-3 text-start preview-logo" id="leftLogoBox">
+                                        <?php if (!empty($template['left_logo_path'])): ?>
+                                            <img src="<?= $template['left_logo_path'] ?>" alt="Left Logo">
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <!-- Header -->
+                                    <div class="col-6 text-center">
+                                        <div id="headerPreview"></div>
+                                    </div>
+
+                                    <!-- Right Logo -->
+                                    <div class="col-3 text-end preview-logo" id="rightLogoBox">
+                                        <?php if (!empty($template['right_logo_path'])): ?>
+                                            <img src="<?= $template['right_logo_path'] ?>" alt="Right Logo">
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <!-- Subheader -->
+                                    <div class="col-12 mt-2">
+                                        <div id="subheaderPreview" class="text-muted"></div>
+                                    </div>
                                 </div>
-                                <div class="mt-2 text-center text-muted" id="subheaderPreview"></div>
-                                <hr>
+                                <hr />
                                 <div class="mt-3" id="footerPreview"></div>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </form>
         </div>
@@ -230,13 +251,37 @@ if (!$template) die("Template not found.");
                 const subheader = document.getElementById('subheader');
                 const footer = document.getElementById('footer');
 
-                document.getElementById('headerPreview').innerHTML = parseSpecial(header.innerHTML);
-                document.getElementById('subheaderPreview').innerHTML = parseSpecial(subheader.innerHTML);
-                document.getElementById('footerPreview').innerHTML = parseSpecial(footer.innerHTML);
+                const headerPreview = document.getElementById('headerPreview');
+                const subheaderPreview = document.getElementById('subheaderPreview');
+                const footerPreview = document.getElementById('footerPreview');
 
-                document.getElementById('header_hidden').value = header.outerHTML;
-                document.getElementById('subheader_hidden').value = subheader.outerHTML;
-                document.getElementById('footer_hidden').value = footer.outerHTML;
+                // Apply parsed content
+                headerPreview.innerHTML = parseSpecial(header.innerHTML);
+                subheaderPreview.innerHTML = parseSpecial(subheader.innerHTML);
+                footerPreview.innerHTML = parseSpecial(footer.innerHTML);
+
+                // Copy font styles to preview
+                headerPreview.style.fontFamily = header.style.fontFamily;
+                headerPreview.style.fontSize = header.style.fontSize;
+                headerPreview.style.textAlign = header.style.textAlign;
+
+                subheaderPreview.style.fontFamily = subheader.style.fontFamily;
+                subheaderPreview.style.fontSize = subheader.style.fontSize;
+                subheaderPreview.style.textAlign = subheader.style.textAlign;
+
+                footerPreview.style.fontFamily = footer.style.fontFamily;
+                footerPreview.style.fontSize = footer.style.fontSize;
+                footerPreview.style.textAlign = footer.style.textAlign;
+
+                // Update hidden fields with final HTML
+                document.getElementById('header_hidden').value =
+                    `<div style="font-family:${header.style.fontFamily}; font-size:${header.style.fontSize}; text-align:${header.style.textAlign};">${header.innerHTML}</div>`;
+
+                document.getElementById('subheader_hidden').value =
+                    `<div style="font-family:${subheader.style.fontFamily}; font-size:${subheader.style.fontSize}; text-align:${subheader.style.textAlign};">${subheader.innerHTML}</div>`;
+
+                document.getElementById('footer_hidden').value =
+                    `<div style="font-family:${footer.style.fontFamily}; font-size:${footer.style.fontSize}; text-align:${footer.style.textAlign};">${footer.innerHTML}</div>`;
             }
 
             function parseSpecial(html) {
