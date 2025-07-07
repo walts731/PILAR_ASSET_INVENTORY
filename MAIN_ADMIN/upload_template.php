@@ -11,7 +11,8 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // Extract DOCX content as formatted HTML and extract up to 2 images as logos
-function extractDocxText($filePath, &$left_logo_path, &$right_logo_path) {
+function extractDocxText($filePath, &$left_logo_path, &$right_logo_path)
+{
     try {
         $phpWord = IOFactory::load($filePath, 'Word2007');
         $writer = IOFactory::createWriter($phpWord, 'HTML');
@@ -90,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['template_file'])) {
     if (preg_match('/&lt;!-- HEADER_START --&gt;(.*?)&lt;!-- HEADER_END --&gt;/is', $content, $matches)) {
         $header_html = html_entity_decode(trim($matches[1]));
         $header_html = preg_replace('/<img[^>]*>/i', '', $header_html);
+        $header_html = preg_replace('/margin-left\s*:\s*1in\s*;?/i', 'margin-left: 0in;', $header_html);
     }
 
     if (preg_match('/&lt;!-- SUBHEADER_START --&gt;(.*?)&lt;!-- SUBHEADER_END --&gt;/is', $content, $matches)) {
@@ -149,4 +151,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['template_file'])) {
     header("Location: templates.php?error=" . urlencode("No file uploaded."));
     exit();
 }
-?>
