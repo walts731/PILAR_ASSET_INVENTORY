@@ -1,15 +1,13 @@
 <?php
 require_once '../connect.php';
 
-
-
 // Get current file name without extension
 $current_page = basename($_SERVER['PHP_SELF'], ".php");
 
-// Format it to a human-readable title
+// Format to human-readable title
 $page_title = ucwords(str_replace("_", " ", $current_page));
 
-// Custom titles for specific pages
+// Custom page titles
 $custom_titles = [
   "index" => "Welcome",
   "user_dashboard" => "Inventory Dashboard",
@@ -28,10 +26,8 @@ if (array_key_exists($current_page, $custom_titles)) {
   $page_title = $custom_titles[$current_page];
 }
 
-// Low stock threshold
+// Low stock alert
 $low_stock_threshold = 5;
-
-// Fetch low stock consumables from assets table (with asset_id)
 $low_stock_stmt = $conn->prepare("SELECT id, asset_name AS product_name, quantity AS stock FROM assets WHERE type = 'consumable' AND quantity <= ? ORDER BY quantity ASC");
 $low_stock_stmt->bind_param("i", $low_stock_threshold);
 $low_stock_stmt->execute();
@@ -41,7 +37,6 @@ $low_stock_items = [];
 while ($row = $low_stock_result->fetch_assoc()) {
   $low_stock_items[] = $row;
 }
-
 $low_stock_count = count($low_stock_items);
 ?>
 
@@ -53,12 +48,21 @@ $low_stock_count = count($low_stock_items);
     </button>
   </div>
 
-  <!-- Page Title -->
-  <h5 class="order-3 order-sm-2 flex-grow-1 text-center text-sm-start m-0">
-    <?php echo htmlspecialchars($page_title); ?>
-  </h5>
+  <!-- Page Title & Breadcrumb -->
+<div class="order-3 order-sm-2 flex-grow-1">
+  <?php if ($current_page === 'edit_template'): ?>
+    <h5 class="m-0 text-center text-sm-start">
+      <a href="templates.php" class="text-decoration-none text-primary">Templates</a>
+      <span class="mx-1 text-muted"> &gt; </span>
+      <span class="text-dark">Edit Template</span>
+    </h5>
+  <?php else: ?>
+    <h5 class="m-0 text-center text-sm-start"><?php echo htmlspecialchars($page_title); ?></h5>
+  <?php endif; ?>
+</div>
 
-  <!-- Right Side Icons -->
+
+  <!-- Right Side Controls -->
   <div class="order-2 order-sm-3 d-flex align-items-center gap-3 ms-auto flex-wrap justify-content-end">
 
     <!-- Date & Time -->
@@ -86,12 +90,14 @@ $low_stock_count = count($low_stock_items);
       </a>
       <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="min-width: 300px;">
         <li class="dropdown-header fw-bold text-center">Notifications</li>
-        <li><hr class="dropdown-divider"></li>
+        <li>
+          <hr class="dropdown-divider">
+        </li>
         <?php if ($low_stock_count > 0): ?>
           <?php foreach ($low_stock_items as $item): ?>
             <li>
               <a class="dropdown-item small text-danger d-flex justify-content-between align-items-center"
-                 href="admin_dashboard.php?id=<?php echo $item['id']; ?>">
+                href="admin_dashboard.php?id=<?php echo $item['id']; ?>">
                 <span><?php echo htmlspecialchars($item['product_name']); ?></span>
                 <span class="badge bg-danger"><?php echo $item['stock']; ?> left</span>
               </a>
@@ -106,18 +112,22 @@ $low_stock_count = count($low_stock_items);
     <!-- Profile Dropdown -->
     <div class="dropdown">
       <a href="#" class="d-flex align-items-center text-dark text-decoration-none" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bi bi-person-circle" id="profileIcon" style="font-size: 1.8rem;"></i>
+        <i class="bi bi-person-circle" style="font-size: 1.8rem;"></i>
       </a>
       <ul class="dropdown-menu dropdown-menu-end text-center" aria-labelledby="profileDropdown" style="min-width: 200px;">
-        <li class="dropdown-header fw-bold text-dark"><?php echo htmlspecialchars($fullname); ?></li>
-        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header fw-bold text-dark"><?php echo htmlspecialchars($fullname ?? 'User'); ?></li>
+        <li>
+          <hr class="dropdown-divider">
+        </li>
         <li><a class="dropdown-item d-flex align-items-center" href="profile.php"><i class="bi bi-person me-2"></i> Profile</a></li>
         <li>
           <button class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#managePasswordModal">
             <i class="bi bi-key me-2"></i> Manage Password
           </button>
         </li>
-        <li><hr class="dropdown-divider"></li>
+        <li>
+          <hr class="dropdown-divider">
+        </li>
         <li><a class="dropdown-item d-flex align-items-center text-danger" href="../logout.php"><i class="bi bi-box-arrow-right me-2"></i> Sign Out</a></li>
       </ul>
     </div>
@@ -128,15 +138,14 @@ $low_stock_count = count($low_stock_items);
 <?php include 'modals/change_password_modal.php'; ?>
 
 <script>
-  // Show/hide password toggle
-  document.getElementById('showPasswordToggle').addEventListener('change', function () {
+  document.getElementById('showPasswordToggle')?.addEventListener('change', function() {
     const type = this.checked ? 'text' : 'password';
     document.getElementById('currentPassword').type = type;
     document.getElementById('newPassword').type = type;
     document.getElementById('confirmPassword').type = type;
   });
 
-  // Bootstrap form validation
+  // Bootstrap validation
   (() => {
     'use strict';
     const forms = document.querySelectorAll('.needs-validation');
@@ -151,21 +160,19 @@ $low_stock_count = count($low_stock_items);
     });
   })();
 
-  document.addEventListener("DOMContentLoaded", function () {
+  // Scroll to low stock item
+  document.addEventListener("DOMContentLoaded", function() {
     const lowStockCard = document.getElementById("lowStockCard");
     const consumablesTab = new bootstrap.Tab(document.querySelector('#consumables-tab'));
-
-    lowStockCard.addEventListener("click", function () {
-      // Switch to the Consumables tab
+    lowStockCard?.addEventListener("click", function() {
       consumablesTab.show();
-
-      // Wait a bit for the tab to show, then scroll
       setTimeout(() => {
         const lowStockRow = document.querySelector('#consumablesTable tbody tr[data-stock="low"]');
         if (lowStockRow) {
-          lowStockRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-          // Flash animation
+          lowStockRow.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
           lowStockRow.classList.add("highlight-row");
           setTimeout(() => {
             lowStockRow.classList.remove("highlight-row");
