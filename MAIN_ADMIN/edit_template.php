@@ -100,6 +100,9 @@ if (!$template) die("Template not found.");
 
             <form method="POST" enctype="multipart/form-data" action="update_template.php">
                 <input type="hidden" name="template_id" value="<?= $template['id'] ?>">
+                <input type="hidden" name="remove_left_logo" id="remove_left_logo" value="0">
+                <input type="hidden" name="remove_right_logo" id="remove_right_logo" value="0">
+
                 <div class="row">
                     <!-- Editor -->
                     <div class="col-md-6">
@@ -234,8 +237,18 @@ if (!$template) die("Template not found.");
             function removeLogo(previewId, editorId) {
                 document.getElementById(previewId).innerHTML = "";
                 document.getElementById(editorId).innerHTML = "";
+
+                // Set hidden flag
+                if (previewId === 'leftLogoBox') {
+                    document.getElementById('remove_left_logo').value = '1';
+                }
+                if (previewId === 'rightLogoBox') {
+                    document.getElementById('remove_right_logo').value = '1';
+                }
+
                 updatePreview();
             }
+
 
             function previewImage(event, previewId) {
                 const reader = new FileReader();
