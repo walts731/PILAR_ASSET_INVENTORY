@@ -58,6 +58,24 @@ if (!$template) die("Template not found.");
         .preview-logo img {
             height: 60px;
         }
+
+        .submit-btn {
+            background-color: rgb(44, 110, 215);
+            color: white;
+            padding: 6px 12px;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .submit-btn:hover {
+            background-color: rgb(9, 96, 184);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
     </style>
 </head>
 
@@ -142,10 +160,27 @@ if (!$template) die("Template not found.");
                             <input type="hidden" name="header_html" id="header_hidden">
                         </div>
 
+                        <!-- Alignment for Subheader -->
+                        <div class="btn-group btn-group-sm">
+                            <span class="text-secondary small me-1">Subheader Align:</span>
+                            <button type="button" class="btn btn-outline-secondary" onclick="setAlignment('subheader', 'left')">Left</button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="setAlignment('subheader', 'center')">Center</button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="setAlignment('subheader', 'right')">Right</button>
+                        </div>
+
+
                         <div class="mb-3">
                             <label class="form-label">Subheader</label>
                             <div id="subheader" class="rich-input" contenteditable="true" oninput="updatePreview()"><?= $template['subheader_html'] ?></div>
                             <input type="hidden" name="subheader_html" id="subheader_hidden">
+                        </div>
+
+                        <!-- Alignment for Footer -->
+                        <div class="btn-group btn-group-sm">
+                            <span class="text-secondary small me-1">Footer Align:</span>
+                            <button type="button" class="btn btn-outline-secondary" onclick="setAlignment('footer', 'left')">Left</button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="setAlignment('footer', 'center')">Center</button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="setAlignment('footer', 'right')">Right</button>
                         </div>
 
                         <div class="mb-3">
@@ -154,7 +189,7 @@ if (!$template) die("Template not found.");
                             <input type="hidden" name="footer_html" id="footer_hidden">
                         </div>
 
-                        <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Update Template</button>
+                        <button type="submit" class="btn submit-btn"><i class="bi bi-save"></i> Update Template</button>
                     </div>
 
                     <!-- Live Preview -->
@@ -199,6 +234,14 @@ if (!$template) die("Template not found.");
 
         <script>
             let activeEditable = null;
+
+            function setAlignment(targetId, alignment) {
+                const target = document.getElementById(targetId);
+                if (target) {
+                    target.style.textAlign = alignment;
+                    updatePreview();
+                }
+            }
 
             document.addEventListener("focusin", function(e) {
                 if (e.target.classList.contains("rich-input")) {

@@ -148,7 +148,7 @@ $stmt->close();
                                 <input type="hidden" name="header_content" id="header_hidden">
                                 <input type="hidden" name="subheader_content" id="subheader_hidden">
                                 <input type="hidden" name="footer_content" id="footer_hidden">
-                                <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Save Template</button>
+                                <button type="submit" class="btn submit-btn"><i class="bi bi-save"></i> Save Template</button>
                             </form>
                         </div>
                     </div>
