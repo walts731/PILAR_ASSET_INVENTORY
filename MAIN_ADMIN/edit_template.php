@@ -33,50 +33,6 @@ if (!$template) die("Template not found.");
     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css" />
     <link rel="stylesheet" href="css/templates.css" />
-
-    <style>
-        .rich-input {
-            border: 1px solid #ccc;
-            padding: 10px;
-            min-height: 80px;
-            background: #fff;
-        }
-
-        .preview-box {
-            border: 1px solid #ccc;
-            padding: 20px;
-            background-color: #fff;
-            height: 100%;
-        }
-
-        .blank {
-            display: inline-block;
-            border-bottom: 1px solid #000;
-            width: 100px;
-        }
-
-        .preview-logo img {
-            height: 60px;
-        }
-
-        .submit-btn {
-            background-color: rgb(44, 110, 215);
-            color: white;
-            padding: 6px 12px;
-            text-decoration: none;
-            border-radius: 20px;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .submit-btn:hover {
-            background-color: rgb(9, 96, 184);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-        }
-    </style>
 </head>
 
 <body><?php include 'includes/sidebar.php' ?>
@@ -232,109 +188,6 @@ if (!$template) die("Template not found.");
             </form>
         </div>
 
-        <script>
-            let activeEditable = null;
-
-            function setAlignment(targetId, alignment) {
-                const target = document.getElementById(targetId);
-                if (target) {
-                    target.style.textAlign = alignment;
-                    updatePreview();
-                }
-            }
-
-            document.addEventListener("focusin", function(e) {
-                if (e.target.classList.contains("rich-input")) {
-                    activeEditable = e.target;
-                }
-            });
-
-            function toggleCommand(button, command) {
-                document.execCommand(command, false, null);
-                button.classList.toggle("active");
-                updatePreview();
-            }
-
-            function setFontSize(size) {
-                if (activeEditable) {
-                    activeEditable.style.fontSize = size;
-                    updatePreview();
-                }
-            }
-
-            function setFontFamily(family) {
-                if (activeEditable) {
-                    activeEditable.style.fontFamily = family;
-                    updatePreview();
-                }
-            }
-
-            function insertSpecial(text) {
-                const sel = window.getSelection();
-                if (!sel.rangeCount) return;
-                const range = sel.getRangeAt(0);
-                range.deleteContents();
-                range.insertNode(document.createTextNode(text));
-                updatePreview();
-            }
-
-            function removeLogo(previewId, editorId) {
-                document.getElementById(previewId).innerHTML = "";
-                document.getElementById(editorId).innerHTML = "";
-
-                if (previewId === 'leftLogoBox') {
-                    document.getElementById('remove_left_logo').value = '1';
-                }
-                if (previewId === 'rightLogoBox') {
-                    document.getElementById('remove_right_logo').value = '1';
-                }
-
-                updatePreview();
-            }
-
-            function previewImage(event, previewId) {
-                const reader = new FileReader();
-                reader.onload = function() {
-                    document.getElementById(previewId).innerHTML = `<img src="${reader.result}" style="height: 60px;">`;
-                    updatePreview();
-                }
-                reader.readAsDataURL(event.target.files[0]);
-            }
-
-            function updatePreview() {
-                const header = document.getElementById('header');
-                const subheader = document.getElementById('subheader');
-                const footer = document.getElementById('footer');
-
-                // Use styled wrapper for previews too
-                document.getElementById('headerPreview').innerHTML = parseSpecial(wrapWithStyle(header));
-                document.getElementById('subheaderPreview').innerHTML = parseSpecial(wrapWithStyle(subheader));
-                document.getElementById('footerPreview').innerHTML = parseSpecial(wrapWithStyle(footer));
-
-                // Save to hidden inputs for form submission
-                document.getElementById('header_hidden').value = wrapWithStyle(header);
-                document.getElementById('subheader_hidden').value = wrapWithStyle(subheader);
-                document.getElementById('footer_hidden').value = wrapWithStyle(footer);
-            }
-
-            function wrapWithStyle(element) {
-                const style = element.getAttribute("style") || "";
-                return `<div style="${style}">${element.innerHTML}</div>`;
-            }
-
-            function parseSpecial(html) {
-                return html
-                    .replace(/\$dynamic_year/g, new Date().getFullYear())
-                    .replace(/\$dynamic_month/g, new Date().toLocaleString('default', {
-                        month: 'long'
-                    }))
-                    .replace(/\[blank\]/g, '<span class="blank">&nbsp;</span>');
-            }
-
-            window.onload = updatePreview;
-        </script>
-
-
         <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -342,6 +195,7 @@ if (!$template) die("Template not found.");
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
         <script src="js/dashboard.js"></script>
+        <script src="js/edit_template.js"></script>
 </body>
 
 </html>
