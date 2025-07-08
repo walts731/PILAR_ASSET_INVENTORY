@@ -199,6 +199,7 @@ if (!$template) die("Template not found.");
 
         <script>
             let activeEditable = null;
+
             document.addEventListener("focusin", function(e) {
                 if (e.target.classList.contains("rich-input")) {
                     activeEditable = e.target;
@@ -238,7 +239,6 @@ if (!$template) die("Template not found.");
                 document.getElementById(previewId).innerHTML = "";
                 document.getElementById(editorId).innerHTML = "";
 
-                // Set hidden flag
                 if (previewId === 'leftLogoBox') {
                     document.getElementById('remove_left_logo').value = '1';
                 }
@@ -248,7 +248,6 @@ if (!$template) die("Template not found.");
 
                 updatePreview();
             }
-
 
             function previewImage(event, previewId) {
                 const reader = new FileReader();
@@ -264,37 +263,20 @@ if (!$template) die("Template not found.");
                 const subheader = document.getElementById('subheader');
                 const footer = document.getElementById('footer');
 
-                const headerPreview = document.getElementById('headerPreview');
-                const subheaderPreview = document.getElementById('subheaderPreview');
-                const footerPreview = document.getElementById('footerPreview');
+                // Use styled wrapper for previews too
+                document.getElementById('headerPreview').innerHTML = parseSpecial(wrapWithStyle(header));
+                document.getElementById('subheaderPreview').innerHTML = parseSpecial(wrapWithStyle(subheader));
+                document.getElementById('footerPreview').innerHTML = parseSpecial(wrapWithStyle(footer));
 
-                // Apply parsed content
-                headerPreview.innerHTML = parseSpecial(header.innerHTML);
-                subheaderPreview.innerHTML = parseSpecial(subheader.innerHTML);
-                footerPreview.innerHTML = parseSpecial(footer.innerHTML);
+                // Save to hidden inputs for form submission
+                document.getElementById('header_hidden').value = wrapWithStyle(header);
+                document.getElementById('subheader_hidden').value = wrapWithStyle(subheader);
+                document.getElementById('footer_hidden').value = wrapWithStyle(footer);
+            }
 
-                // Copy font styles to preview
-                headerPreview.style.fontFamily = header.style.fontFamily;
-                headerPreview.style.fontSize = header.style.fontSize;
-                headerPreview.style.textAlign = header.style.textAlign;
-
-                subheaderPreview.style.fontFamily = subheader.style.fontFamily;
-                subheaderPreview.style.fontSize = subheader.style.fontSize;
-                subheaderPreview.style.textAlign = subheader.style.textAlign;
-
-                footerPreview.style.fontFamily = footer.style.fontFamily;
-                footerPreview.style.fontSize = footer.style.fontSize;
-                footerPreview.style.textAlign = footer.style.textAlign;
-
-                // Update hidden fields with final HTML
-                document.getElementById('header_hidden').value =
-                    `<div style="font-family:${header.style.fontFamily}; font-size:${header.style.fontSize}; text-align:${header.style.textAlign};">${header.innerHTML}</div>`;
-
-                document.getElementById('subheader_hidden').value =
-                    `<div style="font-family:${subheader.style.fontFamily}; font-size:${subheader.style.fontSize}; text-align:${subheader.style.textAlign};">${subheader.innerHTML}</div>`;
-
-                document.getElementById('footer_hidden').value =
-                    `<div style="font-family:${footer.style.fontFamily}; font-size:${footer.style.fontSize}; text-align:${footer.style.textAlign};">${footer.innerHTML}</div>`;
+            function wrapWithStyle(element) {
+                const style = element.getAttribute("style") || "";
+                return `<div style="${style}">${element.innerHTML}</div>`;
             }
 
             function parseSpecial(html) {
@@ -308,6 +290,7 @@ if (!$template) die("Template not found.");
 
             window.onload = updatePreview;
         </script>
+
 
         <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
