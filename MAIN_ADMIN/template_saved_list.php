@@ -25,7 +25,7 @@ $result = $conn->query($sql);
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table id="templateTable" class="table table-bordered table-hover align-middle">
+            <table id="templateTable" class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
                         <th>Template Name</th>
