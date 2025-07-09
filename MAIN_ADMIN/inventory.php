@@ -163,6 +163,11 @@ $stmt->close();
 
         <div class="card shadow-sm mb-4">
           <form action="generate_selected_report.php" method="POST" target="_blank">
+            <?php
+            // Fetch available report templates
+            $template_stmt = $conn->query("SELECT id, template_name FROM report_templates ORDER BY created_at DESC");
+            ?>
+
             <input type="hidden" name="office" value="<?= $selected_office ?>">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
               <h5 class="mb-0">Asset List</h5>
@@ -186,6 +191,12 @@ $stmt->close();
                 <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm">
                   <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
                 </button>
+                <select name="template_id" class="form-select form-select-sm d-inline-block w-auto" required>
+                  <option value="" disabled selected>Select Template</option>
+                  <?php while ($template = $template_stmt->fetch_assoc()): ?>
+                    <option value="<?= $template['id'] ?>"><?= htmlspecialchars($template['template_name']) ?></option>
+                  <?php endwhile; ?>
+                </select>
               </div>
             </div>
             <div class="alert alert-danger" role="alert" id="checkboxAlert">
@@ -254,7 +265,7 @@ $stmt->close();
                       <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
                       <td class="text-nowrap">
                         <div class="btn-group" role="group">
-                          
+
 
                           <!-- Edit Button -->
                           <button type="button"
@@ -364,7 +375,7 @@ $stmt->close();
         </div>
 
         <div class="card shadow-sm">
-          <form action="generate_selected_report.php" method="POST" >
+          <form action="generate_selected_report.php" method="POST">
             <input type="hidden" name="office" value="<?= $selected_office ?>">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
               <h5 class="mb-0">Consumable List</h5>

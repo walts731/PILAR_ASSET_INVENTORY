@@ -25,6 +25,7 @@ if (!isset($_SESSION['office_id'])) {
   // SELECT `id`, `office_name`, `icon` FROM `offices` 
   // SELECT `id`, `category_name`, `type` FROM `categories` 
   // SELECT `id`, `asset_name`, `category`, `description`, `quantity`, `unit`, `status`, `acquisition_date`, `office_id`, `red_tagged`, `last_updated`, `value`, `qr_code`, `type` FROM `assets` 
+  // SELECT `id`, `template_name`, `header_html`, `subheader_html`, `footer_html`, `left_logo_path`, `right_logo_path`, `created_at`, `updated_at`, `created_by`, `updated_by` FROM `report_templates` 
 }
 
 // Fetch full name

@@ -229,3 +229,13 @@ function getSelectedAssetIds() {
   }
 
   document.getElementById('bulkReleaseBtn').addEventListener('click', () => handleBulkAction('release'));
+
+  document.querySelectorAll("form").forEach(form => {
+    form.addEventListener("submit", function (e) {
+      const selectedTemplate = this.querySelector("select[name='template_id']");
+      if (!selectedTemplate || !selectedTemplate.value) {
+        e.preventDefault();
+        alert("Please select a report template before generating a report.");
+      }
+    });
+  });
