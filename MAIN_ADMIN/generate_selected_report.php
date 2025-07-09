@@ -6,7 +6,8 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 
 // Placeholder parsing and HTML decoding
-function parseTemplateContent($html) {
+function parseTemplateContent($html)
+{
     $decoded = html_entity_decode($html); // Decode DB-escaped HTML
 
     $placeholders = [
@@ -77,8 +78,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets']) &
     $html = '
     <style>
         body {
-            font-family: DejaVu Sans, sans-serif;
-            font-size: 12px;
             margin: 0;
             padding: 20px;
         }
@@ -123,13 +122,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets']) &
     </style>
 
     <div class="header-row">
-        <div class="header-col left-col">' . ($leftLogoBase64 ? '<img src="' . $leftLogoBase64 . '" class="logo">' : '') . '</div>
-        <div class="header-col center-col" style="text-align: center;">
-            ' . $headerHtml . '
-            ' . $subHeaderHtml . '
-        </div>
-        <div class="header-col right-col" style="text-align: right;">' . ($rightLogoBase64 ? '<img src="' . $rightLogoBase64 . '" class="logo">' : '') . '</div>
+    <div class="header-col left-col">' . ($leftLogoBase64 ? '<img src="' . $leftLogoBase64 . '" class="logo">' : '') . '</div>
+    <div class="header-col center-col">
+        <div style="text-align: center;">' . $headerHtml . '</div>
     </div>
+    <div class="header-col right-col" style="text-align: right;">' . ($rightLogoBase64 ? '<img src="' . $rightLogoBase64 . '" class="logo">' : '') . '</div>
+</div>
+
+<!-- Subheader full-width row -->
+<div class="subheader-row" style="width: 100%; margin-top: -10px; margin-bottom: 15px;">
+    <div class="col-md-12" style="text-align: center;">
+        ' . $subHeaderHtml . '
+    </div>
+</div>
+
 
     <table>
         <thead>
@@ -198,7 +204,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets']) &
     // Output PDF in browser
     $dompdf->stream($reportFilename, ['Attachment' => false]);
     exit;
-
 } else {
     // Redirect if invalid request
     $office_id = $_GET['office'] ?? ($_POST['office'] ?? '');
