@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 $template_id = $_POST['template_id'] ?? null;
 if (!$template_id) die("Invalid template ID.");
 
-// Fetch existing logo paths (for deletion if needed)
+// Fetch existing logo paths
 $stmt = $conn->prepare("SELECT left_logo_path, right_logo_path FROM report_templates WHERE id = ?");
 $stmt->bind_param("i", $template_id);
 $stmt->execute();
@@ -34,16 +34,16 @@ $right_logo_path = $existing_right_logo_path;
 
 // Remove left logo if flagged
 if ($remove_left_logo === '1') {
-    if (!empty($existing_left_logo_path) && file_exists($existing_left_logo_path)) {
-        unlink($existing_left_logo_path);
+    if (!empty($existing_left_logo_path) && file_exists('../' . $existing_left_logo_path)) {
+        unlink('../' . $existing_left_logo_path);
     }
     $left_logo_path = '';
 }
 
 // Remove right logo if flagged
 if ($remove_right_logo === '1') {
-    if (!empty($existing_right_logo_path) && file_exists($existing_right_logo_path)) {
-        unlink($existing_right_logo_path);
+    if (!empty($existing_right_logo_path) && file_exists('../' . $existing_right_logo_path)) {
+        unlink('../' . $existing_right_logo_path);
     }
     $right_logo_path = '';
 }
@@ -51,30 +51,28 @@ if ($remove_right_logo === '1') {
 // Upload new left logo if provided
 if (isset($_FILES['left_logo']) && $_FILES['left_logo']['error'] === UPLOAD_ERR_OK) {
     $tmp_name = $_FILES['left_logo']['tmp_name'];
-    $filename = 'img/left_' . time() . '_' . basename($_FILES['left_logo']['name']);
+    $filename = '../uploads/' . time() . '_' . basename($_FILES['left_logo']['name']);
     move_uploaded_file($tmp_name, '../' . $filename);
     $left_logo_path = $filename;
 
-    // Delete old logo
-    if (!empty($existing_left_logo_path) && file_exists($existing_left_logo_path)) {
-        unlink($existing_left_logo_path);
+    if (!empty($existing_left_logo_path) && file_exists('../' . $existing_left_logo_path)) {
+        unlink('../' . $existing_left_logo_path);
     }
 }
 
 // Upload new right logo if provided
 if (isset($_FILES['right_logo']) && $_FILES['right_logo']['error'] === UPLOAD_ERR_OK) {
     $tmp_name = $_FILES['right_logo']['tmp_name'];
-    $filename = 'img/right_' . time() . '_' . basename($_FILES['right_logo']['name']);
+    $filename = '../uploads/' . time() . '_' . basename($_FILES['right_logo']['name']);
     move_uploaded_file($tmp_name, '../' . $filename);
     $right_logo_path = $filename;
 
-    // Delete old logo
-    if (!empty($existing_right_logo_path) && file_exists($existing_right_logo_path)) {
-        unlink($existing_right_logo_path);
+    if (!empty($existing_right_logo_path) && file_exists('../' . $existing_right_logo_path)) {
+        unlink('../' . $existing_right_logo_path);
     }
 }
 
-// Final Update Query
+// Final Update
 $stmt = $conn->prepare("UPDATE report_templates SET 
     template_name = ?, 
     header_html = ?, 
