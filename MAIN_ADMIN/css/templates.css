@@ -1,9 +1,16 @@
-        .preview-box {
-            border: 1px solid #ccc;
-            padding: 20px;
-            background-color: #fff;
-            height: 100%;
-        }
+        /* Landscape preview box */
+.preview-box {
+    width: 100%;
+    max-width: 1120px; /* ~A4 landscape width */
+    aspect-ratio: 4 / 3;
+    margin: auto;
+    background: white;
+    border: 1px solid #ddd;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow: auto;
+}
+
 
         .toolbar button {
             margin-right: 5px;

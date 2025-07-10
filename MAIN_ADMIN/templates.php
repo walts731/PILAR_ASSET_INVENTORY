@@ -178,19 +178,11 @@ $stmt->close();
             <?php include 'template_saved_list.php'; ?>
         </div>
     </div>
-    <!-- Upload Format Modal -->
     <?php include 'modals/upload_template_modal.php'; ?>
-    <!-- ✅ jQuery (load first) -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-
-    <!-- ✅ Bootstrap Bundle (only once) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- ✅ DataTables JS -->
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-
-    <!-- ✅ Your custom JS -->
     <script src="js/dashboard.js"></script>
     <script src="js/templates.js"></script>
 
