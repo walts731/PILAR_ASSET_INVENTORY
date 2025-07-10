@@ -115,3 +115,50 @@
         function getActiveSection() {
             return activeEditable;
         }
+
+        function insertTable(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (section) {
+        const table = document.createElement("table");
+        table.className = "table table-bordered";
+        table.innerHTML = `<tr><td>[blank]</td><td>[blank]</td></tr>`;
+        section.appendChild(table);
+        updatePreview();
+    }
+}
+
+function addRow(sectionId) {
+    const section = document.getElementById(sectionId);
+    const table = section.querySelector("table");
+    if (table) {
+        const cols = table.rows[0]?.cells.length || 1;
+        const newRow = table.insertRow();
+        for (let i = 0; i < cols; i++) {
+            const cell = newRow.insertCell();
+            cell.textContent = "[blank]";
+        }
+        updatePreview();
+    }
+}
+
+function addColumn(sectionId) {
+    const section = document.getElementById(sectionId);
+    const table = section.querySelector("table");
+    if (table) {
+        for (let i = 0; i < table.rows.length; i++) {
+            const cell = table.rows[i].insertCell();
+            cell.textContent = "[blank]";
+        }
+        updatePreview();
+    }
+}
+
+function toggleTableBorders(sectionId) {
+    const section = document.getElementById(sectionId);
+    const tables = section.querySelectorAll("table");
+
+    tables.forEach(table => {
+        table.classList.toggle("table-bordered");
+        updatePreview();
+    });
+}

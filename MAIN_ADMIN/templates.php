@@ -133,7 +133,16 @@ $stmt->close();
                                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setAlignment('subheader', 'left')"><i class="bi bi-align-start"></i></button>
                                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setAlignment('subheader', 'center')"><i class="bi bi-align-center"></i></button>
                                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setAlignment('subheader', 'right')"><i class="bi bi-align-end"></i></button>
+                                    </div>'
+                                    <!-- Add Table Controls -->
+                                    <div class="btn-group mb-2" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-success" onclick="insertTable('subheader')">Insert Table</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRow('subheader')">Add Row</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addColumn('subheader')">Add Column</button>
                                     </div>
+                                    <button type="button" class="btn btn-sm btn-outline-dark" onclick="toggleTableBorders('subheader')">
+                                        Toggle Borders
+                                    </button>
                                     <div id="subheader" name="subheader_content" class="rich-input" contenteditable="true" oninput="updatePreview()"></div>
                                 </div>
                                 <div class="mb-3">
@@ -143,6 +152,15 @@ $stmt->close();
                                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setAlignment('footer', 'center')"><i class="bi bi-align-center"></i></button>
                                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setAlignment('footer', 'right')"><i class="bi bi-align-end"></i></button>
                                     </div>
+                                    <!-- Add Table Controls -->
+                                    <div class="btn-group mb-2" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-success" onclick="insertTable('footer')">Insert Table</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRow('footer')">Add Row</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addColumn('footer')">Add Column</button>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-dark" onclick="toggleTableBorders('footer')">
+                                        Toggle Borders
+                                    </button>
                                     <div id="footer" name="footer_content" class="rich-input" contenteditable="true" oninput="updatePreview()"></div>
                                 </div>
                                 <input type="hidden" name="header_content" id="header_hidden">

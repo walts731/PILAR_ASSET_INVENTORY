@@ -94,3 +94,20 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
         }
+
+        .rich-input table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.rich-input td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    min-width: 60px;
+}
+
+/* Optional clarity: borderless tables still have padding */
+.rich-input table td {
+    padding: 6px;
+    min-width: 60px;
+}

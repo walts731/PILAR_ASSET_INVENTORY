@@ -123,7 +123,13 @@ if (!$template) die("Template not found.");
                             <button type="button" class="btn btn-outline-secondary" onclick="setAlignment('subheader', 'center')">Center</button>
                             <button type="button" class="btn btn-outline-secondary" onclick="setAlignment('subheader', 'right')">Right</button>
                         </div>
-
+                        <!-- Subheader Table Controls -->
+                        <div class="btn-group btn-group-sm my-2">
+                            <button type="button" class="btn btn-outline-success" onclick="insertTable('subheader')">Insert Table</button>
+                            <button type="button" class="btn btn-outline-primary" onclick="addRow('subheader')">Add Row</button>
+                            <button type="button" class="btn btn-outline-primary" onclick="addColumn('subheader')">Add Column</button>
+                            <button type="button" class="btn btn-outline-dark" onclick="toggleTableBorders('subheader')">Toggle Borders</button>
+                        </div>
 
                         <div class="mb-3">
                             <label class="form-label">Subheader</label>
@@ -138,7 +144,13 @@ if (!$template) die("Template not found.");
                             <button type="button" class="btn btn-outline-secondary" onclick="setAlignment('footer', 'center')">Center</button>
                             <button type="button" class="btn btn-outline-secondary" onclick="setAlignment('footer', 'right')">Right</button>
                         </div>
-
+                        <!-- Footer Table Controls -->
+                        <div class="btn-group btn-group-sm my-2">
+                            <button type="button" class="btn btn-outline-success" onclick="insertTable('footer')">Insert Table</button>
+                            <button type="button" class="btn btn-outline-primary" onclick="addRow('footer')">Add Row</button>
+                            <button type="button" class="btn btn-outline-primary" onclick="addColumn('footer')">Add Column</button>
+                            <button type="button" class="btn btn-outline-dark" onclick="toggleTableBorders('footer')">Toggle Borders</button>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label">Footer</label>
                             <div id="footer" class="rich-input" contenteditable="true" oninput="updatePreview()"><?= $template['footer_html'] ?></div>
