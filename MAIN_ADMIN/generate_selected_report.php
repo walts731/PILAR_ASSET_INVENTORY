@@ -100,17 +100,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets']) &
         .logo {
             height: 80px;
         }
+        
         table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-            margin-top: 10px;
-        }
-        th, td {
-            border: 1px solid #000;
-            padding: 6px;
-            text-align: left;
-        }
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin-top: 10px;
+}
+th, td {
+    padding: 6px;
+    text-align: left;
+}
+
         th {
             background-color: #f2f2f2;
         }
