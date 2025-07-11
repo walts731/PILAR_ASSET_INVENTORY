@@ -37,7 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Redirect based on role
                 switch ($user["role"]) {
                     case "super_admin":
-                        header("Location: OMPDC/system_admin_dashboard.php?office=" . $user["office_id"]);
+                        header("Location: SYSTEM_ADMIN/system_admin_dashboard.php?office=" . $user["office_id"]);
                         break;
                     case "office_admin":
                         header("Location: ADMIN/admin_dashboard.php?office=" . $user["office_id"]);
