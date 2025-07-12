@@ -12,7 +12,8 @@ $user_id = $_SESSION['user_id'];
 
 // Fetch incoming borrow requests for assets owned by this office
 $query = "
-  SELECT br.id AS request_id, u.fullname AS requester, a.asset_name, a.description, a.unit, br.status, br.requested_at, o.office_name
+  SELECT br.id AS request_id, u.fullname AS requester, a.asset_name, a.description, a.unit,
+         br.quantity, br.status, br.requested_at, o.office_name
   FROM borrow_requests br
   JOIN assets a ON br.asset_id = a.id
   JOIN users u ON br.user_id = u.id
@@ -48,7 +49,6 @@ $result = $stmt->get_result();
         <div>
           <i class="bi bi-inbox"></i> Incoming Borrow Requests
         </div>
-        
       </div>
 
       <div class="card-body">
@@ -61,6 +61,7 @@ $result = $stmt->get_result();
                 <th>Asset</th>
                 <th>Description</th>
                 <th>Unit</th>
+                <th>Quantity</th>
                 <th>Requested At</th>
                 <th>Status</th>
                 <th>Action</th>
@@ -74,6 +75,7 @@ $result = $stmt->get_result();
                   <td><?= htmlspecialchars($row['asset_name']) ?></td>
                   <td><?= htmlspecialchars($row['description']) ?></td>
                   <td><?= htmlspecialchars($row['unit']) ?></td>
+                  <td><?= intval($row['quantity']) ?></td>
                   <td><?= date('F j, Y h:i A', strtotime($row['requested_at'])) ?></td>
                   <td>
                     <span class="badge bg-<?php
