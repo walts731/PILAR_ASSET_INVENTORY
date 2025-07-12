@@ -101,6 +101,9 @@ $result = $stmt->get_result();
                             <i class="bi bi-box-arrow-up"></i> Borrowed Assets
                         </a>
 
+                        <a href="incoming_borrow_requests.php" class="btn btn-warning btn-sm">
+                            <i class="bi bi-inbox"></i> Incoming Borrow Requests
+                        </a>
                     </div>
                 </div>
 
