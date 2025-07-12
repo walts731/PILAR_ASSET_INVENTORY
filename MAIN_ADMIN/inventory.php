@@ -111,7 +111,7 @@ $stmt->close();
           $total++;
           if ($r['status'] === 'available') $active++;
           if ($r['status'] === 'borrowed') $borrowed++;
-          if ($r['red_tagged']) $red_tagged++;
+          if ($r['status'] === 'red_tagged') $red_tagged++;
         }
         ?>
         <div class="row mb-4">
@@ -162,7 +162,7 @@ $stmt->close();
         </div>
 
         <div class="card shadow-sm mb-4">
-          <form action="generate_selected_report.php" method="POST" target="_blank">
+<form action="generate_selected_report.php" method="POST" target="_blank" class="template-check-form">
             <?php
             // Fetch available report templates
             $template_stmt = $conn->query("SELECT id, template_name FROM report_templates ORDER BY created_at DESC");

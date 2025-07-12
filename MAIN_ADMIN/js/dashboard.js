@@ -230,7 +230,7 @@ function getSelectedAssetIds() {
 
   document.getElementById('bulkReleaseBtn').addEventListener('click', () => handleBulkAction('release'));
 
-  document.querySelectorAll("form").forEach(form => {
+  document.querySelectorAll(".template-check-form").forEach(form => {
     form.addEventListener("submit", function (e) {
       const selectedTemplate = this.querySelector("select[name='template_id']");
       if (!selectedTemplate || !selectedTemplate.value) {
