@@ -15,6 +15,9 @@
             <a href="inventory.php" class="nav-link <?= ($page == 'inventory') ? 'active' : '' ?>">
                 <i class="bi bi-box-seam"></i> Inventory
             </a>
+            <a href="borrow.php" class="nav-link <?= ($page == 'borrow') ? 'active' : '' ?>">
+                <i class="bi bi-arrow-left-right"></i> Borrow
+            </a>
             <a href="reports.php" class="nav-link <?= ($page == 'reports') ? 'active' : '' ?>">
                 <i class="bi bi-bar-chart-line"></i> Reports
             </a>

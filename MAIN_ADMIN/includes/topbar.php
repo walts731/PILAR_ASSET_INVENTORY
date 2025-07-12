@@ -20,6 +20,7 @@ $custom_titles = [
   "asset_archive" => "Archive",
   "user" => "User Management",
   "templates" => "Templates",
+  "borrow" => "Borrowing Management",
 ];
 
 if (array_key_exists($current_page, $custom_titles)) {

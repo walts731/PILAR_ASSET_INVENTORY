@@ -174,17 +174,11 @@ $stmt->close();
 
               <div class="d-flex flex-wrap gap-2">
                 <!-- Bulk Actions -->
-                <button type="button" class="btn btn-outline-success btn-sm rounded-pill" id="bulkBorrowBtn">
-                  <i class="bi bi-box-arrow-in-right"></i> Borrow
-                </button>
-                <button type="button" class="btn btn-outline-warning btn-sm rounded-pill" id="bulkReleaseBtn">
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" id="bulkReleaseBtn">
                   <i class="bi bi-box-arrow-up"></i> Release
                 </button>
                 <button type="button" class="btn btn-outline-info btn-sm rounded-pill" id="bulkTransferBtn">
                   <i class="bi bi-arrow-left-right"></i> Transfer
-                </button>
-                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" id="bulkReturnBtn">
-                  <i class="bi bi-box-arrow-in-left"></i> Return
                 </button>
 
                 <!-- Existing Generate Report Button -->
