@@ -50,26 +50,33 @@ $low_stock_count = count($low_stock_items);
   </div>
 
   <!-- Page Title & Breadcrumb -->
-  <div class="order-3 order-sm-2 flex-grow-1">
-    <?php
-    // Page-specific breadcrumb navigation
-    if ($current_page === 'edit_template') {
-      echo '<h5 class="m-0 text-center text-sm-start">
-              <a href="templates.php" class="text-decoration-none text-primary">Templates</a>
-              <span class="mx-1 text-muted"> &gt; </span>
-              <span class="text-dark">Edit Template</span>
-            </h5>';
-    } elseif ($current_page === 'borrow_requests') {
-      echo '<h5 class="m-0 text-center text-sm-start">
-              <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
-              <span class="mx-1 text-muted"> &gt; </span>
-              <span class="text-dark">Borrow Request</span>
-            </h5>';
-    } else {
-      echo '<h5 class="m-0 text-center text-sm-start">' . htmlspecialchars($page_title) . '</h5>';
-    }
-    ?>
-  </div>
+<div class="order-3 order-sm-2 flex-grow-1">
+  <?php
+  // Page-specific breadcrumb navigation
+  if ($current_page === 'edit_template') {
+    echo '<h5 class="m-0 text-center text-sm-start">
+            <a href="templates.php" class="text-decoration-none text-primary">Templates</a>
+            <span class="mx-1 text-muted"> &gt; </span>
+            <span class="text-dark">Edit Template</span>
+          </h5>';
+  } elseif ($current_page === 'borrow_requests') {
+    echo '<h5 class="m-0 text-center text-sm-start">
+            <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
+            <span class="mx-1 text-muted"> &gt; </span>
+            <span class="text-dark">Borrow Request</span>
+          </h5>';
+  } elseif ($current_page === 'borrowed_assets') {
+    echo '<h5 class="m-0 text-center text-sm-start">
+            <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
+            <span class="mx-1 text-muted"> &gt; </span>
+            <span class="text-dark">Borrowed Assets</span>
+          </h5>';
+  } else {
+    echo '<h5 class="m-0 text-center text-sm-start">' . htmlspecialchars($page_title) . '</h5>';
+  }
+  ?>
+</div>
+
 
 
 
