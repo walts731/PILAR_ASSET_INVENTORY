@@ -161,8 +161,8 @@ $stmt->close();
                   ?>
 
                   <?php if ($user['status'] === 'active'): ?>
-                    <?php if ($user['role'] === 'admin'): ?>
-                      <span class="text-muted small" title="Admins cannot be deactivated">
+                    <?php if ($user['role'] === 'super_admin'): ?>
+                      <span class="text-muted small" title="Super Admin cannot be deactivated">
                         <i class="bi bi-shield-lock-fill"></i>
                       </span>
                     <?php else: ?>

@@ -18,13 +18,13 @@ $stmt->bind_result($role);
 $stmt->fetch();
 $stmt->close();
 
-// Prevent deactivation of admin
-if ($role === 'admin') {
+// Prevent deactivation of super_admin only
+if ($role === 'super_admin') {
   header("Location: users.php?deactivate=forbidden&office=$office_id");
   exit();
 }
 
-// Proceed to deactivate if not admin
+// Proceed to deactivate
 $stmt = $conn->prepare("UPDATE users SET status = 'inactive' WHERE id = ?");
 $stmt->bind_param("i", $user_id);
 
