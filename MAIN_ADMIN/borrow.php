@@ -49,7 +49,7 @@ $stmt->execute();
 $available_assets = $stmt->get_result();
 $stmt->close();
 
-// Fetch borrowed assets (for second tab)
+// Fetch borrowed assets
 $borrowed_query = "
 SELECT a.asset_name, a.description, a.unit, br.status, br.requested_at, br.approved_at, u.fullname AS borrower, o.office_name
 FROM borrow_requests br
@@ -66,13 +66,13 @@ $borrowed_assets = $conn->query($borrowed_query);
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Borrow Assets</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
-    <link rel="stylesheet" href="css/dashboard.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 
 <body>
@@ -82,6 +82,22 @@ $borrowed_assets = $conn->query($borrowed_query);
         <?php include 'includes/topbar.php'; ?>
 
         <div class="container mt-4">
+            <?php if (!empty($_SESSION['success_message'])): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <?= $_SESSION['success_message'] ?>
+                    <?php unset($_SESSION['success_message']); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($_SESSION['error_message'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <?= $_SESSION['error_message'] ?>
+                    <?php unset($_SESSION['error_message']); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+
             <ul class="nav nav-tabs" id="assetTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="available-tab" data-bs-toggle="tab" data-bs-target="#available" type="button" role="tab">Available Assets</button>
@@ -92,7 +108,7 @@ $borrowed_assets = $conn->query($borrowed_query);
             </ul>
 
             <div class="tab-content mt-3" id="assetTabsContent">
-                <!-- Available Assets Tab -->
+                <!-- Available Assets -->
                 <div class="tab-pane fade show active" id="available" role="tabpanel">
                     <div class="card shadow-sm">
                         <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -108,12 +124,6 @@ $borrowed_assets = $conn->query($borrowed_query);
                                     </select>
                                 </form>
 
-                                <form id="borrowForm" action="process_borrow.php?office_id=<?= $selected_office_id ?>" method="POST" class="d-inline">
-                                    <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill">
-                                        <i class="bi bi-check2-square"></i> Borrow
-                                    </button>
-                                </form>
-
                                 <a href="borrow_requests.php" class="btn btn-outline-secondary btn-sm rounded-pill">
                                     <i class="bi bi-journal-check"></i> Borrow Requests
                                 </a>
@@ -127,53 +137,53 @@ $borrowed_assets = $conn->query($borrowed_query);
                         </div>
 
                         <div class="card-body">
-                            <div class="table-responsive">
-                                <table id="availableAssetsTable" class="table table-striped align-middle">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th><input type="checkbox" id="selectAll"></th>
-                                            <th>Asset Name</th>
-                                            <th>Description</th>
-                                            <th>Qty</th>
-                                            <th>Unit</th>
-                                            <th>Value</th>
-                                            <th>Acquired</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php while ($row = $available_assets->fetch_assoc()): ?>
-                                            <tr>
-                                                <td>
-                                                    <input type="checkbox" name="selected_assets[]"
-                                                        value="<?= $row['id'] . '|' . $selected_office_id ?>"
-                                                        class="asset-checkbox"
-                                                        data-asset-id="<?= $row['id'] ?>">
-                                                </td>
-                                                <td><?= htmlspecialchars($row['asset_name']) ?></td>
-                                                <td><?= htmlspecialchars($row['description']) ?></td>
-                                                <td><?= $row['quantity'] ?></td>
-                                                <td><?= $row['unit'] ?></td>
-                                                <td>₱<?= number_format($row['value'], 2) ?></td>
-                                                <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
-                                                <td>
-                                                    <input type="number" name="quantities[<?= $row['id'] ?>]"
-                                                        class="form-control form-control-sm quantity-input"
-                                                        min="1" max="<?= $row['quantity'] ?>"
-                                                        placeholder="Qty"
-                                                        disabled>
-                                                </td>
-                                            </tr>
+                            <form action="process_borrow.php?office_id=<?= $selected_office_id ?>" method="POST">
+                                <div class="mb-3 text-end">
+                                    <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill">
+                                        <i class="bi bi-check2-square"></i> Borrow Selected
+                                    </button>
+                                </div>
 
-                                        <?php endwhile; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                                <div class="table-responsive">
+                                    <table id="availableAssetsTable" class="table table-striped align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th><input type="checkbox" id="selectAll"></th>
+                                                <th>Asset Name</th>
+                                                <th>Description</th>
+                                                <th>Qty</th>
+                                                <th>Unit</th>
+                                                <th>Value</th>
+                                                <th>Acquired</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php while ($row = $available_assets->fetch_assoc()): ?>
+                                                <tr>
+                                                    <td>
+                                                        <input type="checkbox" name="selected_assets[]" value="<?= $row['id'] . '|' . $selected_office_id ?>" class="asset-checkbox" data-asset-id="<?= $row['id'] ?>">
+                                                    </td>
+                                                    <td><?= htmlspecialchars($row['asset_name']) ?></td>
+                                                    <td><?= htmlspecialchars($row['description']) ?></td>
+                                                    <td><?= $row['quantity'] ?></td>
+                                                    <td><?= $row['unit'] ?></td>
+                                                    <td>₱<?= number_format($row['value'], 2) ?></td>
+                                                    <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
+                                                    <td>
+                                                        <input type="number" name="quantities[<?= $row['id'] ?>]" class="form-control form-control-sm quantity-input" min="1" max="<?= $row['quantity'] ?>" placeholder="Qty" disabled>
+                                                    </td>
+                                                </tr>
+                                            <?php endwhile; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
 
-                <!-- Borrowed Assets Tab -->
+                <!-- Borrowed Assets -->
                 <div class="tab-pane fade" id="borrowed" role="tabpanel">
                     <div class="card shadow-sm">
                         <div class="card-header">
@@ -200,11 +210,7 @@ $borrowed_assets = $conn->query($borrowed_query);
                                                 <td><?= htmlspecialchars($row['asset_name']) ?></td>
                                                 <td><?= htmlspecialchars($row['description']) ?></td>
                                                 <td><?= htmlspecialchars($row['unit']) ?></td>
-                                                <td>
-                                                    <span class="badge bg-<?= $row['status'] === 'borrowed' ? 'success' : 'warning' ?>">
-                                                        <?= ucfirst($row['status']) ?>
-                                                    </span>
-                                                </td>
+                                                <td><span class="badge bg-<?= $row['status'] === 'borrowed' ? 'success' : 'warning' ?>"><?= ucfirst($row['status']) ?></span></td>
                                                 <td><?= date('F j, Y h:i A', strtotime($row['requested_at'])) ?></td>
                                                 <td><?= $row['approved_at'] ? date('F j, Y h:i A', strtotime($row['approved_at'])) : 'N/A' ?></td>
                                                 <td><?= htmlspecialchars($row['borrower']) ?></td>
@@ -232,35 +238,20 @@ $borrowed_assets = $conn->query($borrowed_query);
             $('#borrowedAssetsTable').DataTable();
 
             $('#selectAll').on('click', function() {
-                $('input[name="selected_assets[]"]').prop('checked', this.checked);
-            });
-        });
-
-        document.addEventListener("DOMContentLoaded", function() {
-            // Handle checkbox changes
-            document.querySelectorAll(".asset-checkbox").forEach(function(checkbox) {
-                checkbox.addEventListener("change", function() {
-                    const assetId = this.dataset.assetId;
-                    const qtyInput = document.querySelector(`input[name="quantities[${assetId}]"]`);
-
-                    if (this.checked) {
-                        qtyInput.disabled = false;
-                        qtyInput.required = true;
-                    } else {
-                        qtyInput.disabled = true;
-                        qtyInput.required = false;
-                        qtyInput.value = ''; // optional: clear value
-                    }
-                });
+                $('.asset-checkbox').prop('checked', this.checked).trigger('change');
             });
 
-            // Handle "Select All"
-            document.getElementById("selectAll")?.addEventListener("click", function() {
-                const checkboxes = document.querySelectorAll(".asset-checkbox");
-                checkboxes.forEach(cb => {
-                    cb.checked = this.checked;
-                    cb.dispatchEvent(new Event('change')); // Trigger the logic above
-                });
+            $('.asset-checkbox').on('change', function() {
+                const assetId = this.dataset.assetId;
+                const qtyInput = document.querySelector(`input[name="quantities[${assetId}]"]`);
+                if (this.checked) {
+                    qtyInput.disabled = false;
+                    qtyInput.required = true;
+                } else {
+                    qtyInput.disabled = true;
+                    qtyInput.required = false;
+                    qtyInput.value = '';
+                }
             });
         });
     </script>
