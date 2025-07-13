@@ -11,32 +11,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
     $request_id = intval($_POST['request_id']);
     $action = $_POST['action'];
 
-    // Get borrow request details
+    // Get current borrow request and asset data
     $stmt = $conn->prepare("
-        SELECT br.asset_id, br.quantity, a.quantity AS available_quantity
+        SELECT br.asset_id, br.quantity, br.status AS current_status, a.quantity AS available_quantity
         FROM borrow_requests br
         JOIN assets a ON br.asset_id = a.id
         WHERE br.id = ?
     ");
     $stmt->bind_param("i", $request_id);
     $stmt->execute();
-    $stmt->bind_result($asset_id, $borrow_quantity, $available_quantity);
+    $stmt->bind_result($asset_id, $borrow_quantity, $current_status, $available_quantity);
     $stmt->fetch();
     $stmt->close();
 
     if ($action === 'accept') {
-        // Validate available quantity
         if ($available_quantity >= $borrow_quantity) {
-            // Deduct quantity from assets table
+            // Deduct asset quantity
             $new_quantity = $available_quantity - $borrow_quantity;
+            $status = ($new_quantity <= 0) ? 'borrowed' : 'Available';
 
             $updateAsset = $conn->prepare("UPDATE assets SET quantity = ?, status = ? WHERE id = ?");
-            $status = ($new_quantity <= 0) ? 'borrowed' : 'Available';
             $updateAsset->bind_param("isi", $new_quantity, $status, $asset_id);
             $updateAsset->execute();
             $updateAsset->close();
 
-            // Update borrow request status
+            // Update request status
             $updateRequest = $conn->prepare("UPDATE borrow_requests SET status = 'approved', approved_at = NOW() WHERE id = ?");
             $updateRequest->bind_param("i", $request_id);
             $updateRequest->execute();
@@ -48,6 +47,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
         }
 
     } elseif ($action === 'reject') {
+        // If previously approved, restore quantity back to assets
+        if ($current_status === 'approved') {
+            $restored_quantity = $available_quantity + $borrow_quantity;
+
+            $updateAsset = $conn->prepare("UPDATE assets SET quantity = ?, status = 'Available' WHERE id = ?");
+            $updateAsset->bind_param("ii", $restored_quantity, $asset_id);
+            $updateAsset->execute();
+            $updateAsset->close();
+        }
+
         $updateRequest = $conn->prepare("UPDATE borrow_requests SET status = 'rejected' WHERE id = ?");
         $updateRequest->bind_param("i", $request_id);
         $updateRequest->execute();

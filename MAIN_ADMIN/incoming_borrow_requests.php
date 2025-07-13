@@ -53,7 +53,7 @@ $result = $stmt->get_result();
 
       <div class="card-body">
         <div class="table-responsive">
-          <table class="table table-striped align-middle">
+          <table class="table table-striped align-middle" id="incomingTable">
             <thead class="table-light">
               <tr>
                 <th>Requester</th>
@@ -69,7 +69,7 @@ $result = $stmt->get_result();
             </thead>
             <tbody>
               <?php while ($row = $result->fetch_assoc()): ?>
-                <tr>
+                <tr data-request-id="<?= $row['request_id'] ?>">
                   <td><?= htmlspecialchars($row['requester']) ?></td>
                   <td><?= htmlspecialchars($row['office_name']) ?></td>
                   <td><?= htmlspecialchars($row['asset_name']) ?></td>
@@ -81,13 +81,33 @@ $result = $stmt->get_result();
                     <span class="badge bg-<?php
                       echo $row['status'] === 'accepted' ? 'success' :
                           ($row['status'] === 'rejected' ? 'danger' : 'warning');
-                    ?>">
+                    ?>" id="status-badge-<?= $row['request_id'] ?>">
                       <?= ucfirst($row['status']) ?>
                     </span>
                   </td>
                   <td>
-                    <?php if ($row['status'] === 'pending'): ?>
-                      <form method="POST" action="process_borrow_decision.php" class="d-flex gap-1">
+                    <div class="action-buttons" id="buttons-<?= $row['request_id'] ?>">
+                      <?php if ($row['status'] === 'pending'): ?>
+                        <form method="POST" action="process_borrow_decision.php" class="d-flex gap-1">
+                          <input type="hidden" name="request_id" value="<?= $row['request_id'] ?>">
+                          <button name="action" value="accept" class="btn btn-success btn-sm" title="Accept">
+                            <i class="bi bi-check-circle"></i>
+                          </button>
+                          <button name="action" value="reject" class="btn btn-danger btn-sm" title="Reject">
+                            <i class="bi bi-x-circle"></i>
+                          </button>
+                        </form>
+                      <?php else: ?>
+                        <!-- Edit icon button -->
+                        <button class="btn btn-secondary btn-sm edit-btn" title="Edit Status" data-request-id="<?= $row['request_id'] ?>">
+                          <i class="bi bi-pencil-square"></i>
+                        </button>
+                      <?php endif; ?>
+                    </div>
+
+                    <!-- Hidden editable form -->
+                    <div class="edit-form d-none" id="edit-form-<?= $row['request_id'] ?>">
+                      <form method="POST" action="process_borrow_decision.php" class="d-flex gap-1 mt-1">
                         <input type="hidden" name="request_id" value="<?= $row['request_id'] ?>">
                         <button name="action" value="accept" class="btn btn-success btn-sm" title="Accept">
                           <i class="bi bi-check-circle"></i>
@@ -95,10 +115,11 @@ $result = $stmt->get_result();
                         <button name="action" value="reject" class="btn btn-danger btn-sm" title="Reject">
                           <i class="bi bi-x-circle"></i>
                         </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm cancel-edit" title="Cancel" data-request-id="<?= $row['request_id'] ?>">
+                          <i class="bi bi-x-lg"></i>
+                        </button>
                       </form>
-                    <?php else: ?>
-                      <span class="text-muted small fst-italic">No actions</span>
-                    <?php endif; ?>
+                    </div>
                   </td>
                 </tr>
               <?php endwhile; ?>
@@ -116,7 +137,19 @@ $result = $stmt->get_result();
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script>
   $(document).ready(function () {
-    $('.table').DataTable();
+    $('#incomingTable').DataTable();
+
+    $('.edit-btn').on('click', function () {
+      const requestId = $(this).data('request-id');
+      $('#buttons-' + requestId).hide();
+      $('#edit-form-' + requestId).removeClass('d-none');
+    });
+
+    $('.cancel-edit').on('click', function () {
+      const requestId = $(this).data('request-id');
+      $('#edit-form-' + requestId).addClass('d-none');
+      $('#buttons-' + requestId).show();
+    });
   });
 </script>
 </body>
