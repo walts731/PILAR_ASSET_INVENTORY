@@ -22,16 +22,7 @@ if (!isset($_SESSION['office_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Fetch full name
-$user_name = '';
-$stmt = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$stmt->bind_result($fullname);
-$stmt->fetch();
-$stmt->close();
-
-// Fetch borrowed assets with office names
+// Fetch borrowed assets
 $query = "
   SELECT br.id, a.asset_name, a.description, a.unit, br.status, br.requested_at, br.approved_at, o.office_name
   FROM borrow_requests br
@@ -67,45 +58,65 @@ $result = $stmt->get_result();
   <div class="container mt-4">
     <div class="card shadow-sm">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <div>
-          <i class="bi bi-box-arrow-up"></i> Borrowed Assets
-        </div>
+        <div><i class="bi bi-box-arrow-up"></i> Borrowed Assets</div>
+        <a href="returned_assets.php" class="btn btn-outline-info btn-sm">
+          <i class="bi bi-arrow-counterclockwise"></i> Returned Assets
+        </a>
       </div>
 
-      <div class="card-body">
-        <div class="table-responsive">
-          <table id="borrowedAssetsTable" class="table table-striped align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Asset Name</th>
-                <th>Description</th>
-                <th>Unit</th>
-                <th>Status</th>
-                <th>Office</th>
-                <th>Requested At</th>
-                <th>Approved At</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php while ($row = $result->fetch_assoc()): ?>
+      <form action="process_return.php" method="POST">
+        <div class="card-body">
+
+          <!-- Return button ABOVE the table -->
+          <div class="mb-3 text-start">
+            <button type="submit" class="btn btn-primary btn-sm">
+              <i class="bi bi-check-circle"></i> Return Selected
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table id="borrowedAssetsTable" class="table table-striped align-middle">
+              <thead class="table-light">
                 <tr>
-                  <td><?= htmlspecialchars($row['asset_name']) ?></td>
-                  <td><?= htmlspecialchars($row['description']) ?></td>
-                  <td><?= htmlspecialchars($row['unit']) ?></td>
-                  <td>
-                    <span class="badge bg-<?= $row['status'] === 'borrowed' ? 'success' : 'warning' ?>">
-                      <?= ucfirst($row['status']) ?>
-                    </span>
-                  </td>
-                  <td><?= htmlspecialchars($row['office_name']) ?></td>
-                  <td><?= date('F j, Y h:i A', strtotime($row['requested_at'])) ?></td>
-                  <td><?= $row['approved_at'] ? date('F j, Y h:i A', strtotime($row['approved_at'])) : 'N/A' ?></td>
+                  <th><input type="checkbox" id="selectAll"></th>
+                  <th>Asset Name</th>
+                  <th>Description</th>
+                  <th>Unit</th>
+                  <th>Status</th>
+                  <th>Office</th>
+                  <th>Requested At</th>
+                  <th>Approved At</th>
+                  <th>Remarks</th>
                 </tr>
-              <?php endwhile; ?>
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                <?php while ($row = $result->fetch_assoc()): ?>
+                  <tr>
+                    <td>
+                      <input type="checkbox" name="return_ids[]" value="<?= $row['id'] ?>" class="return-checkbox">
+                    </td>
+                    <td><?= htmlspecialchars($row['asset_name']) ?></td>
+                    <td><?= htmlspecialchars($row['description']) ?></td>
+                    <td><?= htmlspecialchars($row['unit']) ?></td>
+                    <td>
+                      <span class="badge bg-<?= $row['status'] === 'borrowed' ? 'success' : 'warning' ?>">
+                        <?= ucfirst($row['status']) ?>
+                      </span>
+                    </td>
+                    <td><?= htmlspecialchars($row['office_name']) ?></td>
+                    <td><?= date('F j, Y h:i A', strtotime($row['requested_at'])) ?></td>
+                    <td><?= $row['approved_at'] ? date('F j, Y h:i A', strtotime($row['approved_at'])) : 'N/A' ?></td>
+                    <td>
+                      <input type="text" name="remarks[<?= $row['id'] ?>]" class="form-control form-control-sm" placeholder="Enter remarks..." disabled>
+                    </td>
+                  </tr>
+                <?php endwhile; ?>
+              </tbody>
+            </table>
+          </div>
+
         </div>
-      </div>
+      </form>
     </div>
   </div>
 </div>
@@ -117,6 +128,17 @@ $result = $stmt->get_result();
 <script>
   $(document).ready(function () {
     $('#borrowedAssetsTable').DataTable();
+
+    // Toggle remarks input when checkbox is checked
+    $('.return-checkbox').on('change', function () {
+      const row = $(this).closest('tr');
+      const input = row.find('input[name^="remarks"]');
+      input.prop('disabled', !this.checked);
+    });
+
+    $('#selectAll').on('change', function () {
+      $('.return-checkbox').prop('checked', this.checked).trigger('change');
+    });
   });
 </script>
 </body>

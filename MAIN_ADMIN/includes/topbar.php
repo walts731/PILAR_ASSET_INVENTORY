@@ -77,11 +77,18 @@ $low_stock_count = count($low_stock_items);
             <span class="mx-1 text-muted"> &gt; </span>
             <span class="text-dark">Incoming Borrow Requests</span>
           </h5>';
+  } elseif ($current_page === 'returned_assets') {
+    echo '<h5 class="m-0 text-center text-sm-start">
+            <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
+            <span class="mx-1 text-muted"> &gt; </span>
+            <span class="text-dark">Returned Assets</span>
+          </h5>';
   } else {
     echo '<h5 class="m-0 text-center text-sm-start">' . htmlspecialchars($page_title) . '</h5>';
   }
   ?>
 </div>
+
 
 
 
