@@ -24,7 +24,7 @@ $user_id = $_SESSION['user_id'];
 
 // Fetch borrowed assets
 $query = "
-  SELECT br.id, a.asset_name, a.description, a.unit, br.status, br.requested_at, br.approved_at, o.office_name
+  SELECT br.id, a.asset_name, a.description, a.unit, br.status, br.quantity, br.requested_at, br.approved_at, o.office_name
   FROM borrow_requests br
   JOIN assets a ON br.asset_id = a.id
   JOIN offices o ON br.office_id = o.id
@@ -83,9 +83,11 @@ $result = $stmt->get_result();
                   <th>Description</th>
                   <th>Unit</th>
                   <th>Status</th>
+                  <th>Quantity</th>
                   <th>Office</th>
                   <th>Requested At</th>
                   <th>Approved At</th>
+                  <th>Return Quantity</th>
                   <th>Remarks</th>
                 </tr>
               </thead>
@@ -103,9 +105,13 @@ $result = $stmt->get_result();
                         <?= ucfirst($row['status']) ?>
                       </span>
                     </td>
+                    <td><?= intval($row['quantity']) ?></td>
                     <td><?= htmlspecialchars($row['office_name']) ?></td>
                     <td><?= date('F j, Y h:i A', strtotime($row['requested_at'])) ?></td>
                     <td><?= $row['approved_at'] ? date('F j, Y h:i A', strtotime($row['approved_at'])) : 'N/A' ?></td>
+                    <td>
+                      <input type="number" name="return_qty[<?= $row['id'] ?>]" class="form-control form-control-sm return-qty" min="1" max="<?= $row['quantity'] ?>" placeholder="Qty" disabled>
+                    </td>
                     <td>
                       <input type="text" name="remarks[<?= $row['id'] ?>]" class="form-control form-control-sm" placeholder="Enter remarks..." disabled>
                     </td>
@@ -129,11 +135,10 @@ $result = $stmt->get_result();
   $(document).ready(function () {
     $('#borrowedAssetsTable').DataTable();
 
-    // Toggle remarks input when checkbox is checked
     $('.return-checkbox').on('change', function () {
       const row = $(this).closest('tr');
-      const input = row.find('input[name^="remarks"]');
-      input.prop('disabled', !this.checked);
+      row.find('input[name^="remarks"]').prop('disabled', !this.checked);
+      row.find('input[name^="return_qty"]').prop('disabled', !this.checked);
     });
 
     $('#selectAll').on('change', function () {
