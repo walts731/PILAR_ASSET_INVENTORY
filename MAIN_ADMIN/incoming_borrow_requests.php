@@ -10,10 +10,9 @@ if (!isset($_SESSION['user_id'])) {
 $office_id = $_SESSION['office_id'];
 $user_id = $_SESSION['user_id'];
 
-// Fetch incoming borrow requests for assets owned by this office
 $query = "
   SELECT br.id AS request_id, u.fullname AS requester, a.asset_name, a.description, a.unit,
-         br.quantity, br.status, br.requested_at, o.office_name
+         br.quantity, br.status, br.requested_at, br.returned_at, br.return_remarks, o.office_name
   FROM borrow_requests br
   JOIN assets a ON br.asset_id = a.id
   JOIN users u ON br.user_id = u.id
@@ -46,9 +45,7 @@ $result = $stmt->get_result();
   <div class="container mt-4">
     <div class="card shadow-sm">
       <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <div>
-          <i class="bi bi-inbox"></i> Incoming Borrow Requests
-        </div>
+        <div><i class="bi bi-inbox"></i> Incoming Borrow Requests</div>
       </div>
 
       <div class="card-body">
@@ -64,6 +61,8 @@ $result = $stmt->get_result();
                 <th>Quantity</th>
                 <th>Requested At</th>
                 <th>Status</th>
+                <th>Returned At</th>
+                <th>Remarks</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -79,12 +78,15 @@ $result = $stmt->get_result();
                   <td><?= date('F j, Y h:i A', strtotime($row['requested_at'])) ?></td>
                   <td>
                     <span class="badge bg-<?php
-                      echo $row['status'] === 'accepted' ? 'success' :
-                          ($row['status'] === 'rejected' ? 'danger' : 'warning');
-                    ?>" id="status-badge-<?= $row['request_id'] ?>">
+                      echo $row['status'] === 'approved' ? 'success' :
+                          ($row['status'] === 'rejected' ? 'danger' :
+                          ($row['status'] === 'returned' ? 'secondary' : 'warning'));
+                    ?>">
                       <?= ucfirst($row['status']) ?>
                     </span>
                   </td>
+                  <td><?= $row['returned_at'] ? date('F j, Y h:i A', strtotime($row['returned_at'])) : '—' ?></td>
+                  <td><?= htmlspecialchars($row['return_remarks'] ?? '') ?></td>
                   <td>
                     <div class="action-buttons" id="buttons-<?= $row['request_id'] ?>">
                       <?php if ($row['status'] === 'pending'): ?>
@@ -97,8 +99,13 @@ $result = $stmt->get_result();
                             <i class="bi bi-x-circle"></i>
                           </button>
                         </form>
+                      <?php elseif ($row['status'] === 'returned'): ?>
+                        <button type="button" class="btn btn-info btn-sm view-btn" data-bs-toggle="modal"
+                                data-bs-target="#viewModal"
+                                data-request='<?= json_encode($row) ?>'>
+                          <i class="bi bi-eye"></i>
+                        </button>
                       <?php else: ?>
-                        <!-- Edit icon button -->
                         <button class="btn btn-secondary btn-sm edit-btn" title="Edit Status" data-request-id="<?= $row['request_id'] ?>">
                           <i class="bi bi-pencil-square"></i>
                         </button>
@@ -109,13 +116,13 @@ $result = $stmt->get_result();
                     <div class="edit-form d-none" id="edit-form-<?= $row['request_id'] ?>">
                       <form method="POST" action="process_borrow_decision.php" class="d-flex gap-1 mt-1">
                         <input type="hidden" name="request_id" value="<?= $row['request_id'] ?>">
-                        <button name="action" value="accept" class="btn btn-success btn-sm" title="Accept">
+                        <button name="action" value="accept" class="btn btn-success btn-sm">
                           <i class="bi bi-check-circle"></i>
                         </button>
-                        <button name="action" value="reject" class="btn btn-danger btn-sm" title="Reject">
+                        <button name="action" value="reject" class="btn btn-danger btn-sm">
                           <i class="bi bi-x-circle"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm cancel-edit" title="Cancel" data-request-id="<?= $row['request_id'] ?>">
+                        <button type="button" class="btn btn-outline-secondary btn-sm cancel-edit" data-request-id="<?= $row['request_id'] ?>">
                           <i class="bi bi-x-lg"></i>
                         </button>
                       </form>
@@ -126,6 +133,25 @@ $result = $stmt->get_result();
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Viewing Returned Details -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewModalLabel"><i class="bi bi-eye"></i> Returned Asset Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Requester:</strong> <span id="viewRequester"></span></p>
+        <p><strong>Asset:</strong> <span id="viewAsset"></span></p>
+        <p><strong>Quantity:</strong> <span id="viewQuantity"></span></p>
+        <p><strong>Remarks:</strong> <span id="viewRemarks"></span></p>
+        <p><strong>Returned At:</strong> <span id="viewReturnedAt"></span></p>
       </div>
     </div>
   </div>
@@ -149,6 +175,15 @@ $result = $stmt->get_result();
       const requestId = $(this).data('request-id');
       $('#edit-form-' + requestId).addClass('d-none');
       $('#buttons-' + requestId).show();
+    });
+
+    $('.view-btn').on('click', function () {
+      const data = $(this).data('request');
+      $('#viewRequester').text(data.requester);
+      $('#viewAsset').text(data.asset_name + ' - ' + data.description);
+      $('#viewQuantity').text(data.quantity);
+      $('#viewRemarks').text(data.return_remarks || '—');
+      $('#viewReturnedAt').text(data.returned_at ? new Date(data.returned_at).toLocaleString() : '—');
     });
   });
 </script>
