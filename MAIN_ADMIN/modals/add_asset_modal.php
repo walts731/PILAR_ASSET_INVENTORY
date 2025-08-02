@@ -23,12 +23,12 @@ $nextAssetId = ($nextIdRes && $row = $nextIdRes->fetch_assoc()) ? $row['next_id'
 
             <div class="modal-body row g-3">
                 <div class="col-md-6">
-                    <label for="assetName" class="form-label">Asset Name</label>
+                    <label for="assetName" class="form-label">Asset Name</label> <span class="text-danger">*</span>
                     <input type="text" name="asset_name" id="assetName" class="form-control" required>
                 </div>
 
                 <div class="col-md-6">
-                    <label for="category" class="form-label">Category</label>
+                    <label for="category" class="form-label">Category</label> <span class="text-danger">*</span>
                     <select name="category" id="category" class="form-select" required>
                         <option value="" disabled selected>Select Category</option>
                         <?php foreach ($categories as $cat): ?>
@@ -38,17 +38,17 @@ $nextAssetId = ($nextIdRes && $row = $nextIdRes->fetch_assoc()) ? $row['next_id'
                 </div>
 
                 <div class="col-md-12">
-                    <label for="description" class="form-label">Description</label>
+                    <label for="description" class="form-label">Description</label> <span class="text-danger">*</span>
                     <textarea name="description" id="description" class="form-control" rows="2" required></textarea>
                 </div>
 
                 <div class="col-md-3">
-                    <label for="quantity" class="form-label">Quantity</label>
+                    <label for="quantity" class="form-label">Quantity</label> <span class="text-danger">*</span>
                     <input type="number" name="quantity" id="quantity" class="form-control" min="1" required>
                 </div>
 
                 <div class="col-md-3">
-                    <label for="unit" class="form-label">Unit</label>
+                    <label for="unit" class="form-label">Unit</label> <span class="text-danger">*</span>
                     <select name="unit" id="unit" class="form-select" required>
                         <option value="pcs">pcs</option>
                         <option value="box">box</option>
@@ -58,12 +58,12 @@ $nextAssetId = ($nextIdRes && $row = $nextIdRes->fetch_assoc()) ? $row['next_id'
                 </div>
 
                 <div class="col-md-3">
-                    <label for="value" class="form-label">Value (₱)</label>
+                    <label for="value" class="form-label">Value (₱)</label> <span class="text-danger">*</span>
                     <input type="number" name="value" id="value" class="form-control" step="0.01" min="0" required>
                 </div>
 
                 <div class="col-md-3">
-                    <label for="status" class="form-label">Status</label>
+                    <label for="status" class="form-label">Status</label> <span class="text-danger">*</span>
                     <select name="status" id="status" class="form-select" required>
                         <option value="available">Available</option>
                         <option value="borrowed">Borrowed</option>
@@ -71,7 +71,7 @@ $nextAssetId = ($nextIdRes && $row = $nextIdRes->fetch_assoc()) ? $row['next_id'
                 </div>
 
                 <div class="col-md-4">
-                    <label for="office_id" class="form-label">Office</label>
+                    <label for="office_id" class="form-label">Office</label> <span class="text-danger">*</span>
                     <select name="office_id" id="office_id" class="form-select" required>
                         <option value="" disabled selected>Select Office</option>
                         <?php foreach ($offices as $office): ?>
@@ -81,7 +81,7 @@ $nextAssetId = ($nextIdRes && $row = $nextIdRes->fetch_assoc()) ? $row['next_id'
                 </div>
 
                 <div class="col-md-4">
-                    <label for="type" class="form-label">Type</label>
+                    <label for="type" class="form-label">Type</label> <span class="text-danger">*</span>
                     <select name="type" id="type" class="form-select" required>
                         <option value="asset">Asset</option>
                         <option value="consumable">Consumable</option>

@@ -77,10 +77,6 @@ $stmt->close();
             </select>
           </form>
 
-          <button class="btn btn-outline-secondary rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#manageCategoriesModal">
-            <i class="bi bi-tags"></i> Manage Categories
-          </button>
-
           <button class="btn btn-outline-primary rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
             <i class="bi bi-plus-circle"></i> Add Asset
           </button>
