@@ -173,24 +173,10 @@ $stmt->close();
               <h5 class="mb-0">Asset List</h5>
 
               <div class="d-flex flex-wrap gap-2">
-                <!-- Bulk Actions -->
-                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" id="bulkReleaseBtn">
-                  <i class="bi bi-box-arrow-up"></i> Release
-                </button>
-                <button type="button" class="btn btn-outline-info btn-sm rounded-pill" id="bulkTransferBtn">
-                  <i class="bi bi-arrow-left-right"></i> Transfer
-                </button>
-
                 <!-- Existing Generate Report Button -->
                 <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm">
                   <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
                 </button>
-                <select name="template_id" class="form-select form-select-sm d-inline-block w-auto" required>
-                  <option value="" disabled selected>Select Template</option>
-                  <?php while ($template = $template_stmt->fetch_assoc()): ?>
-                    <option value="<?= $template['id'] ?>"><?= htmlspecialchars($template['template_name']) ?></option>
-                  <?php endwhile; ?>
-                </select>
               </div>
             </div>
             <div class="alert alert-danger" role="alert" id="checkboxAlert">

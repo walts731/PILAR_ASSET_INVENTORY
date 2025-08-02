@@ -207,35 +207,3 @@ setTimeout(() => {
   alertBox.classList.add('d-none');
 }, 4000);
 
-// RELEASE
-function getSelectedAssetIds() {
-    const checkboxes = document.querySelectorAll('.asset-checkbox:checked');
-    return Array.from(checkboxes).map(cb => cb.value);
-  }
-
-  function handleBulkAction(action) {
-    const selectedIds = getSelectedAssetIds();
-    const alertBox = document.getElementById("bulkActionAlert");
-
-    if (selectedIds.length === 0) {
-      alertBox.classList.remove("d-none");
-      return;
-    }
-
-    alertBox.classList.add("d-none"); // hide if visible
-    const ids = selectedIds.join(',');
-    const office = new URLSearchParams(window.location.search).get("office") || "";
-    window.location.href = `${action}_bulk.php?ids=${encodeURIComponent(ids)}&office=${encodeURIComponent(office)}`;
-  }
-
-  document.getElementById('bulkReleaseBtn').addEventListener('click', () => handleBulkAction('release'));
-
-  document.querySelectorAll(".template-check-form").forEach(form => {
-    form.addEventListener("submit", function (e) {
-      const selectedTemplate = this.querySelector("select[name='template_id']");
-      if (!selectedTemplate || !selectedTemplate.value) {
-        e.preventDefault();
-        alert("Please select a report template before generating a report.");
-      }
-    });
-  });

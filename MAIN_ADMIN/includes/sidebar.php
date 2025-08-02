@@ -24,8 +24,8 @@
             <a href="user.php" class="nav-link <?= ($page == 'user') ? 'active' : '' ?>">
                 <i class="bi bi-person"></i> Users
             </a>
-            <a href="templates.php" class="nav-link <?= ($page == 'templates') ? 'active' : '' ?>">
-                <i class="bi bi-file-earmark-text"></i> Templates
+            <a href="forms.php" class="nav-link <?= ($page == 'templates') ? 'active' : '' ?>">
+                <i class="bi bi-file-earmark-text"></i> Forms
             </a>
             <a href="asset_archive.php" class="nav-link <?= ($page == 'asset_archive') ? 'active' : '' ?>">
                 <i class="bi bi-archive"></i> Archive
