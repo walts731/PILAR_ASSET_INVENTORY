@@ -158,7 +158,7 @@ $stmt->close();
         </div>
 
         <div class="card shadow-sm mb-4">
-<form action="generate_selected_report.php" method="POST" target="_blank" class="template-check-form">
+          <form action="generate_selected_report.php" method="POST" target="_blank" class="template-check-form">
             <?php
             // Fetch available report templates
             $template_stmt = $conn->query("SELECT id, template_name FROM report_templates ORDER BY created_at DESC");
@@ -184,18 +184,15 @@ $stmt->close();
                 <thead class="table-light">
                   <tr>
                     <th><input type="checkbox" id="selectAllAssets" /></th>
-                    <th>QR</th>
-                    <th>Name</th>
-                    <th>Category</th>
                     <th>Description</th>
+                    <th>Category</th>
                     <th>Qty</th>
                     <th>Unit</th>
                     <th>Status</th>
                     <th>Value</th>
-                    <th>Acquired</th>
-                    <th>Updated</th>
                     <th>Actions</th>
                   </tr>
+                </thead>
                 </thead>
                 <tbody>
                   <?php
@@ -213,14 +210,8 @@ $stmt->close();
                   ?>
                     <tr>
                       <td><input type="checkbox" class="asset-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
-                      <td>
-                        <a href="../img/<?= $row['qr_code'] ?>" download="<?= $row['asset_name'] ?>_QR.png" title="Download QR">
-                          <img src="../img/<?= $row['qr_code'] ?>" width="50" alt="QR Code" />
-                        </a>
-                      </td>
-                      <td><?= htmlspecialchars($row['asset_name']) ?></td>
-                      <td><?= htmlspecialchars($row['category_name']) ?></td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
+                      <td><?= htmlspecialchars($row['category_name']) ?></td>
                       <td><?= $row['quantity'] ?></td>
                       <td><?= $row['unit'] ?></td>
                       <td>
@@ -237,10 +228,23 @@ $stmt->close();
                         </span>
                       </td>
                       <td>&#8369; <?= number_format($row['value'], 2) ?></td>
-                      <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
-                      <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
                       <td class="text-nowrap">
                         <div class="btn-group" role="group">
+                          <!-- View Button -->
+                          <button type="button"
+  class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn"
+  data-id="<?= $row['id'] ?>"
+  data-name="<?= htmlspecialchars($row['asset_name']) ?>"
+  data-category="<?= $row['category'] ?>"
+  data-description="<?= htmlspecialchars($row['description']) ?>"
+  data-qty="<?= $row['quantity'] ?>"
+  data-unit="<?= $row['unit'] ?>"
+  data-status="<?= $row['status'] ?>"
+  data-value="<?= $row['estimated_value'] ?>"
+  data-bs-toggle="modal"
+  data-bs-target="#viewAssetModal">
+  <i class="bi bi-eye"></i>
+</button>
 
 
                           <!-- Edit Button -->
@@ -270,7 +274,9 @@ $stmt->close();
                               <i class="bi bi-trash"></i>
                             </button>
                           <?php else: ?>
-                            <span class="text-muted small d-inline-flex align-items-center ms-2"><i class="bi bi-lock"></i></span>
+                            <span class="text-muted small d-inline-flex align-items-center ms-2">
+                              <i class="bi bi-lock"></i>
+                            </span>
                           <?php endif; ?>
                         </div>
                       </td>
@@ -464,6 +470,7 @@ $stmt->close();
   <?php include 'modals/delete_asset_modal.php'; ?>
   <?php include 'modals/add_asset_modal.php'; ?>
   <?php include 'modals/manage_categories_modal.php'; ?>
+  <?php include 'modals/view_full_asset_details_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>

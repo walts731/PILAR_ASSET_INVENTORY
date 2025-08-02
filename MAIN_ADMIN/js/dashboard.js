@@ -207,3 +207,28 @@ setTimeout(() => {
   alertBox.classList.add('d-none');
 }, 4000);
 
+document.addEventListener("DOMContentLoaded", function () {
+    const viewButtons = document.querySelectorAll(".viewAssetBtn");
+
+    viewButtons.forEach(button => {
+      button.addEventListener("click", function () {
+        // Get data attributes
+        const name = this.dataset.name;
+        const category = this.dataset.category;
+        const description = this.dataset.description;
+        const qty = this.dataset.qty;
+        const unit = this.dataset.unit;
+        const status = this.dataset.status;
+        const value = this.dataset.value;
+
+        // Insert into modal fields
+        document.getElementById("viewAssetName").textContent = name;
+        document.getElementById("viewAssetCategory").textContent = category;
+        document.getElementById("viewAssetDescription").textContent = description;
+        document.getElementById("viewAssetQty").textContent = qty;
+        document.getElementById("viewAssetUnit").textContent = unit;
+        document.getElementById("viewAssetStatus").textContent = status;
+        document.getElementById("viewAssetValue").textContent = value;
+      });
+    });
+  });
