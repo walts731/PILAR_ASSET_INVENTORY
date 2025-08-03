@@ -383,14 +383,11 @@ $stmt->close();
                 <thead class="table-light">
                   <tr>
                     <th><input type="checkbox" id="selectAllConsumables" /></th>
-                    <th>Name</th>
-                    <th>Category</th>
                     <th>Description</th>
+                    <th>Category</th>
                     <th>Qty</th>
                     <th>Unit</th>
                     <th>Status</th>
-                    <th>Acquired</th>
-                    <th>Updated</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -411,9 +408,8 @@ $stmt->close();
                   ?>
                     <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
                       <td><input type="checkbox" class="consumable-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
-                      <td><?= htmlspecialchars($row['asset_name']) ?></td>
-                      <td><?= htmlspecialchars($row['category_name']) ?></td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
+                      <td><?= htmlspecialchars($row['category_name']) ?></td>
                       <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['quantity'] ?></td>
                       <td><?= $row['unit'] ?></td>
                       <td>
@@ -421,13 +417,10 @@ $stmt->close();
                           <?= ucfirst($row['status']) ?>
                         </span>
                       </td>
-                      <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
-                      <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
                       <td>
                         <button type="button"
                           class="btn btn-sm btn-outline-primary updateConsumableBtn rounded-pill"
                           data-id="<?= $row['id'] ?>"
-                          data-name="<?= htmlspecialchars($row['asset_name']) ?>"
                           data-category="<?= $row['category'] ?>"
                           data-description="<?= htmlspecialchars($row['description']) ?>"
                           data-unit="<?= htmlspecialchars($row['unit']) ?>"

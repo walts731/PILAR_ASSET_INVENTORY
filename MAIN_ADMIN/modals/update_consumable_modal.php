@@ -11,9 +11,9 @@
         <input type="hidden" name="id" id="consumable_id">
 
         <div class="row g-3">
-          <div class="col-md-6">
-            <label for="edit_name" class="form-label">Name</label>
-            <input type="text" class="form-control" name="asset_name" id="edit_name" required>
+          <div class="col-md-12">
+            <label for="edit_description" class="form-label">Description</label>
+            <textarea class="form-control" name="description" id="edit_description" rows="3"></textarea>
           </div>
 
           <div class="col-md-6">
@@ -32,12 +32,18 @@
             <label for="edit_unit" class="form-label">Unit</label>
             <select class="form-select" name="unit" id="edit_unit" required>
               <option value="">Select Unit</option>
-              <option value="pcs">pcs</option>
-              <option value="box">box</option>
-              <option value="pack">pack</option>
-              <option value="bottle">bottle</option>
-              <option value="liters">liters</option>
-              <option value="kg">kg</option>
+              <?php
+              $query = "SELECT unit_name FROM unit ORDER BY unit_name ASC";
+              $result = $conn->query($query);
+
+              if ($result->num_rows > 0) {
+                while ($row = $result->fetch_assoc()) {
+                  echo '<option value="' . htmlspecialchars($row['unit_name']) . '">' . htmlspecialchars($row['unit_name']) . '</option>';
+                }
+              } else {
+                echo '<option disabled>No units available</option>';
+              }
+              ?>
             </select>
           </div>
 
@@ -52,11 +58,6 @@
               <option value="available">Available</option>
               <option value="unavailable">Unavailable</option>
             </select>
-          </div>
-
-          <div class="col-md-12">
-            <label for="edit_description" class="form-label">Description</label>
-            <textarea class="form-control" name="description" id="edit_description" rows="3"></textarea>
           </div>
         </div>
       </div>
