@@ -10,6 +10,11 @@ $offices = $office_query->fetch_all(MYSQLI_ASSOC);
 // Get next asset ID for QR code generation
 $nextIdRes = $conn->query("SELECT AUTO_INCREMENT as next_id FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'assets' AND TABLE_SCHEMA = DATABASE()");
 $nextAssetId = ($nextIdRes && $row = $nextIdRes->fetch_assoc()) ? $row['next_id'] : '0';
+
+// Fetch units
+$unit_query = $conn->query("SELECT id, unit_name FROM unit");
+$units = $unit_query->fetch_all(MYSQLI_ASSOC);
+
 ?>
 
 <!-- Add Asset Modal -->
@@ -22,20 +27,8 @@ $nextAssetId = ($nextIdRes && $row = $nextIdRes->fetch_assoc()) ? $row['next_id'
             </div>
 
             <div class="modal-body row g-3">
-                <div class="col-md-6">
-                    <label for="assetName" class="form-label">Asset Name</label> <span class="text-danger">*</span>
-                    <input type="text" name="asset_name" id="assetName" class="form-control" required>
-                </div>
 
-                <div class="col-md-6">
-                    <label for="category" class="form-label">Category</label> <span class="text-danger">*</span>
-                    <select name="category" id="category" class="form-select" required>
-                        <option value="" disabled selected>Select Category</option>
-                        <?php foreach ($categories as $cat): ?>
-                            <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['category_name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+
 
                 <div class="col-md-12">
                     <label for="description" class="form-label">Description</label> <span class="text-danger">*</span>
@@ -50,10 +43,12 @@ $nextAssetId = ($nextIdRes && $row = $nextIdRes->fetch_assoc()) ? $row['next_id'
                 <div class="col-md-3">
                     <label for="unit" class="form-label">Unit</label> <span class="text-danger">*</span>
                     <select name="unit" id="unit" class="form-select" required>
-                        <option value="pcs">pcs</option>
-                        <option value="box">box</option>
-                        <option value="set">set</option>
-                        <option value="pack">pack</option>
+                        <option value="" disabled selected>Select Unit</option>
+                        <?php foreach ($units as $unit): ?>
+                            <option value="<?= htmlspecialchars($unit['unit_name']) ?>">
+                                <?= htmlspecialchars(ucfirst($unit['unit_name'])) ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
@@ -89,8 +84,13 @@ $nextAssetId = ($nextIdRes && $row = $nextIdRes->fetch_assoc()) ? $row['next_id'
                 </div>
 
                 <div class="col-md-4">
-                    <label for="qr_code" class="form-label">QR Code (auto)</label>
-                    <input type="text" name="qr_code" id="qr_code" class="form-control" value="<?= $nextAssetId ?>" readonly>
+                    <label for="category" class="form-label">Category</label> <span class="text-danger">*</span>
+                    <select name="category" id="category" class="form-select" required>
+                        <option value="" disabled selected>Select Category</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['category_name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
             </div>
 

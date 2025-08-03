@@ -9,7 +9,6 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // Sanitize and escape input values
-$asset_name   = mysqli_real_escape_string($conn, $_POST['asset_name']);
 $category     = (int)$_POST['category'];
 $description  = mysqli_real_escape_string($conn, $_POST['description']);
 $quantity     = (int)$_POST['quantity'];
@@ -24,9 +23,9 @@ $red_tagged   = 0;
 // Insert asset into the database
 $sql = "
   INSERT INTO assets 
-    (asset_name, category, description, quantity, unit, value, status, office_id, type, red_tagged, acquisition_date, last_updated)
+    ( category, description, quantity, unit, value, status, office_id, type, red_tagged, acquisition_date, last_updated)
   VALUES 
-    ('$asset_name', $category, '$description', $quantity, '$unit', $value, '$status', $office_id, '$type', $red_tagged, '$acquired', '$acquired')
+    ( $category, '$description', $quantity, '$unit', $value, '$status', $office_id, '$type', $red_tagged, '$acquired', '$acquired')
 ";
 
 if (mysqli_query($conn, $sql)) {
