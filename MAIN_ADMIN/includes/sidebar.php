@@ -1,9 +1,22 @@
+<?php
+$system = [
+  'logo' => '../img/default-logo.png', // fallback
+  'system_title' => 'Inventory System'
+];
+
+$result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
+if ($result && $result->num_rows > 0) {
+  $system = $result->fetch_assoc();
+}
+?>
 <div class="sidebar d-flex flex-column justify-content-between">
     <div>
         <h5 class="text-center d-flex align-items-center justify-content-center">
-            <img src="../img/logo.jpg" alt="Logo" style="width: 30px; height: 30px; margin-right: 10px;" />
-            Pilar Inventory
+            <img src="../img/<?= htmlspecialchars($system['logo']) ?>" alt="Logo"
+                style="width: 30px; height: 30px; margin-right: 10px;" />
+            <?= htmlspecialchars($system['system_title']) ?>
         </h5>
+
         <hr />
         <?php
         $page = basename($_SERVER['PHP_SELF'], ".php"); // detects current PHP filename

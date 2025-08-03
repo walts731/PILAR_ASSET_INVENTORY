@@ -7,6 +7,11 @@ if (!isset($_SESSION['user_id'])) {
   exit();
 }
 
+$result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
+if ($result && $result->num_rows > 0) {
+    $system = $result->fetch_assoc();
+}
+
 // Set office_id if not set
 if (!isset($_SESSION['office_id'])) {
   $user_id = $_SESSION['user_id'];
