@@ -1,7 +1,7 @@
 <!-- Update Consumable Modal -->
 <div class="modal fade" id="updateConsumableModal" tabindex="-1" aria-labelledby="updateLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg"> <!-- Wider modal -->
-    <form action="update_consumable.php" method="GET" class="modal-content">
+  <div class="modal-dialog modal-lg">
+    <form action="update_consumable.php" method="POST" enctype="multipart/form-data" class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="updateLabel">Update Consumable</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -13,12 +13,13 @@
         <div class="row g-3">
           <div class="col-md-12">
             <label for="edit_description" class="form-label">Description</label>
-            <textarea class="form-control" name="description" id="edit_description" rows="3"></textarea>
+            <textarea class="form-control" name="description" id="edit_description" rows="3" required></textarea>
           </div>
 
           <div class="col-md-6">
             <label for="edit_category" class="form-label">Category</label>
             <select name="category" id="edit_category" class="form-select" required>
+              <option value="">Select Category</option>
               <?php
               $catRes = $conn->query("SELECT id, category_name FROM categories");
               while ($cat = $catRes->fetch_assoc()):
@@ -35,15 +36,10 @@
               <?php
               $query = "SELECT unit_name FROM unit ORDER BY unit_name ASC";
               $result = $conn->query($query);
-
-              if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                  echo '<option value="' . htmlspecialchars($row['unit_name']) . '">' . htmlspecialchars($row['unit_name']) . '</option>';
-                }
-              } else {
-                echo '<option disabled>No units available</option>';
-              }
+              while ($row = $result->fetch_assoc()):
               ?>
+                <option value="<?= htmlspecialchars($row['unit_name']) ?>"><?= htmlspecialchars($row['unit_name']) ?></option>
+              <?php endwhile; ?>
             </select>
           </div>
 
@@ -58,6 +54,21 @@
               <option value="available">Available</option>
               <option value="unavailable">Unavailable</option>
             </select>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-2">
+          <div class="col-md-6">
+            <label for="edit_consumable_image" class="form-label">Change Image</label>
+            <input type="file" class="form-control" name="image" id="edit_consumable_image" accept="image/*">
+          </div>
+
+          <div class="col-md-6 text-center">
+            <label class="form-label d-block">Current Image</label>
+            <img id="edit_consumable_preview" src="#" alt="Current Image"
+              class="img-fluid border rounded"
+              style="max-height: 200px; object-fit: contain;"
+              onerror="this.src='placeholder.jpg';">
           </div>
         </div>
       </div>

@@ -123,18 +123,30 @@ function updateDateTime() {
   });
 });
 
-// Update Consumable Modal
 $(document).ready(function () {
   $('.updateConsumableBtn').on('click', function () {
     $('#consumable_id').val($(this).data('id'));
-    $('#edit_name').val($(this).data('name'));
     $('#edit_category').val($(this).data('category'));
     $('#edit_description').val($(this).data('description'));
     $('#edit_unit').val($(this).data('unit'));
     $('#edit_quantity').val($(this).data('qty'));
     $('#edit_status').val($(this).data('status'));
+
+    // Show current image
+    const imageFile = $(this).data('image');
+    const imgPath = imageFile ? '../img/assets/' + imageFile : 'path/to/placeholder.jpg';
+    $('#edit_consumable_preview').attr('src', imgPath).show();
+  });
+
+  // Live preview of new selected image
+  $('#edit_consumable_image').on('change', function () {
+    const [file] = this.files;
+    if (file) {
+      $('#edit_consumable_preview').attr('src', URL.createObjectURL(file)).show();
+    }
   });
 });
+
 
 // Delete Consumable Modal
 $(document).ready(function () {
