@@ -30,6 +30,9 @@
             <a href="asset_archive.php" class="nav-link <?= ($page == 'asset_archive') ? 'active' : '' ?>">
                 <i class="bi bi-archive"></i> Archive
             </a>
+            <a href="about.php" class="nav-link <?= ($page == 'about') ? 'active' : '' ?>">
+                <i class="bi bi-info-circle"></i> About
+            </a>
             <a href="settings.php" class="nav-link <?= ($page == 'settings') ? 'active' : '' ?>">
                 <i class="bi bi-gear"></i> Settings
             </a>

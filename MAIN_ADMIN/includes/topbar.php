@@ -19,8 +19,9 @@ $custom_titles = [
   "inventory" => "Inventory Management",
   "asset_archive" => "Archive",
   "user" => "User Management",
-  "templates" => "Templates",
+  "forms" => "Forms",
   "borrow" => "Borrowing Management",
+  "about" => "About",
 ];
 
 if (array_key_exists($current_page, $custom_titles)) {
