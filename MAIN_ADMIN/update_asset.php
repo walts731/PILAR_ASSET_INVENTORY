@@ -2,36 +2,55 @@
 require_once '../connect.php';
 session_start();
 
-// Check if all required GET parameters are set
 if (
-    isset($_GET['id'], $_GET['asset_name'], $_GET['category'], $_GET['description'],
-          $_GET['quantity'], $_GET['unit'], $_GET['status'], $_GET['office'])
+    isset($_POST['id'], $_POST['category'], $_POST['description'],
+          $_POST['quantity'], $_POST['unit'], $_POST['status'], $_POST['office'])
 ) {
-    // Sanitize and assign variables
-    $id = intval($_GET['id']);
-    $name = mysqli_real_escape_string($conn, $_GET['asset_name']);
-    $category = intval($_GET['category']);
-    $description = mysqli_real_escape_string($conn, $_GET['description']);
-    $quantity = intval($_GET['quantity']);
-    $unit = mysqli_real_escape_string($conn, $_GET['unit']);
-    $status = mysqli_real_escape_string($conn, $_GET['status']);
-    $office = intval($_GET['office']);
+    $id = intval($_POST['id']);
+    $category = intval($_POST['category']);
+    $description = mysqli_real_escape_string($conn, $_POST['description']);
+    $quantity = intval($_POST['quantity']);
+    $unit = mysqli_real_escape_string($conn, $_POST['unit']);
+    $status = mysqli_real_escape_string($conn, $_POST['status']);
+    $office = intval($_POST['office']);
 
-    // Build SQL query
+    // Image handling
+    $image_query = "";
+    if (isset($_FILES['image']) && $_FILES['image']['error'] == UPLOAD_ERR_OK) {
+        $original_name = basename($_FILES["image"]["name"]);
+        $imageFileType = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+        $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+
+        if (in_array($imageFileType, $allowed_types)) {
+            $new_filename = time() . "_" . preg_replace("/[^a-zA-Z0-9_\.-]/", "", $original_name);
+            $target_path = "../img/assets/" . $new_filename;
+
+            if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_path)) {
+                $image_query = ", image = '$new_filename'";
+            } else {
+                echo "Error uploading image.";
+                exit();
+            }
+        } else {
+            echo "Invalid image type. Allowed types: JPG, JPEG, PNG, GIF.";
+            exit();
+        }
+    }
+
+    // Update query
     $sql = "
         UPDATE assets 
         SET 
-            asset_name = '$name',
             category = $category,
             description = '$description',
             quantity = $quantity,
             unit = '$unit',
             status = '$status',
             last_updated = NOW()
+            $image_query
         WHERE id = $id AND type = 'asset'
     ";
 
-    // Execute and redirect or show error
     if (mysqli_query($conn, $sql)) {
         header("Location: inventory.php?update=success&office=$office");
         exit();

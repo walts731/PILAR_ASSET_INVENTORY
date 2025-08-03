@@ -246,19 +246,20 @@ $stmt->close();
 
                           <!-- Edit Button -->
                           <button type="button"
-                            class="btn btn-sm btn-outline-primary rounded-pill updateAssetBtn"
-                            data-id="<?= $row['id'] ?>"
-                            data-name="<?= htmlspecialchars($row['asset_name']) ?>"
-                            data-category="<?= $row['category'] ?>"
-                            data-description="<?= htmlspecialchars($row['description']) ?>"
-                            data-qty="<?= $row['quantity'] ?>"
-                            data-unit="<?= $row['unit'] ?>"
-                            data-status="<?= $row['status'] ?>"
-                            data-office="<?= $row['office_id'] ?>"
-                            data-bs-toggle="modal"
-                            data-bs-target="#updateAssetModal">
-                            <i class="bi bi-pencil-square"></i>
-                          </button>
+  class="btn btn-sm btn-outline-primary rounded-pill updateAssetBtn"
+  data-id="<?= $row['id'] ?>"
+  data-category="<?= $row['category'] ?>"
+  data-description="<?= htmlspecialchars($row['description']) ?>"
+  data-qty="<?= $row['quantity'] ?>"
+  data-unit="<?= $row['unit'] ?>"
+  data-status="<?= $row['status'] ?>"
+  data-office="<?= $row['office_id'] ?>"
+  data-image="<?= $row['image'] ?>"
+  data-bs-toggle="modal"
+  data-bs-target="#updateAssetModal">
+  <i class="bi bi-pencil-square"></i>
+</button>
+
 
                           <!-- Delete Button or Lock -->
                           <?php if ($row['status'] !== 'borrowed'): ?>

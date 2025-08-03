@@ -151,15 +151,26 @@ $(document).ready(function() {
 
 // Update Asset Modal
 $(document).on("click", ".updateAssetBtn", function () {
-  $("#asset_id").val($(this).data("id"));
-  $("#edit_asset_name").val($(this).data("name"));
-  $("#edit_asset_category").val($(this).data("category"));
-  $("#edit_asset_description").val($(this).data("description"));
-  $("#edit_asset_quantity").val($(this).data("qty"));
-  $("#edit_asset_unit").val($(this).data("unit"));
-  $("#edit_asset_status").val($(this).data("status"));
-  $("#edit_asset_office").val($(this).data("office")); 
-});
+    $("#asset_id").val($(this).data("id"));
+    $("#edit_asset_category").val($(this).data("category"));
+    $("#edit_asset_description").val($(this).data("description"));
+    $("#edit_asset_quantity").val($(this).data("qty"));
+    $("#edit_asset_unit").val($(this).data("unit"));
+    $("#edit_asset_status").val($(this).data("status"));
+    $("#edit_asset_office").val($(this).data("office"));
+
+    // Set current image
+    const imgPath = "../img/assets/" + $(this).data("image");
+    $("#edit_asset_preview").attr("src", imgPath).show();
+  });
+
+  // Live preview for new image selection
+  $("#edit_asset_image").on("change", function () {
+    const [file] = this.files;
+    if (file) {
+      $("#edit_asset_preview").attr("src", URL.createObjectURL(file)).show();
+    }
+  });
 
 // Delete Asset Modal
 $(document).ready(function () {
