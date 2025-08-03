@@ -1,4 +1,6 @@
 <?php
+require_once '../connect.php';
+
 // Fetch categories for assets
 $category_query = $conn->query("SELECT id, category_name FROM categories WHERE type = 'asset'");
 $categories = $category_query->fetch_all(MYSQLI_ASSOC);
@@ -7,32 +9,40 @@ $categories = $category_query->fetch_all(MYSQLI_ASSOC);
 $office_query = $conn->query("SELECT id, office_name FROM offices");
 $offices = $office_query->fetch_all(MYSQLI_ASSOC);
 
-// Get next asset ID for QR code generation
-$nextIdRes = $conn->query("SELECT AUTO_INCREMENT as next_id FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'assets' AND TABLE_SCHEMA = DATABASE()");
-$nextAssetId = ($nextIdRes && $row = $nextIdRes->fetch_assoc()) ? $row['next_id'] : '0';
-
 // Fetch units
 $unit_query = $conn->query("SELECT id, unit_name FROM unit");
 $units = $unit_query->fetch_all(MYSQLI_ASSOC);
-
 ?>
 
 <!-- Add Asset Modal -->
 <div class="modal fade" id="addAssetModal" tabindex="-1" aria-labelledby="addAssetModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <form method="POST" action="add_asset.php" class="modal-content">
+        <form method="POST" action="add_asset.php" class="modal-content" enctype="multipart/form-data">
             <div class="modal-header">
                 <h5 class="modal-title" id="addAssetModalLabel"><i class="bi bi-plus-circle"></i> Add New Asset</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
             <div class="modal-body row g-3">
-
-
-
                 <div class="col-md-12">
                     <label for="description" class="form-label">Description</label> <span class="text-danger">*</span>
                     <textarea name="description" id="description" class="form-control" rows="2" required></textarea>
+                </div>
+
+                <div class="col-md-12">
+                    <div class="row align-items-center">
+                        <!-- Upload Input (Left) -->
+                        <div class="col-md-6">
+                            <label for="asset_image" class="form-label">Asset Image</label>
+                            <input type="file" name="asset_image" id="asset_image" class="form-control" accept="image/*" onchange="previewImage(event)">
+                        </div>
+
+                        <!-- Image Preview (Right) -->
+                        <div class="col-md-6 text-center">
+                            <label class="form-label d-block">Preview</label>
+                            <img id="assetImagePreview" src="#" alt="Image Preview" class="img-thumbnail d-none" style="max-width: 200px; height: auto;">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="col-md-3">
@@ -101,3 +111,18 @@ $units = $unit_query->fetch_all(MYSQLI_ASSOC);
         </form>
     </div>
 </div>
+
+<!-- Image Preview Script -->
+<script>
+    function previewImage(event) {
+        const preview = document.getElementById('assetImagePreview');
+        const file = event.target.files[0];
+        if (file) {
+            preview.src = URL.createObjectURL(file);
+            preview.classList.remove('d-none');
+        } else {
+            preview.src = '#';
+            preview.classList.add('d-none');
+        }
+    }
+</script>
