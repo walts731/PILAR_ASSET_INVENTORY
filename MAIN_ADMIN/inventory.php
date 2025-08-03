@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
 if ($result && $result->num_rows > 0) {
-    $system = $result->fetch_assoc();
+  $system = $result->fetch_assoc();
 }
 
 // Set office_id if not set
@@ -419,14 +419,14 @@ $stmt->close();
                       </td>
                       <td>
                         <!-- View Button -->
-                          <button type="button"
-                            class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn"
-                            data-id="<?= $row['id'] ?>"
-                            data-bs-toggle="modal"
-                            data-bs-target="#viewAssetModal">
-                            <i class="bi bi-eye"></i>
-                          </button>
-                          
+                        <button type="button"
+                          class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn"
+                          data-id="<?= $row['id'] ?>"
+                          data-bs-toggle="modal"
+                          data-bs-target="#viewAssetModal">
+                          <i class="bi bi-eye"></i>
+                        </button>
+
                         <button type="button"
                           class="btn btn-sm btn-outline-primary updateConsumableBtn rounded-pill"
                           data-id="<?= $row['id'] ?>"
@@ -478,46 +478,51 @@ $stmt->close();
   <script src="js/dashboard.js"></script>
 
   <script>
-  function formatDateFormal(dateStr) {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', options);
-  }
+    function formatDateFormal(dateStr) {
+      const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      };
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', options);
+    }
 
-  document.querySelectorAll('.viewAssetBtn').forEach(button => {
-    button.addEventListener('click', function() {
-      const assetId = this.getAttribute('data-id');
+    document.querySelectorAll('.viewAssetBtn').forEach(button => {
+      button.addEventListener('click', function() {
+        const assetId = this.getAttribute('data-id');
 
-      fetch(`get_asset_details.php?id=${assetId}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.error) {
-            alert(data.error);
-            return;
-          }
+        fetch(`get_asset_details.php?id=${assetId}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.error) {
+              alert(data.error);
+              return;
+            }
 
-          // Text content
-          document.getElementById('viewOfficeName').textContent = data.office_name;
-          document.getElementById('viewCategoryName').textContent = `${data.category_name} (${data.category_type})`;
-          document.getElementById('viewType').textContent = data.type;
-          document.getElementById('viewStatus').textContent = data.status;
-          document.getElementById('viewQuantity').textContent = data.quantity;
-          document.getElementById('viewUnit').textContent = data.unit;
-          document.getElementById('viewDescription').textContent = data.description;
-          document.getElementById('viewAcquisitionDate').textContent = formatDateFormal(data.acquisition_date);
-          document.getElementById('viewLastUpdated').textContent = formatDateFormal(data.last_updated);
-          document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
+            // Text content
+            document.getElementById('viewOfficeName').textContent = data.office_name;
+            document.getElementById('viewCategoryName').textContent = `${data.category_name} (${data.category_type})`;
+            document.getElementById('viewType').textContent = data.type;
+            document.getElementById('viewStatus').textContent = data.status;
+            document.getElementById('viewQuantity').textContent = data.quantity;
+            document.getElementById('viewUnit').textContent = data.unit;
+            document.getElementById('viewDescription').textContent = data.description;
+            document.getElementById('viewAcquisitionDate').textContent = formatDateFormal(data.acquisition_date);
+            document.getElementById('viewLastUpdated').textContent = formatDateFormal(data.last_updated);
+            document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
 
-          // Images
-          document.getElementById('viewQrCode').src = '../img/' + data.qr_code;
-          document.getElementById('municipalLogoImg').src = '../img/' + data.system_logo;
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        });
+            // Images
+            document.getElementById('viewQrCode').src = '../img/' + data.qr_code;
+            document.getElementById('municipalLogoImg').src = '../img/' + data.system_logo;
+            document.getElementById('viewAssetImage').src = '../img/assets/' + data.image;
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
+      });
     });
-  });
-</script>
+  </script>
 
 
 </body>

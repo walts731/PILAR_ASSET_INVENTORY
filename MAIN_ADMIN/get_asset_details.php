@@ -17,6 +17,7 @@ if (isset($_GET['id'])) {
       a.last_updated,
       a.value,
       a.qr_code,
+      a.image,
       a.type,
       c.category_name,
       c.type AS category_type,
