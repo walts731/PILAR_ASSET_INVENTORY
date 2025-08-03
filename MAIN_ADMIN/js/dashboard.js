@@ -240,6 +240,8 @@ function formatDateFormal(dateStr) {
   document.querySelectorAll('.viewAssetBtn').forEach(button => {
     button.addEventListener('click', function() {
       const assetId = this.getAttribute('data-id');
+      const value = parseFloat(data.value);
+const quantity = parseInt(data.quantity);
 
       fetch(`get_asset_details.php?id=${assetId}`)
         .then(response => response.json())
@@ -251,7 +253,7 @@ function formatDateFormal(dateStr) {
 
           // Text content
           document.getElementById('viewOfficeName').textContent = data.office_name;
-          document.getElementById('viewCategoryName').textContent = `${data.category_name} (${data.category_type})`;
+          document.getElementById('viewCategoryName').textContent = `${data.category_name}`;
           document.getElementById('viewType').textContent = data.type;
           document.getElementById('viewStatus').textContent = data.status;
           document.getElementById('viewQuantity').textContent = data.quantity;
@@ -260,6 +262,7 @@ function formatDateFormal(dateStr) {
           document.getElementById('viewAcquisitionDate').textContent = formatDateFormal(data.acquisition_date);
           document.getElementById('viewLastUpdated').textContent = formatDateFormal(data.last_updated);
           document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
+          document.getElementById('viewTotalValue').textContent = (value * quantity).toFixed(2);
 
           // Images
           document.getElementById('viewQrCode').src = '../img/' + data.qr_code;

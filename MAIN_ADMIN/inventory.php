@@ -194,7 +194,8 @@ $stmt->close();
                     <th>Qty</th>
                     <th>Unit</th>
                     <th>Status</th>
-                    <th>Value</th>
+                    <th>Unit Cost</th>
+                    <th>Total Value</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -232,7 +233,8 @@ $stmt->close();
                           <?= $row['red_tagged'] ? 'Red-Tagged' : ucfirst($row['status']) ?>
                         </span>
                       </td>
-                      <td>&#8369; <?= number_format($row['value'], 2) ?></td>
+                      <td>&#8369; <?= number_format($row['value'], 2) ?></td> <!-- Unit Cost -->
+                      <td>&#8369; <?= number_format($row['value'] * $row['quantity'], 2) ?></td> <!-- Total Value -->
                       <td class="text-nowrap">
                         <div class="btn-group" role="group">
                           <!-- View Button -->
