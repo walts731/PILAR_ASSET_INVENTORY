@@ -232,20 +232,12 @@ $stmt->close();
                         <div class="btn-group" role="group">
                           <!-- View Button -->
                           <button type="button"
-  class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn"
-  data-id="<?= $row['id'] ?>"
-  data-name="<?= htmlspecialchars($row['asset_name']) ?>"
-  data-category="<?= $row['category'] ?>"
-  data-description="<?= htmlspecialchars($row['description']) ?>"
-  data-qty="<?= $row['quantity'] ?>"
-  data-unit="<?= $row['unit'] ?>"
-  data-status="<?= $row['status'] ?>"
-  data-value="<?= $row['estimated_value'] ?>"
-  data-bs-toggle="modal"
-  data-bs-target="#viewAssetModal">
-  <i class="bi bi-eye"></i>
-</button>
-
+                            class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn"
+                            data-id="<?= $row['id'] ?>"
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewAssetModal">
+                            <i class="bi bi-eye"></i>
+                          </button>
 
                           <!-- Edit Button -->
                           <button type="button"
@@ -470,7 +462,60 @@ $stmt->close();
   <?php include 'modals/delete_asset_modal.php'; ?>
   <?php include 'modals/add_asset_modal.php'; ?>
   <?php include 'modals/manage_categories_modal.php'; ?>
-  <?php include 'modals/view_full_asset_details_modal.php'; ?>
+  <!-- View Asset Modal -->
+  <div class="modal fade" id="viewAssetModal" tabindex="-1" aria-labelledby="viewAssetModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content shadow border border-dark">
+        <div class="modal-body p-4" style="font-family: 'Courier New', Courier, monospace;">
+          <div class="border border-2 border-dark rounded p-3">
+
+            <div class="row align-items-center mb-3 text-center">
+              <!-- Left: Logo -->
+              <div class="col-4 text-start">
+                <img id="municipalLogoImg" src="" alt="Municipal Logo" style="height: 80px;">
+              </div>
+
+              <!-- Center: Office & Category -->
+              <div class="col-4">
+                <h5 class="mb-0 fw-bold text-uppercase" id="viewOfficeName"></h5>
+                <small class="text-muted" id="viewCategoryName"></small>
+              </div>
+
+              <!-- Right: QR Code -->
+              <div class="col-4 text-end">
+                <img id="viewQrCode" src="" alt="QR Code" style="height: 80px; object-fit: contain;">
+              </div>
+            </div>
+
+
+            <hr class="border-dark">
+
+            <!-- Asset Info -->
+            <div class="row mb-2">
+              <div class="col-6"><strong>Asset:</strong> <span id="viewAssetName"></span></div>
+              <div class="col-6"><strong>Type:</strong> <span id="viewType"></span></div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-6"><strong>Status:</strong> <span id="viewStatus"></span></div>
+              <div class="col-6"><strong>Qty:</strong> <span id="viewQuantity"></span> <span id="viewUnit"></span></div>
+            </div>
+            <div class="mb-2"><strong>Description:</strong> <span id="viewDescription"></span></div>
+            <div class="row mb-2">
+              <div class="col-6"><strong>Acquired:</strong> <span id="viewAcquisitionDate"></span></div>
+              <div class="col-6"><strong>Updated:</strong> <span id="viewLastUpdated"></span></div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-6"><strong>Value:</strong> ₱<span id="viewValue"></span></div>
+              <div class="col-6"><strong>Red Tagged:</strong> <span id="viewRedTagged"></span></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -478,6 +523,45 @@ $stmt->close();
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <script src="js/dashboard.js"></script>
 
+  <script>
+    document.querySelectorAll('.viewAssetBtn').forEach(button => {
+      button.addEventListener('click', function() {
+        const assetId = this.getAttribute('data-id');
+
+        fetch(`get_asset_details.php?id=${assetId}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.error) {
+              alert(data.error);
+              return;
+            }
+
+            // Text content
+            document.getElementById('viewOfficeName').textContent = data.office_name;
+            document.getElementById('viewCategoryName').textContent = `${data.category_name} (${data.category_type})`;
+            document.getElementById('viewAssetName').textContent = data.asset_name;
+            document.getElementById('viewType').textContent = data.type;
+            document.getElementById('viewStatus').textContent = data.status;
+            document.getElementById('viewQuantity').textContent = data.quantity;
+            document.getElementById('viewUnit').textContent = data.unit;
+            document.getElementById('viewDescription').textContent = data.description;
+            document.getElementById('viewAcquisitionDate').textContent = data.acquisition_date;
+            document.getElementById('viewLastUpdated').textContent = data.last_updated;
+            document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
+            document.getElementById('viewRedTagged').textContent = data.red_tagged == 1 ? 'Yes' : 'No';
+
+            // Images
+            document.getElementById('viewQrCode').src = '../img/' + data.qr_code;
+            document.getElementById('municipalLogoImg').src = '../img/' + data.system_logo;
+
+
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
+      });
+    });
+  </script>
 
 </body>
 
