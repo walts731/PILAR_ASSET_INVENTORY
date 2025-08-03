@@ -208,3 +208,42 @@ setTimeout(() => {
 }, 4000);
 
 
+function formatDateFormal(dateStr) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', options);
+  }
+
+  document.querySelectorAll('.viewAssetBtn').forEach(button => {
+    button.addEventListener('click', function() {
+      const assetId = this.getAttribute('data-id');
+
+      fetch(`get_asset_details.php?id=${assetId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert(data.error);
+            return;
+          }
+
+          // Text content
+          document.getElementById('viewOfficeName').textContent = data.office_name;
+          document.getElementById('viewCategoryName').textContent = `${data.category_name} (${data.category_type})`;
+          document.getElementById('viewType').textContent = data.type;
+          document.getElementById('viewStatus').textContent = data.status;
+          document.getElementById('viewQuantity').textContent = data.quantity;
+          document.getElementById('viewUnit').textContent = data.unit;
+          document.getElementById('viewDescription').textContent = data.description;
+          document.getElementById('viewAcquisitionDate').textContent = formatDateFormal(data.acquisition_date);
+          document.getElementById('viewLastUpdated').textContent = formatDateFormal(data.last_updated);
+          document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
+
+          // Images
+          document.getElementById('viewQrCode').src = '../img/' + data.qr_code;
+          document.getElementById('municipalLogoImg').src = '../img/' + data.system_logo;
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    });
+  });
