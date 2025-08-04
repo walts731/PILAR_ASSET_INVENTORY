@@ -93,13 +93,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets'])) 
     <table>
         <thead>
             <tr>
-                <th>Asset Name</th>
-                <th>Category</th>
                 <th>Description</th>
+                <th>Category</th>
                 <th>Qty</th>
                 <th>Unit</th>
                 <th>Status</th>
-                <th>Value</th>
+                <th>Unit Cost</th>
+                <th>Total Value</th>
                 <th>Acquired</th>
                 <th>Updated</th>
             </tr>
@@ -108,17 +108,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets'])) 
 
     while ($row = $stmt->fetch_assoc()) {
         $html .= '<tr>
-            <td>' . htmlspecialchars($row['asset_name']) . '</td>
-            <td>' . htmlspecialchars($row['category_name']) . '</td>
-            <td>' . htmlspecialchars($row['description']) . '</td>
-            <td>' . $row['quantity'] . '</td>
-            <td>' . htmlspecialchars($row['unit']) . '</td>
-            <td>' . ucfirst(htmlspecialchars($row['status'])) . '</td>
-            <td>&#8369; ' . number_format($row['value'], 2) . '</td>
-            <td>' . date('M d, Y', strtotime($row['acquisition_date'])) . '</td>
-            <td>' . date('M d, Y', strtotime($row['last_updated'])) . '</td>
-        </tr>';
+        <td>' . htmlspecialchars($row['description']) . '</td>
+        <td>' . htmlspecialchars($row['category_name']) . '</td>
+        <td>' . $row['quantity'] . '</td>
+        <td>' . htmlspecialchars($row['unit']) . '</td>
+        <td>' . ucfirst(htmlspecialchars($row['status'])) . '</td>
+        <td>&#8369; ' . number_format($row['value'], 2) . '</td>
+        <td>&#8369; ' . number_format($row['value'] * $row['quantity'], 2) . '</td>
+        <td>' . date('M d, Y', strtotime($row['acquisition_date'])) . '</td>
+        <td>' . date('M d, Y', strtotime($row['last_updated'])) . '</td>
+    </tr>';
     }
+
 
     $html .= '</tbody></table>';
 
@@ -154,4 +155,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets'])) 
 } else {
     echo "No assets selected.";
 }
-?>
