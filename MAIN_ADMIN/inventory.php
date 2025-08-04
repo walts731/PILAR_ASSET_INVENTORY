@@ -67,27 +67,35 @@ $stmt->close();
     $selected_office = $_GET['office'] ?? $_SESSION['office_id'];
     ?>
     <div class="card card-filter shadow-sm mb-3">
-      <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h5 class="mb-0 me-3">Filter Assets and Consumables</h5>
+  <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h5 class="mb-0 me-3">Filter Assets and Consumables</h5>
 
-        <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
-          <form method="GET" class="d-flex align-items-center gap-2 mb-0">
-            <label for="officeFilter" class="form-label mb-0">Office</label>
-            <select name="office" id="officeFilter" class="form-select form-select-sm" onchange="this.form.submit()">
-              <?php while ($office = $offices->fetch_assoc()): ?>
-                <option value="<?= $office['id'] ?>" <?= $office['id'] == $selected_office ? 'selected' : '' ?>>
-                  <?= htmlspecialchars($office['office_name']) ?>
-                </option>
-              <?php endwhile; ?>
-            </select>
-          </form>
+    <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
+      <form method="GET" class="d-flex align-items-center gap-2 mb-0">
+        <label for="officeFilter" class="form-label mb-0">Office</label>
+        <select name="office" id="officeFilter" class="form-select form-select-sm" onchange="this.form.submit()">
+          <?php while ($office = $offices->fetch_assoc()): ?>
+            <option value="<?= $office['id'] ?>" <?= $office['id'] == $selected_office ? 'selected' : '' ?>>
+              <?= htmlspecialchars($office['office_name']) ?>
+            </option>
+          <?php endwhile; ?>
+        </select>
+      </form>
 
-          <button class="btn btn-outline-primary rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
-            <i class="bi bi-plus-circle"></i> Add Asset
-          </button>
-        </div>
-      </div>
+      <!-- Add Asset Button -->
+      <button class="btn btn-outline-primary rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
+        <i class="bi bi-plus-circle"></i> Add Asset
+      </button>
+
+      <!-- Import CSV Button -->
+<button class="btn btn-outline-success rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#importCSVModal">
+  <i class="bi bi-upload"></i> Import CSV
+</button>
+
     </div>
+  </div>
+</div>
+
 
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
@@ -475,6 +483,7 @@ $stmt->close();
   <?php include 'modals/add_asset_modal.php'; ?>
   <?php include 'modals/manage_categories_modal.php'; ?>
   <?php include 'modals/view_asset_modal.php'; ?>
+  <?php include 'modals/import_csv_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
