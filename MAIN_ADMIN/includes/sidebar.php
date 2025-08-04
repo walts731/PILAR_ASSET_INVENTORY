@@ -1,12 +1,12 @@
 <?php
 $system = [
-  'logo' => '../img/default-logo.png', // fallback
-  'system_title' => 'Inventory System'
+    'logo' => '../img/default-logo.png', // fallback
+    'system_title' => 'Inventory System'
 ];
 
 $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
 if ($result && $result->num_rows > 0) {
-  $system = $result->fetch_assoc();
+    $system = $result->fetch_assoc();
 }
 ?>
 <div class="sidebar d-flex flex-column justify-content-between">
@@ -49,9 +49,28 @@ if ($result && $result->num_rows > 0) {
             <a href="settings.php" class="nav-link <?= ($page == 'settings') ? 'active' : '' ?>">
                 <i class="bi bi-gear"></i> Settings
             </a>
-            <a href="../logout.php" class="nav-link">
+            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
         </nav>
     </div>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to log out?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a href="../logout.php" class="btn btn-danger">Logout</a>
+      </div>
+    </div>
+  </div>
 </div>
