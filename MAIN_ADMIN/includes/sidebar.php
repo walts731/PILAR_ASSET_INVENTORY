@@ -36,39 +36,39 @@ if ($formCatResult && $formCatResult->num_rows > 0) {
 
 <!-- SIDEBAR STYLES -->
 <style>
-.sidebar {
-    height: 100vh;
-    overflow: hidden;
-}
+    .sidebar {
+        height: 100vh;
+        overflow: hidden;
+    }
 
-.sidebar .scrollable-nav {
-    overflow-y: auto;
-    height: calc(100vh - 60px);
-    padding-right: 8px;
-    scrollbar-width: none;
-}
+    .sidebar .scrollable-nav {
+        overflow-y: auto;
+        height: calc(100vh - 60px);
+        padding-right: 8px;
+        scrollbar-width: none;
+    }
 
-.sidebar .scrollable-nav::-webkit-scrollbar {
-    display: none;
-}
+    .sidebar .scrollable-nav::-webkit-scrollbar {
+        display: none;
+    }
 
-.sidebar a {
-    width: 100%;
-    text-align: left;
-    padding: 10px 15px;
-    border-radius: 10px;
-    margin: 5px 0;
-    transition: all 0.3s ease;
-    display: block;
-    color: #000;
-    text-decoration: none;
-}
+    .sidebar a {
+        width: 100%;
+        text-align: left;
+        padding: 10px 15px;
+        border-radius: 10px;
+        margin: 5px 0;
+        transition: all 0.3s ease;
+        display: block;
+        color: #000;
+        text-decoration: none;
+    }
 
-.sidebar a:hover,
-.sidebar a.active {
-    background-color: #e0e0e0;
-    color: #000;
-}
+    .sidebar a:hover,
+    .sidebar a.active {
+        background-color: #e0e0e0;
+        color: #000;
+    }
 </style>
 
 <!-- SIDEBAR HTML -->
@@ -109,18 +109,17 @@ if ($formCatResult && $formCatResult->num_rows > 0) {
             </div>
 
             <!-- Forms dropdown -->
-            <a class="<?= ($page == 'forms' || $page == 'forms_category') ? 'active' : '' ?>"
+            <a class="<?= ($page == 'form') ? 'active' : '' ?>"
                 data-bs-toggle="collapse" href="#formsSubMenu" role="button"
-                aria-expanded="<?= ($page == 'forms' || $page == 'forms_category') ? 'true' : 'false' ?>"
+                aria-expanded="<?= ($page == 'form') ? 'true' : 'false' ?>"
                 aria-controls="formsSubMenu">
                 <i class="bi bi-file-earmark-text"></i> Forms
                 <i class="bi bi-caret-down-fill float-end"></i>
             </a>
-            <div class="collapse ps-4 <?= ($page == 'forms' || $page == 'forms_category') ? 'show' : '' ?>" id="formsSubMenu">
-                <a class="nav-link <?= ($page == 'forms') ? 'active' : '' ?>" href="forms.php">All</a>
+            <div class="collapse ps-4 <?= ($page == 'form') ? 'show' : '' ?>" id="formsSubMenu">
                 <?php foreach ($form_categories as $cat): ?>
-                    <a class="nav-link <?= (isset($_GET['category']) && $_GET['category'] === $cat && $page == 'forms_category') ? 'active' : '' ?>"
-                        href="forms_category.php?category=<?= urlencode($cat) ?>">
+                    <a class="nav-link <?= (isset($_GET['category']) && $_GET['category'] === $cat && $page == 'form') ? 'active' : '' ?>"
+                        href="forms.php?category=<?= urlencode($cat) ?>">
                         <?= htmlspecialchars($cat) ?>
                     </a>
                 <?php endforeach; ?>
