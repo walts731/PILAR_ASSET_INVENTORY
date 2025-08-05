@@ -76,9 +76,61 @@ if ($form_id > 0) {
         <h2 class="mb-4"><?= htmlspecialchars($form['form_title']) ?></h2>
         <div class="card shadow">
           <div class="card-body">
-            <a class="btn btn-primary" href="../<?= htmlspecialchars($form['file_path']) ?>" target="_blank">
-              <i class="bi bi-file-earmark-arrow-down"></i> Submit Form
-            </a>
+
+            <?php if ($form['category'] === 'ris'): ?>
+              <!-- Static Requisition Inventory Slip layout -->
+              <h4 class="text-center mb-3">REQUISITION AND ISSUE SLIP (RIS)</h4>
+              <form>
+                <div class="mb-3">
+                  <label for="office" class="form-label">Office/Unit:</label>
+                  <input type="text" class="form-control" id="office" name="office">
+                </div>
+
+                <div class="mb-3">
+                  <label for="responsibility" class="form-label">Responsibility Center Code:</label>
+                  <input type="text" class="form-control" id="responsibility" name="responsibility">
+                </div>
+
+                <table class="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th>Stock No.</th>
+                      <th>Unit</th>
+                      <th>Description</th>
+                      <th>Quantity Requested</th>
+                      <th>Quantity Issued</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php for ($i = 0; $i < 5; $i++): ?>
+                      <tr>
+                        <td><input type="text" class="form-control" name="stock_no[]"></td>
+                        <td><input type="text" class="form-control" name="unit[]"></td>
+                        <td><input type="text" class="form-control" name="description[]"></td>
+                        <td><input type="number" class="form-control" name="qty_requested[]"></td>
+                        <td><input type="number" class="form-control" name="qty_issued[]"></td>
+                      </tr>
+                    <?php endfor; ?>
+                  </tbody>
+                </table>
+
+                <div class="mb-3">
+                  <label class="form-label">Purpose:</label>
+                  <textarea class="form-control" name="purpose" rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                  <i class="bi bi-send-check-fill"></i> Submit RIS
+                </button>
+              </form>
+
+            <?php else: ?>
+              <!-- Default form behavior for other categories -->
+              <a class="btn btn-primary" href="../<?= htmlspecialchars($form['file_path']) ?>" target="_blank">
+                <i class="bi bi-file-earmark-arrow-down"></i> Submit Form
+              </a>
+            <?php endif; ?>
+
           </div>
         </div>
       <?php else: ?>
