@@ -24,14 +24,17 @@ if ($categoryResult && $categoryResult->num_rows > 0) {
     }
 }
 
-// Fetch forms categories
+// Fetch unique form categories WITH id (the first form per category)
 $form_categories = [];
-$formCatResult = $conn->query("SELECT DISTINCT category FROM forms WHERE category IS NOT NULL AND category != ''");
+$formCatResult = $conn->query("SELECT MIN(id) AS id, category FROM forms WHERE category IS NOT NULL AND category != '' GROUP BY category");
 if ($formCatResult && $formCatResult->num_rows > 0) {
     while ($row = $formCatResult->fetch_assoc()) {
-        $form_categories[] = $row['category'];
+        $form_categories[] = $row;
     }
 }
+
+// Determine if Forms dropdown should be active
+$formActive = ($page == 'forms' && isset($_GET['id']));
 ?>
 
 <!-- SIDEBAR STYLES -->
@@ -78,7 +81,7 @@ if ($formCatResult && $formCatResult->num_rows > 0) {
         <!-- Logo and title -->
         <h5 class="text-center d-flex align-items-center justify-content-center mt-3">
             <img src="../img/<?= htmlspecialchars($system['logo']) ?>" alt="Logo"
-                style="width: 30px; height: 30px; margin-right: 10px;" />
+                 style="width: 30px; height: 30px; margin-right: 10px;" />
             <?= htmlspecialchars($system['system_title']) ?>
         </h5>
         <hr>
@@ -91,39 +94,36 @@ if ($formCatResult && $formCatResult->num_rows > 0) {
 
             <!-- Inventory dropdown -->
             <a class="<?= ($page == 'inventory' || $page == 'inventory_category') ? 'active' : '' ?>"
-                data-bs-toggle="collapse" href="#inventorySubMenu" role="button"
-                aria-expanded="<?= ($page == 'inventory' || $page == 'inventory_category') ? 'true' : 'false' ?>"
-                aria-controls="inventorySubMenu">
+               data-bs-toggle="collapse" href="#inventorySubMenu" role="button"
+               aria-expanded="<?= ($page == 'inventory' || $page == 'inventory_category') ? 'true' : 'false' ?>"
+               aria-controls="inventorySubMenu">
                 <i class="bi bi-box-seam"></i> Inventory
                 <i class="bi bi-caret-down-fill float-end"></i>
             </a>
             <div class="collapse ps-4 <?= ($page == 'inventory' || $page == 'inventory_category') ? 'show' : '' ?>"
-                id="inventorySubMenu">
+                 id="inventorySubMenu">
                 <a class="nav-link <?= ($page == 'inventory') ? 'active' : '' ?>" href="inventory.php">All</a>
                 <?php foreach ($categories as $cat): ?>
                     <a class="nav-link <?= (isset($_GET['category']) && $_GET['category'] == $cat['id'] && $page == 'inventory_category') ? 'active' : '' ?>"
-                        href="inventory_category.php?category=<?= $cat['id'] ?>">
+                       href="inventory_category.php?category=<?= $cat['id'] ?>">
                         <?= htmlspecialchars($cat['category_name']) ?>
                     </a>
                 <?php endforeach; ?>
             </div>
 
             <!-- Forms dropdown -->
-            <?php
-            $formActive = ($page == 'form' || ($page == 'forms' && isset($_GET['category'])));
-            ?>
             <a class="<?= $formActive ? 'active' : '' ?>"
-                data-bs-toggle="collapse" href="#formsSubMenu" role="button"
-                aria-expanded="<?= $formActive ? 'true' : 'false' ?>"
-                aria-controls="formsSubMenu">
-                <i class="bi bi-file-earmark-text"></i> Forms
-                <i class="bi bi-caret-down-fill float-end"></i>
+               data-bs-toggle="collapse" href="#formsSubMenu" role="button"
+               aria-expanded="<?= $formActive ? 'true' : 'false' ?>"
+               aria-controls="formsSubMenu">
+               <i class="bi bi-file-earmark-text"></i> Forms
+               <i class="bi bi-caret-down-fill float-end"></i>
             </a>
             <div class="collapse ps-4 <?= $formActive ? 'show' : '' ?>" id="formsSubMenu">
                 <?php foreach ($form_categories as $category): ?>
-                    <a class="nav-link <?= (isset($_GET['category']) && $_GET['category'] == $category) ? 'active' : '' ?>"
-                        href="forms.php?category=<?= urlencode($category) ?>">
-                        <?= htmlspecialchars($category) ?>
+                    <a class="nav-link <?= (isset($_GET['id']) && $_GET['id'] == $category['id']) ? 'active' : '' ?>"
+                       href="forms.php?id=<?= $category['id'] ?>">
+                       <?= htmlspecialchars($category['category']) ?>
                     </a>
                 <?php endforeach; ?>
             </div>
