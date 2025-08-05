@@ -109,18 +109,21 @@ if ($formCatResult && $formCatResult->num_rows > 0) {
             </div>
 
             <!-- Forms dropdown -->
-            <a class="<?= ($page == 'form') ? 'active' : '' ?>"
+            <?php
+            $formActive = ($page == 'form' || ($page == 'forms' && isset($_GET['category'])));
+            ?>
+            <a class="<?= $formActive ? 'active' : '' ?>"
                 data-bs-toggle="collapse" href="#formsSubMenu" role="button"
-                aria-expanded="<?= ($page == 'form') ? 'true' : 'false' ?>"
+                aria-expanded="<?= $formActive ? 'true' : 'false' ?>"
                 aria-controls="formsSubMenu">
                 <i class="bi bi-file-earmark-text"></i> Forms
                 <i class="bi bi-caret-down-fill float-end"></i>
             </a>
-            <div class="collapse ps-4 <?= ($page == 'form') ? 'show' : '' ?>" id="formsSubMenu">
-                <?php foreach ($form_categories as $cat): ?>
-                    <a class="nav-link <?= (isset($_GET['category']) && $_GET['category'] === $cat && $page == 'form') ? 'active' : '' ?>"
-                        href="forms.php?category=<?= urlencode($cat) ?>">
-                        <?= htmlspecialchars($cat) ?>
+            <div class="collapse ps-4 <?= $formActive ? 'show' : '' ?>" id="formsSubMenu">
+                <?php foreach ($form_categories as $category): ?>
+                    <a class="nav-link <?= (isset($_GET['category']) && $_GET['category'] == $category) ? 'active' : '' ?>"
+                        href="forms.php?category=<?= urlencode($category) ?>">
+                        <?= htmlspecialchars($category) ?>
                     </a>
                 <?php endforeach; ?>
             </div>
