@@ -112,6 +112,9 @@ if ($form_id > 0) {
             <?php if ($form['category'] === 'ris'): ?>
               <?php include 'ris_form.php'; ?>
             <?php endif; ?>
+            <?php if ($form['category'] === 'ics'): ?>
+              <?php include 'ics_form.php'; ?>
+            <?php endif; ?>
           </div>
         </div>
       <?php else: ?>

@@ -1,0 +1,85 @@
+<?php
+// Fetch ICS form data (you can pass ICS ID via GET or session)
+$ics_id = $_GET['ics_id'] ?? null;
+
+$ics_data = [
+    'header_image' => '',
+    'entity_name' => '',
+    'fund_cluster' => '',
+    'ics_no' => '',
+];
+
+if ($ics_id) {
+    $stmt = $conn->prepare("SELECT * FROM ics_form WHERE id = ?");
+    $stmt->bind_param("i", $ics_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $ics_data = $result->fetch_assoc();
+    }
+}
+?>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <form method="post" action="save_ics.php" enctype="multipart/form-data">
+            <div class="mb-3">
+                <?php if (!empty($ics_data['header_image'])): ?>
+                    <img src="<?= $ics_data['header_image'] ?>" height="60" class="mb-2"><br>
+                <?php endif; ?>
+            </div>
+
+            <div class="row mb-3">
+                <!-- ENTITY NAME -->
+                <div class="col-6">
+                    <label class="form-label fw-semibold">ENTITY NAME</label>
+                    <input type="text" class="form-control" name="entity_name" value="<?= htmlspecialchars($ics_data['entity_name']) ?>">
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- FUND CLUSTER -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">FUND CLUSTER</label>
+                    <input type="text" class="form-control" name="fund_cluster" value="<?= htmlspecialchars($ics_data['fund_cluster']) ?>">
+                </div>
+
+                <!-- ICS NO -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">ICS NO.</label>
+                    <input type="text" class="form-control" name="ics_no" value="<?= htmlspecialchars($ics_data['ics_no']) ?>">
+                </div>
+            </div>
+
+            <table class="table table-bordered text-center align-middle mt-3">
+                <thead>
+                    <tr>
+                        <th rowspan="2">QUANTITY</th>
+                        <th rowspan="2">UNIT</th>
+                        <th colspan="2">AMOUNT</th>
+                        <th rowspan="2">DESCRIPTION</th>
+                        <th rowspan="2">ITEM NO</th>
+                        <th rowspan="2">ESTIMATED USEFUL LIFE</th>
+                    </tr>
+                    <tr>
+                        <th>UNIT COST</th>
+                        <th>TOTAL COST</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="number" class="form-control" name="quantity[]"></td>
+                        <td><input type="text" class="form-control" name="unit[]"></td>
+                        <td><input type="number" class="form-control" step="0.01" name="unit_cost[]"></td>
+                        <td><input type="number" class="form-control" step="0.01" name="total_cost[]"></td>
+                        <td><input type="text" class="form-control" name="description[]"></td>
+                        <td><input type="text" class="form-control" name="item_no[]"></td>
+                        <td><input type="text" class="form-control" name="estimated_useful_life[]"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <button type="submit" class="btn btn-success mt-3">Save ICS</button>
+        </form>
+    </div>
+</div>
