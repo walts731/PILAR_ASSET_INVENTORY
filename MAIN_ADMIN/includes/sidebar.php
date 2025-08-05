@@ -1,4 +1,5 @@
 <?php
+require_once '../connect.php';
 
 $system = [
     'logo' => '../img/default-logo.png',
@@ -14,12 +15,21 @@ if ($result && $result->num_rows > 0) {
 // Get current page
 $page = basename($_SERVER['PHP_SELF'], ".php");
 
-// Fetch categories for dropdown
+// Fetch inventory categories
 $categories = [];
 $categoryResult = $conn->query("SELECT id, category_name FROM categories");
 if ($categoryResult && $categoryResult->num_rows > 0) {
     while ($row = $categoryResult->fetch_assoc()) {
         $categories[] = $row;
+    }
+}
+
+// Fetch forms categories
+$form_categories = [];
+$formCatResult = $conn->query("SELECT DISTINCT category FROM forms WHERE category IS NOT NULL AND category != ''");
+if ($formCatResult && $formCatResult->num_rows > 0) {
+    while ($row = $formCatResult->fetch_assoc()) {
+        $form_categories[] = $row['category'];
     }
 }
 ?>
@@ -33,13 +43,31 @@ if ($categoryResult && $categoryResult->num_rows > 0) {
 
 .sidebar .scrollable-nav {
     overflow-y: auto;
-    height: calc(100vh - 60px); /* Adjust for logout section */
+    height: calc(100vh - 60px);
     padding-right: 8px;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
 }
 
 .sidebar .scrollable-nav::-webkit-scrollbar {
-    display: none; /* Chrome, Safari */
+    display: none;
+}
+
+.sidebar a {
+    width: 100%;
+    text-align: left;
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin: 5px 0;
+    transition: all 0.3s ease;
+    display: block;
+    color: #000;
+    text-decoration: none;
+}
+
+.sidebar a:hover,
+.sidebar a.active {
+    background-color: #e0e0e0;
+    color: #000;
 }
 </style>
 
@@ -57,55 +85,71 @@ if ($categoryResult && $categoryResult->num_rows > 0) {
 
         <!-- Sidebar Navigation -->
         <nav class="nav flex-column">
-            <a href="../MAIN_ADMIN/admin_dashboard.php" class="nav-link <?= ($page == 'admin_dashboard') ? 'active' : '' ?>">
+            <a href="../MAIN_ADMIN/admin_dashboard.php" class="<?= ($page == 'admin_dashboard') ? 'active' : '' ?>">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
 
             <!-- Inventory dropdown -->
-            <div class="nav-item">
-                <a class="nav-link d-flex justify-content-between align-items-center <?= ($page == 'inventory' || $page == 'inventory_category') ? 'active' : '' ?>"
-                   data-bs-toggle="collapse" href="#inventorySubMenu" role="button" aria-expanded="false" aria-controls="inventorySubMenu">
-                    <span><i class="bi bi-box-seam"></i> Inventory</span>
-                    <i class="bi bi-caret-down-fill"></i>
-                </a>
-                <div class="collapse ps-3 <?= ($page == 'inventory' || $page == 'inventory_category') ? 'show' : '' ?>" id="inventorySubMenu">
-                    <a class="nav-link <?= ($page == 'inventory') ? 'active' : '' ?>" href="inventory.php">All</a>
-                    <?php foreach ($categories as $cat): ?>
-                        <a class="nav-link <?= (isset($_GET['category']) && $_GET['category'] == $cat['id'] && $page == 'inventory_category') ? 'active' : '' ?>"
-                           href="inventory_category.php?category=<?= $cat['id'] ?>">
-                            <?= htmlspecialchars($cat['category_name']) ?>
-                        </a>
-                    <?php endforeach; ?>
-                </div>
+            <a class="<?= ($page == 'inventory' || $page == 'inventory_category') ? 'active' : '' ?>"
+                data-bs-toggle="collapse" href="#inventorySubMenu" role="button"
+                aria-expanded="<?= ($page == 'inventory' || $page == 'inventory_category') ? 'true' : 'false' ?>"
+                aria-controls="inventorySubMenu">
+                <i class="bi bi-box-seam"></i> Inventory
+                <i class="bi bi-caret-down-fill float-end"></i>
+            </a>
+            <div class="collapse ps-4 <?= ($page == 'inventory' || $page == 'inventory_category') ? 'show' : '' ?>"
+                id="inventorySubMenu">
+                <a class="nav-link <?= ($page == 'inventory') ? 'active' : '' ?>" href="inventory.php">All</a>
+                <?php foreach ($categories as $cat): ?>
+                    <a class="nav-link <?= (isset($_GET['category']) && $_GET['category'] == $cat['id'] && $page == 'inventory_category') ? 'active' : '' ?>"
+                        href="inventory_category.php?category=<?= $cat['id'] ?>">
+                        <?= htmlspecialchars($cat['category_name']) ?>
+                    </a>
+                <?php endforeach; ?>
             </div>
 
-            <a href="borrow.php" class="nav-link <?= ($page == 'borrow') ? 'active' : '' ?>">
+            <!-- Forms dropdown -->
+            <a class="<?= ($page == 'forms' || $page == 'forms_category') ? 'active' : '' ?>"
+                data-bs-toggle="collapse" href="#formsSubMenu" role="button"
+                aria-expanded="<?= ($page == 'forms' || $page == 'forms_category') ? 'true' : 'false' ?>"
+                aria-controls="formsSubMenu">
+                <i class="bi bi-file-earmark-text"></i> Forms
+                <i class="bi bi-caret-down-fill float-end"></i>
+            </a>
+            <div class="collapse ps-4 <?= ($page == 'forms' || $page == 'forms_category') ? 'show' : '' ?>" id="formsSubMenu">
+                <a class="nav-link <?= ($page == 'forms') ? 'active' : '' ?>" href="forms.php">All</a>
+                <?php foreach ($form_categories as $cat): ?>
+                    <a class="nav-link <?= (isset($_GET['category']) && $_GET['category'] === $cat && $page == 'forms_category') ? 'active' : '' ?>"
+                        href="forms_category.php?category=<?= urlencode($cat) ?>">
+                        <?= htmlspecialchars($cat) ?>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+
+            <a href="borrow.php" class="<?= ($page == 'borrow') ? 'active' : '' ?>">
                 <i class="bi bi-arrow-left-right"></i> Borrow
             </a>
-            <a href="reports.php" class="nav-link <?= ($page == 'reports') ? 'active' : '' ?>">
+            <a href="reports.php" class="<?= ($page == 'reports') ? 'active' : '' ?>">
                 <i class="bi bi-bar-chart-line"></i> Reports
             </a>
-            <a href="user.php" class="nav-link <?= ($page == 'user') ? 'active' : '' ?>">
+            <a href="user.php" class="<?= ($page == 'user') ? 'active' : '' ?>">
                 <i class="bi bi-person"></i> Users
             </a>
-            <a href="forms.php" class="nav-link <?= ($page == 'templates') ? 'active' : '' ?>">
-                <i class="bi bi-file-earmark-text"></i> Forms
-            </a>
-            <a href="asset_archive.php" class="nav-link <?= ($page == 'asset_archive') ? 'active' : '' ?>">
+            <a href="asset_archive.php" class="<?= ($page == 'asset_archive') ? 'active' : '' ?>">
                 <i class="bi bi-archive"></i> Archive
             </a>
-            <a href="about.php" class="nav-link <?= ($page == 'about') ? 'active' : '' ?>">
+            <a href="about.php" class="<?= ($page == 'about') ? 'active' : '' ?>">
                 <i class="bi bi-info-circle"></i> About
             </a>
-            <a href="settings.php" class="nav-link <?= ($page == 'settings') ? 'active' : '' ?>">
+            <a href="settings.php" class="<?= ($page == 'settings') ? 'active' : '' ?>">
                 <i class="bi bi-gear"></i> Settings
             </a>
         </nav>
     </div>
 
-    <!-- Fixed bottom part (logout) -->
+    <!-- Logout -->
     <div class="p-3 border-top">
-        <a href="#" class="nav-link " data-bs-toggle="modal" data-bs-target="#logoutModal">
+        <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#logoutModal">
             <i class="bi bi-box-arrow-right"></i> Logout
         </a>
     </div>
@@ -113,20 +157,19 @@ if ($categoryResult && $categoryResult->num_rows > 0) {
 
 <!-- Logout Modal -->
 <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content shadow">
-      <div class="modal-header">
-        <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        Are you sure you want to log out?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <a href="../logout.php" class="btn btn-danger">Logout</a>
-      </div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to log out?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="../logout.php" class="btn btn-danger">Logout</a>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
-

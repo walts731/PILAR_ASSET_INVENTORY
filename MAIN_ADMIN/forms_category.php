@@ -1,14 +1,17 @@
 <?php
 require_once '../connect.php';
-$result = $conn->query("SELECT * FROM forms ORDER BY created_at DESC");
+$category = $_GET['category'] ?? '';
+$stmt = $conn->prepare("SELECT * FROM forms WHERE category = ?");
+$stmt->bind_param("s", $category);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
-<h3>All Forms</h3>
+<h3>Forms under "<?= htmlspecialchars($category) ?>"</h3>
 <ul>
     <?php while ($row = $result->fetch_assoc()): ?>
         <li>
             <a href="<?= $row['file_path'] ?>" target="_blank"><?= htmlspecialchars($row['form_title']) ?></a>
-            (<?= htmlspecialchars($row['category']) ?>)
         </li>
     <?php endwhile; ?>
 </ul>
