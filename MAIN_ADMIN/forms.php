@@ -3,53 +3,57 @@ require_once '../connect.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../index.php");
-    exit();
+  header("Location: ../index.php");
+  exit();
 }
 
 // Set office_id if not set
 if (!isset($_SESSION['office_id'])) {
-    $user_id = $_SESSION['user_id'];
-    $stmt = $conn->prepare("SELECT office_id FROM users WHERE user_id = ?");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $stmt->bind_result($office_id);
-    if ($stmt->fetch()) {
-        $_SESSION['office_id'] = $office_id;
-    }
-    $stmt->close();
+  $user_id = $_SESSION['user_id'];
+  $stmt = $conn->prepare("SELECT office_id FROM users WHERE user_id = ?");
+  $stmt->bind_param("i", $user_id);
+  $stmt->execute();
+  $stmt->bind_result($office_id);
+  if ($stmt->fetch()) {
+    $_SESSION['office_id'] = $office_id;
+  }
+  $stmt->close();
 }
-
-// Fetch full name
-$user_name = '';
-$stmt = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
-$stmt->bind_param("i", $_SESSION['user_id']);
-$stmt->execute();
-$stmt->bind_result($fullname);
-$stmt->fetch();
-$stmt->close();
 
 // Get form ID from URL
 $form_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $form = null;
+$ris_data = null;
 
 if ($form_id > 0) {
-    $stmt = $conn->prepare("SELECT id, form_title, category, file_path, created_at FROM forms WHERE id = ?");
+  // Fetch form metadata
+  $stmt = $conn->prepare("SELECT id, form_title, category, file_path, created_at FROM forms WHERE id = ?");
+  $stmt->bind_param("i", $form_id);
+  $stmt->execute();
+  $stmt->bind_result($id, $form_title, $category, $file_path, $created_at);
+  if ($stmt->fetch()) {
+    $form = [
+      'id' => $id,
+      'form_title' => $form_title,
+      'category' => $category,
+      'file_path' => $file_path,
+      'created_at' => $created_at
+    ];
+  }
+  $stmt->close();
+
+  // Fetch RIS data if category is ris
+  if ($form && $form['category'] === 'ris') {
+    $stmt = $conn->prepare("SELECT `id`, `form_id`, `office_id`, `header_image`, `division`, `responsibility_center`, `ris_no`, `sai_no`, `date`, `approved_by_name`, `approved_by_designation`, `released_by_name`, `released_by_designation`, `received_by_name`, `received_by_designation`, `footer_date`, `reason_for_transfer`, `created_at` FROM `ris_form` WHERE form_id = ?");
     $stmt->bind_param("i", $form_id);
     $stmt->execute();
-    $stmt->bind_result($id, $form_title, $category, $file_path, $created_at);
-    if ($stmt->fetch()) {
-        $form = [
-            'id' => $id,
-            'form_title' => $form_title,
-            'category' => $category,
-            'file_path' => $file_path,
-            'created_at' => $created_at
-        ];
-    }
+    $result = $stmt->get_result();
+    $ris_data = $result->fetch_assoc();
     $stmt->close();
+  }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -62,6 +66,35 @@ if ($form_id > 0) {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
   <link rel="stylesheet" href="css/dashboard.css" />
+  <style>
+    .autocomplete-suggestions {
+      background-color: #fff;
+      position: absolute;
+      z-index: 999;
+      max-height: 300px;
+      overflow-y: auto;
+      width: 100%;
+      font-size: 18px;
+      /* Bigger font */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      /* Add shadow */
+      border-radius: 4px;
+    }
+
+    .autocomplete-suggestion {
+      padding: 12px 15px;
+      /* Bigger padding */
+      cursor: pointer;
+    }
+
+    .autocomplete-suggestion:hover {
+      background-color: #f2f2f2;
+      font-weight: bold;
+      /* Emphasize on hover */
+      color: #333;
+    }
+  </style>
+
 </head>
 
 <body>
@@ -76,59 +109,170 @@ if ($form_id > 0) {
         <h2 class="mb-4"><?= htmlspecialchars($form['form_title']) ?></h2>
         <div class="card shadow">
           <div class="card-body">
-
             <?php if ($form['category'] === 'ris'): ?>
-              <!-- Static Requisition Inventory Slip layout -->
-              <h4 class="text-center mb-3">REQUISITION AND ISSUE SLIP (RIS)</h4>
+              <h4 class="text-center mb-4 fw-bold text-uppercase">Requisition and Issue Slip (RIS)</h4>
+
               <form>
-                <div class="mb-3">
-                  <label for="office" class="form-label">Office/Unit:</label>
-                  <input type="text" class="form-control" id="office" name="office">
+                <!-- Row 1: Division, Responsibility Center, RIS No., Date -->
+                <div class="row mb-3">
+                  <div class="col-md-3">
+                    <label for="division" class="form-label fw-semibold">Division</label>
+                    <input type="text" class="form-control" id="division" name="division" value="<?= htmlspecialchars($ris_data['division'] ?? '') ?>">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="responsibility_center" class="form-label fw-semibold">Responsibility Center</label>
+                    <input type="text" class="form-control" id="responsibility_center" name="responsibility_center" value="<?= htmlspecialchars($ris_data['responsibility_center'] ?? '') ?>">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="ris_no" class="form-label fw-semibold">RIS No.</label>
+                    <input type="text" class="form-control" id="ris_no" name="ris_no" value="<?= htmlspecialchars($ris_data['ris_no'] ?? '') ?>">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="date" class="form-label fw-semibold">Date</label>
+                    <input type="date" class="form-control" id="date" name="date" value="<?= htmlspecialchars($ris_data['date'] ?? '') ?>">
+                  </div>
                 </div>
 
-                <div class="mb-3">
-                  <label for="responsibility" class="form-label">Responsibility Center Code:</label>
-                  <input type="text" class="form-control" id="responsibility" name="responsibility">
+                <!-- Row 2: Office, Responsibility Code, SAI No., Empty -->
+                <div class="row mb-3">
+                  <div class="col-md-3">
+                    <label for="office" class="form-label fw-semibold">Office/Unit</label>
+                    <select class="form-select" id="office" name="office" required>
+                      <option value="" disabled <?= !isset($ris_data['office']) ? 'selected' : '' ?>>Select Office</option>
+                      <?php
+                      $office_query = $conn->query("SELECT id, office_name FROM offices ORDER BY office_name ASC");
+                      while ($row = $office_query->fetch_assoc()):
+                        $selected = (isset($ris_data['office']) && $ris_data['office'] == $row['id']) ? 'selected' : '';
+                      ?>
+                        <option value="<?= $row['id'] ?>" <?= $selected ?>><?= htmlspecialchars($row['office_name']) ?></option>
+                      <?php endwhile; ?>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="responsibility_code" class="form-label fw-semibold">Code</label>
+                    <input type="text" class="form-control" id="responsibility_code" name="responsibility_code" value="<?= htmlspecialchars($ris_data['responsibility_code'] ?? '') ?>">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="sai_no" class="form-label fw-semibold">SAI No.</label>
+                    <input type="text" class="form-control" id="sai_no" name="sai_no" value="<?= htmlspecialchars($ris_data['sai_no'] ?? '') ?>">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="date" class="form-label fw-semibold">Date</label>
+                    <input type="date" class="form-control" id="date" name="date" value="<?= htmlspecialchars($ris_data['date'] ?? '') ?>">
+                  </div>
                 </div>
 
-                <table class="table table-bordered">
+                <table class="table table-bordered align-middle text-center">
                   <thead>
-                    <tr>
-                      <th>Stock No.</th>
+                    <tr class="table-secondary">
+                      <th colspan="4">REQUISITION</th>
+                      <th colspan="2">ISSUANCE</th>
+                    </tr>
+                    <tr class="table-light">
+                      <th>Stock No</th>
                       <th>Unit</th>
                       <th>Description</th>
-                      <th>Quantity Requested</th>
-                      <th>Quantity Issued</th>
+                      <th>Quantity</th>
+                      <th>Quantity</th>
+                      <th>Signature</th>
+                      <th>Price</th>
+                      <th>Total Amount</th>
                     </tr>
                   </thead>
                   <tbody>
                     <?php for ($i = 0; $i < 5; $i++): ?>
                       <tr>
                         <td><input type="text" class="form-control" name="stock_no[]"></td>
-                        <td><input type="text" class="form-control" name="unit[]"></td>
-                        <td><input type="text" class="form-control" name="description[]"></td>
-                        <td><input type="number" class="form-control" name="qty_requested[]"></td>
-                        <td><input type="number" class="form-control" name="qty_issued[]"></td>
+                        <td>
+                          <select name="unit[]" class="form-select" required>
+                            <option value="" disabled selected>Select Unit</option>
+                            <?php
+                            $unit_query = $conn->query("SELECT id, unit_name FROM unit ORDER BY unit_name ASC");
+                            while ($row = $unit_query->fetch_assoc()):
+                            ?>
+                              <option value="<?= $row['id'] ?>"><?= htmlspecialchars($row['unit_name']) ?></option>
+                            <?php endwhile; ?>
+                          </select>
+                        </td>
+                        <td style="position: relative;">
+                          <input type="text" class="form-control description-input" name="description[]" autocomplete="off">
+                          <div class="autocomplete-suggestions"></div>
+                        </td>
+                        <td><input type="number" class="form-control" name="req_quantity[]"></td>
+                        <td><input type="number" class="form-control" name="iss_quantity[]"></td>
+                        <td><input type="text" class="form-control" name="signature[]"></td>
+                        <td><input type="number" step="0.01" class="form-control" name="price[]"></td>
+                        <td><input type="number" step="0.01" class="form-control" name="total_amount[]"></td>
                       </tr>
                     <?php endfor; ?>
                   </tbody>
                 </table>
 
+                <!-- Reason for Transfer -->
                 <div class="mb-3">
-                  <label class="form-label">Purpose:</label>
-                  <textarea class="form-control" name="purpose" rows="3"></textarea>
+                  <label for="reason_for_transfer" class="form-label">Reason for Transfer:</label>
+                  <textarea class="form-control" name="reason_for_transfer" id="reason_for_transfer"><?= htmlspecialchars($ris_data['reason_for_transfer'] ?? '') ?></textarea>
                 </div>
 
+                <!-- RIS Footer Layout -->
+                <hr>
+                <div class="row text-center fw-bold mb-2">
+                  <div class="col">Approved by:</div>
+                  <div class="col">Released/Issued by:</div>
+                  <div class="col">Received by:</div>
+                </div>
+
+                <div class="row text-center mb-1">
+                  <div class="col">
+                    <label class="form-label">Signature:</label>
+                    <div class="form-control border-0 bg-light" style="height: 40px;"></div>
+                  </div>
+                  <div class="col">
+                    <label class="form-label">Signature:</label>
+                    <div class="form-control border-0 bg-light" style="height: 40px;"></div>
+                  </div>
+                  <div class="col">
+                    <label class="form-label">Signature:</label>
+                    <div class="form-control border-0 bg-light" style="height: 40px;"></div>
+                  </div>
+                </div>
+
+                <div class="row text-center mb-1">
+                  <div class="col">
+                    <input type="text" class="form-control" name="approved_by_name" placeholder="Printed Name" value="<?= htmlspecialchars($ris_data['approved_by_name'] ?? '') ?>">
+                  </div>
+                  <div class="col">
+                    <input type="text" class="form-control" name="released_by_name" placeholder="Printed Name" value="<?= htmlspecialchars($ris_data['released_by_name'] ?? '') ?>">
+                  </div>
+                  <div class="col">
+                    <input type="text" class="form-control" name="received_by_name" placeholder="Printed Name" value="<?= htmlspecialchars($ris_data['received_by_name'] ?? '') ?>">
+                  </div>
+                </div>
+
+                <div class="row text-center mb-1">
+                  <div class="col">
+                    <input type="text" class="form-control" name="approved_by_designation" placeholder="Designation" value="<?= htmlspecialchars($ris_data['approved_by_designation'] ?? '') ?>">
+                  </div>
+                  <div class="col">
+                    <input type="text" class="form-control" name="released_by_designation" placeholder="Designation" value="<?= htmlspecialchars($ris_data['released_by_designation'] ?? '') ?>">
+                  </div>
+                  <div class="col">
+                    <input type="text" class="form-control" name="received_by_designation" placeholder="Designation" value="<?= htmlspecialchars($ris_data['received_by_designation'] ?? '') ?>">
+                  </div>
+                </div>
+
+                <div class="row mt-3 mb-4">
+                  <div class="col-4">
+                    <label for="footer_date" class="form-label">Date:</label>
+                    <input type="date" class="form-control" name="footer_date" value="<?= htmlspecialchars($ris_data['footer_date'] ?? '') ?>">
+                  </div>
+                </div>
+
+                <!-- Submit Button -->
                 <button type="submit" class="btn btn-success">
                   <i class="bi bi-send-check-fill"></i> Submit RIS
                 </button>
               </form>
-
-            <?php else: ?>
-              <!-- Default form behavior for other categories -->
-              <a class="btn btn-primary" href="../<?= htmlspecialchars($form['file_path']) ?>" target="_blank">
-                <i class="bi bi-file-earmark-arrow-down"></i> Submit Form
-              </a>
             <?php endif; ?>
 
           </div>
@@ -146,6 +290,36 @@ if ($form_id > 0) {
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <script src="js/dashboard.js"></script>
+  <script>
+    $(document).on('input', '.description-input', function() {
+      const input = $(this);
+      const query = input.val().trim();
+      const suggestionBox = input.siblings('.autocomplete-suggestions');
+
+      if (query.length >= 1) {
+        $.ajax({
+          url: 'fetch_descriptions.php',
+          method: 'POST',
+          data: {
+            search: query
+          },
+          success: function(data) {
+            suggestionBox.html(data).show();
+          }
+        });
+      } else {
+        suggestionBox.hide();
+      }
+    });
+
+    $(document).on('click', '.autocomplete-suggestion', function() {
+      const selected = $(this).text();
+      const input = $(this).closest('td').find('.description-input');
+      input.val(selected);
+      $(this).parent().hide();
+    });
+  </script>
+
 </body>
 
 </html>
