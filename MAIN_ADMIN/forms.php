@@ -109,10 +109,10 @@ if ($form_id > 0) {
         <h2 class="mb-4"><?= htmlspecialchars($form['form_title']) ?></h2>
         <div class="card shadow">
           <div class="card-body">
-            <?php if ($form['category'] === 'ris'): ?>
+            <?php if ($form['category'] === 'RIS'): ?>
               <?php include 'ris_form.php'; ?>
             <?php endif; ?>
-            <?php if ($form['category'] === 'ics'): ?>
+            <?php if ($form['category'] === 'ICS'): ?>
               <?php include 'ics_form.php'; ?>
             <?php endif; ?>
           </div>
@@ -158,6 +158,8 @@ if ($form_id > 0) {
       input.val(selected);
       $(this).parent().hide();
     });
+
+    
   </script>
 
 </body>
