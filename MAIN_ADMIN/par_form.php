@@ -50,8 +50,6 @@ $unit_query = $conn->query("SELECT id, unit_name FROM unit");
 while ($row = $unit_query->fetch_assoc()) {
     $units[] = $row;
 }
-
-
 ?>
 
 
@@ -135,11 +133,17 @@ while ($row = $unit_query->fetch_assoc()) {
                             </select>
                         </td>
                         <td class="position-relative" style="width: 30%;">
-                            <div class="input-group">
-                                <input type="text" name="items[<?= $i ?>][description]" class="form-control form-control-lg" list="descriptionList" id="descInput<?= $i ?>">
-                                <button type="button" class="btn btn-outline-info" onclick="clearDescription(<?= $i ?>)">&#x2716;</button>
-                            </div>
-                        </td>
+    <div class="input-group">
+        <input type="text" name="items[<?= $i ?>][description]" class="form-control form-control-lg" list="descriptionList" id="descInput<?= $i ?>">
+        <button type="button"
+                class="btn p-0 m-0 border-0 bg-transparent"
+                onclick="clearDescription(<?= $i ?>)"
+                style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+            <span class="badge rounded-circle bg-secondary text-white" style="font-size: 0.75rem;">×</span>
+        </button>
+    </div>
+</td>
+
                         <td><input type="text" name="items[<?= $i ?>][property_no]" class="form-control"></td>
                         <td><input type="date" name="items[<?= $i ?>][date_acquired]" class="form-control" id="acqDate<?= $i ?>"></td>
                         <td style="position: relative;">
@@ -285,14 +289,54 @@ while ($row = $unit_query->fetch_assoc()) {
         <td class="position-relative">
     <div class="input-group">
         <input type="text" name="items[${rowIndex}][description]" class="form-control form-control-lg" list="descriptionList" id="descInput${rowIndex}">
-        <button type="button" class="btn btn-outline-info" onclick="clearDescription(${rowIndex})">&#x2716;</button>
+        <button type="button"
+                class="btn p-0 m-0 border-0 bg-transparent"
+                onclick="clearDescription(${rowIndex})"
+                style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+            <span class="badge rounded-circle bg-secondary text-white" style="font-size: 0.75rem;">×</span>
+        </button>
     </div>
 </td>
 
         <td><input type="text" name="items[${rowIndex}][property_no]" class="form-control"></td>
         <td><input type="date" name="items[${rowIndex}][date_acquired]" class="form-control" id="acqDate${rowIndex}"></td>
-        <td><input type="number" name="items[${rowIndex}][unit_price]" class="form-control text-end" step="0.01" id="unitCost${rowIndex}"></td>
-        <td><input type="number" name="items[${rowIndex}][amount]" class="form-control text-end" step="0.01" id="amount${rowIndex}" readonly></td>
+        <td style="position: relative; width: 150px;">
+    <span style="
+        position: absolute;
+        top: 50%;
+        left: 10px;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: inherit;
+        font-size: 1rem;">₱</span>
+    <input
+        type="number"
+        name="items[${rowIndex}][unit_price]"
+        class="form-control text-end"
+        step="0.01"
+        id="unitCost${rowIndex}"
+        style="padding-left: 1.5rem; width: 100%;">
+</td>
+
+        <td style="position: relative; width: 150px;">
+    <span style="
+        position: absolute;
+        top: 50%;
+        left: 10px;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: inherit;
+        font-size: 1rem;">₱</span>
+    <input
+        type="number"
+        name="items[${rowIndex}][amount]"
+        class="form-control text-end fw-semibold"
+        step="0.01"
+        id="amount${rowIndex}"
+        readonly
+        style="padding-left: 1.5rem; width: 100%;">
+</td>
+
         `;
 
         tbody.appendChild(newRow);
