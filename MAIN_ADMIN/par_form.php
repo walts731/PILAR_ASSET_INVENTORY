@@ -31,14 +31,15 @@ while ($row = $office_query->fetch_assoc()) {
 
 // Fetch description + unit cost + quantity from assets
 $description_details = [];
-$result = $conn->query("SELECT description, value AS unit_cost, quantity, acquisition_date FROM assets");
+$result = $conn->query("SELECT description, value AS unit_cost, quantity, acquisition_date, unit FROM assets");
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $desc = $row['description'];
         $description_details[$desc] = [
             'unit_cost' => $row['unit_cost'],
             'quantity' => $row['quantity'],
-            'acquisition_date' => $row['acquisition_date']
+            'acquisition_date' => $row['acquisition_date'],
+            'unit' => $row['unit']
         ];
     }
 }
@@ -49,6 +50,7 @@ $unit_query = $conn->query("SELECT id, unit_name FROM unit");
 while ($row = $unit_query->fetch_assoc()) {
     $units[] = $row;
 }
+
 
 ?>
 
@@ -188,9 +190,11 @@ while ($row = $unit_query->fetch_assoc()) {
                                 <option value="<?= htmlspecialchars($desc) ?>"
                                     data-unit-cost="<?= htmlspecialchars($details['unit_cost']) ?>"
                                     data-quantity="<?= htmlspecialchars($details['quantity']) ?>"
-                                    data-date="<?= htmlspecialchars($details['acquisition_date']) ?>"></option>
+                                    data-date="<?= htmlspecialchars($details['acquisition_date']) ?>"
+                                    data-unit="<?= htmlspecialchars($details['unit']) ?>"></option>
                             <?php endforeach; ?>
                         </datalist>
+
 
                     </tr>
                 <?php endfor; ?>
@@ -324,15 +328,13 @@ while ($row = $unit_query->fetch_assoc()) {
         descInput.addEventListener('change', function() {
             const val = descInput.value.trim();
 
-            // Check for duplicate
             if (selectedDescriptions.has(val)) {
                 showAlert('This asset has already been selected.');
                 descInput.value = '';
                 return;
             }
 
-
-            // Remove any previously tracked value for this input
+            // Remove any previously tracked value
             document.querySelectorAll('input[list="descriptionList"]').forEach(input => {
                 if (input !== descInput && selectedDescriptions.has(input.value)) {
                     let count = 0;
@@ -347,17 +349,27 @@ while ($row = $unit_query->fetch_assoc()) {
 
             selectedDescriptions.add(val);
 
-            // Set related fields
             const options = dataList.options;
             for (let j = 0; j < options.length; j++) {
                 if (options[j].value === val) {
                     const unitCost = options[j].getAttribute('data-unit-cost');
                     const maxQty = options[j].getAttribute('data-quantity');
                     const acqDate = options[j].getAttribute('data-date');
+                    const unit = options[j].getAttribute('data-unit');
 
                     unitCostInput.value = unitCost;
                     qtyInput.max = maxQty;
                     acqDateInput.value = acqDate;
+
+                    const unitSelect = document.querySelector(`[name="items[${i}][unit]"]`);
+                    if (unitSelect && unit) {
+                        for (let opt of unitSelect.options) {
+                            if (opt.value === unit) {
+                                unitSelect.value = unit;
+                                break;
+                            }
+                        }
+                    }
 
                     if (parseInt(qtyInput.value) > parseInt(maxQty)) {
                         qtyInput.value = '';
