@@ -112,7 +112,7 @@ while ($row = $unit_query->fetch_assoc()) {
         </table>
 
         <!-- ITEM TABLE -->
-        <table class="table align-middle text-center mt-4" style="table-layout: fixed; border: none;">
+        <table class="table align-middle text-center mt-4" style="table-layout: fixed; ">
             <thead>
                 <tr>
                     <th>QUANTITY</th>
@@ -139,13 +139,50 @@ while ($row = $unit_query->fetch_assoc()) {
                         <td class="position-relative" style="width: 30%;">
                             <div class="input-group">
                                 <input type="text" name="items[<?= $i ?>][description]" class="form-control form-control-lg" list="descriptionList" id="descInput<?= $i ?>">
-                                <button type="button" class="btn btn-outline-danger" onclick="clearDescription(<?= $i ?>)">&#x2716;</button>
+                                <button type="button" class="btn btn-outline-info" onclick="clearDescription(<?= $i ?>)">&#x2716;</button>
                             </div>
                         </td>
                         <td><input type="text" name="items[<?= $i ?>][property_no]" class="form-control"></td>
                         <td><input type="date" name="items[<?= $i ?>][date_acquired]" class="form-control" id="acqDate<?= $i ?>"></td>
-                        <td><input type="number" name="items[<?= $i ?>][unit_price]" class="form-control text-end" step="0.01" id="unitCost<?= $i ?>"></td>
-                        <td><input type="number" name="items[<?= $i ?>][amount]" class="form-control text-end" step="0.01" id="amount<?= $i ?>" readonly></td>
+                        <td style="position: relative;">
+                            <span style="
+                                            position: absolute;
+                                            top: 50%;
+                                            left: 10px;
+                                            transform: translateY(-50%);
+                                            pointer-events: none;
+                                            color: inherit;
+                                            font-size: 1rem;
+                                        ">₱</span>
+                            <input
+                                type="number"
+                                name="items[<?= $i ?>][unit_price]"
+                                class="form-control text-end"
+                                step="0.01"
+                                id="unitCost<?= $i ?>"
+                                style="padding-left: 1.5rem;">
+                        </td>
+
+                        <td style="position: relative;">
+                            <span style="
+                                            position: absolute;
+                                            top: 50%;
+                                            left: 10px;
+                                            transform: translateY(-50%);
+                                            pointer-events: none;
+                                            color: inherit;
+                                            font-size: 1rem;
+                                        ">₱</span>
+                            <input
+                                type="number"
+                                name="items[<?= $i ?>][amount]"
+                                class="form-control text-end"
+                                step="0.01"
+                                id="amount<?= $i ?>"
+                                readonly
+                                style="padding-left: 1.5rem;">
+                        </td>
+
                         <datalist id="descriptionList">
                             <?php foreach ($description_details as $desc => $details): ?>
                                 <option value="<?= htmlspecialchars($desc) ?>"
@@ -159,9 +196,26 @@ while ($row = $unit_query->fetch_assoc()) {
                 <?php endfor; ?>
             <tfoot>
                 <tr>
-                    <td colspan="6" class="text-end fw-bold">Total Amount:</td>
-                    <td><input type="text" id="totalAmount" class="form-control text-end fw-bold" readonly></td>
+                    <td colspan="3" class="text-end fw-bold">Total:</td>
+                    <td style="position: relative;">
+                        <span style="
+                                    position: absolute;
+                                    top: 50%;
+                                    left: 10px;
+                                    transform: translateY(-50%);
+                                    pointer-events: none;
+                                    color: inherit;
+                                    font-size: 1rem;
+                                    ">₱</span>
+                        <input
+                            type="text"
+                            id="totalAmount"
+                            class="form-control text-end fw-bold"
+                            readonly
+                            style="padding-left: 1.5rem; width: 150px;">
+                    </td>
                 </tr>
+
             </tfoot>
 
             </tbody>
@@ -201,7 +255,7 @@ while ($row = $unit_query->fetch_assoc()) {
                 <br>
                 <label>Date:</label>
                 <input type="date" name="date_received" class="form-control"
-                    value="<?= date('Y-m-d') ?>">
+                    value="<?= date('Y-d-m') ?>">
             </div>
         </div>
 
@@ -230,7 +284,7 @@ while ($row = $unit_query->fetch_assoc()) {
         <td class="position-relative">
     <div class="input-group">
         <input type="text" name="items[${rowIndex}][description]" class="form-control form-control-lg" list="descriptionList" id="descInput${rowIndex}">
-        <button type="button" class="btn btn-outline-danger" onclick="clearDescription(${rowIndex})">&#x2716;</button>
+        <button type="button" class="btn btn-outline-info" onclick="clearDescription(${rowIndex})">&#x2716;</button>
     </div>
 </td>
 
