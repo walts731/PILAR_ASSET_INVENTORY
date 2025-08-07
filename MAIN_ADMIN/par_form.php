@@ -59,10 +59,6 @@ while ($row = $unit_query->fetch_assoc()) {
 
     <form method="post" action="save_par_form.php" enctype="multipart/form-data">
         <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
-        <div id="alertContainer" class="alert alert-danger alert-dismissible fade show d-none" role="alert">
-            <span id="alertMessage"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
 
         <table class="table table-bordered align-middle text-start" style="table-layout: fixed;">
             <tbody>
@@ -267,6 +263,7 @@ while ($row = $unit_query->fetch_assoc()) {
     </form>
 </div>
 
+<?php include 'modals/par_duplicate_modal.php' ?>
 <script>
     let rowIndex = 5; // Start after the initial 5 rows
     let selectedDescriptions = new Set(); // 🔁 Track selected asset descriptions
@@ -328,26 +325,21 @@ while ($row = $unit_query->fetch_assoc()) {
         descInput.addEventListener('change', function() {
             const val = descInput.value.trim();
 
-            if (selectedDescriptions.has(val)) {
-                showAlert('This asset has already been selected.');
-                descInput.value = '';
-                return;
-            }
+            // Check all other description inputs for duplicates
+            const descInputs = document.querySelectorAll('input[list="descriptionList"]');
+            let duplicateFound = false;
 
-            // Remove any previously tracked value
-            document.querySelectorAll('input[list="descriptionList"]').forEach(input => {
-                if (input !== descInput && selectedDescriptions.has(input.value)) {
-                    let count = 0;
-                    document.querySelectorAll('input[list="descriptionList"]').forEach(i => {
-                        if (i.value === input.value) count++;
-                    });
-                    if (count < 2) {
-                        selectedDescriptions.delete(input.value);
-                    }
+            descInputs.forEach((input, idx) => {
+                if (input !== descInput && input.value.trim() === val) {
+                    duplicateFound = true;
                 }
             });
 
-            selectedDescriptions.add(val);
+            if (duplicateFound) {
+                showDuplicateModal();
+                descInput.value = '';
+                return;
+            }
 
             const options = dataList.options;
             for (let j = 0; j < options.length; j++) {
@@ -407,9 +399,10 @@ while ($row = $unit_query->fetch_assoc()) {
     function checkDuplicates() {
         const descInputs = document.querySelectorAll('input[list="descriptionList"]');
         const seen = new Set();
+
         for (let input of descInputs) {
             const val = input.value.trim();
-            if (val) {
+            if (val !== '') {
                 if (seen.has(val)) {
                     alert("Duplicate asset descriptions found.");
                     return false;
@@ -417,19 +410,13 @@ while ($row = $unit_query->fetch_assoc()) {
                 seen.add(val);
             }
         }
+
         return true;
     }
 
-    function showAlert(message) {
-        const alertBox = document.getElementById('alertContainer');
-        alertBox.textContent = message;
-        alertBox.classList.remove('d-none');
-
-        // Auto-hide the alert after 3 seconds
-        setTimeout(() => {
-            alertBox.classList.add('d-none');
-            alertBox.textContent = '';
-        }, 3000);
+    function showDuplicateModal() {
+        const duplicateModal = new bootstrap.Modal(document.getElementById('duplicateModal'));
+        duplicateModal.show();
     }
 
     function clearDescription(index) {
