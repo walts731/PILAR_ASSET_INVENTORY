@@ -1,4 +1,3 @@
-
 <form>
   <!-- Row 1: Division, Responsibility Center, RIS No., Date -->
   <div class="row mb-3">
@@ -96,13 +95,15 @@
           </td>
           <td><input type="text" class="form-control" name="signature[]"></td>
           <td><input type="number" step="0.01" class="form-control" name="price[]"></td>
-          <td><input type="number" step="0.01" class="form-control" name="total_amount[]"></td>
+          <td>
+            <input type="text" class="form-control total" readonly>
+          </td>
         </tr>
       <?php endfor; ?>
       <datalist id="asset_list">
         <?php
         $assets_query = $conn->query("
-      SELECT id, description, quantity, unit
+      SELECT id, description, quantity, unit, value
       FROM assets
       ORDER BY description ASC
   ");
@@ -112,9 +113,11 @@
             value="<?= htmlspecialchars($asset['description']) ?>"
             data-id="<?= $asset['id'] ?>"
             data-stock="<?= $asset['quantity'] ?>"
-            data-unit="<?= htmlspecialchars($asset['unit']) ?>">
+            data-unit="<?= htmlspecialchars($asset['unit']) ?>"
+            data-price="<?= $asset['value'] ?>">
           <?php endwhile; ?>
       </datalist>
+
     </tbody>
   </table>
 
@@ -185,7 +188,8 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {
-    const rows = document.querySelectorAll("tbody tr");
+    // Only target rows that have description inputs
+    const rows = document.querySelectorAll("tbody tr:has(.description-input)");
     const allOptions = Array.from(document.querySelectorAll("#asset_list option"));
 
     function updateDatalist() {
@@ -195,6 +199,8 @@
 
       rows.forEach(row => {
         const descInput = row.querySelector(".description-input");
+        if (!descInput) return; // skip if no description input
+
         const listId = "asset_list_" + Math.random().toString(36).substring(2, 9);
         let datalist = document.createElement("datalist");
         datalist.id = listId;
@@ -202,9 +208,10 @@
         const optionsHTML = allOptions
           .filter(opt => !selectedDescriptions.includes(opt.value.trim()) || opt.value.trim() === descInput.value.trim())
           .map(opt => `<option value="${opt.value}" 
-                                data-id="${opt.dataset.id}" 
-                                data-stock="${opt.dataset.stock}" 
-                                data-unit="${opt.dataset.unit}"></option>`)
+                        data-id="${opt.dataset.id}" 
+                        data-stock="${opt.dataset.stock}" 
+                        data-unit="${opt.dataset.unit}"
+                        data-price="${opt.dataset.price}"></option>`)
           .join("");
 
         datalist.innerHTML = optionsHTML;
@@ -217,6 +224,9 @@
       const descInput = row.querySelector(".description-input");
       const reqQtyInput = row.querySelector("input[name='req_quantity[]']");
       const unitSelect = row.querySelector("select[name='unit[]']");
+      const priceInput = row.querySelector("input[name='price[]']");
+
+      if (!descInput) return; // skip footer or other rows
 
       descInput.addEventListener("input", function() {
         const val = this.value;
@@ -233,18 +243,26 @@
             reqQtyInput.placeholder = "";
           }
 
-          // Autofill unit (by name)
+          // Autofill unit
           const unitName = option.dataset.unit || "";
           if (unitName) {
-            const matchOption = Array.from(unitSelect.options).find(opt => opt.text.trim().toLowerCase() === unitName.trim().toLowerCase());
+            const matchOption = Array.from(unitSelect.options)
+              .find(opt => opt.text.trim().toLowerCase() === unitName.trim().toLowerCase());
             if (matchOption) {
               unitSelect.value = matchOption.value;
             }
           }
+
+          // Autofill price
+          if (priceInput && option.dataset.price) {
+            priceInput.value = option.dataset.price;
+          }
+
         } else {
           reqQtyInput.removeAttribute("max");
           reqQtyInput.placeholder = "";
           unitSelect.value = "";
+          if (priceInput) priceInput.value = "";
         }
 
         updateDatalist();
@@ -253,4 +271,19 @@
 
     updateDatalist();
   });
+
+  // Auto-calculate total amount dynamically
+document.addEventListener('input', function (e) {
+    if (e.target.name === 'req_quantity[]' || e.target.name === 'price[]') {
+        let row = e.target.closest('tr');
+        let qty = parseFloat(row.querySelector("input[name='req_quantity[]']").value) || 0;
+        let price = parseFloat(row.querySelector("input[name='price[]']").value) || 0;
+        let total = qty * price;
+        let totalField = row.querySelector('.total');
+        if (totalField) {
+            totalField.value = total.toFixed(2);
+        }
+    }
+});
+
 </script>
