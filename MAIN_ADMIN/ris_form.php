@@ -84,8 +84,13 @@
             </select>
           </td>
           <td style="position: relative;">
-            <input type="text" class="form-control description-input" name="description[]"
-              autocomplete="off" list="asset_list">
+            <div class="input-group">
+              <input type="text" class="form-control description-input" name="description[]"
+                autocomplete="off" list="asset_list">
+              <button type="button" class="btn btn-link p-0 ms-1 text-danger clear-description" style="border: none;">
+                &times;
+              </button>
+            </div>
           </td>
           <td>
             <input type="number" class="form-control" name="req_quantity[]" min="1">
@@ -273,17 +278,44 @@
   });
 
   // Auto-calculate total amount dynamically
-document.addEventListener('input', function (e) {
+  document.addEventListener('input', function(e) {
     if (e.target.name === 'req_quantity[]' || e.target.name === 'price[]') {
-        let row = e.target.closest('tr');
-        let qty = parseFloat(row.querySelector("input[name='req_quantity[]']").value) || 0;
-        let price = parseFloat(row.querySelector("input[name='price[]']").value) || 0;
-        let total = qty * price;
-        let totalField = row.querySelector('.total');
-        if (totalField) {
-            totalField.value = total.toFixed(2);
-        }
+      let row = e.target.closest('tr');
+      let qty = parseFloat(row.querySelector("input[name='req_quantity[]']").value) || 0;
+      let price = parseFloat(row.querySelector("input[name='price[]']").value) || 0;
+      let total = qty * price;
+      let totalField = row.querySelector('.total');
+      if (totalField) {
+        totalField.value = total.toFixed(2);
+      }
     }
-});
+  });
 
+  // Handle click on X to clear description
+document.addEventListener("click", function (e) {
+  if (e.target.classList.contains("clear-description")) {
+    let row = e.target.closest("tr");
+    if (row) {
+      let descInput = row.querySelector(".description-input");
+      let reqQtyInput = row.querySelector("input[name='req_quantity[]']");
+      let unitSelect = row.querySelector("select[name='unit[]']");
+      let priceInput = row.querySelector("input[name='price[]']");
+      let totalField = row.querySelector(".total");
+
+      // Clear the description
+      descInput.value = "";
+
+      // Reset related fields
+      reqQtyInput.removeAttribute("max");
+      reqQtyInput.placeholder = "";
+      reqQtyInput.value = "";
+      unitSelect.value = "";
+      priceInput.value = "";
+      if (totalField) totalField.value = "";
+
+      // Trigger datalist update
+      descInput.dispatchEvent(new Event("input"));
+    }
+  }
+});
 </script>
