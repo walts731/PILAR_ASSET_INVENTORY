@@ -118,6 +118,9 @@ if ($form_id > 0) {
             <?php if ($form['category'] === 'PAR'): ?>
               <?php include 'par_form.php'; ?>
             <?php endif; ?>
+            <?php if ($form['category'] === 'IIRUP'): ?>
+              <?php include 'iirup_form.php'; ?>
+            <?php endif; ?>
           </div>
         </div>
       <?php else: ?>
