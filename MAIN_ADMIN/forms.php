@@ -121,6 +121,9 @@ if ($form_id > 0) {
             <?php if ($form['category'] === 'IIRUP'): ?>
               <?php include 'iirup_form.php'; ?>
             <?php endif; ?>
+            <?php if ($form['category'] === 'RPCPPE'): ?>
+              <?php include 'rpcppe_form.php'; ?>
+            <?php endif; ?>
           </div>
         </div>
       <?php else: ?>
