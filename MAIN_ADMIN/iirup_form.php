@@ -244,7 +244,6 @@ if ($result_footer && $result_footer->num_rows > 0) {
 ?>
 
 <!-- FOOTER SECTION -->
-<form method="POST">
 <div style="margin-top: 30px; font-size: 12px; line-height: 1.5;">
     <table style="width: 100%; border-collapse: collapse; text-align: center;">
         <tr>
@@ -304,10 +303,7 @@ if ($result_footer && $result_footer->num_rows > 0) {
     </table>
 </div>
 
-<div style="margin-top: 15px; text-align: right;">
-    <button type="submit" name="save_footer" style="padding: 6px 15px;">Save Footer</button>
-</div>
-</form>
+
 
 
 <script>
