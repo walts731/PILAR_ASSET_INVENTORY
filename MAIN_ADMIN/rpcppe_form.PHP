@@ -89,26 +89,134 @@ if ($result && $result->num_rows > 0) {
             <tbody>
                 <tr>
                     <td><input type="text" name="code[]" class="form-control form-control-sm"></td>
-                    <td><input type="text" name="office[]" class="form-control form-control-sm"></td>
                     <td>
-                        <input type="date" name="purchase_date[]" class="form-control form-control-sm small-date">
+                        <select name="office[]" class="form-control form-control-sm">
+                            <option value="">-- Select Office --</option>
+                            <?php
+                            // Fetch offices from DB
+                            $office_query = "SELECT id, office_name FROM offices ORDER BY office_name ASC";
+                            $office_result = $conn->query($office_query);
+
+                            if ($office_result && $office_result->num_rows > 0) {
+                                while ($office = $office_result->fetch_assoc()) {
+                                    echo '<option value="' . htmlspecialchars($office['office_id']) . '">' . htmlspecialchars($office['office_name']) . '</option>';
+                                }
+                            }
+                            ?>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="date"
+                            name="purchase_date[]"
+                            class="form-control form-control-sm small-date"
+                            value="<?= date('Y-m-d') ?>">
                     </td>
                     <td><input type="text" name="article[]" class="form-control form-control-sm"></td>
-                    <td><input type="text" name="description[]" class="form-control form-control-sm"></td>
+                    <td style="position: relative;">
+                        <input list="asset_descriptions" style="width:200px;"
+                            name="description[]"
+                            class="form-control form-control-sm desc-input"
+                            oninput="fillAssetDetails(this)">
+
+                        <!-- Clear (X) button -->
+                        <button type="button"
+                            class="btn btn-sm btn-light position-absolute top-50 end-0 translate-middle-y"
+                            style="border: none; padding: 0 6px;"
+                            onclick="clearDescription(this)">
+                            ✕
+                        </button>
+
+                        <datalist id="asset_descriptions">
+                            <?php
+                            $asset_query = "SELECT description, unit, value FROM assets ORDER BY description ASC";
+                            $asset_result = $conn->query($asset_query);
+
+                            if ($asset_result && $asset_result->num_rows > 0) {
+                                while ($asset = $asset_result->fetch_assoc()) {
+                                    echo '<option value="' . htmlspecialchars($asset['description']) . '" 
+                          data-unit="' . htmlspecialchars($asset['unit']) . '" 
+                          data-value="' . htmlspecialchars($asset['value']) . '">';
+                                }
+                            }
+                            ?>
+                        </datalist>
+                    </td>
                     <td><input type="text" name="property_number[]" class="form-control form-control-sm"></td>
-                    <td><input type="text" name="unit_measure[]" class="form-control form-control-sm"></td>
-                    <td><input type="number" step="0.01" name="unit_value[]" class="form-control form-control-sm"></td>
-                    <td><input type="number" step="0.01" name="balance_value[]" class="form-control form-control-sm"></td>
-                    <td><input type="number" step="0.01" name="onhand_value[]" class="form-control form-control-sm"></td>
-                    <td><input type="number" name="shortage_qty[]" class="form-control form-control-sm"></td>
-                    <td><input type="number" step="0.01" name="shortage_value[]" class="form-control form-control-sm"></td>
-                    <td><input type="text" name="remarks[]" class="form-control form-control-sm"></td>
+                    <td>
+    <select name="unit_measure[]" class="form-control form-control-sm">
+        <option value="">-- Select Unit --</option>
+        <?php
+        // Fetch units from database
+        $sql = "SELECT unit_name FROM unit ORDER BY unit_name ASC";
+        $result = $conn->query($sql);
+
+        if ($result && $result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                echo '<option value="' . htmlspecialchars($row['unit_name']) . '">' . htmlspecialchars($row['unit_name']) . '</option>';
+            }
+        }
+        ?>
+    </select>
+</td>
+
+                    <td>
+                        <input type="number"
+                            step="0.01"
+                            name="unit_value[]"
+                            class="form-control form-control-sm unit-value-input"
+                            min="1">
+                    </td>
+                    <style>
+                        .unit-value-input {
+                            width: 90px !important;
+                            /* wider than default */
+                            font-size: 11px;
+                            /* smaller font */
+                            text-align: right;
+                            /* align numbers neatly */
+                        }
+                    </style>
+
+                    <td><input type="number" step="0.01" name="balance_value[]" class="form-control form-control-sm" min="1"></td>
+                    <td><input type="number" step="0.01" name="onhand_value[]" class="form-control form-control-sm" min="1"></td>
+                    <td><input type="number" name="shortage_qty[]" class="form-control form-control-sm" min="1"></td>
+                    <td><input type="number" step="0.01" name="shortage_value[]" class="form-control form-control-sm" min="1"></td>
+                    <td>
+                        <select name="remarks[]" class="form-control form-control-sm">
+                            <option value="">-- Select Remark --</option>
+                            <option value="Unserviceable">Unserviceable</option>
+                            <option value="Unserviceable">Serviceable</option>
+
+                        </select>
+                    </td>
                     <td><input type="text" name="user[]" class="form-control form-control-sm"></td>
                     <td><input type="text" name="serial_number[]" class="form-control form-control-sm"></td>
-                    <td><input type="text" name="received_from[]" class="form-control form-control-sm"></td>
-                    <td><input type="text" name="received_by[]" class="form-control form-control-sm"></td>
-                    <td><input type="text" name="movement[]" class="form-control form-control-sm"></td>
-                    <td><input type="text" name="document_number[]" class="form-control form-control-sm"></td>
+                    <td><input type="text" name="received_from[]" class="form-control form-control-sm" style="width:200px;"></td>
+                    <td><input type="text" name="received_by[]" class="form-control form-control-sm" style="width:200px;"></td>
+                    <td>
+                        <select name="movement[]" class="form-control form-control-sm">
+                            <option value="">-- Select Movement --</option>
+                            <option value="ARE">ARE</option>
+                            <option value="PAR">PAR</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="document_number[]" class="form-control form-control-sm">
+                            <option value="">-- Select Document # --</option>
+                            <?php
+                            $doc_query = "SELECT doc_id, document_number FROM doc_no ORDER BY document_number ASC";
+                            $doc_result = $conn->query($doc_query);
+
+                            if ($doc_result && $doc_result->num_rows > 0) {
+                                while ($doc = $doc_result->fetch_assoc()) {
+                                    echo '<option value="' . htmlspecialchars($doc['document_number']) . '">' . htmlspecialchars($doc['document_number']) . '</option>';
+                                }
+                            } else {
+                                echo '<option disabled>No document numbers available</option>';
+                            }
+                            ?>
+                        </select>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -155,3 +263,48 @@ if ($result && $result->num_rows > 0) {
 
     <button type="submit" class="btn btn-primary">Save</button>
 </form>
+
+<script>
+    function fillAssetDetails(input) {
+        const datalist = document.getElementById("asset_descriptions");
+        const options = datalist.options;
+
+        let row = input.closest("tr");
+        let unitSelect = row.querySelector('select[name="unit_measure[]"]');
+        let unitValue = row.querySelector('input[name="unit_value[]"]');
+
+        // Reset values first
+        unitSelect.value = "";
+        unitValue.value = "";
+
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].value === input.value) {
+                let unit = options[i].dataset.unit;
+                let value = options[i].dataset.value;
+
+                // Set dropdown to matching unit (if exists)
+                if (unit) {
+                    for (let j = 0; j < unitSelect.options.length; j++) {
+                        if (unitSelect.options[j].value === unit) {
+                            unitSelect.value = unit;
+                            break;
+                        }
+                    }
+                }
+
+                // Set unit value
+                if (value) {
+                    unitValue.value = value;
+                }
+                break;
+            }
+        }
+    }
+
+    function clearDescription(btn) {
+        let row = btn.closest("tr");
+        row.querySelector('.desc-input').value = "";
+        row.querySelector('select[name="unit_measure[]"]').value = "";
+        row.querySelector('input[name="unit_value[]"]').value = "";
+    }
+</script>
