@@ -143,21 +143,21 @@ if ($result && $result->num_rows > 0) {
                     </td>
                     <td><input type="text" name="property_number[]" class="form-control form-control-sm"></td>
                     <td>
-    <select name="unit_measure[]" class="form-control form-control-sm">
-        <option value="">-- Select Unit --</option>
-        <?php
-        // Fetch units from database
-        $sql = "SELECT unit_name FROM unit ORDER BY unit_name ASC";
-        $result = $conn->query($sql);
+                        <select name="unit_measure[]" class="form-control form-control-sm">
+                            <option value="">-- Select Unit --</option>
+                            <?php
+                            // Fetch units from database
+                            $sql = "SELECT unit_name FROM unit ORDER BY unit_name ASC";
+                            $result = $conn->query($sql);
 
-        if ($result && $result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                echo '<option value="' . htmlspecialchars($row['unit_name']) . '">' . htmlspecialchars($row['unit_name']) . '</option>';
-            }
-        }
-        ?>
-    </select>
-</td>
+                            if ($result && $result->num_rows > 0) {
+                                while ($row = $result->fetch_assoc()) {
+                                    echo '<option value="' . htmlspecialchars($row['unit_name']) . '">' . htmlspecialchars($row['unit_name']) . '</option>';
+                                }
+                            }
+                            ?>
+                        </select>
+                    </td>
 
                     <td>
                         <input type="number"
