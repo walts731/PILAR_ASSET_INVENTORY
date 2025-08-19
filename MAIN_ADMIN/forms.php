@@ -109,7 +109,7 @@ if ($form_id > 0) {
         <h2 class="mb-4"><?= htmlspecialchars($form['form_title']) ?></h2>
         <div class="card shadow">
           <div class="card-body">
-            <?php if ($form['category'] === 'RIS'): ?>
+            <?php if ($form['category'] === 'SIR'): ?>
               <?php include 'ris_form.php'; ?>
             <?php endif; ?>
             <?php if ($form['category'] === 'ICS'): ?>
@@ -123,6 +123,9 @@ if ($form_id > 0) {
             <?php endif; ?>
             <?php if ($form['category'] === 'RPCPPE'): ?>
               <?php include 'rpcppe_form.php'; ?>
+            <?php endif; ?>
+            <?php if ($form['category'] === 'RIS'): ?>
+              <?php include 'ris_form.php'; ?>
             <?php endif; ?>
           </div>
         </div>

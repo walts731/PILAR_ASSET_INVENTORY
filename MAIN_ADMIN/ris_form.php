@@ -125,9 +125,9 @@
 
     </tbody>
   </table>
-<button type="button" id="addRowBtn" class="btn btn-primary mb-3">
-  <i class="bi bi-plus-circle"></i> Add Row
-</button>
+  <button type="button" id="addRowBtn" class="btn btn-primary mb-3">
+    <i class="bi bi-plus-circle"></i> Add Row
+  </button>
   <!-- Purpose -->
   <div class="mb-3">
     <label for="purpose" class="form-label fw-bold">PURPOSE:</label>
@@ -294,110 +294,110 @@
   });
 
   // Handle click on X to clear description
-document.addEventListener("click", function (e) {
-  if (e.target.classList.contains("clear-description")) {
-    let row = e.target.closest("tr");
-    if (row) {
-      let descInput = row.querySelector(".description-input");
-      let reqQtyInput = row.querySelector("input[name='req_quantity[]']");
-      let unitSelect = row.querySelector("select[name='unit[]']");
-      let priceInput = row.querySelector("input[name='price[]']");
-      let totalField = row.querySelector(".total");
+  document.addEventListener("click", function(e) {
+    if (e.target.classList.contains("clear-description")) {
+      let row = e.target.closest("tr");
+      if (row) {
+        let descInput = row.querySelector(".description-input");
+        let reqQtyInput = row.querySelector("input[name='req_quantity[]']");
+        let unitSelect = row.querySelector("select[name='unit[]']");
+        let priceInput = row.querySelector("input[name='price[]']");
+        let totalField = row.querySelector(".total");
 
-      // Clear the description
-      descInput.value = "";
+        // Clear the description
+        descInput.value = "";
 
-      // Reset related fields
-      reqQtyInput.removeAttribute("max");
-      reqQtyInput.placeholder = "";
-      reqQtyInput.value = "";
-      unitSelect.value = "";
-      priceInput.value = "";
-      if (totalField) totalField.value = "";
+        // Reset related fields
+        reqQtyInput.removeAttribute("max");
+        reqQtyInput.placeholder = "";
+        reqQtyInput.value = "";
+        unitSelect.value = "";
+        priceInput.value = "";
+        if (totalField) totalField.value = "";
 
-      // Trigger datalist update
-      descInput.dispatchEvent(new Event("input"));
+        // Trigger datalist update
+        descInput.dispatchEvent(new Event("input"));
+      }
     }
-  }
-});
+  });
 
-document.addEventListener("DOMContentLoaded", function () {
-  const tableBody = document.querySelector("tbody");
-  const allOptions = Array.from(document.querySelectorAll("#asset_list option"));
+  document.addEventListener("DOMContentLoaded", function() {
+    const tableBody = document.querySelector("tbody");
+    const allOptions = Array.from(document.querySelectorAll("#asset_list option"));
 
-  function updateDatalist() {
-    const selectedDescriptions = Array.from(document.querySelectorAll(".description-input"))
-      .map(input => input.value.trim())
-      .filter(val => val !== "");
+    function updateDatalist() {
+      const selectedDescriptions = Array.from(document.querySelectorAll(".description-input"))
+        .map(input => input.value.trim())
+        .filter(val => val !== "");
 
-    document.querySelectorAll(".description-input").forEach(descInput => {
-      const listId = "asset_list_" + Math.random().toString(36).substring(2, 9);
-      let datalist = document.createElement("datalist");
-      datalist.id = listId;
+      document.querySelectorAll(".description-input").forEach(descInput => {
+        const listId = "asset_list_" + Math.random().toString(36).substring(2, 9);
+        let datalist = document.createElement("datalist");
+        datalist.id = listId;
 
-      const optionsHTML = allOptions
-        .filter(opt => !selectedDescriptions.includes(opt.value.trim()) || opt.value.trim() === descInput.value.trim())
-        .map(opt => `<option value="${opt.value}" 
+        const optionsHTML = allOptions
+          .filter(opt => !selectedDescriptions.includes(opt.value.trim()) || opt.value.trim() === descInput.value.trim())
+          .map(opt => `<option value="${opt.value}" 
                         data-id="${opt.dataset.id}" 
                         data-stock="${opt.dataset.stock}" 
                         data-unit="${opt.dataset.unit}"
                         data-price="${opt.dataset.price}"></option>`)
-        .join("");
+          .join("");
 
-      datalist.innerHTML = optionsHTML;
-      document.body.appendChild(datalist);
-      descInput.setAttribute("list", listId);
-    });
-  }
+        datalist.innerHTML = optionsHTML;
+        document.body.appendChild(datalist);
+        descInput.setAttribute("list", listId);
+      });
+    }
 
-  function bindRowEvents(row) {
-    const descInput = row.querySelector(".description-input");
-    const reqQtyInput = row.querySelector("input[name='req_quantity[]']");
-    const unitSelect = row.querySelector("select[name='unit[]']");
-    const priceInput = row.querySelector("input[name='price[]']");
+    function bindRowEvents(row) {
+      const descInput = row.querySelector(".description-input");
+      const reqQtyInput = row.querySelector("input[name='req_quantity[]']");
+      const unitSelect = row.querySelector("select[name='unit[]']");
+      const priceInput = row.querySelector("input[name='price[]']");
 
-    if (!descInput) return;
+      if (!descInput) return;
 
-    descInput.addEventListener("input", function () {
-      const val = this.value;
-      const option = allOptions.find(opt => opt.value === val);
+      descInput.addEventListener("input", function() {
+        const val = this.value;
+        const option = allOptions.find(opt => opt.value === val);
 
-      if (option) {
-        const maxStock = option.dataset.stock || "";
-        if (maxStock) {
-          reqQtyInput.max = maxStock;
-          reqQtyInput.placeholder = `Max: ${maxStock}`;
+        if (option) {
+          const maxStock = option.dataset.stock || "";
+          if (maxStock) {
+            reqQtyInput.max = maxStock;
+            reqQtyInput.placeholder = `Max: ${maxStock}`;
+          } else {
+            reqQtyInput.removeAttribute("max");
+            reqQtyInput.placeholder = "";
+          }
+
+          const unitName = option.dataset.unit || "";
+          if (unitName) {
+            const matchOption = Array.from(unitSelect.options)
+              .find(opt => opt.text.trim().toLowerCase() === unitName.trim().toLowerCase());
+            if (matchOption) {
+              unitSelect.value = matchOption.value;
+            }
+          }
+
+          if (priceInput && option.dataset.price) {
+            priceInput.value = option.dataset.price;
+          }
         } else {
           reqQtyInput.removeAttribute("max");
           reqQtyInput.placeholder = "";
+          unitSelect.value = "";
+          if (priceInput) priceInput.value = "";
         }
 
-        const unitName = option.dataset.unit || "";
-        if (unitName) {
-          const matchOption = Array.from(unitSelect.options)
-            .find(opt => opt.text.trim().toLowerCase() === unitName.trim().toLowerCase());
-          if (matchOption) {
-            unitSelect.value = matchOption.value;
-          }
-        }
+        updateDatalist();
+      });
+    }
 
-        if (priceInput && option.dataset.price) {
-          priceInput.value = option.dataset.price;
-        }
-      } else {
-        reqQtyInput.removeAttribute("max");
-        reqQtyInput.placeholder = "";
-        unitSelect.value = "";
-        if (priceInput) priceInput.value = "";
-      }
-
-      updateDatalist();
-    });
-  }
-
-  function addRow() {
-    const newRow = document.createElement("tr");
-    newRow.innerHTML = `
+    function addRow() {
+      const newRow = document.createElement("tr");
+      newRow.innerHTML = `
       <td><input type="text" class="form-control" name="stock_no[]"></td>
       <td>
         <select name="unit[]" class="form-select" required>
@@ -417,50 +417,49 @@ document.addEventListener("DOMContentLoaded", function () {
       <td><input type="number" step="0.01" class="form-control" name="price[]"></td>
       <td><input type="text" class="form-control total" readonly></td>
     `;
-    tableBody.appendChild(newRow);
-    bindRowEvents(newRow);
+      tableBody.appendChild(newRow);
+      bindRowEvents(newRow);
+      updateDatalist();
+    }
+
+    // Initial bind for existing rows
+    document.querySelectorAll("tbody tr").forEach(row => bindRowEvents(row));
+
+    // Add Row button click
+    document.getElementById("addRowBtn").addEventListener("click", addRow);
+
+    // Handle clear button click
+    tableBody.addEventListener("click", function(e) {
+      if (e.target.classList.contains("clear-description")) {
+        let row = e.target.closest("tr");
+        let descInput = row.querySelector(".description-input");
+        let reqQtyInput = row.querySelector("input[name='req_quantity[]']");
+        let unitSelect = row.querySelector("select[name='unit[]']");
+        let priceInput = row.querySelector("input[name='price[]']");
+        let totalField = row.querySelector(".total");
+
+        descInput.value = "";
+        reqQtyInput.removeAttribute("max");
+        reqQtyInput.placeholder = "";
+        reqQtyInput.value = "";
+        unitSelect.value = "";
+        priceInput.value = "";
+        if (totalField) totalField.value = "";
+
+        descInput.dispatchEvent(new Event("input"));
+      }
+    });
+
+    // Auto-calc totals
+    tableBody.addEventListener("input", function(e) {
+      if (e.target.name === 'req_quantity[]' || e.target.name === 'price[]') {
+        let row = e.target.closest('tr');
+        let qty = parseFloat(row.querySelector("input[name='req_quantity[]']").value) || 0;
+        let price = parseFloat(row.querySelector("input[name='price[]']").value) || 0;
+        row.querySelector('.total').value = (qty * price).toFixed(2);
+      }
+    });
+
     updateDatalist();
-  }
-
-  // Initial bind for existing rows
-  document.querySelectorAll("tbody tr").forEach(row => bindRowEvents(row));
-
-  // Add Row button click
-  document.getElementById("addRowBtn").addEventListener("click", addRow);
-
-  // Handle clear button click
-  tableBody.addEventListener("click", function (e) {
-    if (e.target.classList.contains("clear-description")) {
-      let row = e.target.closest("tr");
-      let descInput = row.querySelector(".description-input");
-      let reqQtyInput = row.querySelector("input[name='req_quantity[]']");
-      let unitSelect = row.querySelector("select[name='unit[]']");
-      let priceInput = row.querySelector("input[name='price[]']");
-      let totalField = row.querySelector(".total");
-
-      descInput.value = "";
-      reqQtyInput.removeAttribute("max");
-      reqQtyInput.placeholder = "";
-      reqQtyInput.value = "";
-      unitSelect.value = "";
-      priceInput.value = "";
-      if (totalField) totalField.value = "";
-
-      descInput.dispatchEvent(new Event("input"));
-    }
   });
-
-  // Auto-calc totals
-  tableBody.addEventListener("input", function (e) {
-    if (e.target.name === 'req_quantity[]' || e.target.name === 'price[]') {
-      let row = e.target.closest('tr');
-      let qty = parseFloat(row.querySelector("input[name='req_quantity[]']").value) || 0;
-      let price = parseFloat(row.querySelector("input[name='price[]']").value) || 0;
-      row.querySelector('.total').value = (qty * price).toFixed(2);
-    }
-  });
-
-  updateDatalist();
-});
-
 </script>
