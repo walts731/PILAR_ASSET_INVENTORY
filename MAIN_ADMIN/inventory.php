@@ -315,29 +315,28 @@ $stmt->close();
       <!-- Consumables Tab -->
       <div class="tab-pane fade" id="consumables" role="tabpanel">
         <?php
-$ctotal = $cactive = $clow_stock = $cunavailable = 0;
-$threshold = 5;
+        $ctotal = $cactive = $clow_stock = $cunavailable = 0;
+        $threshold = 5;
 
-if ($selected_office === "all") {
-  // Fetch all consumables across offices
-  $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable'");
-} else {
-  // Fetch consumables for a specific office
-  $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable' AND office_id = ?");
-  $cres->bind_param("i", $selected_office);
-}
+        if ($selected_office === "all") {
+          // Fetch all consumables across offices
+          $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable'");
+        } else {
+          // Fetch consumables for a specific office
+          $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable' AND office_id = ?");
+          $cres->bind_param("i", $selected_office);
+        }
 
-$cres->execute();
-$cresResult = $cres->get_result();
+        $cres->execute();
+        $cresResult = $cres->get_result();
 
-while ($r = $cresResult->fetch_assoc()) {
-  $ctotal++;
-  if ($r['status'] === 'available') $cactive++;
-  if ($r['status'] === 'unavailable') $cunavailable++;
-  if ((int)$r['quantity'] <= $threshold) $clow_stock++;
-}
-?>
-
+        while ($r = $cresResult->fetch_assoc()) {
+          $ctotal++;
+          if ($r['status'] === 'available') $cactive++;
+          if ($r['status'] === 'unavailable') $cunavailable++;
+          if ((int)$r['quantity'] <= $threshold) $clow_stock++;
+        }
+        ?>
 
         <div class="row mb-4">
           <div class="col-12 col-sm-6 col-md-3 mb-3">

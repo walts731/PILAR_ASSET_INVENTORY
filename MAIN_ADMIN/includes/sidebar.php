@@ -134,6 +134,9 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
             <a href="reports.php" class="<?= ($page == 'reports') ? 'active' : '' ?>">
                 <i class="bi bi-bar-chart-line"></i> Reports
             </a>
+            <a href="employees.php" class="<?= ($page == 'employees') ? 'active' : '' ?>">
+                <i class="bi bi-bar-chart-line"></i> Employees
+            </a>
             <a href="user.php" class="<?= ($page == 'user') ? 'active' : '' ?>">
                 <i class="bi bi-person"></i> Users
             </a>
