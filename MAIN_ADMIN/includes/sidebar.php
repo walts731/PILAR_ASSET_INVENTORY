@@ -81,7 +81,7 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
         <!-- Logo and title -->
         <h5 class="text-center d-flex align-items-center justify-content-center mt-3">
             <img src="../img/<?= htmlspecialchars($system['logo']) ?>" alt="Logo"
-                 style="width: 30px; height: 30px; margin-right: 10px;" />
+                style="width: 30px; height: 30px; margin-right: 10px;" />
             <?= htmlspecialchars($system['system_title']) ?>
         </h5>
         <hr>
@@ -94,18 +94,18 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
 
             <!-- Inventory dropdown -->
             <a class="<?= ($page == 'inventory' || $page == 'inventory_category') ? 'active' : '' ?>"
-               data-bs-toggle="collapse" href="#inventorySubMenu" role="button"
-               aria-expanded="<?= ($page == 'inventory' || $page == 'inventory_category') ? 'true' : 'false' ?>"
-               aria-controls="inventorySubMenu">
+                data-bs-toggle="collapse" href="#inventorySubMenu" role="button"
+                aria-expanded="<?= ($page == 'inventory' || $page == 'inventory_category') ? 'true' : 'false' ?>"
+                aria-controls="inventorySubMenu">
                 <i class="bi bi-box-seam"></i> Inventory
                 <i class="bi bi-caret-down-fill float-end"></i>
             </a>
             <div class="collapse ps-4 <?= ($page == 'inventory' || $page == 'inventory_category') ? 'show' : '' ?>"
-                 id="inventorySubMenu">
+                id="inventorySubMenu">
                 <a class="nav-link <?= ($page == 'inventory') ? 'active' : '' ?>" href="inventory.php">All</a>
                 <?php foreach ($categories as $cat): ?>
                     <a class="nav-link <?= (isset($_GET['category']) && $_GET['category'] == $cat['id'] && $page == 'inventory_category') ? 'active' : '' ?>"
-                       href="inventory_category.php?category=<?= $cat['id'] ?>">
+                        href="inventory_category.php?category=<?= $cat['id'] ?>">
                         <?= htmlspecialchars($cat['category_name']) ?>
                     </a>
                 <?php endforeach; ?>
@@ -113,17 +113,17 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
 
             <!-- Forms dropdown -->
             <a class="<?= $formActive ? 'active' : '' ?>"
-               data-bs-toggle="collapse" href="#formsSubMenu" role="button"
-               aria-expanded="<?= $formActive ? 'true' : 'false' ?>"
-               aria-controls="formsSubMenu">
-               <i class="bi bi-file-earmark-text"></i> Forms
-               <i class="bi bi-caret-down-fill float-end"></i>
+                data-bs-toggle="collapse" href="#formsSubMenu" role="button"
+                aria-expanded="<?= $formActive ? 'true' : 'false' ?>"
+                aria-controls="formsSubMenu">
+                <i class="bi bi-file-earmark-text"></i> Forms
+                <i class="bi bi-caret-down-fill float-end"></i>
             </a>
             <div class="collapse ps-4 <?= $formActive ? 'show' : '' ?>" id="formsSubMenu">
                 <?php foreach ($form_categories as $category): ?>
                     <a class="nav-link <?= (isset($_GET['id']) && $_GET['id'] == $category['id']) ? 'active' : '' ?>"
-                       href="forms.php?id=<?= $category['id'] ?>">
-                       <?= htmlspecialchars($category['category']) ?>
+                        href="forms.php?id=<?= $category['id'] ?>">
+                        <?= htmlspecialchars($category['category']) ?>
                     </a>
                 <?php endforeach; ?>
             </div>
@@ -135,8 +135,9 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
                 <i class="bi bi-bar-chart-line"></i> Reports
             </a>
             <a href="employees.php" class="<?= ($page == 'employees') ? 'active' : '' ?>">
-                <i class="bi bi-bar-chart-line"></i> Employees
+                <i class="bi bi-people-fill"></i> Employees
             </a>
+
             <a href="user.php" class="<?= ($page == 'user') ? 'active' : '' ?>">
                 <i class="bi bi-person"></i> Users
             </a>

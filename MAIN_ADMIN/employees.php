@@ -138,6 +138,26 @@ if ($result->num_rows > 0) {
     </div>
   </div>
 
+  <!-- Full Asset Details Modal -->
+<div class="modal fade" id="assetDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-info-circle"></i> Asset Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-bordered">
+          <tbody id="assetDetailsBody">
+            <tr><td colspan="2" class="text-center text-muted">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -168,11 +188,31 @@ if ($result->num_rows > 0) {
         });
       });
     });
+
+    $(document).on("click", ".view-asset-details", function() {
+  let assetId = $(this).data("id");
+
+  $('#assetDetailsBody').html('<tr><td colspan="2" class="text-center">Loading...</td></tr>');
+  $('#assetDetailsModal').modal('show');
+
+  $.ajax({
+    url: 'fetch_asset_details.php',
+    method: 'GET',
+    data: { asset_id: assetId },
+    success: function(response) {
+      $('#assetDetailsBody').html(response);
+    },
+    error: function() {
+      $('#assetDetailsBody').html('<tr><td colspan="2" class="text-danger text-center">Failed to load details.</td></tr>');
+    }
+  });
+});
+
   </script>
 </body>
 </html>
 
-// fetch_employees_assets.php
+<!-- // fetch_employees_assets.php
 <?php
 require_once '../connect.php';
 
@@ -202,5 +242,5 @@ if (isset($_GET['employee_id'])) {
 
     $stmt->close();
 }
-?>
+?> -->
 

@@ -4,7 +4,7 @@ require_once '../connect.php';
 if (isset($_GET['employee_id'])) {
     $employee_id = intval($_GET['employee_id']);
 
-    $stmt = $conn->prepare("SELECT asset_name, description, status, serial_no, property_no 
+    $stmt = $conn->prepare("SELECT id, asset_name, description, status, serial_no, property_no 
                             FROM assets 
                             WHERE employee_id = ?");
     $stmt->bind_param("i", $employee_id);
@@ -19,10 +19,16 @@ if (isset($_GET['employee_id'])) {
                     <td>" . htmlspecialchars($row['status']) . "</td>
                     <td>" . htmlspecialchars($row['serial_no']) . "</td>
                     <td>" . htmlspecialchars($row['property_no']) . "</td>
+                    <td>
+                      <button class='btn btn-sm btn-info view-asset-details' 
+                        data-id='" . $row['id'] . "'>
+                        <i class='bi bi-eye'></i> View
+                      </button>
+                    </td>
                   </tr>";
         }
     } else {
-        echo "<tr><td colspan='5' class='text-center text-muted'>No assets assigned.</td></tr>";
+        echo "<tr><td colspan='6' class='text-center text-muted'>No assets assigned.</td></tr>";
     }
 
     $stmt->close();
