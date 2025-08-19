@@ -67,34 +67,37 @@ $stmt->close();
     $selected_office = $_GET['office'] ?? $_SESSION['office_id'];
     ?>
     <div class="card card-filter shadow-sm mb-3">
-  <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
-    <h5 class="mb-0 me-3">Filter Assets and Consumables</h5>
+      <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0 me-3">Filter Assets and Consumables</h5>
 
-    <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
-      <form method="GET" class="d-flex align-items-center gap-2 mb-0">
-        <label for="officeFilter" class="form-label mb-0">Office</label>
-        <select name="office" id="officeFilter" class="form-select form-select-sm" onchange="this.form.submit()">
-          <?php while ($office = $offices->fetch_assoc()): ?>
-            <option value="<?= $office['id'] ?>" <?= $office['id'] == $selected_office ? 'selected' : '' ?>>
-              <?= htmlspecialchars($office['office_name']) ?>
-            </option>
-          <?php endwhile; ?>
-        </select>
-      </form>
+        <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
+          <form method="GET" class="d-flex align-items-center gap-2 mb-0">
+            <label for="officeFilter" class="form-label mb-0">Office</label>
+            <select name="office" id="officeFilter" class="form-select form-select-sm" onchange="this.form.submit()">
+              <!-- Add "All" option -->
+              <option value="all" <?= $selected_office === "all" ? 'selected' : '' ?>>All</option>
 
-      <!-- Add Asset Button -->
-      <button class="btn btn-outline-primary rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
-        <i class="bi bi-plus-circle"></i> Add Asset
-      </button>
+              <?php while ($office = $offices->fetch_assoc()): ?>
+                <option value="<?= $office['id'] ?>" <?= $office['id'] == $selected_office ? 'selected' : '' ?>>
+                  <?= htmlspecialchars($office['office_name']) ?>
+                </option>
+              <?php endwhile; ?>
+            </select>
+          </form>
 
-      <!-- Import CSV Button -->
-<button class="btn btn-outline-success rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#importCSVModal">
-  <i class="bi bi-upload"></i> Import CSV
-</button>
+          <!-- Add Asset Button -->
+          <button class="btn btn-outline-primary rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
+            <i class="bi bi-plus-circle"></i> Add Asset
+          </button>
 
+          <!-- Import CSV Button -->
+          <button class="btn btn-outline-success rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#importCSVModal">
+            <i class="bi bi-upload"></i> Import CSV
+          </button>
+
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
 
     <!-- Tab Navigation -->
@@ -112,8 +115,12 @@ $stmt->close();
       <div class="tab-pane fade show active" id="assets" role="tabpanel">
         <?php
         $total = $active = $borrowed = $red_tagged = 0;
-        $res = $conn->prepare("SELECT status, red_tagged FROM assets WHERE type = 'asset' AND office_id = ?");
-        $res->bind_param("i", $selected_office);
+        if ($selected_office === "all") {
+          $res = $conn->prepare("SELECT status, red_tagged FROM assets WHERE type = 'asset'");
+        } else {
+          $res = $conn->prepare("SELECT status, red_tagged FROM assets WHERE type = 'asset' AND office_id = ?");
+          $res->bind_param("i", $selected_office);
+        }
         $res->execute();
         $resResult = $res->get_result();
         while ($r = $resResult->fetch_assoc()) {
@@ -210,13 +217,22 @@ $stmt->close();
                 </thead>
                 <tbody>
                   <?php
-                  $stmt = $conn->prepare("
-                          SELECT a.*, c.category_name 
-                          FROM assets a 
-                          JOIN categories c ON a.category = c.id 
-                          WHERE a.type = 'asset' AND a.office_id = ?
-                        ");
-                  $stmt->bind_param("i", $selected_office);
+                  if ($selected_office === "all") {
+                    $stmt = $conn->prepare("
+    SELECT a.*, c.category_name 
+    FROM assets a 
+    JOIN categories c ON a.category = c.id 
+    WHERE a.type = 'asset'
+  ");
+                  } else {
+                    $stmt = $conn->prepare("
+    SELECT a.*, c.category_name 
+    FROM assets a 
+    JOIN categories c ON a.category = c.id 
+    WHERE a.type = 'asset' AND a.office_id = ?
+  ");
+                    $stmt->bind_param("i", $selected_office);
+                  }
                   $stmt->execute();
                   $result = $stmt->get_result();
                   while ($row = $result->fetch_assoc()):
@@ -299,19 +315,29 @@ $stmt->close();
       <!-- Consumables Tab -->
       <div class="tab-pane fade" id="consumables" role="tabpanel">
         <?php
-        $ctotal = $cactive = $clow_stock = $cunavailable = 0;
-        $threshold = 5;
-        $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable' AND office_id = ?");
-        $cres->bind_param("i", $selected_office);
-        $cres->execute();
-        $cresResult = $cres->get_result();
-        while ($r = $cresResult->fetch_assoc()) {
-          $ctotal++;
-          if ($r['status'] === 'available') $cactive++;
-          if ($r['status'] === 'unavailable') $cunavailable++;
-          if ((int)$r['quantity'] <= $threshold) $clow_stock++;
-        }
-        ?>
+$ctotal = $cactive = $clow_stock = $cunavailable = 0;
+$threshold = 5;
+
+if ($selected_office === "all") {
+  // Fetch all consumables across offices
+  $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable'");
+} else {
+  // Fetch consumables for a specific office
+  $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable' AND office_id = ?");
+  $cres->bind_param("i", $selected_office);
+}
+
+$cres->execute();
+$cresResult = $cres->get_result();
+
+while ($r = $cresResult->fetch_assoc()) {
+  $ctotal++;
+  if ($r['status'] === 'available') $cactive++;
+  if ($r['status'] === 'unavailable') $cunavailable++;
+  if ((int)$r['quantity'] <= $threshold) $clow_stock++;
+}
+?>
+
 
         <div class="row mb-4">
           <div class="col-12 col-sm-6 col-md-3 mb-3">
