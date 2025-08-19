@@ -188,9 +188,9 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
               <!-- Asset Image -->
               <div class="col-5 text-center">
                 <label class="form-label fw-bold">Asset Image</label>
-                <img id="viewAssetImage" src="" alt="Asset Image" 
-                     class="img-fluid border border-dark rounded" 
-                     style="max-height: 150px; object-fit: contain;">
+                <img id="viewAssetImage" src="" alt="Asset Image"
+                  class="img-fluid border border-dark rounded"
+                  style="max-height: 150px; object-fit: contain;">
               </div>
 
               <!-- Asset Details -->
@@ -227,7 +227,7 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
     const systemLogo = "<?= $systemLogo ?>"; // logo from system table
 
     document.querySelectorAll('.viewAssetBtn').forEach(button => {
-      button.addEventListener('click', function () {
+      button.addEventListener('click', function() {
         const assetId = this.getAttribute('data-id');
 
         fetch(`get_asset_details.php?id=${assetId}`)
@@ -241,7 +241,7 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
             // Text fields
             document.getElementById('viewDescription').textContent = data.description;
             document.getElementById('viewOfficeName').textContent = data.office_name;
-            document.getElementById('viewCategoryName').textContent = data.category;
+            document.getElementById('viewCategoryName').textContent = data.category_name;
             document.getElementById('viewType').textContent = data.type;
             document.getElementById('viewStatus').textContent = data.status;
             document.getElementById('viewQuantity').textContent = data.quantity;
@@ -265,26 +265,27 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
       });
     });
 
-    $(document).ready(function () {
-    $('#inventoryTable').DataTable({
-      paging: true,          // Enable pagination
-      searching: true,       // Enable search box
-      ordering: true,        // Enable column sorting
-      info: true,            // Show table info
-      pageLength: 10,        // Default rows per page
-      lengthMenu: [5, 10, 25, 50, 100], // Rows per page options
-      language: {
-        search: "Filter records:", // Customize search label
-        lengthMenu: "Show _MENU_ entries",
-        info: "Showing _START_ to _END_ of _TOTAL_ entries",
-        paginate: {
-          previous: "Prev",
-          next: "Next"
+    $(document).ready(function() {
+      $('#inventoryTable').DataTable({
+        paging: true, // Enable pagination
+        searching: true, // Enable search box
+        ordering: true, // Enable column sorting
+        info: true, // Show table info
+        pageLength: 10, // Default rows per page
+        lengthMenu: [5, 10, 25, 50, 100], // Rows per page options
+        language: {
+          search: "Filter records:", // Customize search label
+          lengthMenu: "Show _MENU_ entries",
+          info: "Showing _START_ to _END_ of _TOTAL_ entries",
+          paginate: {
+            previous: "Prev",
+            next: "Next"
+          }
         }
-      }
+      });
     });
-  });
   </script>
 
 </body>
+
 </html>
