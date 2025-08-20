@@ -75,14 +75,16 @@ while ($row = $result->fetch_assoc()) {
       <div class="card shadow">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
           <h5 class="mb-0"><i class="bi bi-people-fill"></i> Employees</h5>
-          <button class="btn btn-sm btn-outline-success rounded-pill" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
-            <i class="bi bi-plus-circle"></i> Add Employee
-          </button>
 
-          <button class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#importEmployeeModal">
-            <i class="bi bi-file-earmark-arrow-up"></i> Import CSV
-          </button>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-success rounded-pill" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+              <i class="bi bi-plus-circle"></i> Add Employee
+            </button>
 
+            <button class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#importEmployeeModal">
+              <i class="bi bi-file-earmark-arrow-up"></i> Import CSV
+            </button>
+          </div>
         </div>
 
         <div class="card-body">

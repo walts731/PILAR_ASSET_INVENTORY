@@ -9,7 +9,7 @@
         <div class="modal-body">
           <p class="text-muted">
             Upload a CSV file with the following columns: 
-            <strong>employee_no, name, office_id, status, image</strong>
+            <strong>name, office_name, status</strong>
           </p>
           <div class="mb-3">
             <label for="csvFile" class="form-label">Choose CSV File</label>
@@ -23,3 +23,5 @@
     </div>
   </div>
 </div>
+
+
