@@ -77,7 +77,7 @@ while ($row = $result->fetch_assoc()) {
           <h5 class="mb-0"><i class="bi bi-people-fill"></i> Employees</h5>
 
           <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-success rounded-pill" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+            <button class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
               <i class="bi bi-plus-circle"></i> Add Employee
             </button>
 
@@ -88,7 +88,7 @@ while ($row = $result->fetch_assoc()) {
         </div>
 
         <div class="card-body">
-          <table id="employeeTable" class="table table-striped table-bordered">
+          <table id="employeeTable" class="table">
             <thead class="table-light">
               <tr>
                 <th>Employee No</th>
