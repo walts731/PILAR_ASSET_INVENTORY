@@ -327,3 +327,5 @@ while ($row = $result->fetch_assoc()) {
 <?php include 'modals/add_employee_modal.php'; ?>
 <?php include 'modals/edit_employee_modal.php'; ?>
 <?php include 'modals/import_employee_modal.php'; ?>
+<?php include 'modals/employee_duplicate_modal.php'; ?>
+<?php include 'modals/add_employee_duplicate_modal.php'; ?>

@@ -3,6 +3,8 @@ require_once '../connect.php';
 session_start();
 
 if (isset($_POST['import'])) {
+    $duplicates = []; // store duplicate names
+
     if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === 0) {
         $fileName = $_FILES['csv_file']['tmp_name'];
         
@@ -24,19 +26,31 @@ if (isset($_POST['import'])) {
                 $stmt->fetch();
                 $stmt->close();
 
-                // Only insert if office was found
                 if ($office_id) {
+                    // --- Check for duplicate employee name ---
+                    $check = $conn->prepare("SELECT COUNT(*) FROM employees WHERE name = ?");
+                    $check->bind_param("s", $name);
+                    $check->execute();
+                    $check->bind_result($exists);
+                    $check->fetch();
+                    $check->close();
+
+                    if ($exists > 0) {
+                        $duplicates[] = $name; // store duplicates
+                        continue;
+                    }
+
                     // --- Generate new employee number like EMP0001 ---
                     $result = $conn->query("SELECT employee_no FROM employees ORDER BY employee_id DESC LIMIT 1");
                     if ($row = $result->fetch_assoc()) {
-                        $lastNo = intval(substr($row['employee_no'], 3)); // remove "EMP"
+                        $lastNo = intval(substr($row['employee_no'], 3));
                         $newNo = $lastNo + 1;
                     } else {
                         $newNo = 1;
                     }
                     $employee_no = "EMP" . str_pad($newNo, 4, "0", STR_PAD_LEFT);
 
-                    // Insert employee with generated employee_no
+                    // Insert employee
                     $stmt = $conn->prepare("INSERT INTO employees (employee_no, name, office_id, status, date_added) 
                                              VALUES (?, ?, ?, ?, NOW())");
                     $stmt->bind_param("ssis", $employee_no, $name, $office_id, $status);
@@ -47,7 +61,14 @@ if (isset($_POST['import'])) {
             fclose($handle);
         }
     }
-    header("Location: employees.php?import=success");
+
+    // Redirect with duplicates if any
+    if (!empty($duplicates)) {
+        $dupString = implode(",", $duplicates);
+        header("Location: employees.php?import=duplicates&names=" . urlencode($dupString));
+    } else {
+        header("Location: employees.php?import=success");
+    }
     exit();
 }
 ?>

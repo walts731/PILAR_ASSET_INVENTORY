@@ -13,10 +13,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = trim($_POST['status']);
     $office_id = intval($_POST['office_id']);
 
+    // --- 0. Check for duplicate name ---
+    $check = $conn->prepare("SELECT COUNT(*) FROM employees WHERE name = ?");
+    $check->bind_param("s", $name);
+    $check->execute();
+    $check->bind_result($exists);
+    $check->fetch();
+    $check->close();
+
+    if ($exists > 0) {
+        $_SESSION['duplicate_name'] = $name; // store duplicate name for modal
+        header("Location: employees.php");
+        exit();
+    }
+
     // --- 1. Generate new employee number ---
     $result = $conn->query("SELECT employee_no FROM employees ORDER BY employee_id DESC LIMIT 1");
     if ($row = $result->fetch_assoc()) {
-        $lastNo = intval(substr($row['employee_no'], 3)); // remove "EMP"
+        $lastNo = intval(substr($row['employee_no'], 3));
         $newNo = $lastNo + 1;
     } else {
         $newNo = 1;
@@ -31,16 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $imageName = uniqid("emp_") . "." . strtolower($ext);
         $uploadPath = $uploadDir . $imageName;
 
-        // Validate image type
         $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
-        if (!in_array(strtolower($ext), $allowedTypes)) {
-            $_SESSION['error'] = "Invalid image format. Only JPG, PNG, GIF allowed.";
-            header("Location: employees.php");
-            exit();
-        }
-
-        if (!move_uploaded_file($_FILES['image']['tmp_name'], $uploadPath)) {
-            $_SESSION['error'] = "Failed to upload image.";
+        if (!in_array(strtolower($ext), $allowedTypes) || !move_uploaded_file($_FILES['image']['tmp_name'], $uploadPath)) {
+            $_SESSION['error'] = "Invalid image or upload failed.";
             header("Location: employees.php");
             exit();
         }
@@ -58,7 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $stmt->close();
 
-    // --- 4. Redirect back ---
     header("Location: employees.php");
     exit();
 }
