@@ -104,10 +104,14 @@ $units = $unit_query->fetch_all(MYSQLI_ASSOC);
                 </div>
             </div>
 
-            <div class="modal-footer">
-                <button type="submit" class="btn btn-info"><i class="bi bi-save"></i> Save</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <div class="modal-footer d-flex justify-content-between align-items-center">
+                <p class="text-danger text-start mb-0">* Required fields</p>
+                <div>
+                    <button type="submit" class="btn btn-info"><i class="bi bi-save"></i> Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
             </div>
+
         </form>
     </div>
 </div>
