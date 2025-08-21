@@ -51,25 +51,27 @@ if ($result) {
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
     <link rel="stylesheet" href="css/dashboard.css" />
     <style>
-    /* Wrap header text */
-    #inventoryTable th {
-        white-space: normal; /* allow text to wrap */
-        vertical-align: middle;
-        text-align: center;
-    }
+        /* Wrap header text */
+        #inventoryTable th {
+            white-space: normal;
+            /* allow text to wrap */
+            vertical-align: middle;
+            text-align: center;
+        }
 
-    /* Reduce header and row padding */
-    #inventoryTable th,
-    #inventoryTable td {
-        padding: 0.3rem 0.5rem;
-        font-size: 0.75rem; /* even smaller font */
-    }
+        /* Reduce header and row padding */
+        #inventoryTable th,
+        #inventoryTable td {
+            padding: 0.3rem 0.5rem;
+            font-size: 0.75rem;
+            /* even smaller font */
+        }
 
-    /* Ensure table scrolls horizontally */
-    .table-responsive {
-        overflow-x: auto;
-    }
-</style>
+        /* Ensure table scrolls horizontally */
+        .table-responsive {
+            overflow-x: auto;
+        }
+    </style>
 
 
 </head>
@@ -95,46 +97,33 @@ if ($result) {
                     <div class="table-responsive">
                         <table id="inventoryTable" class="table table-striped table-bordered">
                             <thead>
-    <tr>
-        <th>Classification/<br>Type</th>
-        <th>Item<br>description</th>
-        <th>Nature Occupancy<br>(schools, offices,<br>hospital, etc.)</th>
-        <th>Location</th>
-        <th>Date Constructed/<br>Acquired/<br>Manufactured</th>
-        <th>Property No./<br>Other reference</th>
-        <th colspan="2" class="text-center">Valuation</th>
-        <th>Date of<br>Appraisal</th>
-        <th>Remarks</th>
-    </tr>
-    <tr>
-        <th colspan="6"></th> <!-- empty cells under previous columns -->
-        <th>Acquisition Cost/<br>Insurable Interest</th>
-        <th>Market/Appraisal/<br>Insurable Interest</th>
-        <th colspan="2"></th> <!-- empty under Date of Appraisal & Remarks -->
-    </tr>
-</thead>
-
+                                <tr>
+                                    <th>Classification/<br>Type</th>
+                                    <th>Item<br>description</th>
+                                    <th>Nature Occupancy<br>(schools, offices,<br>hospital, etc.)</th>
+                                    <th>Location</th>
+                                    <th>Date Constructed/<br>Acquired/<br>Manufactured</th>
+                                    <th>Property No./<br>Other reference</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
 
                             <tbody>
                                 <?php foreach ($inventory as $item): ?>
                                     <tr>
-                                        <td><?= htmlspecialchars($item['inventory_id']) ?></td>
                                         <td><?= htmlspecialchars($item['classification_type']) ?></td>
                                         <td><?= htmlspecialchars($item['item_description']) ?></td>
                                         <td><?= htmlspecialchars($item['nature_occupancy']) ?></td>
                                         <td><?= htmlspecialchars($item['location']) ?></td>
                                         <td><?= htmlspecialchars($item['date_constructed_acquired_manufactured']) ?></td>
                                         <td><?= htmlspecialchars($item['property_no_or_reference']) ?></td>
-                                        <td><?= htmlspecialchars(number_format($item['acquisition_cost'], 2)) ?></td>
-                                        <td><?= htmlspecialchars(number_format($item['market_appraisal_insurable_interest'], 2)) ?></td>
-                                        <td><?= htmlspecialchars($item['date_of_appraisal']) ?></td>
-                                        <td><?= htmlspecialchars($item['remarks']) ?></td>
-                                        <td>
-                                            <?php for ($i = 1; $i <= 4; $i++): ?>
-                                                <?php if (!empty($item['image_' . $i])): ?>
-                                                    <img src="<?= htmlspecialchars($item['image_' . $i]) ?>" alt="Image <?= $i ?>" style="width:50px; height:50px; object-fit:cover; margin-right:3px;">
-                                                <?php endif; ?>
-                                            <?php endfor; ?>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-outline-primary view-btn"
+                                                data-id="<?= $item['inventory_id'] ?>"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#viewInventoryModal">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -158,8 +147,42 @@ if ($result) {
         $(document).ready(function() {
             $('#inventoryTable').DataTable();
         });
+
+        $(document).ready(function() {
+            $('#inventoryTable').DataTable();
+
+            // Handle view button click
+            $('.view-btn').on('click', function() {
+                let inventoryId = $(this).data('id');
+
+                $('#inventoryDetails').html('<div class="text-center text-muted">Loading...</div>');
+
+                $.ajax({
+                    url: 'view_infrastructure.php',
+                    type: 'GET',
+                    data: {
+                        id: inventoryId
+                    },
+                    success: function(response) {
+                        $('#inventoryDetails').html(response);
+                    },
+                    error: function() {
+                        $('#inventoryDetails').html('<div class="text-danger">Error loading details.</div>');
+                    }
+                });
+            });
+        });
     </script>
 
 </body>
 
 </html>
+
+<!-- View Inventory Modal -->
+<?php include 'view_infrastructure_modal.php'; ?>
+
+<!-- Add Inventory Modal -->
+<?php include 'modals/add_infrastructure_modal.php'; ?>
+
+
+
