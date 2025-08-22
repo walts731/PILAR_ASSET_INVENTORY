@@ -50,8 +50,11 @@ while ($row = $office_query->fetch_assoc()) {
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Header Image</label>
                     <?php if (!empty($par_data['header_image'])): ?>
-                        <div class="mb-2">
-                            <img src="../img/<?= htmlspecialchars($par_data['header_image']) ?>" alt="Header Image" class="img-fluid rounded border" style="max-height:120px;">
+                        <div class="mb-2 text-center">
+                            <img src="img/<?= htmlspecialchars($par_data['header_image']) ?>"
+                                alt="Header Image"
+                                class="img-fluid rounded border w-100"
+                                style="max-height:250px; object-fit: contain;">
                         </div>
                     <?php endif; ?>
                     <input type="file" name="header_image" class="form-control" accept="image/*">
@@ -97,16 +100,16 @@ while ($row = $office_query->fetch_assoc()) {
                 <div class="col-md-6 text-center mb-3">
                     <p class="fw-semibold">Received by:</p>
                     <input type="text" class="form-control text-center" name="position_office_left"
-                           placeholder="Position / Office" value="<?= htmlspecialchars($par_data['position_office_left']) ?>">
+                        placeholder="Position / Office" value="<?= htmlspecialchars($par_data['position_office_left']) ?>">
                 </div>
                 <div class="col-md-6 text-center mb-3">
                     <p class="fw-semibold">Issued by:</p>
                     <input type="text" class="form-control text-center" name="position_office_right"
-                           placeholder="Position / Office" value="<?= htmlspecialchars($par_data['position_office_right']) ?>">
+                        placeholder="Position / Office" value="<?= htmlspecialchars($par_data['position_office_right']) ?>">
                 </div>
             </div>
         </div>
 
-        <button type="submit" class="btn btn-success">Save Header & Footer</button>
+        <button type="submit" class="btn btn-info">Save Header & Footer</button>
     </form>
 </div>
