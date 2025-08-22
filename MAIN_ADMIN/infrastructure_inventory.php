@@ -115,7 +115,9 @@ if ($result) {
                                         <td><?= htmlspecialchars($item['item_description']) ?></td>
                                         <td><?= htmlspecialchars($item['nature_occupancy']) ?></td>
                                         <td><?= htmlspecialchars($item['location']) ?></td>
-                                        <td><?= htmlspecialchars($item['date_constructed_acquired_manufactured']) ?></td>
+                                        <td>
+                                            <?= date("M-Y", strtotime($item['date_constructed_acquired_manufactured'])) ?>
+                                        </td>
                                         <td><?= htmlspecialchars($item['property_no_or_reference']) ?></td>
                                         <td class="text-center">
                                             <button class="btn btn-sm btn-outline-primary view-btn"
@@ -183,6 +185,3 @@ if ($result) {
 
 <!-- Add Inventory Modal -->
 <?php include 'modals/add_infrastructure_modal.php'; ?>
-
-
-

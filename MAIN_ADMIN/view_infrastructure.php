@@ -14,11 +14,15 @@ if (isset($_GET['id'])) {
         echo "<tr><th>Item Description</th><td>" . htmlspecialchars($row['item_description']) . "</td></tr>";
         echo "<tr><th>Nature Occupancy</th><td>" . htmlspecialchars($row['nature_occupancy']) . "</td></tr>";
         echo "<tr><th>Location</th><td>" . htmlspecialchars($row['location']) . "</td></tr>";
-        echo "<tr><th>Date Constructed/Acquired/Manufactured</th><td>" . htmlspecialchars($row['date_constructed_acquired_manufactured']) . "</td></tr>";
+        echo "<tr><th>Date Constructed/Acquired/Manufactured</th><td>"
+            . (!empty($row['date_constructed_acquired_manufactured'])
+                ? date("M-Y", strtotime($row['date_constructed_acquired_manufactured']))
+                : '')
+            . "</td></tr>";
         echo "<tr><th>Property No./Other Reference</th><td>" . htmlspecialchars($row['property_no_or_reference']) . "</td></tr>";
         echo "<tr><th>Acquisition Cost</th><td>" . htmlspecialchars($row['acquisition_cost']) . "</td></tr>";
         echo "<tr><th>Market/Appraisal Value</th><td>" . htmlspecialchars($row['market_appraisal_insurable_interest']) . "</td></tr>";
-        echo "<tr><th>Date of Appraisal</th><td>" . htmlspecialchars($row['date_of_appraisal']) . "</td></tr>";
+        echo "<tr><th>Date of Appraisal</th><td>" . (!empty($row['date_of_appraisal']) ? date("Y", strtotime($row['date_of_appraisal'])) : '') . "</td></tr>";
         echo "<tr><th>Remarks</th><td>" . htmlspecialchars($row['remarks']) . "</td></tr>";
         echo "</table>";
 
@@ -40,4 +44,3 @@ if (isset($_GET['id'])) {
     }
     $stmt->close();
 }
-?>
