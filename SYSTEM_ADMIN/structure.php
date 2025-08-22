@@ -26,6 +26,7 @@ if (!isset($_SESSION['office_id'])) {
   // SELECT `id`, `category_name`, `type` FROM `categories` 
   // SELECT `id`, `asset_name`, `category`, `description`, `quantity`, `unit`, `status`, `acquisition_date`, `office_id`, `red_tagged`, `last_updated`, `value`, `qr_code`, `type` FROM `assets` 
   //SELECT `id`, `form_title`, FROM `forms`
+  //SELECT `id`, `logo`, `system_title` FROM `system` 
 
 }
 

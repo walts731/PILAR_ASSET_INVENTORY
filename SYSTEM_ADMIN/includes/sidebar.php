@@ -93,8 +93,13 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
             </a>
 
             <a href="../SYSTEM_ADMIN/manage_forms.php" class="<?= ($page == 'manage_forms') ? 'active' : '' ?>">
-                <i class="bi bi-speedometer2"></i> Forms
+                <i class="bi bi-file-text"></i> Forms
             </a>
+
+            <a href="../SYSTEM_ADMIN/edit_system.php" class="<?= ($page == 'System') ? 'active' : '' ?>">
+                <i class="bi bi-gear"></i> System
+            </a>
+
         </nav>
     </div>
 
