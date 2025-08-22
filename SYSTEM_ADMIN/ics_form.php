@@ -1,6 +1,9 @@
 <?php
 require_once '../connect.php';
 
+$form_id = $_GET['id'] ?? null;
+
+
 $ics_data = [
     'header_image' => '',
     'entity_name' => '',
@@ -28,37 +31,39 @@ if ($result && $result->num_rows > 0) {
 ?>
 
 <form method="POST" action="save_ics_header_footer.php" enctype="multipart/form-data">
-   <!-- ICS Header Image Upload -->
-<div class="mb-3">
-    <label class="form-label fw-semibold">Header Image</label>
-    <?php if (!empty($ics_data['header_image'])): ?>
-        <div class="mb-2 text-center">
-            <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
-                 alt="Header Image"
-                 class="img-fluid rounded border w-100"
-                 style="max-height:250px; object-fit:contain;">
-        </div>
-    <?php endif; ?>
-    <input type="file" name="header_image" class="form-control" accept="image/*">
-</div>
+    <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
+
+    <!-- ICS Header Image Upload -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Header Image</label>
+        <?php if (!empty($ics_data['header_image'])): ?>
+            <div class="mb-2 text-center">
+                <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
+                    alt="Header Image"
+                    class="img-fluid rounded border w-100"
+                    style="max-height:250px; object-fit:contain;">
+            </div>
+        <?php endif; ?>
+        <input type="file" name="header_image" class="form-control" accept="image/*">
+    </div>
 
 
     <!-- ENTITY NAME, FUND CLUSTER, ICS NO -->
     <div class="row mb-3">
         <div class="col-md-6">
             <label class="form-label fw-semibold">ENTITY NAME</label>
-            <input type="text" class="form-control" name="entity_name" 
-                   value="<?= htmlspecialchars($ics_data['entity_name']) ?>">
+            <input type="text" class="form-control" name="entity_name"
+                value="<?= htmlspecialchars($ics_data['entity_name']) ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label fw-semibold">FUND CLUSTER</label>
-            <input type="text" class="form-control" name="fund_cluster" 
-                   value="<?= htmlspecialchars($ics_data['fund_cluster']) ?>">
+            <input type="text" class="form-control" name="fund_cluster"
+                value="<?= htmlspecialchars($ics_data['fund_cluster']) ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label fw-semibold">ICS NO.</label>
-            <input type="text" class="form-control" name="ics_no" 
-                   value="<?= htmlspecialchars($ics_data['ics_no']) ?>">
+            <input type="text" class="form-control" name="ics_no"
+                value="<?= htmlspecialchars($ics_data['ics_no']) ?>">
         </div>
     </div>
 
@@ -71,29 +76,29 @@ if ($result && $result->num_rows > 0) {
         <tr>
             <td>
                 <input type="text" name="received_from_name"
-                       class="form-control text-center fw-bold"
-                       value="<?= htmlspecialchars($ics_data['received_from_name']) ?>"
-                       placeholder="Enter name" style="text-decoration:underline;">
+                    class="form-control text-center fw-bold"
+                    value="<?= htmlspecialchars($ics_data['received_from_name']) ?>"
+                    placeholder="Enter name" style="text-decoration:underline;">
             </td>
             <td>
                 <input type="text" name="received_by_name"
-                       class="form-control text-center fw-bold"
-                       value="<?= htmlspecialchars($ics_data['received_by_name']) ?>"
-                       placeholder="Enter name" style="text-decoration:underline;">
+                    class="form-control text-center fw-bold"
+                    value="<?= htmlspecialchars($ics_data['received_by_name']) ?>"
+                    placeholder="Enter name" style="text-decoration:underline;">
             </td>
         </tr>
         <tr>
             <td>
                 <input type="text" name="received_from_position"
-                       class="form-control text-center"
-                       value="<?= htmlspecialchars($ics_data['received_from_position']) ?>"
-                       placeholder="Enter position">
+                    class="form-control text-center"
+                    value="<?= htmlspecialchars($ics_data['received_from_position']) ?>"
+                    placeholder="Enter position">
             </td>
             <td>
                 <input type="text" name="received_by_position"
-                       class="form-control text-center"
-                       value="<?= htmlspecialchars($ics_data['received_by_position']) ?>"
-                       placeholder="Enter position">
+                    class="form-control text-center"
+                    value="<?= htmlspecialchars($ics_data['received_by_position']) ?>"
+                    placeholder="Enter position">
             </td>
         </tr>
         <tr>
@@ -103,13 +108,13 @@ if ($result && $result->num_rows > 0) {
         <tr>
             <td>
                 <input type="date" name="received_from_date"
-                       class="form-control text-center"
-                       value="<?= !empty($ics_data['created_at']) ? htmlspecialchars(date('Y-m-d', strtotime($ics_data['created_at']))) : date('Y-m-d') ?>">
+                    class="form-control text-center"
+                    value="<?= !empty($ics_data['created_at']) ? htmlspecialchars(date('Y-m-d', strtotime($ics_data['created_at']))) : date('Y-m-d') ?>">
             </td>
             <td>
                 <input type="date" name="received_by_date"
-                       class="form-control text-center"
-                       value="<?= !empty($ics_data['created_at']) ? htmlspecialchars(date('Y-m-d', strtotime($ics_data['created_at']))) : date('Y-m-d') ?>">
+                    class="form-control text-center"
+                    value="<?= !empty($ics_data['created_at']) ? htmlspecialchars(date('Y-m-d', strtotime($ics_data['created_at']))) : date('Y-m-d') ?>">
             </td>
         </tr>
     </table>
