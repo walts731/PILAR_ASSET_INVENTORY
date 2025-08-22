@@ -57,7 +57,7 @@ if ($result && $result->num_rows > 0) {
         <td class="text-center"><?= htmlspecialchars($form['form_title']) ?></td>
         <td class="text-center">
           <!-- View Button -->
-          <a href="view_form.php?id=<?= $form['id'] ?>" class="btn btn-sm btn-success">
+          <a href="view_form.php?id=<?= $form['id'] ?>" class="btn btn-sm btn-info">
             <i class="bi bi-eye"></i> View
           </a>
 

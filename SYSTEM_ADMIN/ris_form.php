@@ -2,104 +2,35 @@
 require_once '../connect.php';
 
 // Fetch existing RIS data if editing
-$ris_id = $_GET['id'] ?? null;
+$form_id = $_GET['id'] ?? null;
 $ris_data = [];
-if ($ris_id) {
-    $stmt = $conn->prepare("SELECT * FROM ris_form WHERE id = ?");
-    $stmt->bind_param("i", $ris_id);
+if ($form_id) {
+    $stmt = $conn->prepare("SELECT * FROM ris_form WHERE form_id = ?");
+    $stmt->bind_param("i", $form_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $ris_data = $result->fetch_assoc();
 }
-
-// Handle form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $division = $_POST['division'];
-    $responsibility_center = $_POST['responsibility_center'];
-    $ris_no = $_POST['ris_no'];
-    $date = $_POST['date'];
-    $office = $_POST['office'];
-    $responsibility_code = $_POST['responsibility_code'];
-    $sai_no = $_POST['sai_no'];
-    $purpose = $_POST['purpose'];
-
-    // Footer
-    $requested_by_name = $_POST['requested_by_name'];
-    $approved_by_name = $_POST['approved_by_name'];
-    $issued_by_name = $_POST['issued_by_name'];
-    $received_by_name = $_POST['received_by_name'];
-    $requested_by_designation = $_POST['requested_by_designation'];
-    $approved_by_designation = $_POST['approved_by_designation'];
-    $issued_by_designation = $_POST['issued_by_designation'];
-    $received_by_designation = $_POST['received_by_designation'];
-    $requested_by_date = $_POST['requested_by_date'];
-    $approved_by_date = $_POST['approved_by_date'];
-    $issued_by_date = $_POST['issued_by_date'];
-    $received_by_date = $_POST['received_by_date'];
-
-    // Header Image upload
-    $header_image = $ris_data['header_image'] ?? null;
-    if (!empty($_FILES['header_image']['name'])) {
-        $targetDir = "../img/";
-        $fileName = time() . "_" . basename($_FILES['header_image']['name']);
-        $targetFilePath = $targetDir . $fileName;
-
-        if (move_uploaded_file($_FILES['header_image']['tmp_name'], $targetFilePath)) {
-            $header_image = $fileName;
-        }
-    }
-
-    // Insert or Update
-    if ($ris_id) {
-        $stmt = $conn->prepare("
-            UPDATE ris_form SET 
-                header_image=?, division=?, responsibility_center=?, ris_no=?, date=?, office=?, responsibility_code=?, sai_no=?, purpose=?,
-                requested_by_name=?, approved_by_name=?, issued_by_name=?, received_by_name=?,
-                requested_by_designation=?, approved_by_designation=?, issued_by_designation=?, received_by_designation=?,
-                requested_by_date=?, approved_by_date=?, issued_by_date=?, received_by_date=?
-            WHERE id=?
-        ");
-        $stmt->bind_param("sssssssssssssssssssssi",
-            $header_image, $division, $responsibility_center, $ris_no, $date, $office, $responsibility_code, $sai_no, $purpose,
-            $requested_by_name, $approved_by_name, $issued_by_name, $received_by_name,
-            $requested_by_designation, $approved_by_designation, $issued_by_designation, $received_by_designation,
-            $requested_by_date, $approved_by_date, $issued_by_date, $received_by_date,
-            $ris_id
-        );
-    } else {
-        $stmt = $conn->prepare("
-            INSERT INTO ris_form (
-                header_image, division, responsibility_center, ris_no, date, office, responsibility_code, sai_no, purpose,
-                requested_by_name, approved_by_name, issued_by_name, received_by_name,
-                requested_by_designation, approved_by_designation, issued_by_designation, received_by_designation,
-                requested_by_date, approved_by_date, issued_by_date, received_by_date
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        ");
-        $stmt->bind_param("sssssssssssssssssssss",
-            $header_image, $division, $responsibility_center, $ris_no, $date, $office, $responsibility_code, $sai_no, $purpose,
-            $requested_by_name, $approved_by_name, $issued_by_name, $received_by_name,
-            $requested_by_designation, $approved_by_designation, $issued_by_designation, $received_by_designation,
-            $requested_by_date, $approved_by_date, $issued_by_date, $received_by_date
-        );
-    }
-
-    if ($stmt->execute()) {
-        echo "<div class='alert alert-success'>RIS saved successfully!</div>";
-    } else {
-        echo "<div class='alert alert-danger'>Error: " . $conn->error . "</div>";
-    }
-}
 ?>
 
-<form method="POST" enctype="multipart/form-data">
+<form method="POST" enctype="multipart/form-data" action="save_ris_header_footer.php">
+    <!-- Hidden field for form_id -->
+    <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
+
     <!-- Header Image -->
-    <div class="mb-3">
-        <label class="form-label fw-semibold">Header Image</label>
-        <input type="file" name="header_image" class="form-control" accept="image/*">
-        <?php if (!empty($ris_data['header_image'])): ?>
-            <img src="../img/<?= htmlspecialchars($ris_data['header_image']) ?>" alt="Header Image" class="img-fluid mt-2" style="max-height:150px;">
-        <?php endif; ?>
-    </div>
+<div class="mb-3">
+    <label class="form-label fw-semibold">Header Image</label>
+    <input type="file" name="header_image" class="form-control" accept="image/*">
+    <?php if (!empty($ris_data['header_image'])): ?>
+        <div class="mt-2">
+            <img src="../img/<?= htmlspecialchars($ris_data['header_image']) ?>" 
+                 alt="Header Image" 
+                 class="img-fluid rounded border"
+                 style="width: 100%; height: auto; object-fit: contain; max-height: 300px;">
+        </div>
+    <?php endif; ?>
+</div>
+
 
     <!-- Row 1: Division, Responsibility Center, RIS No., Date -->
     <div class="row mb-3">
@@ -124,16 +55,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Row 2: Office, Responsibility Code, SAI No. -->
     <div class="row mb-3">
         <div class="col-md-3">
-            <label for="office" class="form-label fw-semibold">Office/Unit</label>
-            <select class="form-select" id="office" name="office" required>
-                <option value="" disabled <?= !isset($ris_data['office']) ? 'selected' : '' ?>>Select Office</option>
+            <label for="office_id" class="form-label fw-semibold">Office/Unit</label>
+            <select name="office_id" id="office_id" class="form-select" required>
+                <option value="">-- Select Office --</option>
                 <?php
-                $office_query = $conn->query("SELECT id, office_name FROM offices ORDER BY office_name ASC");
-                while ($row = $office_query->fetch_assoc()):
-                    $selected = (isset($ris_data['office']) && $ris_data['office'] == $row['id']) ? 'selected' : '';
+                $offices = $conn->query("SELECT id, office_name FROM offices");
+                while ($row = $offices->fetch_assoc()) {
+                    $selected = ($ris_data['office_id'] ?? '') == $row['id'] ? 'selected' : '';
+                    echo "<option value='{$row['id']}' $selected>{$row['office_name']}</option>";
+                }
                 ?>
-                    <option value="<?= $row['id'] ?>" <?= $selected ?>><?= htmlspecialchars($row['office_name']) ?></option>
-                <?php endwhile; ?>
             </select>
         </div>
         <div class="col-md-3">
@@ -146,10 +77,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <!-- Purpose -->
+    <!-- Purpose (must match `reason_for_transfer`) -->
     <div class="mb-3">
-        <label for="purpose" class="form-label fw-bold">PURPOSE:</label>
-        <textarea class="form-control" name="purpose" id="purpose" rows="2"><?= htmlspecialchars($ris_data['purpose'] ?? '') ?></textarea>
+        <label for="reason_for_transfer" class="form-label fw-bold">PURPOSE:</label>
+        <textarea class="form-control" name="reason_for_transfer" id="reason_for_transfer" rows="2"><?= htmlspecialchars($ris_data['reason_for_transfer'] ?? '') ?></textarea>
     </div>
 
     <!-- Footer Table -->
@@ -194,6 +125,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </tr>
         </tbody>
     </table>
+
+    <!-- Footer Date -->
+    <div class="mb-3">
+        <label for="footer_date" class="form-label fw-semibold">Footer Date</label>
+        <input type="date" class="form-control" id="footer_date" name="footer_date" value="<?= htmlspecialchars($ris_data['footer_date'] ?? date('Y-m-d')) ?>">
+    </div>
 
     <!-- Submit Button -->
     <button type="submit" class="btn btn-success">
