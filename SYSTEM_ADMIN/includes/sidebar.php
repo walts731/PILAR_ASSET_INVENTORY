@@ -88,11 +88,13 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
 
         <!-- Sidebar Navigation -->
         <nav class="nav flex-column">
-            <a href="../MAIN_ADMIN/admin_dashboard.php" class="<?= ($page == 'admin_dashboard') ? 'active' : '' ?>">
+            <a href="../SYSTEM_ADMIN/system_admin_dashboard.php" class="<?= ($page == 'system_admin_dashboard') ? 'active' : '' ?>">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
 
-            
+            <a href="../SYSTEM_ADMIN/manage_forms.php" class="<?= ($page == 'manage_forms') ? 'active' : '' ?>">
+                <i class="bi bi-speedometer2"></i> Forms
+            </a>
         </nav>
     </div>
 
