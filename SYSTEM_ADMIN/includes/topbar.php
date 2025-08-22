@@ -19,7 +19,9 @@ $custom_titles = [
   "inventory" => "Inventory Management",
   "asset_archive" => "Archive",
   "user" => "User Management",
-  "templates" => "Templates",
+  "forms" => "Forms",
+  "borrow" => "Borrowing Management",
+  "about" => "About",
 ];
 
 if (array_key_exists($current_page, $custom_titles)) {
@@ -50,16 +52,47 @@ $low_stock_count = count($low_stock_items);
 
   <!-- Page Title & Breadcrumb -->
 <div class="order-3 order-sm-2 flex-grow-1">
-  <?php if ($current_page === 'edit_template'): ?>
-    <h5 class="m-0 text-center text-sm-start">
-      <a href="templates.php" class="text-decoration-none text-primary">Templates</a>
-      <span class="mx-1 text-muted"> &gt; </span>
-      <span class="text-dark">Edit Template</span>
-    </h5>
-  <?php else: ?>
-    <h5 class="m-0 text-center text-sm-start"><?php echo htmlspecialchars($page_title); ?></h5>
-  <?php endif; ?>
+  <?php
+  // Page-specific breadcrumb navigation
+  if ($current_page === 'edit_template') {
+    echo '<h5 class="m-0 text-center text-sm-start">
+            <a href="templates.php" class="text-decoration-none text-primary">Templates</a>
+            <span class="mx-1 text-muted"> &gt; </span>
+            <span class="text-dark">Edit Template</span>
+          </h5>';
+  } elseif ($current_page === 'borrow_requests') {
+    echo '<h5 class="m-0 text-center text-sm-start">
+            <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
+            <span class="mx-1 text-muted"> &gt; </span>
+            <span class="text-dark">Borrow Request</span>
+          </h5>';
+  } elseif ($current_page === 'borrowed_assets') {
+    echo '<h5 class="m-0 text-center text-sm-start">
+            <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
+            <span class="mx-1 text-muted"> &gt; </span>
+            <span class="text-dark">Borrowed Assets</span>
+          </h5>';
+  } elseif ($current_page === 'incoming_borrow_requests') {
+    echo '<h5 class="m-0 text-center text-sm-start">
+            <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
+            <span class="mx-1 text-muted"> &gt; </span>
+            <span class="text-dark">Incoming Borrow Requests</span>
+          </h5>';
+  } elseif ($current_page === 'returned_assets') {
+    echo '<h5 class="m-0 text-center text-sm-start">
+            <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
+            <span class="mx-1 text-muted"> &gt; </span>
+            <span class="text-dark">Returned Assets</span>
+          </h5>';
+  } else {
+    echo '<h5 class="m-0 text-center text-sm-start">' . htmlspecialchars($page_title) . '</h5>';
+  }
+  ?>
 </div>
+
+
+
+
 
 
   <!-- Right Side Controls -->

@@ -123,18 +123,30 @@ function updateDateTime() {
   });
 });
 
-// Update Consumable Modal
 $(document).ready(function () {
   $('.updateConsumableBtn').on('click', function () {
     $('#consumable_id').val($(this).data('id'));
-    $('#edit_name').val($(this).data('name'));
     $('#edit_category').val($(this).data('category'));
     $('#edit_description').val($(this).data('description'));
     $('#edit_unit').val($(this).data('unit'));
     $('#edit_quantity').val($(this).data('qty'));
     $('#edit_status').val($(this).data('status'));
+
+    // Show current image
+    const imageFile = $(this).data('image');
+    const imgPath = imageFile ? '../img/assets/' + imageFile : 'path/to/placeholder.jpg';
+    $('#edit_consumable_preview').attr('src', imgPath).show();
+  });
+
+  // Live preview of new selected image
+  $('#edit_consumable_image').on('change', function () {
+    const [file] = this.files;
+    if (file) {
+      $('#edit_consumable_preview').attr('src', URL.createObjectURL(file)).show();
+    }
   });
 });
+
 
 // Delete Consumable Modal
 $(document).ready(function () {
@@ -151,15 +163,26 @@ $(document).ready(function() {
 
 // Update Asset Modal
 $(document).on("click", ".updateAssetBtn", function () {
-  $("#asset_id").val($(this).data("id"));
-  $("#edit_asset_name").val($(this).data("name"));
-  $("#edit_asset_category").val($(this).data("category"));
-  $("#edit_asset_description").val($(this).data("description"));
-  $("#edit_asset_quantity").val($(this).data("qty"));
-  $("#edit_asset_unit").val($(this).data("unit"));
-  $("#edit_asset_status").val($(this).data("status"));
-  $("#edit_asset_office").val($(this).data("office")); 
-});
+    $("#asset_id").val($(this).data("id"));
+    $("#edit_asset_category").val($(this).data("category"));
+    $("#edit_asset_description").val($(this).data("description"));
+    $("#edit_asset_quantity").val($(this).data("qty"));
+    $("#edit_asset_unit").val($(this).data("unit"));
+    $("#edit_asset_status").val($(this).data("status"));
+    $("#edit_asset_office").val($(this).data("office"));
+
+    // Set current image
+    const imgPath = "../img/assets/" + $(this).data("image");
+    $("#edit_asset_preview").attr("src", imgPath).show();
+  });
+
+  // Live preview for new image selection
+  $("#edit_asset_image").on("change", function () {
+    const [file] = this.files;
+    if (file) {
+      $("#edit_asset_preview").attr("src", URL.createObjectURL(file)).show();
+    }
+  });
 
 // Delete Asset Modal
 $(document).ready(function () {
@@ -207,35 +230,46 @@ setTimeout(() => {
   alertBox.classList.add('d-none');
 }, 4000);
 
-// RELEASE
-function getSelectedAssetIds() {
-    const checkboxes = document.querySelectorAll('.asset-checkbox:checked');
-    return Array.from(checkboxes).map(cb => cb.value);
+
+function formatDateFormal(dateStr) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', options);
   }
 
-  function handleBulkAction(action) {
-    const selectedIds = getSelectedAssetIds();
-    const alertBox = document.getElementById("bulkActionAlert");
+  document.querySelectorAll('.viewAssetBtn').forEach(button => {
+    button.addEventListener('click', function() {
+      const assetId = this.getAttribute('data-id');
+      const value = parseFloat(data.value);
+const quantity = parseInt(data.quantity);
 
-    if (selectedIds.length === 0) {
-      alertBox.classList.remove("d-none");
-      return;
-    }
+      fetch(`get_asset_details.php?id=${assetId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert(data.error);
+            return;
+          }
 
-    alertBox.classList.add("d-none"); // hide if visible
-    const ids = selectedIds.join(',');
-    const office = new URLSearchParams(window.location.search).get("office") || "";
-    window.location.href = `${action}_bulk.php?ids=${encodeURIComponent(ids)}&office=${encodeURIComponent(office)}`;
-  }
+          // Text content
+          document.getElementById('viewOfficeName').textContent = data.office_name;
+          document.getElementById('viewCategoryName').textContent = `${data.category_name}`;
+          document.getElementById('viewType').textContent = data.type;
+          document.getElementById('viewStatus').textContent = data.status;
+          document.getElementById('viewQuantity').textContent = data.quantity;
+          document.getElementById('viewUnit').textContent = data.unit;
+          document.getElementById('viewDescription').textContent = data.description;
+          document.getElementById('viewAcquisitionDate').textContent = formatDateFormal(data.acquisition_date);
+          document.getElementById('viewLastUpdated').textContent = formatDateFormal(data.last_updated);
+          document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
+          document.getElementById('viewTotalValue').textContent = (value * quantity).toFixed(2);
 
-  document.getElementById('bulkReleaseBtn').addEventListener('click', () => handleBulkAction('release'));
-
-  document.querySelectorAll("form").forEach(form => {
-    form.addEventListener("submit", function (e) {
-      const selectedTemplate = this.querySelector("select[name='template_id']");
-      if (!selectedTemplate || !selectedTemplate.value) {
-        e.preventDefault();
-        alert("Please select a report template before generating a report.");
-      }
+          // Images
+          document.getElementById('viewQrCode').src = '../img/' + data.qr_code;
+          document.getElementById('municipalLogoImg').src = '../img/' + data.system_logo;
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
     });
   });

@@ -147,8 +147,10 @@ if ($result_assets && $result_assets->num_rows > 0) {
                 <td><input type="number" step="0.01" name="carrying_amount[]" min="1"></td>
                 <td>
                     <select name="remarks[]">
-                        <option value="">-- Select --</option>
+                        <option value="">Select</option>
                         <option value="Unserviceable">Unserviceable</option>
+                        <option value="Unserviceable">Serviceable</option>
+
                     </select>
                 </td>
                 <td><input type="text" name="sale[]"></td>
@@ -161,7 +163,7 @@ if ($result_assets && $result_assets->num_rows > 0) {
                 <td><input type="number" step="0.01" name="amount[]" min="1"></td>
                 <td>
                     <select name="dept_office[]">
-                        <option value="">-- Select Office --</option>
+                        <option value="">Select</option>
                         <?php
                         // Fetch all office names from the database
                         $office_sql = "SELECT office_name FROM offices ORDER BY office_name ASC";

@@ -106,27 +106,32 @@ if ($form_id > 0) {
 
     <div class="container mt-4">
       <?php if ($form): ?>
-        <h2 class="mb-4"><?= htmlspecialchars($form['form_title']) ?></h2>
         <div class="card shadow">
           <div class="card-body">
-            <?php if ($form['category'] === 'SIR'): ?>
-              <?php include 'ris_form.php'; ?>
+            <?php if ($form): ?>
+              <h2 class="mb-4 text-center"><?= htmlspecialchars($form['form_title']) ?></h2>
+              <div class="card shadow">
+                <div class="card-body">
+                  <?php
+                  // Normalize category (e.g., RIS → ris_form.php)
+                  $category = strtolower($form['category']);
+                  $file = $category . "_form.php";
+
+                  // Check if the corresponding file exists
+                  if (file_exists($file)) {
+                    include $file;
+                  } else {
+                    echo "<div class='alert alert-danger'>No form template found for category: " . htmlspecialchars($form['category']) . "</div>";
+                  }
+                  ?>
+                </div>
+              </div>
+            <?php else: ?>
+              <div class="alert alert-warning">
+                Form not found. Please select a valid form from the sidebar.
+              </div>
             <?php endif; ?>
-            <?php if ($form['category'] === 'ICS'): ?>
-              <?php include 'ics_form.php'; ?>
-            <?php endif; ?>
-            <?php if ($form['category'] === 'PAR'): ?>
-              <?php include 'par_form.php'; ?>
-            <?php endif; ?>
-            <?php if ($form['category'] === 'IIRUP'): ?>
-              <?php include 'iirup_form.php'; ?>
-            <?php endif; ?>
-            <?php if ($form['category'] === 'RPCPPE'): ?>
-              <?php include 'rpcppe_form.php'; ?>
-            <?php endif; ?>
-            <?php if ($form['category'] === 'RIS'): ?>
-              <?php include 'ris_form.php'; ?>
-            <?php endif; ?>
+
           </div>
         </div>
       <?php else: ?>
@@ -170,8 +175,6 @@ if ($form_id > 0) {
       input.val(selected);
       $(this).parent().hide();
     });
-
-    
   </script>
 
 </body>
