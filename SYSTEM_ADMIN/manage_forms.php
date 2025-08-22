@@ -45,27 +45,34 @@ if ($result && $result->num_rows > 0) {
   <?php endif; ?>
 
   <table id="formsTable" class="table table-bordered ">
-    <thead class="">
+  <thead>
+    <tr>
+      <th class="text-center">Form Title</th>
+      <th class="text-center">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <?php foreach ($forms as $form): ?>
       <tr>
-        <th class="text-center">Form Title</th>
-        <th class="text-center">Action</th>
+        <td class="text-center"><?= htmlspecialchars($form['form_title']) ?></td>
+        <td class="text-center">
+          <!-- View Button -->
+          <a href="view_form.php?id=<?= $form['id'] ?>" class="btn btn-sm btn-success">
+            <i class="bi bi-eye"></i> View
+          </a>
+
+          <!-- Edit Button -->
+          <button class="btn btn-sm btn-primary editBtn"
+                  data-id="<?= $form['id'] ?>"
+                  data-title="<?= htmlspecialchars($form['form_title']) ?>">
+            <i class="bi bi-pencil"></i> Edit
+          </button>
+        </td>
       </tr>
-    </thead>
-    <tbody>
-      <?php foreach ($forms as $form): ?>
-        <tr>
-          <td><?= htmlspecialchars($form['form_title']) ?></td>
-          <td>
-            <button class="btn btn-sm btn-primary editBtn"
-                    data-id="<?= $form['id'] ?>"
-                    data-title="<?= htmlspecialchars($form['form_title']) ?>">
-              <i class="bi bi-pencil"></i> Edit
-            </button>
-          </td>
-        </tr>
-      <?php endforeach; ?>
-    </tbody>
-  </table>
+    <?php endforeach; ?>
+  </tbody>
+</table>
+
 </div>
 
 </div>
