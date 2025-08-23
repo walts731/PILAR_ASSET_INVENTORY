@@ -1,9 +1,6 @@
 <?php
 require_once '../connect.php';
 
-
-
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get ICS main info
     $ics_id = intval($_POST['ics_id'] ?? 0);   // from hidden input (ics_form.id)
