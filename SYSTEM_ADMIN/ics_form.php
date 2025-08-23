@@ -120,7 +120,7 @@ if ($result && $result->num_rows > 0) {
     </table>
 
     <!-- SAVE BUTTON -->
-    <div class="text-center mt-4">
-        <button type="submit" class="btn btn-success btn-lg">Save ICS</button>
+    <div class="text-start mt-4">
+        <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-send-check-fill"></i>Save</button>
     </div>
 </form>

@@ -104,7 +104,7 @@ $as_of = date('F, Y');
     </div>
 
     <!-- SAVE BUTTON -->
-    <div class="text-center mt-4">
-        <button type="submit" class="btn btn-primary btn-lg">Save</button>
+    <div class="text-start mt-4">
+        <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-send-check-fill"></i>Save</button>
     </div>
 </form>
