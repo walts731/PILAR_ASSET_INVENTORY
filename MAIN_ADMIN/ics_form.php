@@ -1,4 +1,9 @@
 <?php
+require_once '../connect.php';
+
+// Get form_id from URL, default to null if not provided
+$form_id = isset($_GET['id']) ? intval($_GET['id']) : null;
+
 // Fetch the latest ICS data (remove conditional by $ics_id)
 $sql = "SELECT id, header_image, entity_name, fund_cluster, ics_no, 
                received_from_name, received_from_position, 
@@ -52,7 +57,10 @@ if ($result && $result->num_rows > 0) {
     <div class="card-body">
         <!-- Inventory Custodian Slip Heading -->
 
-        <form method="post" action="save_ics.php" enctype="multipart/form-data">
+        <form method="post" action="save_ics_items.php" enctype="multipart/form-data">
+            <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
+            <!-- ICS Form ID from database -->
+            <input type="hidden" name="ics_id" value="<?= htmlspecialchars($ics_data['id'] ?? '') ?>">
             <div class="mb-3 text-center">
                 <?php if (!empty($ics_data['header_image'])): ?>
                     <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
