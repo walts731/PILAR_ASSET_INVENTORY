@@ -58,54 +58,67 @@ while ($row = $unit_query->fetch_assoc()) {
     <form method="post" action="save_par_form.php" enctype="multipart/form-data">
         <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
 
-        <table class="table table-bordered align-middle text-start" style="table-layout: fixed;">
-            <tbody>
-                <!-- Office/Location Row -->
-                <tr>
-                    <td colspan="2">
-                        <div class="row">
-                            <div class="col-md-3"></div>
-                            <div class="col-md-6 text-center">
-                                <label class="form-label fw-semibold mb-0">Office/Location</label>
-                                <select name="office_id" class="form-select text-center" required>
-                                    <option value="">Select Office</option>
-                                    <?php foreach ($offices as $office): ?>
-                                        <option value="<?= htmlspecialchars($office['id']) ?>"
-                                            <?= ($office['id'] == $par_data['office_id']) ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($office['office_name']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-3"></div>
-                        </div>
-                    </td>
-                </tr>
+        <div class="mb-3 text-center">
+    <?php if (!empty($par_data['header_image'])): ?>
+        <img src="../SYSTEM_ADMIN/img/<?= htmlspecialchars($par_data['header_image']) ?>" 
+             class="img-fluid mb-3" 
+             style="max-width: 100%; height: auto; object-fit: contain;">
+    <?php endif; ?>
+</div>
 
-                <!-- Entity Name and Blank -->
-                <tr>
-                    <td>
-                        <label class="form-label fw-semibold mb-0">Entity Name</label>
-                        <input type="text" name="entity_name" class="form-control" value="<?= htmlspecialchars($par_data['entity_name']) ?>" required>
-                    </td>
-                    <td>
-                        <!-- Blank right cell -->
-                    </td>
-                </tr>
 
-                <!-- Fund Cluster and PAR No. -->
-                <tr>
-                    <td>
-                        <label class="form-label fw-semibold mb-0">Fund Cluster</label>
-                        <input type="text" name="fund_cluster" class="form-control" value="<?= htmlspecialchars($par_data['fund_cluster']) ?>" required>
-                    </td>
-                    <td>
-                        <label class="form-label fw-semibold mb-0">PAR No.</label>
-                        <input type="text" name="par_no" class="form-control" value="<?= htmlspecialchars($par_data['par_no']) ?>" required>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+<table class="table table-bordered align-middle text-start" style="table-layout: fixed;">
+    <tbody>
+        <!-- Office/Location Row -->
+        <tr>
+            <td colspan="2">
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-6 text-center">
+                        <label class="form-label fw-semibold mb-0">Office/Location</label>
+                        <select name="office_id" class="form-select text-center" required>
+                            <option value="">Select Office</option>
+                            <?php foreach ($offices as $office): ?>
+                                <option value="<?= htmlspecialchars($office['id']) ?>"
+                                    <?= ($office['id'] == $par_data['office_id']) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($office['office_name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3"></div>
+                </div>
+            </td>
+        </tr>
+
+        <!-- Entity Name and Blank -->
+        <tr>
+            <td>
+                <label class="form-label fw-semibold mb-0">Entity Name</label>
+                <input type="text" name="entity_name" class="form-control" 
+                       value="<?= htmlspecialchars($par_data['entity_name']) ?>" required>
+            </td>
+            <td>
+                <!-- Blank right cell -->
+            </td>
+        </tr>
+
+        <!-- Fund Cluster and PAR No. -->
+        <tr>
+            <td>
+                <label class="form-label fw-semibold mb-0">Fund Cluster</label>
+                <input type="text" name="fund_cluster" class="form-control" 
+                       value="<?= htmlspecialchars($par_data['fund_cluster']) ?>" required>
+            </td>
+            <td>
+                <label class="form-label fw-semibold mb-0">PAR No.</label>
+                <input type="text" name="par_no" class="form-control" 
+                       value="<?= htmlspecialchars($par_data['par_no']) ?>" required>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
 
         <!-- ITEM TABLE -->
         <table class="table align-middle text-center mt-4" style="table-layout: fixed; ">
@@ -133,16 +146,16 @@ while ($row = $unit_query->fetch_assoc()) {
                             </select>
                         </td>
                         <td class="position-relative" style="width: 30%;">
-    <div class="input-group">
-        <input type="text" name="items[<?= $i ?>][description]" class="form-control form-control-lg" list="descriptionList" id="descInput<?= $i ?>">
-        <button type="button"
-                class="btn p-0 m-0 border-0 bg-transparent"
-                onclick="clearDescription(<?= $i ?>)"
-                style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
-            <span class="badge rounded-circle bg-secondary text-white" style="font-size: 0.75rem;">×</span>
-        </button>
-    </div>
-</td>
+                            <div class="input-group">
+                                <input type="text" name="items[<?= $i ?>][description]" class="form-control form-control-lg" list="descriptionList" id="descInput<?= $i ?>">
+                                <button type="button"
+                                    class="btn p-0 m-0 border-0 bg-transparent"
+                                    onclick="clearDescription(<?= $i ?>)"
+                                    style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="badge rounded-circle bg-secondary text-white" style="font-size: 0.75rem;">×</span>
+                                </button>
+                            </div>
+                        </td>
 
                         <td><input type="text" name="items[<?= $i ?>][property_no]" class="form-control"></td>
                         <td><input type="date" name="items[<?= $i ?>][date_acquired]" class="form-control" id="acqDate<?= $i ?>"></td>
@@ -263,7 +276,7 @@ while ($row = $unit_query->fetch_assoc()) {
             </div>
         </div>
 
-        <button type="submit" class="btn btn-success">Save PAR Form</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-send-check-fill"></i>Save</button>
     </form>
 </div>
 

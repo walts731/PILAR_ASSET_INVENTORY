@@ -1,17 +1,42 @@
-<form>
+<?php
+require_once '../connect.php';
+
+// Fetch the very first row only
+$stmt = $conn->prepare("SELECT * FROM ris_form ORDER BY id ASC LIMIT 1");
+$stmt->execute();
+$result = $stmt->get_result();
+$ris_data = $result->fetch_assoc() ?? [];
+$stmt->close();
+?>
+
+
+<form method="POST" enctype="multipart/form-data">
+
+  <!-- Header Image -->
+  <div class="mb-3 text-center">
+    <?php if (!empty($ris_data['header_image'])): ?>
+      <img src="../img/<?= htmlspecialchars($ris_data['header_image']) ?>"
+        class="img-fluid mb-3"
+        style="max-width: 100%; height: auto; object-fit: contain;">
+    <?php endif; ?>
+  </div>
+
   <!-- Row 1: Division, Responsibility Center, RIS No., Date -->
   <div class="row mb-3">
     <div class="col-md-3">
       <label for="division" class="form-label fw-semibold">Division</label>
-      <input type="text" class="form-control" id="division" name="division" value="<?= htmlspecialchars($ris_data['division'] ?? '') ?>">
+      <input type="text" class="form-control" id="division" name="division"
+        value="<?= htmlspecialchars($ris_data['division'] ?? '') ?>">
     </div>
     <div class="col-md-3">
       <label for="responsibility_center" class="form-label fw-semibold">Responsibility Center</label>
-      <input type="text" class="form-control" id="responsibility_center" name="responsibility_center" value="<?= htmlspecialchars($ris_data['responsibility_center'] ?? '') ?>">
+      <input type="text" class="form-control" id="responsibility_center" name="responsibility_center"
+        value="<?= htmlspecialchars($ris_data['responsibility_center'] ?? '') ?>">
     </div>
     <div class="col-md-3">
       <label for="ris_no" class="form-label fw-semibold">RIS No.</label>
-      <input type="text" class="form-control" id="ris_no" name="ris_no" value="<?= htmlspecialchars($ris_data['ris_no'] ?? '') ?>">
+      <input type="text" class="form-control" id="ris_no" name="ris_no"
+        value="<?= htmlspecialchars($ris_data['ris_no'] ?? '') ?>">
     </div>
     <div class="col-md-3">
       <label for="date" class="form-label fw-semibold">Date</label>
@@ -20,16 +45,16 @@
     </div>
   </div>
 
-  <!-- Row 2: Office, Responsibility Code, SAI No., Empty -->
+  <!-- Row 2: Office, Responsibility Code, SAI No., Reason for Transfer -->
   <div class="row mb-3">
     <div class="col-md-3">
-      <label for="office" class="form-label fw-semibold">Office/Unit</label>
-      <select class="form-select" id="office" name="office" required>
-        <option value="" disabled <?= !isset($ris_data['office']) ? 'selected' : '' ?>>Select Office</option>
+      <label for="office_id" class="form-label fw-semibold">Office/Unit</label>
+      <select class="form-select" id="office_id" name="office_id" required>
+        <option value="" disabled <?= !isset($ris_data['office_id']) ? 'selected' : '' ?>>Select Office</option>
         <?php
         $office_query = $conn->query("SELECT id, office_name FROM offices ORDER BY office_name ASC");
         while ($row = $office_query->fetch_assoc()):
-          $selected = (isset($ris_data['office']) && $ris_data['office'] == $row['id']) ? 'selected' : '';
+          $selected = (isset($ris_data['office_id']) && $ris_data['office_id'] == $row['id']) ? 'selected' : '';
         ?>
           <option value="<?= $row['id'] ?>" <?= $selected ?>><?= htmlspecialchars($row['office_name']) ?></option>
         <?php endwhile; ?>
@@ -37,25 +62,27 @@
     </div>
     <div class="col-md-3">
       <label for="responsibility_code" class="form-label fw-semibold">Code</label>
-      <input type="text" class="form-control" id="responsibility_code" name="responsibility_code" value="<?= htmlspecialchars($ris_data['responsibility_code'] ?? '') ?>">
+      <input type="text" class="form-control" id="responsibility_code" name="responsibility_code"
+        value="<?= htmlspecialchars($ris_data['responsibility_code'] ?? '') ?>">
     </div>
     <div class="col-md-3">
       <label for="sai_no" class="form-label fw-semibold">SAI No.</label>
-      <input type="text" class="form-control" id="sai_no" name="sai_no" value="<?= htmlspecialchars($ris_data['sai_no'] ?? '') ?>">
+      <input type="text" class="form-control" id="sai_no" name="sai_no"
+        value="<?= htmlspecialchars($ris_data['sai_no'] ?? '') ?>">
     </div>
     <div class="col-md-3">
-      <label for="date" class="form-label fw-semibold">Date</label>
-      <input type="date" class="form-control" id="date" name="date"
-        value="<?= htmlspecialchars($ris_data['date'] ?? date('Y-m-d')) ?>">
+      <label for="reason_for_transfer" class="form-label fw-semibold">Reason for Transfer</label>
+      <input type="text" class="form-control" id="reason_for_transfer" name="reason_for_transfer"
+        value="<?= htmlspecialchars($ris_data['reason_for_transfer'] ?? '') ?>">
     </div>
-
   </div>
 
+  <!-- Items Table -->
   <table class="table table-bordered align-middle text-center">
     <thead>
       <tr class="table-secondary">
         <th colspan="4">REQUISITION</th>
-        <th colspan="2">ISSUANCE</th>
+        <th colspan="4">ISSUANCE</th>
       </tr>
       <tr class="table-light">
         <th>Stock No</th>
@@ -85,53 +112,37 @@
           </td>
           <td style="position: relative;">
             <div class="input-group">
-              <input type="text" class="form-control description-input" name="description[]"
-                autocomplete="off" list="asset_list">
-              <button type="button" class="btn btn-link p-0 ms-1 text-danger clear-description" style="border: none;">
-                &times;
-              </button>
+              <input type="text" class="form-control description-input" name="description[]" autocomplete="off" list="asset_list">
+              <button type="button" class="btn btn-link p-0 ms-1 text-danger clear-description">&times;</button>
             </div>
           </td>
-          <td>
-            <input type="number" class="form-control" name="req_quantity[]" min="1">
-          </td>
-          <td>
-            <input type="number" class="form-control" name="iss_quantity[]" min="1">
-          </td>
+          <td><input type="number" class="form-control" name="req_quantity[]" min="1"></td>
+          <td><input type="number" class="form-control" name="iss_quantity[]" min="1"></td>
           <td><input type="text" class="form-control" name="signature[]"></td>
           <td><input type="number" step="0.01" class="form-control" name="price[]"></td>
-          <td>
-            <input type="text" class="form-control total" readonly>
-          </td>
+          <td><input type="text" class="form-control total" readonly></td>
         </tr>
       <?php endfor; ?>
       <datalist id="asset_list">
         <?php
-        $assets_query = $conn->query("
-      SELECT id, description, quantity, unit, value
-      FROM assets
-      ORDER BY description ASC
-  ");
+        $assets_query = $conn->query("SELECT id, description, quantity, unit, value FROM assets ORDER BY description ASC");
         while ($asset = $assets_query->fetch_assoc()):
         ?>
-          <option
-            value="<?= htmlspecialchars($asset['description']) ?>"
+          <option value="<?= htmlspecialchars($asset['description']) ?>"
             data-id="<?= $asset['id'] ?>"
             data-stock="<?= $asset['quantity'] ?>"
             data-unit="<?= htmlspecialchars($asset['unit']) ?>"
             data-price="<?= $asset['value'] ?>">
           <?php endwhile; ?>
       </datalist>
-
     </tbody>
   </table>
-  <button type="button" id="addRowBtn" class="btn btn-primary mb-3">
-    <i class="bi bi-plus-circle"></i> Add Row
-  </button>
+  <button type="button" id="addRowBtn" class="btn btn-primary mb-3"><i class="bi bi-plus-circle"></i> Add Row</button>
+
   <!-- Purpose -->
   <div class="mb-3">
     <label for="purpose" class="form-label fw-bold">PURPOSE:</label>
-    <textarea class="form-control" name="purpose" id="purpose" rows="2"><?= htmlspecialchars($ris_data['purpose'] ?? '') ?></textarea>
+    <textarea class="form-control" name="purpose" id="purpose" rows="2"><?= htmlspecialchars($ris_data['reason_for_transfer'] ?? '') ?></textarea>
   </div>
 
   <!-- Footer Table -->
@@ -146,15 +157,6 @@
       </tr>
     </thead>
     <tbody>
-      <!-- Signature Row -->
-      <tr>
-        <td>Signature</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <!-- Printed Name Row -->
       <tr>
         <td>Printed Name:</td>
         <td><input type="text" class="form-control" name="requested_by_name" value="<?= htmlspecialchars($ris_data['requested_by_name'] ?? '') ?>"></td>
@@ -162,7 +164,6 @@
         <td><input type="text" class="form-control" name="issued_by_name" value="<?= htmlspecialchars($ris_data['issued_by_name'] ?? '') ?>"></td>
         <td><input type="text" class="form-control" name="received_by_name" value="<?= htmlspecialchars($ris_data['received_by_name'] ?? '') ?>"></td>
       </tr>
-      <!-- Designation Row -->
       <tr>
         <td>Designation:</td>
         <td><input type="text" class="form-control" name="requested_by_designation" value="<?= htmlspecialchars($ris_data['requested_by_designation'] ?? '') ?>"></td>
@@ -170,27 +171,21 @@
         <td><input type="text" class="form-control" name="issued_by_designation" value="<?= htmlspecialchars($ris_data['issued_by_designation'] ?? '') ?>"></td>
         <td><input type="text" class="form-control" name="received_by_designation" value="<?= htmlspecialchars($ris_data['received_by_designation'] ?? '') ?>"></td>
       </tr>
-      <!-- Date Row -->
       <tr>
         <td>Date:</td>
-        <td><input type="date" class="form-control" name="requested_by_date"
-            value="<?= htmlspecialchars($ris_data['requested_by_date'] ?? date('Y-m-d')) ?>"></td>
-        <td><input type="date" class="form-control" name="approved_by_date"
-            value="<?= htmlspecialchars($ris_data['approved_by_date'] ?? date('Y-m-d')) ?>"></td>
-        <td><input type="date" class="form-control" name="issued_by_date"
-            value="<?= htmlspecialchars($ris_data['issued_by_date'] ?? date('Y-m-d')) ?>"></td>
-        <td><input type="date" class="form-control" name="received_by_date"
-            value="<?= htmlspecialchars($ris_data['received_by_date'] ?? date('Y-m-d')) ?>"></td>
+        <td><input type="date" class="form-control" name="requested_by_date" value="<?= htmlspecialchars($ris_data['requested_by_date'] ?? date('Y-m-d')) ?>"></td>
+        <td><input type="date" class="form-control" name="approved_by_date" value="<?= htmlspecialchars($ris_data['approved_by_date'] ?? date('Y-m-d')) ?>"></td>
+        <td><input type="date" class="form-control" name="issued_by_date" value="<?= htmlspecialchars($ris_data['issued_by_date'] ?? date('Y-m-d')) ?>"></td>
+        <td><input type="date" class="form-control" name="received_by_date" value="<?= htmlspecialchars($ris_data['received_by_date'] ?? date('Y-m-d')) ?>"></td>
       </tr>
-
+      <tr>
+        <td>Footer Date:</td>
+        <td colspan="4"><input type="date" class="form-control" name="footer_date" value="<?= htmlspecialchars($ris_data['footer_date'] ?? date('Y-m-d')) ?>"></td>
+      </tr>
     </tbody>
   </table>
 
-
-  <!-- Submit Button -->
-  <button type="submit" class="btn btn-success">
-    <i class="bi bi-send-check-fill"></i> Submit RIS
-  </button>
+  <button type="submit" class="btn btn-primary"><i class="bi bi-send-check-fill"></i>Save</button>
 </form>
 
 <script>

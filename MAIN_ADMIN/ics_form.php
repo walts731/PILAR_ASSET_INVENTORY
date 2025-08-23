@@ -51,12 +51,13 @@ if ($result && $result->num_rows > 0) {
 <div class="card mt-4">
     <div class="card-body">
         <!-- Inventory Custodian Slip Heading -->
-        <h5 class="text-center fw-bold text-uppercase mb-4">Inventory Custodian Slip</h5>
 
         <form method="post" action="save_ics.php" enctype="multipart/form-data">
-            <div class="mb-3">
+            <div class="mb-3 text-center">
                 <?php if (!empty($ics_data['header_image'])): ?>
-                    <img src="<?= $ics_data['header_image'] ?>" height="60" class="mb-2"><br>
+                    <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
+                        class="img-fluid mb-2"
+                        style="max-width: 100%; height: auto; object-fit: contain;">
                 <?php endif; ?>
             </div>
 
@@ -134,14 +135,14 @@ if ($result && $result->num_rows > 0) {
                             </td>
 
                             <td style="position: relative;">
-    <input type="text" class="form-control description-field" 
-        name="description[]" 
-        list="descriptionList" 
-        placeholder="Type or search..."
-        style="padding-right: 2rem;"> <!-- add right padding so X doesn't overlap -->
-    <button type="button" 
-        class="clear-description" 
-        style="
+                                <input type="text" class="form-control description-field"
+                                    name="description[]"
+                                    list="descriptionList"
+                                    placeholder="Type or search..."
+                                    style="padding-right: 2rem;"> <!-- add right padding so X doesn't overlap -->
+                                <button type="button"
+                                    class="clear-description"
+                                    style="
             position: absolute;
             right: 5px;
             top: 50%;
@@ -154,12 +155,12 @@ if ($result && $result->num_rows > 0) {
             color: #888;
             cursor: pointer;
         ">&times;</button>
-    <datalist id="descriptionList">
-        <?php foreach ($description_details as $desc => $detail): ?>
-            <option value="<?= htmlspecialchars($desc) ?>"></option>
-        <?php endforeach; ?>
-    </datalist>
-</td>
+                                <datalist id="descriptionList">
+                                    <?php foreach ($description_details as $desc => $detail): ?>
+                                        <option value="<?= htmlspecialchars($desc) ?>"></option>
+                                    <?php endforeach; ?>
+                                </datalist>
+                            </td>
 
                             <td><input type="text" class="form-control" name="item_no[]"></td>
                             <td><input type="text" class="form-control" name="estimated_useful_life[]"></td>
@@ -242,7 +243,7 @@ if ($result && $result->num_rows > 0) {
                 </tr>
             </table>
 
-            <button type="submit" class="btn btn-success mt-3">Save ICS</button>
+            <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-send-check-fill"></i>Save</button>
         </form>
 
         <!-- Duplicate Asset Modal -->
@@ -267,137 +268,140 @@ if ($result && $result->num_rows > 0) {
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const tableBody = document.getElementById('ics-items-body');
-    const addRowBtn = document.getElementById('addRowBtn');
-    const grandTotalField = document.getElementById('grandTotal');
-    const duplicateModal = new bootstrap.Modal(document.getElementById('duplicateModal'));
+    document.addEventListener('DOMContentLoaded', function() {
+        const tableBody = document.getElementById('ics-items-body');
+        const addRowBtn = document.getElementById('addRowBtn');
+        const grandTotalField = document.getElementById('grandTotal');
+        const duplicateModal = new bootstrap.Modal(document.getElementById('duplicateModal'));
 
-    const descriptionMap = <?= json_encode($description_details) ?>;
+        const descriptionMap = <?= json_encode($description_details) ?>;
 
-    function updateGrandTotal() {
-        let sum = 0;
-        document.querySelectorAll('input[name="total_cost[]"]').forEach(input => {
-            sum += parseFloat(input.value) || 0;
-        });
-        grandTotalField.value = sum.toFixed(2);
-    }
+        function updateGrandTotal() {
+            let sum = 0;
+            document.querySelectorAll('input[name="total_cost[]"]').forEach(input => {
+                sum += parseFloat(input.value) || 0;
+            });
+            grandTotalField.value = sum.toFixed(2);
+        }
 
-    function isDuplicate(value, currentInput) {
-        let isDup = false;
-        document.querySelectorAll('input[name="description[]"]').forEach(input => {
-            if (input !== currentInput && input.value.trim() === value.trim() && value.trim() !== "") {
-                isDup = true;
-            }
-        });
-        return isDup;
-    }
-
-    // Input handler (quantities, description selection, unit cost -> total)
-    tableBody.addEventListener('input', function(event) {
-        const target = event.target;
-        const row = target.closest('tr');
-        if (!row) return;
-
-        const quantityInput = row.querySelector('input[name="quantity[]"]');
-        const unitCostInput = row.querySelector('input[name="unit_cost[]"]');
-        const totalCostField = row.querySelector('input[name="total_cost[]"]');
-
-        if (target.name === "description[]") {
-            const selectedDesc = target.value;
-
-            // Check for duplicate before proceeding
-            if (isDuplicate(selectedDesc, target)) {
-                target.value = ''; // Clear the field
-                duplicateModal.show(); // Show warning modal
-                return;
-            }
-
-            if (descriptionMap[selectedDesc]) {
-                const { unit_cost, quantity } = descriptionMap[selectedDesc];
-                if (unitCostInput) unitCostInput.value = unit_cost;
-                if (quantityInput) {
-                    quantityInput.max = quantity;
-                    quantityInput.placeholder = `Max: ${quantity}`;
+        function isDuplicate(value, currentInput) {
+            let isDup = false;
+            document.querySelectorAll('input[name="description[]"]').forEach(input => {
+                if (input !== currentInput && input.value.trim() === value.trim() && value.trim() !== "") {
+                    isDup = true;
                 }
+            });
+            return isDup;
+        }
+
+        // Input handler (quantities, description selection, unit cost -> total)
+        tableBody.addEventListener('input', function(event) {
+            const target = event.target;
+            const row = target.closest('tr');
+            if (!row) return;
+
+            const quantityInput = row.querySelector('input[name="quantity[]"]');
+            const unitCostInput = row.querySelector('input[name="unit_cost[]"]');
+            const totalCostField = row.querySelector('input[name="total_cost[]"]');
+
+            if (target.name === "description[]") {
+                const selectedDesc = target.value;
+
+                // Check for duplicate before proceeding
+                if (isDuplicate(selectedDesc, target)) {
+                    target.value = ''; // Clear the field
+                    duplicateModal.show(); // Show warning modal
+                    return;
+                }
+
+                if (descriptionMap[selectedDesc]) {
+                    const {
+                        unit_cost,
+                        quantity
+                    } = descriptionMap[selectedDesc];
+                    if (unitCostInput) unitCostInput.value = unit_cost;
+                    if (quantityInput) {
+                        quantityInput.max = quantity;
+                        quantityInput.placeholder = `Max: ${quantity}`;
+                    }
+                } else {
+                    // If user typed something not in map, clear any limits
+                    if (quantityInput) {
+                        quantityInput.removeAttribute('max');
+                        quantityInput.placeholder = '';
+                    }
+                }
+            }
+
+            const quantity = parseFloat(quantityInput?.value) || 0;
+            const unitCost = parseFloat(unitCostInput?.value) || 0;
+            if (totalCostField) totalCostField.value = (quantity * unitCost).toFixed(2);
+
+            if (quantityInput?.max && quantity > parseFloat(quantityInput.max)) {
+                quantityInput.setCustomValidity("Quantity exceeds available stock.");
+                quantityInput.reportValidity();
             } else {
-                // If user typed something not in map, clear any limits
-                if (quantityInput) {
-                    quantityInput.removeAttribute('max');
-                    quantityInput.placeholder = '';
-                }
+                quantityInput?.setCustomValidity("");
             }
-        }
 
-        const quantity = parseFloat(quantityInput?.value) || 0;
-        const unitCost = parseFloat(unitCostInput?.value) || 0;
-        if (totalCostField) totalCostField.value = (quantity * unitCost).toFixed(2);
+            updateGrandTotal();
+        });
 
-        if (quantityInput?.max && quantity > parseFloat(quantityInput.max)) {
-            quantityInput.setCustomValidity("Quantity exceeds available stock.");
-            quantityInput.reportValidity();
-        } else {
-            quantityInput?.setCustomValidity("");
-        }
+        // Clear (×) button handler - uses event delegation and clears related fields
+        tableBody.addEventListener('click', function(event) {
+            if (!event.target.classList.contains('clear-description')) return;
 
+            const btn = event.target;
+            const row = btn.closest('tr');
+            if (!row) return;
+
+            const descriptionInput = row.querySelector('.description-field');
+            const unitCostInput = row.querySelector('input[name="unit_cost[]"]');
+            const totalCostField = row.querySelector('input[name="total_cost[]"]');
+            const quantityInput = row.querySelector('input[name="quantity[]"]');
+
+            if (descriptionInput) descriptionInput.value = '';
+            if (unitCostInput) unitCostInput.value = '';
+            if (totalCostField) totalCostField.value = '';
+            if (quantityInput) {
+                quantityInput.value = '';
+                quantityInput.removeAttribute('max');
+                quantityInput.placeholder = '';
+                quantityInput.setCustomValidity("");
+            }
+
+            // Trigger input event to recalculate and keep behavior consistent
+            if (descriptionInput) descriptionInput.dispatchEvent(new Event('input'));
+            updateGrandTotal();
+
+            // Optional: put focus back into the description field
+            if (descriptionInput) descriptionInput.focus();
+        });
+
+        // Add row (clone)
+        addRowBtn.addEventListener('click', function() {
+            const firstRow = tableBody.querySelector('tr');
+            if (!firstRow) return;
+
+            const newRow = firstRow.cloneNode(true);
+
+            // clear values in cloned inputs/selects
+            newRow.querySelectorAll('input, select').forEach(el => {
+                // keep attributes but reset values
+                if (el.tagName.toLowerCase() === 'select') {
+                    el.selectedIndex = 0;
+                } else {
+                    el.value = '';
+                }
+            });
+
+            // specifically ensure total_cost cleared
+            newRow.querySelectorAll('input.total_cost').forEach(i => i.value = '');
+
+            tableBody.appendChild(newRow);
+        });
+
+        // initial total calc
         updateGrandTotal();
     });
-
-    // Clear (×) button handler - uses event delegation and clears related fields
-    tableBody.addEventListener('click', function(event) {
-        if (!event.target.classList.contains('clear-description')) return;
-
-        const btn = event.target;
-        const row = btn.closest('tr');
-        if (!row) return;
-
-        const descriptionInput = row.querySelector('.description-field');
-        const unitCostInput = row.querySelector('input[name="unit_cost[]"]');
-        const totalCostField = row.querySelector('input[name="total_cost[]"]');
-        const quantityInput = row.querySelector('input[name="quantity[]"]');
-
-        if (descriptionInput) descriptionInput.value = '';
-        if (unitCostInput) unitCostInput.value = '';
-        if (totalCostField) totalCostField.value = '';
-        if (quantityInput) {
-            quantityInput.value = '';
-            quantityInput.removeAttribute('max');
-            quantityInput.placeholder = '';
-            quantityInput.setCustomValidity("");
-        }
-
-        // Trigger input event to recalculate and keep behavior consistent
-        if (descriptionInput) descriptionInput.dispatchEvent(new Event('input'));
-        updateGrandTotal();
-
-        // Optional: put focus back into the description field
-        if (descriptionInput) descriptionInput.focus();
-    });
-
-    // Add row (clone)
-    addRowBtn.addEventListener('click', function() {
-        const firstRow = tableBody.querySelector('tr');
-        if (!firstRow) return;
-
-        const newRow = firstRow.cloneNode(true);
-
-        // clear values in cloned inputs/selects
-        newRow.querySelectorAll('input, select').forEach(el => {
-            // keep attributes but reset values
-            if (el.tagName.toLowerCase() === 'select') {
-                el.selectedIndex = 0;
-            } else {
-                el.value = '';
-            }
-        });
-
-        // specifically ensure total_cost cleared
-        newRow.querySelectorAll('input.total_cost').forEach(i => i.value = '');
-
-        tableBody.appendChild(newRow);
-    });
-
-    // initial total calc
-    updateGrandTotal();
-});
 </script>
