@@ -50,7 +50,7 @@ $as_of = date('F, Y');
             </div>
         <?php endif; ?>
         <input type="file" name="header_image" class="form-control" accept="image/*">
-        <div class="mt-2 fst-italic text-secondary">As of <?= $as_of ?></div>
+        <div class="mt-2 fst-italic text-secondary text-center">As of <?= $as_of ?></div>
     </div>
 
     <!-- HEADER FIELDS -->
@@ -105,6 +105,6 @@ $as_of = date('F, Y');
 
     <!-- SAVE BUTTON -->
     <div class="text-center mt-4">
-        <button type="submit" class="btn btn-success btn-lg">Save RPCPPE</button>
+        <button type="submit" class="btn btn-primary btn-lg">Save</button>
     </div>
 </form>
