@@ -188,11 +188,127 @@ $stmt->close();
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Charts Section -->
+    <div class="container-fluid mt-1">
+      <div class="row">
+        <!-- Most Consumed Items (Static Bar Chart) -->
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm">
+            <div class="card-header">
+              <h5 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>Most Consumed Items</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="consumedChart" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Most Borrowed Items (Line Chart) -->
+        <div class="col-md-6 mb-1">
+          <div class="card shadow-sm">
+            <div class="card-header">
+              <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Most Borrowed Items</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="borrowedChart" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/dashboard.js"></script>
+
+    <script>
+      // ✅ Sample Data for Most Consumed Items (Bar Chart)
+      const consumedCtx = document.getElementById('consumedChart').getContext('2d');
+      new Chart(consumedCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Bond Paper', 'Ink Cartridges', 'Staplers', 'Pens', 'Folders', 'Markers'],
+          datasets: [{
+            label: 'Quantity Consumed',
+            data: [150, 90, 45, 120, 60, 80], // sample values
+            backgroundColor: [
+              'rgba(75, 192, 192, 0.6)',
+              'rgba(54, 162, 235, 0.6)',
+              'rgba(255, 206, 86, 0.6)',
+              'rgba(255, 99, 132, 0.6)',
+              'rgba(153, 102, 255, 0.6)',
+              'rgba(255, 159, 64, 0.6)'
+            ],
+            borderColor: [
+              'rgba(75, 192, 192, 1)',
+              'rgba(54, 162, 235, 1)',
+              'rgba(255, 206, 86, 1)',
+              'rgba(255, 99, 132, 1)',
+              'rgba(153, 102, 255, 1)',
+              'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+
+      // ✅ Sample Data for Most Borrowed Items (Line Chart)
+      const borrowedCtx = document.getElementById('borrowedChart').getContext('2d');
+      new Chart(borrowedCtx, {
+        type: 'line',
+        data: {
+          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+          datasets: [
+            {
+              label: 'Chairs',
+              data: [5, 10, 8, 12],
+              borderColor: 'rgba(255, 99, 132, 1)',
+              backgroundColor: 'rgba(255, 99, 132, 0.2)',
+              fill: true,
+              tension: 0.3
+            },
+            {
+              label: 'Projectors',
+              data: [2, 6, 4, 7],
+              borderColor: 'rgba(54, 162, 235, 1)',
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              fill: true,
+              tension: 0.3
+            },
+            {
+              label: 'Laptops',
+              data: [3, 4, 6, 9],
+              borderColor: 'rgba(255, 206, 86, 1)',
+              backgroundColor: 'rgba(255, 206, 86, 0.2)',
+              fill: true,
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    </script>
+
 </body>
 
 </html>
