@@ -50,6 +50,17 @@ if ($result && $result->num_rows > 0) {
         ];
     }
 }
+
+// Fetch office options
+$office_options = [];
+$result = $conn->query("SELECT id, office_name FROM offices");
+if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $office_options[] = $row;
+    }
+}
+
+
 ?>
 
 
@@ -70,12 +81,28 @@ if ($result && $result->num_rows > 0) {
             </div>
 
             <div class="row mb-3">
-                <!-- ENTITY NAME -->
-                <div class="col-6">
-                    <label class="form-label fw-semibold">ENTITY NAME</label>
-                    <input type="text" class="form-control" name="entity_name" value="<?= htmlspecialchars($ics_data['entity_name']) ?>">
-                </div>
-            </div>
+    <!-- ENTITY NAME -->
+    <div class="col-6">
+        <label class="form-label fw-semibold">ENTITY NAME</label>
+        <input type="text" class="form-control" name="entity_name" 
+               value="<?= htmlspecialchars($ics_data['entity_name']) ?>">
+    </div>
+
+    <!-- OFFICE -->
+    <div class="col-6">
+        <label class="form-label fw-semibold">OFFICE</label>
+        <select class="form-select" name="office_id">
+    <option value="" disabled selected>Select office</option>
+    <?php foreach ($office_options as $office): ?>
+        <option value="<?= htmlspecialchars($office['id']) ?>">
+            <?= htmlspecialchars($office['office_name']) ?>
+        </option>
+    <?php endforeach; ?>
+</select>
+
+    </div>
+</div>
+
 
             <div class="row">
                 <!-- FUND CLUSTER -->

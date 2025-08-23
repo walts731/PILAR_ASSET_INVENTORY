@@ -1,6 +1,9 @@
 <?php
 require_once '../connect.php';
 
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get ICS main info
     $ics_id = intval($_POST['ics_id'] ?? 0);   // from hidden input (ics_form.id)
@@ -13,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $received_by_name = $_POST['received_by_name'] ?? '';
     $received_by_position = $_POST['received_by_position'] ?? '';
     $updated_at = date('Y-m-d H:i:s');
+    $office_id = intval($_POST['office_id'] ?? 0);
 
     if ($ics_id > 0) {
         // Update existing ICS form
@@ -72,9 +76,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt_items->bind_param("idddsssss", $id, $quantity, $unit, $unit_cost, $total_cost, $description, $item_no, $estimated_life, $updated_at);
         $stmt_items->execute();
 
-        // Subtract quantity from assets
+        // Subtract quantity from main stock
         $stmt_update_assets->bind_param("ds", $quantity, $description);
         $stmt_update_assets->execute();
+
+        // Transfer asset to selected office
+        if ($office_id > 0) {
+            transferAssetToOffice($conn, $description, $unit_cost, $quantity, $office_id);
+        }
     }
 
     $stmt_items->close();
@@ -83,5 +92,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Redirect to forms.php with the ICS form id
     header("Location: forms.php?id=" . $form_id);
     exit();
+}
+
+function transferAssetToOffice($conn, $description, $unit_cost, $quantity, $office_id) {
+    $created_at = date('Y-m-d H:i:s');
+
+    // 1. Fetch the asset details from main stock
+    $fetch = $conn->prepare("SELECT * FROM assets WHERE description = ? LIMIT 1");
+    $fetch->bind_param("s", $description);
+    $fetch->execute();
+    $result = $fetch->get_result();
+    $asset = $result->fetch_assoc();
+    $fetch->close();
+
+    if (!$asset) {
+        return; // nothing to transfer
+    }
+
+    // 2. Check if asset already exists in this office
+    $check = $conn->prepare("SELECT id, quantity FROM assets WHERE description = ? AND office_id = ?");
+    $check->bind_param("si", $description, $office_id);
+    $check->execute();
+    $result = $check->get_result();
+
+    if ($result && $row = $result->fetch_assoc()) {
+        // Update existing office stock
+        $new_quantity = $row['quantity'] + $quantity;
+        $update = $conn->prepare("UPDATE assets SET quantity = ?, value = ?, last_updated = ? WHERE id = ?");
+        $update->bind_param("ddsi", $new_quantity, $unit_cost, $created_at, $row['id']);
+        $update->execute();
+        $update->close();
+    } else {
+        $insert = $conn->prepare("INSERT INTO assets 
+    (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+$insert->bind_param("sisisssiiisdssssssss",
+    $asset['asset_name'],       // s
+    $asset['category'],         // i
+    $asset['description'],      // s
+    $quantity,                  // i
+    $asset['unit'],             // s
+    $asset['status'],           // s
+    $asset['acquisition_date'], // s
+    $office_id,                 // i
+    $asset['employee_id'],      // i
+    $asset['red_tagged'],       // i
+    $created_at,                // s
+    $unit_cost,                 // d
+    $asset['qr_code'],          // s
+    $asset['type'],             // s
+    $asset['image'],            // s
+    $asset['serial_no'],        // s
+    $asset['code'],             // s
+    $asset['property_no'],      // s
+    $asset['model'],            // s
+    $asset['brand']             // s
+);
+
+        $insert->execute();
+        $insert->close();
+    }
+
+    $check->close();
 }
 ?>
