@@ -60,7 +60,8 @@ if ($result && $result->num_rows > 0) {
     }
 }
 
-function generateICSNo($conn) {
+function generateICSNo($conn)
+{
     $year = date("Y");
 
     // Query the latest ics_no for this year
@@ -97,15 +98,15 @@ $new_ics_no = generateICSNo($conn);
             <input type="hidden" name="ics_id" value="<?= htmlspecialchars($ics_data['id'] ?? '') ?>">
             <div class="mb-3 text-center">
                 <?php if (!empty($ics_data['header_image'])): ?>
-    <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
-         class="img-fluid mb-2"
-         style="max-width: 100%; height: auto; object-fit: contain;">
+                    <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
+                        class="img-fluid mb-2"
+                        style="max-width: 100%; height: auto; object-fit: contain;">
 
-    <!-- Hidden input ensures it gets submitted -->
-    <input type="hidden" name="header_image" value="<?= htmlspecialchars($ics_data['header_image']) ?>">
-<?php else: ?>
-    <p class="text-muted">No header image available</p>
-<?php endif; ?>
+                    <!-- Hidden input ensures it gets submitted -->
+                    <input type="hidden" name="header_image" value="<?= htmlspecialchars($ics_data['header_image']) ?>">
+                <?php else: ?>
+                    <p class="text-muted">No header image available</p>
+                <?php endif; ?>
 
             </div>
 
@@ -141,11 +142,11 @@ $new_ics_no = generateICSNo($conn);
                 </div>
 
                 <!-- ICS NO -->
-<div class="col-md-6">
-    <label class="form-label fw-semibold">ICS NO.</label>
-    <input type="text" class="form-control" name="ics_no"
-        value="<?= htmlspecialchars($new_ics_no) ?>" readonly>
-</div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">ICS NO.</label>
+                    <input type="text" class="form-control" name="ics_no"
+                        value="<?= htmlspecialchars($new_ics_no) ?>" readonly>
+                </div>
 
             </div>
 
