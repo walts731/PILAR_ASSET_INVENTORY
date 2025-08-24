@@ -84,8 +84,6 @@ $html = '
   .header-img { text-align: center; margin-bottom: 10px; }
   .header-img img { max-width: 100%; height: auto; }
 </style>
-
-
 </head>
 <body>
 ';
@@ -155,21 +153,25 @@ for ($i = 0; $i < 10; $i++) {
 // Grand total row
 $html .= '
   <tr>
-    <td colspan="3"></td>
+    <td colspan="2"></td>
+    <td></td>
     <td class="grand-total">' . number_format($grandTotal, 2) . '</td>
     <td colspan="3"></td>
-  </tr>
+  </tr>';
+
+// Footer row (keeps column borders continuous)
+$html .= '
   <tr>
-    <td colspan="7" style="padding:0; border:none;">
-      <table style="width:100%; border-collapse:collapse; border-top:1px solid #000;">
+    <td colspan="7" style="padding:0; border-top:1px solid #000;">
+      <table style="width:100%; border-collapse:collapse;">
         <tr>
-          <td style="border:1px solid #000; height:60px; vertical-align:bottom; text-align:center;">
+          <td style="width:50%; border-right:1px solid #000; height:80px; vertical-align:bottom; text-align:center;">
             <strong>Received from:</strong><br><br>
             <u>' . strtoupper(htmlspecialchars($ics['received_from_name'])) . '</u><br>
             <span class="designation">' . htmlspecialchars($ics['received_from_position']) . '</span><br>
             Date: ____________
           </td>
-          <td style="border:1px solid #000; height:60px; vertical-align:bottom; text-align:center;">
+          <td style="width:50%; height:80px; vertical-align:bottom; text-align:center;">
             <strong>Received by:</strong><br><br>
             <u>' . strtoupper(htmlspecialchars($ics['received_by_name'])) . '</u><br>
             <span class="designation">' . htmlspecialchars($ics['received_by_position']) . '</span><br>
