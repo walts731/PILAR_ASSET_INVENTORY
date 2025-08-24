@@ -60,10 +60,33 @@ if ($result && $result->num_rows > 0) {
     }
 }
 
+function generateICSNo($conn) {
+    $year = date("Y");
+
+    // Query the latest ics_no for this year
+    $sql = "SELECT ics_no 
+            FROM ics_form 
+            WHERE ics_no LIKE 'ICS-$year-%' 
+            ORDER BY id DESC LIMIT 1";
+    $result = $conn->query($sql);
+
+    if ($result && $row = $result->fetch_assoc()) {
+        // Extract the last number
+        $lastNo = intval(substr($row['ics_no'], -4));
+        $nextNo = str_pad($lastNo + 1, 4, "0", STR_PAD_LEFT);
+    } else {
+        // First number of the year
+        $nextNo = "0001";
+    }
+
+    return "ICS-$year-$nextNo";
+}
+
+// Generate the next ICS number
+$new_ics_no = generateICSNo($conn);
+
 
 ?>
-
-
 <div class="card mt-4">
     <div class="card-body">
         <!-- Inventory Custodian Slip Heading -->
@@ -74,34 +97,40 @@ if ($result && $result->num_rows > 0) {
             <input type="hidden" name="ics_id" value="<?= htmlspecialchars($ics_data['id'] ?? '') ?>">
             <div class="mb-3 text-center">
                 <?php if (!empty($ics_data['header_image'])): ?>
-                    <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
-                        class="img-fluid mb-2"
-                        style="max-width: 100%; height: auto; object-fit: contain;">
-                <?php endif; ?>
+    <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
+         class="img-fluid mb-2"
+         style="max-width: 100%; height: auto; object-fit: contain;">
+
+    <!-- Hidden input ensures it gets submitted -->
+    <input type="hidden" name="header_image" value="<?= htmlspecialchars($ics_data['header_image']) ?>">
+<?php else: ?>
+    <p class="text-muted">No header image available</p>
+<?php endif; ?>
+
             </div>
 
             <div class="row mb-3">
-    <!-- ENTITY NAME -->
-    <div class="col-6">
-        <label class="form-label fw-semibold">ENTITY NAME</label>
-        <input type="text" class="form-control" name="entity_name" 
-               value="<?= htmlspecialchars($ics_data['entity_name']) ?>">
-    </div>
+                <!-- ENTITY NAME -->
+                <div class="col-6">
+                    <label class="form-label fw-semibold">ENTITY NAME</label>
+                    <input type="text" class="form-control" name="entity_name"
+                        value="<?= htmlspecialchars($ics_data['entity_name']) ?>">
+                </div>
 
-    <!-- OFFICE -->
-    <div class="col-6">
-        <label class="form-label fw-semibold">OFFICE</label>
-        <select class="form-select" name="office_id">
-    <option value="" disabled selected>Select office</option>
-    <?php foreach ($office_options as $office): ?>
-        <option value="<?= htmlspecialchars($office['id']) ?>">
-            <?= htmlspecialchars($office['office_name']) ?>
-        </option>
-    <?php endforeach; ?>
-</select>
+                <!-- OFFICE -->
+                <div class="col-6">
+                    <label class="form-label fw-semibold">OFFICE</label>
+                    <select class="form-select" name="office_id">
+                        <option value="" disabled selected>Select office</option>
+                        <?php foreach ($office_options as $office): ?>
+                            <option value="<?= htmlspecialchars($office['id']) ?>">
+                                <?= htmlspecialchars($office['office_name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
 
-    </div>
-</div>
+                </div>
+            </div>
 
 
             <div class="row">
@@ -112,10 +141,12 @@ if ($result && $result->num_rows > 0) {
                 </div>
 
                 <!-- ICS NO -->
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">ICS NO.</label>
-                    <input type="text" class="form-control" name="ics_no" value="<?= htmlspecialchars($ics_data['ics_no']) ?>">
-                </div>
+<div class="col-md-6">
+    <label class="form-label fw-semibold">ICS NO.</label>
+    <input type="text" class="form-control" name="ics_no"
+        value="<?= htmlspecialchars($new_ics_no) ?>" readonly>
+</div>
+
             </div>
 
             <!-- Items Table -->
@@ -280,6 +311,12 @@ if ($result && $result->num_rows > 0) {
 
             <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-send-check-fill"></i>Save</button>
         </form>
+        <!-- Button to go to Saved ICS -->
+        <div class="mt-3">
+            <a href="saved_ics.php" class="btn btn-info">
+                <i class="bi bi-folder-check"></i> View Saved ICS
+            </a>
+        </div>
 
         <!-- Duplicate Asset Modal -->
         <div class="modal fade" id="duplicateModal" tabindex="-1" aria-labelledby="duplicateModalLabel" aria-hidden="true">
