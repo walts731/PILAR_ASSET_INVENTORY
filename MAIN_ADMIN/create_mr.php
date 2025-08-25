@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Fetch the municipal logo from the system table
 $logo_path = '';
-$stmt_logo = $conn->prepare("SELECT logo FROM system WHERE id = 1");  // Assuming 'id = 1' fetches the system settings
+$stmt_logo = $conn->prepare("SELECT logo FROM system WHERE id = 1");
 $stmt_logo->execute();
 $result_logo = $stmt_logo->get_result();
 
@@ -34,11 +34,24 @@ if ($item_id) {
     $result_check = $stmt_check->get_result();
 
     if ($result_check->num_rows > 0) {
-        // If an existing MR is found, prevent further submission
         $existing_mr_check = true;
     }
 
     $stmt_check->close();
+}
+
+// Fetch asset_id from ics_items table based on item_id
+$asset_id = null;
+if ($item_id) {
+    $stmt = $conn->prepare("SELECT asset_id FROM ics_items WHERE item_id = ?");
+    $stmt->bind_param("i", $item_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $asset_data = $result->fetch_assoc();
+        $asset_id = $asset_data['asset_id']; // Fetch asset_id from ics_items
+    }
+    $stmt->close();
 }
 
 // --- Start of PHP code for form submission and insertion ---
@@ -59,18 +72,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
     $acquired_date = $_POST['acquired_date'];
     $counted_date = $_POST['counted_date'];
 
-    // Prepare and bind SQL statement for insertion
-    $stmt_insert = $conn->prepare("INSERT INTO mr_details (item_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, acquired_date, counted_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt_insert->bind_param("issssiiissssss", $item_id_form, $office_location, $description, $model_no, $serial_no, $serviceable, $unserviceable, $unit_quantity, $unit, $acquisition_date, $acquisition_cost, $person_accountable, $acquired_date, $counted_date);
+    // Prepare and bind SQL statement for insertion, now including asset_id
+    $stmt_insert = $conn->prepare("INSERT INTO mr_details (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, acquired_date, counted_date) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    
+    $stmt_insert->bind_param("iissssiiissssss", $item_id_form, $asset_id, $office_location, $description, $model_no, $serial_no, $serviceable, $unserviceable, $unit_quantity, $unit, $acquisition_date, $acquisition_cost, $person_accountable, $acquired_date, $counted_date);
 
     if ($stmt_insert->execute()) {
-        // Success message or redirect
         $_SESSION['success_message'] = "MR Details successfully recorded!";
-        // Redirect back to the form or a confirmation page
-        header("Location: create_mr.php?item_id=" . $item_id_form); // Redirect back to the current page with item_id
+        header("Location: create_mr.php?item_id=" . $item_id_form);
         exit();
     } else {
-        // Error message
         $_SESSION['error_message'] = "Error: " . $stmt_insert->error;
     }
     $stmt_insert->close();
