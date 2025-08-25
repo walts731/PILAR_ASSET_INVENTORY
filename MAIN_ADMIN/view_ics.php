@@ -105,38 +105,45 @@ $stmt->close();
           <hr>
 
           <!-- Items Table -->
-          <div class="table-responsive">
-            <table class="table table-bordered text-center align-middle">
-              <thead class="table-secondary">
-                <tr>
-                  <th>Quantity</th>
-                  <th>Unit</th>
-                  <th>Unit Cost</th>
-                  <th>Total Cost</th>
-                  <th>Description</th>
-                  <th>Item No</th>
-                  <th>Estimated Useful Life</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php if (!empty($ics['items'])): ?>
-                  <?php foreach ($ics['items'] as $item): ?>
+<div class="table-responsive">
+    <table class="table table-bordered text-center align-middle">
+        <thead class="table-secondary">
+            <tr>
+                <th>Quantity</th>
+                <th>Unit</th>
+                <th>Unit Cost</th>
+                <th>Total Cost</th>
+                <th>Description</th>
+                <th>Item No</th>
+                <th>Estimated Useful Life</th>
+                <th>Action</th> <!-- New column for actions -->
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (!empty($ics['items'])): ?>
+                <?php foreach ($ics['items'] as $item): ?>
                     <tr>
-                      <td><?= htmlspecialchars($item['quantity']) ?></td>
-                      <td><?= htmlspecialchars($item['unit']) ?></td>
-                      <td>₱<?= number_format($item['unit_cost'], 2) ?></td>
-                      <td>₱<?= number_format($item['total_cost'], 2) ?></td>
-                      <td><?= htmlspecialchars($item['description']) ?></td>
-                      <td><?= htmlspecialchars($item['item_no']) ?></td>
-                      <td><?= htmlspecialchars($item['estimated_useful_life']) ?></td>
+                        <td><?= htmlspecialchars($item['quantity']) ?></td>
+                        <td><?= htmlspecialchars($item['unit']) ?></td>
+                        <td>₱<?= number_format($item['unit_cost'], 2) ?></td>
+                        <td>₱<?= number_format($item['total_cost'], 2) ?></td>
+                        <td><?= htmlspecialchars($item['description']) ?></td>
+                        <td><?= htmlspecialchars($item['item_no']) ?></td>
+                        <td><?= htmlspecialchars($item['estimated_useful_life']) ?></td>
+                        <td>
+                            <a href="create_mr.php?item_id=<?= htmlspecialchars($item['item_id']) ?>" class="btn btn-primary btn-sm">
+                                Create MR
+                            </a>
+                        </td> <!-- Create MR button -->
                     </tr>
-                  <?php endforeach; ?>
-                <?php else: ?>
-                  <tr><td colspan="7" class="text-muted">No items found.</td></tr>
-                <?php endif; ?>
-              </tbody>
-            </table>
-          </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr><td colspan="8" class="text-muted">No items found.</td></tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
+
 
           <!-- Signatories -->
           <div class="row mt-4">
