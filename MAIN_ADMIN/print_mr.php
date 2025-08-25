@@ -8,7 +8,7 @@ use Dompdf\Options;
 $item_id = isset($_GET['item_id']) ? $_GET['item_id'] : null;
 
 if ($item_id) {
-    // Fetch MR details
+    // Fetch MR details along with the serviceable and unserviceable fields
     $stmt = $conn->prepare("SELECT * FROM mr_details WHERE item_id = ?");
     $stmt->bind_param("i", $item_id);
     $stmt->execute();
@@ -56,12 +56,20 @@ if ($item_id) {
         }
     }
 
+    // Fetch inventory tag
+    $inventory_tag = $mr_details['inventory_tag'] ?: "No Inventory Tag";
+
+    // Prepare checked status for checkboxes
+    $serviceableChecked = ($mr_details['serviceable'] == 1) ? 'checked' : '';
+    $unserviceableChecked = ($mr_details['unserviceable'] == 1) ? 'checked' : '';
+
     // HTML structure for the property sticker
-   $html = "
+    $html = "
 <html>
 <head>
+    <meta charset='UTF-8'>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; padding: 0; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 12px; margin: 0; padding: 0; }
         .container { width: 700px; border: 1px solid #000; padding: 10px; position: relative; }
         .header { display: flex; justify-content: space-between; align-items: center; }
         .logo { position: absolute; top: 0; left: 0; }
@@ -75,8 +83,15 @@ if ($item_id) {
         .col { width: 48%; text-align: left; }
         .signature-space { border-top: 1px solid #000; margin-top: 25px; }
         .bold { font-weight: bold; }
-        .inline-date { display: inline-block; width: 48%; } /* For inline dates */
-        .inline-signature { display: inline-block; width: 48%; text-align: center; } /* For inline signatures */
+        .inline-date { display: inline-block; width: 48%; }
+        .inline-signature { display: inline-block; width: 48%; text-align: center; }
+        input[type='checkbox'] {
+            width: 14px;
+            height: 14px;
+            margin-right: 5px;
+            accent-color: black; /* For supported browsers */
+        }
+        u { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -84,34 +99,40 @@ if ($item_id) {
         <div class='header'>
             <!-- Municipal Logo (Left) -->
             <div class='logo'>
-                <img src='" . $logoData . "' alt='Municipal Logo' style='height: 60px;'>
+                <img src='" . $logoData . "' alt='Municipal Logo' style='height: 60px;' />
             </div>
                 
             <!-- Title & Office Location -->
             <div class='header-title'>
                 <h2>GOVERNMENT PROPERTY</h2>
-                <div class='office-under-title'>Office/Location: " . htmlspecialchars($mr_details['office_location']) . "</div>
+                <div class='office-under-title'>Office/Location: <u>" . htmlspecialchars($mr_details['office_location']) . "</u></div>
             </div>
                 
             <!-- Tag Info & QR -->
             <div class='header-right'>
-                <div class='tag-text'>No. PS-5S-03-F02-01-01<br>INVENTORY TAG</div>
-                <img src='" . $qrData . "' alt='QR Code'>
+                <div class='tag-text'>No. <u>" . htmlspecialchars($inventory_tag) . "</u><br>INVENTORY TAG</div>
+                <img src='" . $qrData . "' alt='QR Code' />
             </div>
         </div>
 
         <div class='line'></div>
 
-        <p><span class='field-label'>Description of the property:</span> " . htmlspecialchars($mr_details['description']) . "</p>
-        <p><span class='field-label'>Model No.:</span> " . htmlspecialchars($mr_details['model_no']) . " &nbsp;&nbsp;&nbsp; Serial No.: " . htmlspecialchars($mr_details['serial_no']) . "</p>
-        <p><span class='field-label'>Serviceable:</span> ____________ &nbsp;&nbsp; Unserviceable: ____________</p>
-        <p><span class='field-label'>Unit/Quantity:</span> " . htmlspecialchars($mr_details['unit_quantity']) . " " . htmlspecialchars($mr_details['unit']) . " &nbsp;&nbsp; Acquisition Date/Cost: " . htmlspecialchars($mr_details['acquisition_date']) . " / PHP " . htmlspecialchars($mr_details['acquisition_cost']) . "</p>
-        <p><span class='field-label'>Person Accountable:</span> " . htmlspecialchars($mr_details['person_accountable']) . "</p>
+        <p><span class='field-label'>Description of the property:</span> <u>" . htmlspecialchars($mr_details['description']) . "</u></p>
+        <p><span class='field-label'>Model No.:</span> <u>" . htmlspecialchars($mr_details['model_no']) . "</u> &nbsp;&nbsp;&nbsp; Serial No.: <u>" . htmlspecialchars($mr_details['serial_no']) . "</u></p>
+        
+        <p>
+            <input type='checkbox' $serviceableChecked> Serviceable
+            &nbsp;&nbsp;&nbsp;
+            <input type='checkbox' $unserviceableChecked> Unserviceable
+        </p>
+
+        <p><span class='field-label'>Unit/Quantity:</span> <u>" . htmlspecialchars($mr_details['unit_quantity']) . " " . htmlspecialchars($mr_details['unit']) . "</u> &nbsp;&nbsp; Acquisition Date/Cost: <u>" . htmlspecialchars($mr_details['acquisition_date']) . " / ₱ " . htmlspecialchars($mr_details['acquisition_cost']) . "</u></p>
+        <p><span class='field-label'>Person Accountable:</span> <u>" . htmlspecialchars($mr_details['person_accountable']) . "</u></p>
 
         <!-- Date Section (Inline) -->
-        <div class='row bold'>
-            <div class='inline-date'>DATE: (ACQUIRED) &nbsp;&nbsp; " . htmlspecialchars($mr_details['acquired_date']) . "</div>
-            <div class='inline-date'>DATE: (COUNTED) &nbsp;&nbsp; " . htmlspecialchars($mr_details['counted_date']) . "</div>
+        <div class='row'>
+            <div class='inline-date'>Date: (acquired) &nbsp;&nbsp; <u>" . htmlspecialchars($mr_details['acquired_date']) . "</u></div>
+            <div class='inline-date'>Date: (counted) &nbsp;&nbsp; <u>" . htmlspecialchars($mr_details['counted_date']) . "</u></div>
         </div>
 
         <!-- Signature Section (Inline) -->
@@ -131,14 +152,15 @@ if ($item_id) {
 ";
 
 
-
     // Generate PDF
     $options = new Options();
     $options->set('isHtml5ParserEnabled', true);
+    $options->set('fontDir', '/path/to/your/fonts'); // Path to the font directory
+    $options->set('fontCache', '/path/to/your/font/cache'); // Path to the font cache
     $dompdf = new Dompdf($options);
 
     $dompdf->loadHtml($html);
-    $dompdf->setPaper('A5', 'landscape'); // Similar to tag size
+    $dompdf->setPaper('A5', 'landscape'); // Tag size
     $dompdf->render();
 
     $dompdf->stream("inventory_tag_{$item_id}.pdf", ["Attachment" => 0]);

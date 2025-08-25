@@ -53,7 +53,19 @@ if ($item_id) {
     }
     $stmt->close();
 }
+// Generate Inventory Tag
+$inventory_tag = '';
+if ($asset_id) {
+    // Example logic for generating an inventory tag
+    $prefix = "PS"; // Asset type prefix
+    $size = "5S"; // Size or category, you can modify this based on your asset's size
+    $department_code = "03"; // Department or office number
+    $factory_code = "F02"; // Factory or location code
+    $unique_id = str_pad($item_id, 2, "0", STR_PAD_LEFT); // Use item_id or another unique field for the last part of the tag
 
+    // Concatenate to form the full inventory tag
+    $inventory_tag = "No. " . $prefix . "-" . $size . "-" . $department_code . "-" . $factory_code . "-" . $unique_id;
+}
 // --- Start of PHP code for form submission and insertion ---
 if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
     // Collect form data
@@ -71,12 +83,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
     $person_accountable = $_POST['person_accountable'];
     $acquired_date = $_POST['acquired_date'];
     $counted_date = $_POST['counted_date'];
+    
 
     // Prepare and bind SQL statement for insertion, now including asset_id
-    $stmt_insert = $conn->prepare("INSERT INTO mr_details (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, acquired_date, counted_date) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt_insert = $conn->prepare("INSERT INTO mr_details (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, acquired_date, counted_date, inventory_tag) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     
-    $stmt_insert->bind_param("iissssiiissssss", $item_id_form, $asset_id, $office_location, $description, $model_no, $serial_no, $serviceable, $unserviceable, $unit_quantity, $unit, $acquisition_date, $acquisition_cost, $person_accountable, $acquired_date, $counted_date);
+    $stmt_insert->bind_param("iissssiiisssssss", $item_id_form, $asset_id, $office_location, $description, $model_no, $serial_no, $serviceable, $unserviceable, $unit_quantity, $unit, $acquisition_date, $acquisition_cost, $person_accountable, $acquired_date, $counted_date, $inventory_tag);
 
     if ($stmt_insert->execute()) {
         $_SESSION['success_message'] = "MR Details successfully recorded!";
@@ -128,6 +141,20 @@ if ($item_id) {
 
     $stmt->close();
 }
+
+// Generate Inventory Tag
+$inventory_tag = '';
+if ($asset_id) {
+    // Example logic for generating an inventory tag
+    $prefix = "PS"; // Asset type prefix
+    $size = "5S"; // Size or category, you can modify this based on your asset's size
+    $department_code = "03"; // Department or office number
+    $factory_code = "F02"; // Factory or location code
+    $unique_id = str_pad($item_id, 2, "0", STR_PAD_LEFT); // Use item_id or another unique field for the last part of the tag
+
+    // Concatenate to form the full inventory tag
+    $inventory_tag = "No. " . $prefix . "-" . $size . "-" . $department_code . "-" . $factory_code . "-" . $unique_id;
+}
 ?>
 
 <!DOCTYPE html>
@@ -150,18 +177,23 @@ if ($item_id) {
     <?php include 'includes/topbar.php'; ?>
 
     <!-- Header: Logo, QR, and GOV LABEL -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <!-- Municipal Logo -->
-      <img id="municipalLogoImg" src="<?= $logo_path ?>" alt="Municipal Logo" style="height: 70px;">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- Municipal Logo -->
+    <img id="municipalLogoImg" src="<?= $logo_path ?>" alt="Municipal Logo" style="height: 70px;">
 
-      <!-- Government Label -->
-      <div class="text-center flex-grow-1">
+    <!-- Government Label -->
+    <div class="text-center flex-grow-1">
         <h6 class="m-0 text-uppercase fw-bold">Government Property</h6>
-      </div>
-
-      <!-- QR Code -->
-      <img id="viewQrCode" src="../img/<?= isset($asset_details['qr_code']) ? $asset_details['qr_code'] : '' ?>" alt="QR Code" style="height: 70px;">
     </div>
+
+    <!-- Inventory Tag Display -->
+    <div class="text-center">
+        <p class="fw-bold">Inventory Tag: <?= $inventory_tag ?></p> <!-- Display the inventory tag here -->
+    </div>
+
+    <!-- QR Code -->
+    <img id="viewQrCode" src="../img/<?= isset($asset_details['qr_code']) ? $asset_details['qr_code'] : '' ?>" alt="QR Code" style="height: 70px;">
+</div>
 
     <!-- Form for MR Asset -->
     <div class="container mt-4">
