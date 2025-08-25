@@ -38,18 +38,20 @@ if ($result && $result->num_rows > 0) {
     }
 }
 
-// Fetch description + unit cost + quantity from assets
+// Fetch description + unit cost + quantity + unit from assets
 $description_details = [];
-$result = $conn->query("SELECT description, value AS unit_cost, quantity FROM assets");
+$result = $conn->query("SELECT description, value AS unit_cost, quantity, unit FROM assets");
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $description = $row['description'];
         $description_details[$description] = [
             'unit_cost' => $row['unit_cost'],
-            'quantity' => $row['quantity']
+            'quantity' => $row['quantity'],
+            'unit' => $row['unit']
         ];
     }
 }
+
 
 // Fetch office options
 $office_options = [];
@@ -120,8 +122,10 @@ $new_ics_no = generateICSNo($conn);
 
                 <!-- OFFICE -->
                 <div class="col-6">
-                    <label class="form-label fw-semibold">OFFICE</label>
-                    <select class="form-select" name="office_id">
+                    <label class="form-label fw-semibold">
+                        OFFICE <span style="color: red;">*</span>
+                    </label>
+                    <select class="form-select" name="office_id" required>
                         <option value="" disabled selected>Select office</option>
                         <?php foreach ($office_options as $office): ?>
                             <option value="<?= htmlspecialchars($office['id']) ?>">
@@ -129,7 +133,6 @@ $new_ics_no = generateICSNo($conn);
                             </option>
                         <?php endforeach; ?>
                     </select>
-
                 </div>
             </div>
 
@@ -390,12 +393,28 @@ $new_ics_no = generateICSNo($conn);
                 if (descriptionMap[selectedDesc]) {
                     const {
                         unit_cost,
-                        quantity
+                        quantity,
+                        unit
                     } = descriptionMap[selectedDesc];
                     if (unitCostInput) unitCostInput.value = unit_cost;
                     if (quantityInput) {
                         quantityInput.max = quantity;
                         quantityInput.placeholder = `Max: ${quantity}`;
+                    }
+
+                    // Auto-fill unit
+                    const unitSelect = row.querySelector('select[name="unit[]"]');
+                    if (unitSelect) {
+                        // Find option that matches
+                        let found = false;
+                        for (let i = 0; i < unitSelect.options.length; i++) {
+                            if (unitSelect.options[i].value === unit) {
+                                unitSelect.selectedIndex = i;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) unitSelect.selectedIndex = 0; // fallback
                     }
                 } else {
                     // If user typed something not in map, clear any limits
@@ -403,8 +422,11 @@ $new_ics_no = generateICSNo($conn);
                         quantityInput.removeAttribute('max');
                         quantityInput.placeholder = '';
                     }
+                    const unitSelect = row.querySelector('select[name="unit[]"]');
+                    if (unitSelect) unitSelect.selectedIndex = 0;
                 }
             }
+
 
             const quantity = parseFloat(quantityInput?.value) || 0;
             const unitCost = parseFloat(unitCostInput?.value) || 0;
