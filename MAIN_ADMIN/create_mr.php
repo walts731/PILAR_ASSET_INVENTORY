@@ -83,12 +83,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
     $person_accountable = $_POST['person_accountable'];
     $acquired_date = $_POST['acquired_date'];
     $counted_date = $_POST['counted_date'];
-    
+
 
     // Prepare and bind SQL statement for insertion, now including asset_id
     $stmt_insert = $conn->prepare("INSERT INTO mr_details (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, acquired_date, counted_date, inventory_tag) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    
+
     $stmt_insert->bind_param("iissssiiisssssss", $item_id_form, $asset_id, $office_location, $description, $model_no, $serial_no, $serviceable, $unserviceable, $unit_quantity, $unit, $acquisition_date, $acquisition_cost, $person_accountable, $acquired_date, $counted_date, $inventory_tag);
 
     if ($stmt_insert->execute()) {
@@ -112,7 +112,7 @@ if ($item_id) {
     if ($result->num_rows > 0) {
         $asset_data = $result->fetch_assoc();
         $asset_id = $asset_data['asset_id'];
-        
+
         // Fetch the office_name from the `offices` table based on office_id in the assets table
         $stmt_offices = $conn->prepare("SELECT office_name FROM offices WHERE id = (SELECT office_id FROM assets WHERE id = ?)");
         $stmt_offices->bind_param("i", $asset_id);
@@ -155,172 +155,213 @@ if ($asset_id) {
     // Concatenate to form the full inventory tag
     $inventory_tag = "No. " . $prefix . "-" . $size . "-" . $department_code . "-" . $factory_code . "-" . $unique_id;
 }
+
+// Fetch employees for datalist
+$employees = [];
+$sql_employees = "SELECT employee_id, employee_no, name FROM employees";
+$result_employees = $conn->query($sql_employees);
+
+if ($result_employees && $result_employees->num_rows > 0) {
+    while ($row = $result_employees->fetch_assoc()) {
+        $employees[] = $row;
+    }
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Create MR</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
-  <link rel="stylesheet" href="css/dashboard.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create MR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="css/dashboard.css" />
 </head>
 
 <body>
-  <?php include 'includes/sidebar.php'; ?>
+    <?php include 'includes/sidebar.php'; ?>
 
-  <div class="main">
-    <?php include 'includes/topbar.php'; ?>
+    <div class="main">
+        <?php include 'includes/topbar.php'; ?>
 
-    <!-- Header: Logo, QR, and GOV LABEL -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <!-- Municipal Logo -->
-    <img id="municipalLogoImg" src="<?= $logo_path ?>" alt="Municipal Logo" style="height: 70px;">
+        <!-- Header: Logo, QR, and GOV LABEL -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <!-- Municipal Logo -->
+            <img id="municipalLogoImg" src="<?= $logo_path ?>" alt="Municipal Logo" style="height: 70px;">
 
-    <!-- Government Label -->
-    <div class="text-center flex-grow-1">
-        <h6 class="m-0 text-uppercase fw-bold">Government Property</h6>
-    </div>
-
-    <!-- Inventory Tag Display -->
-    <div class="text-center">
-        <p class="fw-bold">Inventory Tag: <?= $inventory_tag ?></p> <!-- Display the inventory tag here -->
-    </div>
-
-    <!-- QR Code -->
-    <img id="viewQrCode" src="../img/<?= isset($asset_details['qr_code']) ? $asset_details['qr_code'] : '' ?>" alt="QR Code" style="height: 70px;">
-</div>
-
-    <!-- Form for MR Asset -->
-    <div class="container mt-4">
-        <?php 
-        // Display success or error messages
-        if (isset($_SESSION['success_message'])) {
-            echo '<div class="alert alert-success">' . $_SESSION['success_message'] . '</div>';
-            unset($_SESSION['success_message']);
-        }
-        if (isset($_SESSION['error_message'])) {
-            echo '<div class="alert alert-danger">' . $_SESSION['error_message'] . '</div>';
-            unset($_SESSION['error_message']);
-        }
-        
-        if ($existing_mr_check) {
-            echo '<div class="alert alert-warning">MR Details for this item already exist. You cannot fill the form again.</div>';
-        }
-        ?>
-
-        <form method="post" action="">
-            <!-- Hidden input for item_id -->
-            <input type="hidden" name="item_id" value="<?= htmlspecialchars($item_id) ?>">
-
-            <!-- Office Location (Centered) -->
-            <div class="row mb-3">
-                <div class="col-md-6 offset-md-3">
-                    <label for="office_location" class="form-label">Office Location</label>
-                    <input type="text" class="form-control" name="office_location" value="<?= isset($office_name) ? htmlspecialchars($office_name) : '' ?>" required>
-                </div>
+            <!-- Government Label -->
+            <div class="text-center flex-grow-1">
+                <h6 class="m-0 text-uppercase fw-bold">Government Property</h6>
             </div>
 
-            <!-- Description (Full Width) -->
-            <div class="row mb-3">
-                <div class="col-md-12">
-                    <label for="description" class="form-label">Description</label>
-                    <input type="text" class="form-control" name="description" value="<?= isset($asset_details['description']) ? htmlspecialchars($asset_details['description']) : '' ?>" required>
-                </div>
+            <!-- Inventory Tag Display -->
+            <div class="text-center">
+                <p class="fw-bold">Inventory Tag: <?= $inventory_tag ?></p> <!-- Display the inventory tag here -->
             </div>
 
-            <!-- Model No and Serial No -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="model_no" class="form-label">Model No</label>
-                    <input type="text" class="form-control" name="model_no" value="<?= isset($asset_details['model']) ? htmlspecialchars($asset_details['model']) : '' ?>">
-                </div>
-                <div class="col-md-6">
-                    <label for="serial_no" class="form-label">Serial No</label>
-                    <input type="text" class="form-control" name="serial_no" value="<?= isset($asset_details['serial_no']) ? htmlspecialchars($asset_details['serial_no']) : '' ?>">
-                </div>
-            </div>
+            <!-- QR Code -->
+            <img id="viewQrCode" src="../img/<?= isset($asset_details['qr_code']) ? $asset_details['qr_code'] : '' ?>" alt="QR Code" style="height: 70px;">
+        </div>
 
-            <!-- Serviceable and Unserviceable -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label">Serviceable</label>
-                    <input type="checkbox" name="serviceable" value="1" <?= (isset($asset_data['quantity']) && $asset_data['quantity'] > 0) ? 'checked' : '' ?>>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Unserviceable</label>
-                    <input type="checkbox" name="unserviceable" value="1" <?= (isset($asset_data['quantity']) && $asset_data['quantity'] == 0) ? 'checked' : '' ?>>
-                </div>
-            </div>
+        <!-- Form for MR Asset -->
+        <div class="container mt-4">
+            <?php
+            // Display success or error messages
+            if (isset($_SESSION['success_message'])) {
+                echo '<div class="alert alert-success">' . $_SESSION['success_message'] . '</div>';
+                unset($_SESSION['success_message']);
+            }
+            if (isset($_SESSION['error_message'])) {
+                echo '<div class="alert alert-danger">' . $_SESSION['error_message'] . '</div>';
+                unset($_SESSION['error_message']);
+            }
 
-            <!-- Unit Quantity and Acquisition Date -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="unit_quantity" class="form-label">Unit Quantity</label>
-                    <div class="d-flex">
-                        <input type="number" class="form-control" name="unit_quantity" value="<?= isset($asset_details['quantity']) ? htmlspecialchars($asset_details['quantity']) : '' ?>" required>
-                        <select name="unit" class="form-select" required>
-                            <option value="kg" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'kg') ? 'selected' : '' ?>>kg</option>
-                            <option value="pcs" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'pcs') ? 'selected' : '' ?>>pcs</option>
-                            <option value="liter" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'liter') ? 'selected' : '' ?>>liter</option>
-                            <!-- Add more unit options here as needed -->
-                        </select>
+            if ($existing_mr_check) {
+                echo '<div class="alert alert-warning">MR Details for this item already exist. You cannot fill the form again.</div>';
+            }
+            ?>
+
+            <form method="post" action="">
+                <!-- Hidden input for item_id -->
+                <input type="hidden" name="item_id" value="<?= htmlspecialchars($item_id) ?>">
+
+                <!-- Office Location (Centered) -->
+                <div class="row mb-3">
+                    <div class="col-md-6 offset-md-3">
+                        <label for="office_location" class="form-label">Office Location</label>
+                        <input type="text" class="form-control" name="office_location" value="<?= isset($office_name) ? htmlspecialchars($office_name) : '' ?>" required>
                     </div>
                 </div>
 
-                <!-- Acquisition Date and Acquisition Cost (Both in col-md-3) -->
-                <div class="col-md-3">
-                    <label for="acquisition_date" class="form-label">Acquisition Date</label>
-                    <input type="date" class="form-control" name="acquisition_date" value="<?= isset($asset_details['acquisition_date']) ? htmlspecialchars($asset_details['acquisition_date']) : '' ?>" required>
+                <!-- Description (Full Width) -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="text" class="form-control" name="description" value="<?= isset($asset_details['description']) ? htmlspecialchars($asset_details['description']) : '' ?>" required>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <label for="acquisition_cost" class="form-label">Acquisition Cost</label>
-                    <input type="number" class="form-control" name="acquisition_cost" step="0.01" value="<?= isset($asset_details['value']) ? htmlspecialchars($asset_details['value']) : '' ?>" required>
-                </div>
-            </div>
 
-            <!-- Person Accountable (Full Width) -->
-            <div class="row mb-3">
-                <div class="col-md-12">
-                    <label for="person_accountable" class="form-label">Person Accountable</label>
-                    <input type="text" class="form-control" name="person_accountable" value="<?= isset($asset_details['employee_id']) ? htmlspecialchars($asset_details['employee_id']) : '' ?>">
+                <!-- Model No and Serial No -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="model_no" class="form-label">Model No</label>
+                        <input type="text" class="form-control" name="model_no" value="<?= isset($asset_details['model']) ? htmlspecialchars($asset_details['model']) : '' ?>">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="serial_no" class="form-label">Serial No</label>
+                        <input type="text" class="form-control" name="serial_no" value="<?= isset($asset_details['serial_no']) ? htmlspecialchars($asset_details['serial_no']) : '' ?>">
+                    </div>
                 </div>
-            </div>
 
-            <!-- Acquired Date and Counted Date -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="acquired_date" class="form-label">Acquired Date</label>
-                    <input type="date" class="form-control" name="acquired_date" value="<?= isset($asset_details['last_updated']) ? htmlspecialchars($asset_details['last_updated']) : '' ?>">
+                <!-- Serviceable and Unserviceable -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Serviceable</label>
+                        <input type="checkbox" name="serviceable" value="1" <?= (isset($asset_data['quantity']) && $asset_data['quantity'] > 0) ? 'checked' : '' ?>>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Unserviceable</label>
+                        <input type="checkbox" name="unserviceable" value="1" <?= (isset($asset_data['quantity']) && $asset_data['quantity'] == 0) ? 'checked' : '' ?>>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <label for="counted_date" class="form-label">Counted Date</label>
-                    <input type="date" class="form-control" name="counted_date">
+
+                <!-- Unit Quantity and Acquisition Date -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="unit_quantity" class="form-label">Unit Quantity</label>
+                        <div class="d-flex">
+                            <input type="number" class="form-control" name="unit_quantity" value="<?= isset($asset_details['quantity']) ? htmlspecialchars($asset_details['quantity']) : '' ?>" required>
+                            <select name="unit" class="form-select" required>
+                                <option value="kg" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'kg') ? 'selected' : '' ?>>kg</option>
+                                <option value="pcs" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'pcs') ? 'selected' : '' ?>>pcs</option>
+                                <option value="liter" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'liter') ? 'selected' : '' ?>>liter</option>
+                                <!-- Add more unit options here as needed -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Acquisition Date and Acquisition Cost (Both in col-md-3) -->
+                    <div class="col-md-3">
+                        <label for="acquisition_date" class="form-label">Acquisition Date</label>
+                        <input type="date" class="form-control" name="acquisition_date" value="<?= isset($asset_details['acquisition_date']) ? htmlspecialchars($asset_details['acquisition_date']) : '' ?>" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="acquisition_cost" class="form-label">Acquisition Cost</label>
+                        <input type="number" class="form-control" name="acquisition_cost" step="0.01" value="<?= isset($asset_details['value']) ? htmlspecialchars($asset_details['value']) : '' ?>" required>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Submit Button -->
-            <button type="submit" class="btn btn-primary" <?= $existing_mr_check ? 'disabled' : '' ?>>
-                <?= $existing_mr_check ? 'Already Created' : 'Submit' ?>
-            </button>
+                <div class="row mb-3">
+    <div class="col-md-12">
+        <label for="person_accountable" class="form-label">Person Accountable</label>
+        
+        <!-- Visible Input for Name -->
+        <input type="text" class="form-control" name="person_accountable_name" id="person_accountable"
+               list="employeeList" placeholder="Type to search employee" autocomplete="off"
+               value="<?= isset($asset_details['employee_id']) ? htmlspecialchars($asset_details['employee_id']) : '' ?>">
 
-            <!-- Print MR Button (Conditional Display) -->
-            <?php if ($existing_mr_check): ?>
-                <a href="print_mr.php?item_id=<?= htmlspecialchars($item_id) ?>" class="btn btn-info ml-2">Print MR</a>
-            <?php endif; ?>
-        </form>
+        <!-- Hidden Input for Employee ID -->
+        <input type="hidden" name="employee_id" id="employee_id">
+
+        <!-- Datalist -->
+        <datalist id="employeeList">
+            <?php foreach ($employees as $emp): ?>
+                <option data-id="<?= $emp['employee_id'] ?>" value="<?= htmlspecialchars($emp['name']) ?>"></option>
+            <?php endforeach; ?>
+        </datalist>
     </div>
-  </div>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-  <script src="js/dashboard.js"></script>
+
+                <!-- Acquired Date and Counted Date -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="acquired_date" class="form-label">Acquired Date</label>
+                        <input type="date" class="form-control" name="acquired_date" value="<?= isset($asset_details['last_updated']) ? htmlspecialchars($asset_details['last_updated']) : '' ?>">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="counted_date" class="form-label">Counted Date</label>
+                        <input type="date" class="form-control" name="counted_date">
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary" <?= $existing_mr_check ? 'disabled' : '' ?>>
+                    <?= $existing_mr_check ? 'Already Created' : 'Submit' ?>
+                </button>
+
+                <!-- Print MR Button (Conditional Display) -->
+                <?php if ($existing_mr_check): ?>
+                    <a href="print_mr.php?item_id=<?= htmlspecialchars($item_id) ?>" class="btn btn-info ml-2">Print MR</a>
+                <?php endif; ?>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script>
+document.getElementById('person_accountable').addEventListener('input', function() {
+    const inputVal = this.value;
+    const options = document.querySelectorAll('#employeeList option');
+    let selectedId = '';
+
+    options.forEach(option => {
+        if (option.value === inputVal) {
+            selectedId = option.getAttribute('data-id');
+        }
+    });
+
+    document.getElementById('employee_id').value = selectedId;
+});
+</script>
+
 </body>
 
 </html>
