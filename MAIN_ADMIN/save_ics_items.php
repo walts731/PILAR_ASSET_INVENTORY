@@ -69,22 +69,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($description) || $quantity <= 0) continue;
 
-        // Fetch asset_id
-        $asset_id = null;
-        $stmt_asset = $conn->prepare("SELECT id FROM assets WHERE description = ? LIMIT 1");
-        $stmt_asset->bind_param("s", $description);
-        $stmt_asset->execute();
-        $result_asset = $stmt_asset->get_result();
-        if ($result_asset && $row_asset = $result_asset->fetch_assoc()) {
-            $asset_id = $row_asset['id'];
-        }
-        $stmt_asset->close();
+        // Update main stock
+        $stmt_update_assets->bind_param("ds", $quantity, $description);
+        $stmt_update_assets->execute();
 
-        // Insert ICS item
+        // Transfer asset to office and get the inserted asset ID
+        $latest_asset_id = $office_id > 0 
+            ? transferAssetToOffice($conn, $description, $unit_cost, $quantity, $office_id) 
+            : getMainStockAssetId($conn, $description);
+
+        // Insert ICS item with the latest asset_id
         $stmt_items->bind_param(
             "iisdssssss",
             $ics_id,
-            $asset_id,
+            $latest_asset_id,
             $ics_no,
             $quantity,
             $unit,
@@ -95,15 +93,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $estimated_life
         );
         $stmt_items->execute();
-
-        // Update main stock
-        $stmt_update_assets->bind_param("ds", $quantity, $description);
-        $stmt_update_assets->execute();
-
-        // Transfer to office
-        if ($office_id > 0) {
-            transferAssetToOffice($conn, $description, $unit_cost, $quantity, $office_id);
-        }
     }
 
     $stmt_items->close();
@@ -113,41 +102,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit();
 }
 
-// Transfer asset to office with QR code generation
+// Get main stock asset id by description
+function getMainStockAssetId($conn, $description) {
+    $stmt = $conn->prepare("SELECT id FROM assets WHERE description = ? LIMIT 1");
+    $stmt->bind_param("s", $description);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+    return $row ? $row['id'] : null;
+}
+
+// Transfer asset to office with QR code generation, returns inserted asset_id
 function transferAssetToOffice($conn, $description, $unit_cost, $quantity, $office_id)
 {
     $created_at = date('Y-m-d H:i:s');
 
     // Fetch main stock asset
-    $fetch = $conn->prepare("SELECT * FROM assets WHERE description = ? LIMIT 1");
-    $fetch->bind_param("s", $description);
-    $fetch->execute();
-    $result = $fetch->get_result();
+    $stmt = $conn->prepare("SELECT * FROM assets WHERE description = ? LIMIT 1");
+    $stmt->bind_param("s", $description);
+    $stmt->execute();
+    $result = $stmt->get_result();
     $asset = $result->fetch_assoc();
-    $fetch->close();
-
-    if (!$asset) return;
+    $stmt->close();
+    if (!$asset) return null;
 
     // Check if asset exists in office
-    $check = $conn->prepare("SELECT id, quantity FROM assets WHERE description = ? AND office_id = ?");
-    $check->bind_param("si", $description, $office_id);
-    $check->execute();
-    $result_check = $check->get_result();
+    $stmt = $conn->prepare("SELECT id, quantity FROM assets WHERE description = ? AND office_id = ?");
+    $stmt->bind_param("si", $description, $office_id);
+    $stmt->execute();
+    $result_check = $stmt->get_result();
+    $stmt->close();
 
     if ($result_check && $row = $result_check->fetch_assoc()) {
         $new_quantity = $row['quantity'] + $quantity;
-        $update = $conn->prepare("UPDATE assets SET quantity = ?, value = ?, last_updated = ? WHERE id = ?");
-        $update->bind_param("ddsi", $new_quantity, $unit_cost, $created_at, $row['id']);
-        $update->execute();
-        $update->close();
+        $stmt = $conn->prepare("UPDATE assets SET quantity = ?, value = ?, last_updated = ? WHERE id = ?");
+        $stmt->bind_param("ddsi", $new_quantity, $unit_cost, $created_at, $row['id']);
+        $stmt->execute();
+        $stmt->close();
+        return $row['id'];
     } else {
         // Insert new office asset
         $qr_code = '';
-        $insert = $conn->prepare("INSERT INTO assets 
+        $stmt = $conn->prepare("INSERT INTO assets 
             (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-        $insert->bind_param(
+        $stmt->bind_param(
             "sisisssiiisdssssssss",
             $asset['asset_name'],
             $asset['category'],
@@ -170,21 +171,22 @@ function transferAssetToOffice($conn, $description, $unit_cost, $quantity, $offi
             $asset['model'],
             $asset['brand']
         );
-        $insert->execute();
-
-        // Generate QR code for the new asset
+        $stmt->execute();
         $new_asset_id = $conn->insert_id;
+        $stmt->close();
+
+        // Generate QR code
         $qr_filename = $new_asset_id . '.png';
         $qr_path = '../img/' . $qr_filename;
         QRcode::png((string)$new_asset_id, $qr_path, QR_ECLEVEL_L, 4);
 
         // Update asset with QR code
-        $update_qr = $conn->prepare("UPDATE assets SET qr_code = ? WHERE id = ?");
-        $update_qr->bind_param("si", $qr_filename, $new_asset_id);
-        $update_qr->execute();
-        $update_qr->close();
-    }
+        $stmt = $conn->prepare("UPDATE assets SET qr_code = ? WHERE id = ?");
+        $stmt->bind_param("si", $qr_filename, $new_asset_id);
+        $stmt->execute();
+        $stmt->close();
 
-    $check->close();
+        return $new_asset_id;
+    }
 }
 ?>
