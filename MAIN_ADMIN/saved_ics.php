@@ -7,39 +7,16 @@ if (!isset($_SESSION['user_id'])) {
   exit();
 }
 
-// Set office_id if not set
-if (!isset($_SESSION['office_id'])) {
-  $user_id = $_SESSION['user_id'];
-  $stmt = $conn->prepare("SELECT office_id FROM users WHERE id = ?");
-  $stmt->bind_param("i", $user_id);
-  $stmt->execute();
-  $stmt->bind_result($office_id);
-  if ($stmt->fetch()) {
-    $_SESSION['office_id'] = $office_id;
-  }
-  $stmt->close();
-}
-
-// Fetch full name
-$user_name = '';
-$stmt = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
-$stmt->bind_param("i", $_SESSION['user_id']);
-$stmt->execute();
-$stmt->bind_result($fullname);
-if ($stmt->fetch()) {
-  $user_name = $fullname;
-}
-$stmt->close();
-
 // Fetch all ICS forms
 $sql = "SELECT f.id AS ics_id, f.entity_name, f.fund_cluster, f.ics_no,
                f.received_from_name, f.received_from_position,
                f.received_by_name, f.received_by_position, f.created_at,
                o.office_name
         FROM ics_form f
-        LEFT JOIN offices o ON f.id = o.id
+        LEFT JOIN offices o ON f.office_id = o.id
         ORDER BY f.created_at DESC";
 $result = $conn->query($sql);
+
 
 $ics_forms = [];
 if ($result && $result->num_rows > 0) {

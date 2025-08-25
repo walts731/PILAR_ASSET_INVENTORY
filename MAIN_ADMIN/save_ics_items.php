@@ -15,11 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $created_at = date('Y-m-d H:i:s');
     $office_id = intval($_POST['office_id'] ?? 0);
 
-    // Always INSERT new ICS form with header_image
+    // Always INSERT new ICS form with header_image and office_id
     $stmt = $conn->prepare("INSERT INTO ics_form 
-        (header_image, entity_name, fund_cluster, ics_no, received_from_name, received_from_position, received_by_name, received_by_position, created_at) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssssssss", 
+        (header_image, entity_name, fund_cluster, ics_no, received_from_name, received_from_position, received_by_name, received_by_position, created_at, office_id) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssssssi", 
         $header_image,
         $entity_name, 
         $fund_cluster, 
@@ -28,7 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $received_from_position, 
         $received_by_name, 
         $received_by_position, 
-        $created_at
+        $created_at,
+        $office_id
     );
     $stmt->execute();
     $id = $conn->insert_id; // get new ICS id for items
