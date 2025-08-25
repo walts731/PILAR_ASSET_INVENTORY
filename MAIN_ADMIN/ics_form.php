@@ -44,11 +44,14 @@ $result = $conn->query("SELECT description, value AS unit_cost, quantity, unit F
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $description = $row['description'];
-        $description_details[$description] = [
-            'unit_cost' => $row['unit_cost'],
-            'quantity' => $row['quantity'],
-            'unit' => $row['unit']
-        ];
+        // Only add to the details if quantity is greater than 0
+        if ($row['quantity'] > 0) {
+            $description_details[$description] = [
+                'unit_cost' => $row['unit_cost'],
+                'quantity' => $row['quantity'],
+                'unit' => $row['unit']
+            ];
+        }
     }
 }
 
@@ -344,6 +347,30 @@ $new_ics_no = generateICSNo($conn);
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+    const descriptions = <?= json_encode(array_keys($description_details)) ?>;
+    
+    document.querySelectorAll('.description-field').forEach(input => {
+        input.addEventListener('input', function() {
+            const val = this.value.toLowerCase();
+            const list = descriptions.filter(d => d.toLowerCase().includes(val));
+            
+            // Remove existing suggestions
+            let datalist = this.nextElementSibling;
+            if (!datalist || datalist.tagName.toLowerCase() !== 'datalist') {
+                datalist = document.createElement('datalist');
+                this.setAttribute('list', datalist.id = 'tempList' + Math.random().toString(36).substr(2,5));
+                this.after(datalist);
+            }
+            datalist.innerHTML = '';
+            list.forEach(d => {
+                const option = document.createElement('option');
+                option.value = d;
+                datalist.appendChild(option);
+            });
+        });
+    });
+});
     document.addEventListener('DOMContentLoaded', function() {
         const tableBody = document.getElementById('ics-items-body');
         const addRowBtn = document.getElementById('addRowBtn');

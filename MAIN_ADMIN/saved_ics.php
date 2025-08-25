@@ -52,8 +52,8 @@ if ($result && $result->num_rows > 0) {
 
       <?php if (!empty($ics_forms)): ?>
         <div class="table-responsive">
-          <table id="icsTable" class="table table-striped table-hover align-middle">
-            <thead class="table-dark text-center">
+          <table id="icsTable" class="table">
+            <thead class="text-center">
               <tr>
                 <th>ICS No</th>
                 <th>Entity</th>
