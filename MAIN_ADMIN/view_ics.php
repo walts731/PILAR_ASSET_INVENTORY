@@ -65,29 +65,28 @@ $stmt->close();
 
     <div class="container py-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="fw-bold"><i class="bi bi-file-earmark-text"></i> ICS Details</h4>
-        <a href="saved_ics.php" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+        <a href="saved_ics.php" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Saved ICS</a>
       </div>
 
       <div class="card mb-5 shadow-sm">
         <div class="card-body">
 
           <div class="mb-3 text-center">
-  <?php if (!empty($ics['header_image'])): ?>
-    <img src="../img/<?= htmlspecialchars($ics['header_image']) ?>" 
-         class="img-fluid mb-2 w-100" 
-         style="max-height:300px; object-fit:cover;">
-  <?php else: ?>
-    <p class="text-muted">No header image</p>
-  <?php endif; ?>
-</div>
+            <?php if (!empty($ics['header_image'])): ?>
+              <img src="../img/<?= htmlspecialchars($ics['header_image']) ?>"
+                class="img-fluid mb-2 w-100"
+                style="max-height:300px; object-fit:cover;">
+            <?php else: ?>
+              <p class="text-muted">No header image</p>
+            <?php endif; ?>
+          </div>
 
           <div class="row mb-2">
             <div class="col-md-6">
               <p class="mb-1 fw-semibold">Entity Name:</p>
               <p class="border-bottom pb-1"><?= htmlspecialchars($ics['entity_name']) ?></p>
             </div>
-            
+
           </div>
 
           <div class="row mb-2">
@@ -105,44 +104,47 @@ $stmt->close();
           <hr>
 
           <!-- Items Table -->
-<div class="table-responsive">
-    <table class="table table-bordered text-center align-middle">
-        <thead class="table-secondary">
-            <tr>
-                <th>Quantity</th>
-                <th>Unit</th>
-                <th>Unit Cost</th>
-                <th>Total Cost</th>
-                <th>Description</th>
-                <th>Item No</th>
-                <th>Estimated Useful Life</th>
-                <th>Action</th> <!-- New column for actions -->
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (!empty($ics['items'])): ?>
-                <?php foreach ($ics['items'] as $item): ?>
+          <div class="table-responsive">
+            <table class="table table-bordered text-center align-middle">
+              <thead class="table-secondary">
+                <tr>
+                  <th>Quantity</th>
+                  <th>Unit</th>
+                  <th>Unit Cost</th>
+                  <th>Total Cost</th>
+                  <th>Description</th>
+                  <th>Item No</th>
+                  <th>Estimated Useful Life</th>
+                  <th>Action</th> <!-- New column for actions -->
+                </tr>
+              </thead>
+              <tbody>
+                <?php if (!empty($ics['items'])): ?>
+                  <?php foreach ($ics['items'] as $item): ?>
                     <tr>
-                        <td><?= htmlspecialchars($item['quantity']) ?></td>
-                        <td><?= htmlspecialchars($item['unit']) ?></td>
-                        <td>₱<?= number_format($item['unit_cost'], 2) ?></td>
-                        <td>₱<?= number_format($item['total_cost'], 2) ?></td>
-                        <td><?= htmlspecialchars($item['description']) ?></td>
-                        <td><?= htmlspecialchars($item['item_no']) ?></td>
-                        <td><?= htmlspecialchars($item['estimated_useful_life']) ?></td>
-                        <td>
-                            <a href="create_mr.php?item_id=<?= htmlspecialchars($item['item_id']) ?>" class="btn btn-primary btn-sm">
-                                Create MR
-                            </a>
-                        </td> <!-- Create MR button -->
+                      <td><?= htmlspecialchars($item['quantity']) ?></td>
+                      <td><?= htmlspecialchars($item['unit']) ?></td>
+                      <td>₱<?= number_format($item['unit_cost'], 2) ?></td>
+                      <td>₱<?= number_format($item['total_cost'], 2) ?></td>
+                      <td><?= htmlspecialchars($item['description']) ?></td>
+                      <td><?= htmlspecialchars($item['item_no']) ?></td>
+                      <td><?= htmlspecialchars($item['estimated_useful_life']) ?></td>
+                      <td>
+                        <a href="create_mr.php?item_id=<?= htmlspecialchars($item['item_id']) ?>&ics_id=<?= htmlspecialchars($ics['ics_id']) ?>" class="btn btn-primary btn-sm">
+                          Create MR
+                        </a>
+
+                      </td> <!-- Create MR button -->
                     </tr>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <tr><td colspan="8" class="text-muted">No items found.</td></tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
-</div>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <tr>
+                    <td colspan="8" class="text-muted">No items found.</td>
+                  </tr>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
 
 
           <!-- Signatories -->
@@ -176,4 +178,5 @@ $stmt->close();
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

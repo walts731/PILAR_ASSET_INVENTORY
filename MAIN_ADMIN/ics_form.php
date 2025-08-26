@@ -93,6 +93,12 @@ $new_ics_no = generateICSNo($conn);
 
 
 ?>
+<!-- Top-right button -->
+<div class="d-flex justify-content-end mb-3">
+    <a href="saved_ics.php?id=<?= htmlspecialchars($form_id) ?>" class="btn btn-info">
+        <i class="bi bi-folder-check"></i> View Saved ICS
+    </a>
+</div>
 <div class="card mt-4">
     <div class="card-body">
         <!-- Inventory Custodian Slip Heading -->

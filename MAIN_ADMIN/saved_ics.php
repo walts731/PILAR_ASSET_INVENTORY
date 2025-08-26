@@ -7,6 +7,9 @@ if (!isset($_SESSION['user_id'])) {
   exit();
 }
 
+$form_id = isset($_GET['id']) ? intval($_GET['id']) : null;
+
+
 // Fetch all ICS forms
 $sql = "SELECT f.id AS ics_id, f.entity_name, f.fund_cluster, f.ics_no,
                f.received_from_name, f.received_from_position,
@@ -44,7 +47,7 @@ if ($result && $result->num_rows > 0) {
 
   <div class="main">
     <?php include 'includes/topbar.php' ?>
-        <a href="forms.php?id=4" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+        <a href="forms.php?id=<?php echo $form_id ?>" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to ICS Form</a>
 
     <div class="container-fluid py-4">
       <div class="d-flex justify-content-between align-items-center mb-3">

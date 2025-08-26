@@ -6,6 +6,8 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: ../index.php");
     exit();
 }
+$ics_id = isset($_GET['ics_id']) ? intval($_GET['ics_id']) : null;
+
 
 // Fetch the municipal logo from the system table
 $logo_path = '';
@@ -103,10 +105,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
         (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, acquired_date, counted_date, inventory_tag) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    $stmt_insert->bind_param("iissssiiisssssss",
-        $item_id_form, $asset_id, $office_location, $description, $model_no, $serial_no,
-        $serviceable, $unserviceable, $unit_quantity, $unit, $acquisition_date, $acquisition_cost,
-        $person_accountable_name, $acquired_date, $counted_date, $inventory_tag
+    $stmt_insert->bind_param(
+        "iissssiiisssssss",
+        $item_id_form,
+        $asset_id,
+        $office_location,
+        $description,
+        $model_no,
+        $serial_no,
+        $serviceable,
+        $unserviceable,
+        $unit_quantity,
+        $unit,
+        $acquisition_date,
+        $acquisition_cost,
+        $person_accountable_name,
+        $acquired_date,
+        $counted_date,
+        $inventory_tag
     );
 
     if ($stmt_insert->execute()) {
@@ -216,25 +232,9 @@ $stmt_assets->close();
 
     <div class="main">
         <?php include 'includes/topbar.php'; ?>
-
-        <!-- Header: Logo, QR, and GOV LABEL -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <!-- Municipal Logo -->
-            <img id="municipalLogoImg" src="<?= $logo_path ?>" alt="Municipal Logo" style="height: 70px;">
-
-            <!-- Government Label -->
-            <div class="text-center flex-grow-1">
-                <h6 class="m-0 text-uppercase fw-bold">Government Property</h6>
-            </div>
-
-            <!-- Inventory Tag Display -->
-            <div class="text-center">
-                <p class="fw-bold">Inventory Tag: <?= $inventory_tag ?></p> <!-- Display the inventory tag here -->
-            </div>
-
-            <!-- QR Code -->
-            <img id="viewQrCode" src="../img/<?= isset($asset_details['qr_code']) ? $asset_details['qr_code'] : '' ?>" alt="QR Code" style="height: 70px;">
-        </div>
+        <a href="view_ics.php?id=<?= htmlspecialchars($ics_id) ?>" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to View ICS
+        </a>
 
         <!-- Form for MR Asset -->
         <div class="container mt-4">
@@ -254,121 +254,156 @@ $stmt_assets->close();
             }
             ?>
 
-            <form method="post" action="">
-                <!-- Hidden input for item_id -->
-                <input type="hidden" name="item_id" value="<?= htmlspecialchars($item_id) ?>">
-
-                <!-- Office Location (Centered) -->
-                <div class="row mb-3">
-                    <div class="col-md-6 offset-md-3">
-                        <label for="office_location" class="form-label">Office Location</label>
-                        <input type="text" class="form-control" name="office_location" value="<?= isset($office_name) ? htmlspecialchars($office_name) : '' ?>" required>
-                    </div>
+            <!-- Card wrapper -->
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="m-0">Create MR</h5>
+                    <!-- Top-right button (optional) -->
+                    <a href="saved_mr.php" class="btn btn-info btn-sm">
+                        <i class="bi bi-folder-check"></i> View Saved MR
+                    </a>
                 </div>
+                <!-- Header: Logo, QR, and GOV LABEL -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <!-- Municipal Logo -->
+                    <img id="municipalLogoImg" src="<?= $logo_path ?>" alt="Municipal Logo" style="height: 70px;">
 
-                <!-- Description (Full Width) -->
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label for="description" class="form-label">Description</label>
-                        <input type="text" class="form-control" name="description" value="<?= isset($asset_details['description']) ? htmlspecialchars($asset_details['description']) : '' ?>" required>
+                    <!-- Government Label -->
+                    <div class="text-center flex-grow-1">
+                        <h6 class="m-0 text-uppercase fw-bold">Government Property</h6>
                     </div>
+
+                    <!-- Inventory Tag Display -->
+                    <div class="text-center">
+                        <p class="fw-bold">Inventory Tag: <?= $inventory_tag ?></p> <!-- Display the inventory tag here -->
+                    </div>
+
+                    <!-- QR Code -->
+                    <img id="viewQrCode" src="../img/<?= isset($asset_details['qr_code']) ? $asset_details['qr_code'] : '' ?>" alt="QR Code" style="height: 70px;">
                 </div>
+                <div class="card-body">
+                    <form method="post" action="">
+                        <input type="hidden" name="item_id" value="<?= htmlspecialchars($item_id) ?>">
 
-                <!-- Model No and Serial No -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="model_no" class="form-label">Model No</label>
-                        <input type="text" class="form-control" name="model_no" value="<?= isset($asset_details['model']) ? htmlspecialchars($asset_details['model']) : '' ?>">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="serial_no" class="form-label">Serial No</label>
-                        <input type="text" class="form-control" name="serial_no" value="<?= isset($asset_details['serial_no']) ? htmlspecialchars($asset_details['serial_no']) : '' ?>">
-                    </div>
-                </div>
-
-                <!-- Serviceable and Unserviceable -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Serviceable</label>
-                        <input type="checkbox" name="serviceable" value="1" <?= (isset($asset_data['quantity']) && $asset_data['quantity'] > 0) ? 'checked' : '' ?>>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Unserviceable</label>
-                        <input type="checkbox" name="unserviceable" value="1" <?= (isset($asset_data['quantity']) && $asset_data['quantity'] == 0) ? 'checked' : '' ?>>
-                    </div>
-                </div>
-
-                <!-- Unit Quantity and Acquisition Date -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="unit_quantity" class="form-label">Unit Quantity</label>
-                        <div class="d-flex">
-                            <input type="number" class="form-control" name="unit_quantity" value="<?= isset($asset_details['quantity']) ? htmlspecialchars($asset_details['quantity']) : '' ?>" required>
-                            <select name="unit" class="form-select" required>
-                                <option value="kg" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'kg') ? 'selected' : '' ?>>kg</option>
-                                <option value="pcs" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'pcs') ? 'selected' : '' ?>>pcs</option>
-                                <option value="liter" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'liter') ? 'selected' : '' ?>>liter</option>
-                                <!-- Add more unit options here as needed -->
-                            </select>
+                        <!-- Office Location -->
+                        <div class="row mb-3">
+                            <div class="col-md-6 offset-md-3">
+                                <label for="office_location" class="form-label">Office Location</label>
+                                <input type="text" class="form-control" name="office_location"
+                                    value="<?= isset($office_name) ? htmlspecialchars($office_name) : '' ?>" required>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Acquisition Date and Acquisition Cost (Both in col-md-3) -->
-                    <div class="col-md-3">
-                        <label for="acquisition_date" class="form-label">Acquisition Date</label>
-                        <input type="date" class="form-control" name="acquisition_date" value="<?= isset($asset_details['acquisition_date']) ? htmlspecialchars($asset_details['acquisition_date']) : '' ?>" required>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="acquisition_cost" class="form-label">Acquisition Cost</label>
-                        <input type="number" class="form-control" name="acquisition_cost" step="0.01" value="<?= isset($asset_details['value']) ? htmlspecialchars($asset_details['value']) : '' ?>" required>
-                    </div>
+                        <!-- Description -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="description" class="form-label">Description</label>
+                                <input type="text" class="form-control" name="description"
+                                    value="<?= isset($asset_details['description']) ? htmlspecialchars($asset_details['description']) : '' ?>" required>
+                            </div>
+                        </div>
+
+                        <!-- Model No and Serial No -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="model_no" class="form-label">Model No</label>
+                                <input type="text" class="form-control" name="model_no"
+                                    value="<?= isset($asset_details['model']) ? htmlspecialchars($asset_details['model']) : '' ?>">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="serial_no" class="form-label">Serial No</label>
+                                <input type="text" class="form-control" name="serial_no"
+                                    value="<?= isset($asset_details['serial_no']) ? htmlspecialchars($asset_details['serial_no']) : '' ?>">
+                            </div>
+                        </div>
+
+                        <!-- Serviceable and Unserviceable -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="serviceable" value="1"
+                                        <?= (isset($asset_data['quantity']) && $asset_data['quantity'] > 0) ? 'checked' : '' ?>>
+                                    <label class="form-check-label">Serviceable</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="unserviceable" value="1"
+                                        <?= (isset($asset_data['quantity']) && $asset_data['quantity'] == 0) ? 'checked' : '' ?>>
+                                    <label class="form-check-label">Unserviceable</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quantity, Unit, Acquisition Date & Cost -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="unit_quantity" class="form-label">Unit Quantity</label>
+                                <div class="d-flex">
+                                    <input type="number" class="form-control" name="unit_quantity"
+                                        value="<?= isset($asset_details['quantity']) ? htmlspecialchars($asset_details['quantity']) : '' ?>" required>
+                                    <select name="unit" class="form-select" required>
+                                        <option value="kg" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'kg') ? 'selected' : '' ?>>kg</option>
+                                        <option value="pcs" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'pcs') ? 'selected' : '' ?>>pcs</option>
+                                        <option value="liter" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'liter') ? 'selected' : '' ?>>liter</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="acquisition_date" class="form-label">Acquisition Date</label>
+                                <input type="date" class="form-control" name="acquisition_date"
+                                    value="<?= isset($asset_details['acquisition_date']) ? htmlspecialchars($asset_details['acquisition_date']) : '' ?>" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="acquisition_cost" class="form-label">Acquisition Cost</label>
+                                <input type="number" class="form-control" name="acquisition_cost" step="0.01"
+                                    value="<?= isset($asset_details['value']) ? htmlspecialchars($asset_details['value']) : '' ?>" required>
+                            </div>
+                        </div>
+
+                        <!-- Person Accountable -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="person_accountable" class="form-label">Person Accountable</label>
+                                <input type="text" class="form-control" name="person_accountable_name" id="person_accountable"
+                                    list="employeeList" placeholder="Type to search employee" autocomplete="off"
+                                    value="<?= htmlspecialchars($person_accountable_name) ?>">
+                                <input type="hidden" name="employee_id" id="employee_id"
+                                    value="<?= isset($asset_details['employee_id']) ? htmlspecialchars($asset_details['employee_id']) : '' ?>">
+                                <datalist id="employeeList">
+                                    <?php foreach ($employees as $emp): ?>
+                                        <option data-id="<?= $emp['employee_id'] ?>" value="<?= htmlspecialchars($emp['name']) ?>"></option>
+                                    <?php endforeach; ?>
+                                </datalist>
+                            </div>
+                        </div>
+
+                        <!-- Acquired Date & Counted Date -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="acquired_date" class="form-label">Acquired Date</label>
+                                <input type="date" class="form-control" name="acquired_date"
+                                    value="<?= isset($asset_details['last_updated']) ? htmlspecialchars($asset_details['last_updated']) : '' ?>">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="counted_date" class="form-label">Counted Date</label>
+                                <input type="date" class="form-control" name="counted_date">
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-primary" <?= $existing_mr_check ? 'disabled' : '' ?>>
+                            <?= $existing_mr_check ? 'Already Created' : 'Submit' ?>
+                        </button>
+
+                        <?php if ($existing_mr_check): ?>
+                            <a href="print_mr.php?item_id=<?= htmlspecialchars($item_id) ?>" class="btn btn-info ms-2">Print MR</a>
+                        <?php endif; ?>
+                    </form>
                 </div>
-
-                <!-- Person Accountable -->
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label for="person_accountable" class="form-label">Person Accountable</label>
-
-                        <!-- Visible Input for Name -->
-                        <input type="text" class="form-control" name="person_accountable_name" id="person_accountable"
-                            list="employeeList" placeholder="Type to search employee" autocomplete="off"
-                            value="<?= htmlspecialchars($person_accountable_name) ?>">
-
-                        <!-- Hidden Input for Employee ID -->
-                        <input type="hidden" name="employee_id" id="employee_id" value="<?= isset($asset_details['employee_id']) ? htmlspecialchars($asset_details['employee_id']) : '' ?>">
-
-                        <!-- Datalist -->
-                        <datalist id="employeeList">
-                            <?php foreach ($employees as $emp): ?>
-                                <option data-id="<?= $emp['employee_id'] ?>" value="<?= htmlspecialchars($emp['name']) ?>"></option>
-                            <?php endforeach; ?>
-                        </datalist>
-                    </div>
-                </div>
-
-                <!-- Acquired Date and Counted Date -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="acquired_date" class="form-label">Acquired Date</label>
-                        <input type="date" class="form-control" name="acquired_date" value="<?= isset($asset_details['last_updated']) ? htmlspecialchars($asset_details['last_updated']) : '' ?>">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="counted_date" class="form-label">Counted Date</label>
-                        <input type="date" class="form-control" name="counted_date">
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" class="btn btn-primary" <?= $existing_mr_check ? 'disabled' : '' ?>>
-                    <?= $existing_mr_check ? 'Already Created' : 'Submit' ?>
-                </button>
-
-                <!-- Print MR Button (Conditional Display) -->
-                <?php if ($existing_mr_check): ?>
-                    <a href="print_mr.php?item_id=<?= htmlspecialchars($item_id) ?>" class="btn btn-info ml-2">Print MR</a>
-                <?php endif; ?>
-            </form>
+            </div>
         </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
