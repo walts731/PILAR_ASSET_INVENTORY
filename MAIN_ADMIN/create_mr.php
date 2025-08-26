@@ -66,6 +66,7 @@ if ($asset_id) {
     // Concatenate to form the full inventory tag
     $inventory_tag = "No. " . $prefix . "-" . $size . "-" . $department_code . "-" . $factory_code . "-" . $unique_id;
 }
+
 if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
     // Collect form data
     $item_id_form = $_POST['item_id'] ?? null;
@@ -84,11 +85,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
     $acquired_date = $_POST['acquired_date'];
     $counted_date = $_POST['counted_date'];
 
+    // --- Prioritize updating the employee_id in the assets table first ---
+    if ($employee_id) {
+        $stmt_update_employee = $conn->prepare("UPDATE assets SET employee_id = ? WHERE id = ?");
+        $stmt_update_employee->bind_param("ii", $employee_id, $asset_id);
+        if (!$stmt_update_employee->execute()) {
+            $_SESSION['error_message'] = "Error updating employee_id in assets: " . $stmt_update_employee->error;
+            $stmt_update_employee->close();
+            header("Location: create_mr.php?item_id=" . $item_id_form);
+            exit();
+        }
+        $stmt_update_employee->close();
+    }
+
     // Insert into mr_details
     $stmt_insert = $conn->prepare("INSERT INTO mr_details 
         (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, acquired_date, counted_date, inventory_tag) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    
+
     $stmt_insert->bind_param("iissssiiisssssss",
         $item_id_form, $asset_id, $office_location, $description, $model_no, $serial_no,
         $serviceable, $unserviceable, $unit_quantity, $unit, $acquisition_date, $acquisition_cost,
@@ -96,30 +110,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
     );
 
     if ($stmt_insert->execute()) {
-        // Fetch the current employee ID from the assets table
-$current_emp_id = null;
-$stmt_check_emp = $conn->prepare("SELECT employee_id FROM assets WHERE id = ?");
-$stmt_check_emp->bind_param("i", $asset_id);
-$stmt_check_emp->execute();
-$result_emp = $stmt_check_emp->get_result();
-if ($row = $result_emp->fetch_assoc()) {
-    $current_emp_id = $row['employee_id'];
-}
-$stmt_check_emp->close();
-
-// If employee_id is not set and it's not null in the form, update the assets table
-if (empty($current_emp_id) && !empty($employee_id)) {
-    // Update the assets table with the employee_id
-    $stmt_update_emp = $conn->prepare("UPDATE assets SET employee_id = ? WHERE id = ?");
-    $stmt_update_emp->bind_param("ii", $employee_id, $asset_id);
-    if ($stmt_update_emp->execute()) {
-        $stmt_update_emp->close();
-    } else {
-        $_SESSION['error_message'] = "Error updating employee ID: " . $stmt_update_emp->error;
-    }
-}
-
-
         $_SESSION['success_message'] = "MR Details successfully recorded!";
         header("Location: create_mr.php?item_id=" . $item_id_form);
         exit();
@@ -171,19 +161,23 @@ if ($item_id) {
     $stmt->close();
 }
 
-// Generate Inventory Tag
-$inventory_tag = '';
-if ($asset_id) {
-    // Example logic for generating an inventory tag
-    $prefix = "PS"; // Asset type prefix
-    $size = "5S"; // Size or category, you can modify this based on your asset's size
-    $department_code = "03"; // Department or office number
-    $factory_code = "F02"; // Factory or location code
-    $unique_id = str_pad($item_id, 2, "0", STR_PAD_LEFT); // Use item_id or another unique field for the last part of the tag
+// Fetch the employee's name based on the employee_id
+$person_accountable_name = '';
+if (isset($asset_details['employee_id'])) {
+    $employee_id = $asset_details['employee_id'];
+    $stmt_employee = $conn->prepare("SELECT name FROM employees WHERE employee_id = ?");
+    $stmt_employee->bind_param("i", $employee_id);
+    $stmt_employee->execute();
+    $result_employee = $stmt_employee->get_result();
 
-    // Concatenate to form the full inventory tag
-    $inventory_tag = "No. " . $prefix . "-" . $size . "-" . $department_code . "-" . $factory_code . "-" . $unique_id;
+    if ($result_employee->num_rows > 0) {
+        $employee_data = $result_employee->fetch_assoc();
+        $person_accountable_name = $employee_data['name'];  // Get the name of the person accountable
+    }
+
+    $stmt_employee->close();
 }
+
 
 // Fetch employees for datalist
 $employees = [];
@@ -338,7 +332,7 @@ $stmt_assets->close();
                         <!-- Visible Input for Name -->
                         <input type="text" class="form-control" name="person_accountable_name" id="person_accountable"
                             list="employeeList" placeholder="Type to search employee" autocomplete="off"
-                            value="<?= isset($asset_details['employee_id']) ? htmlspecialchars($asset_details['employee_id']) : '' ?>">
+                            value="<?= htmlspecialchars($person_accountable_name) ?>">
 
                         <!-- Hidden Input for Employee ID -->
                         <input type="hidden" name="employee_id" id="employee_id" value="<?= isset($asset_details['employee_id']) ? htmlspecialchars($asset_details['employee_id']) : '' ?>">
