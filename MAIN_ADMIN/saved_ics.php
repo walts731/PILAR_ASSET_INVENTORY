@@ -44,6 +44,7 @@ if ($result && $result->num_rows > 0) {
 
   <div class="main">
     <?php include 'includes/topbar.php' ?>
+        <a href="forms.php?id=4" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
 
     <div class="container-fluid py-4">
       <div class="d-flex justify-content-between align-items-center mb-3">

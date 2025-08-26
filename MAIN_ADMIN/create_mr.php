@@ -66,10 +66,9 @@ if ($asset_id) {
     // Concatenate to form the full inventory tag
     $inventory_tag = "No. " . $prefix . "-" . $size . "-" . $department_code . "-" . $factory_code . "-" . $unique_id;
 }
-// --- Start of PHP code for form submission and insertion ---
 if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
     // Collect form data
-    $item_id_form = isset($_POST['item_id']) ? $_POST['item_id'] : null; // Get item_id from hidden field
+    $item_id_form = $_POST['item_id'] ?? null;
     $office_location = $_POST['office_location'];
     $description = $_POST['description'];
     $model_no = $_POST['model_no'];
@@ -80,18 +79,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
     $unit = $_POST['unit'];
     $acquisition_date = $_POST['acquisition_date'];
     $acquisition_cost = $_POST['acquisition_cost'];
-    $person_accountable = $_POST['person_accountable'];
+    $person_accountable_name = $_POST['person_accountable_name']; // Visible name
+    $employee_id = $_POST['employee_id']; // Hidden employee ID
     $acquired_date = $_POST['acquired_date'];
     $counted_date = $_POST['counted_date'];
 
-
-    // Prepare and bind SQL statement for insertion, now including asset_id
-    $stmt_insert = $conn->prepare("INSERT INTO mr_details (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, acquired_date, counted_date, inventory_tag) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-    $stmt_insert->bind_param("iissssiiisssssss", $item_id_form, $asset_id, $office_location, $description, $model_no, $serial_no, $serviceable, $unserviceable, $unit_quantity, $unit, $acquisition_date, $acquisition_cost, $person_accountable, $acquired_date, $counted_date, $inventory_tag);
+    // Insert into mr_details
+    $stmt_insert = $conn->prepare("INSERT INTO mr_details 
+        (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, acquired_date, counted_date, inventory_tag) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    
+    $stmt_insert->bind_param("iissssiiisssssss",
+        $item_id_form, $asset_id, $office_location, $description, $model_no, $serial_no,
+        $serviceable, $unserviceable, $unit_quantity, $unit, $acquisition_date, $acquisition_cost,
+        $person_accountable_name, $acquired_date, $counted_date, $inventory_tag
+    );
 
     if ($stmt_insert->execute()) {
+        // Fetch the current employee ID from the assets table
+$current_emp_id = null;
+$stmt_check_emp = $conn->prepare("SELECT employee_id FROM assets WHERE id = ?");
+$stmt_check_emp->bind_param("i", $asset_id);
+$stmt_check_emp->execute();
+$result_emp = $stmt_check_emp->get_result();
+if ($row = $result_emp->fetch_assoc()) {
+    $current_emp_id = $row['employee_id'];
+}
+$stmt_check_emp->close();
+
+// If employee_id is not set and it's not null in the form, update the assets table
+if (empty($current_emp_id) && !empty($employee_id)) {
+    // Update the assets table with the employee_id
+    $stmt_update_emp = $conn->prepare("UPDATE assets SET employee_id = ? WHERE id = ?");
+    $stmt_update_emp->bind_param("ii", $employee_id, $asset_id);
+    if ($stmt_update_emp->execute()) {
+        $stmt_update_emp->close();
+    } else {
+        $_SESSION['error_message'] = "Error updating employee ID: " . $stmt_update_emp->error;
+    }
+}
+
+
         $_SESSION['success_message'] = "MR Details successfully recorded!";
         header("Location: create_mr.php?item_id=" . $item_id_form);
         exit();
@@ -100,6 +128,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
     }
     $stmt_insert->close();
 }
+
 // --- End of PHP code for form submission and insertion ---
 
 // Fetch data from the `ics_items` table using the item_id (This part remains the same as your original code)
@@ -166,6 +195,13 @@ if ($result_employees && $result_employees->num_rows > 0) {
         $employees[] = $row;
     }
 }
+
+// Assuming you are inserting or updating assets table somewhere
+$stmt_assets = $conn->prepare("UPDATE assets SET employee_id = ? WHERE id = ?");
+$stmt_assets->bind_param("ii", $employee_id, $asset_id);  // Update with employee_id
+$stmt_assets->execute();
+$stmt_assets->close();
+
 ?>
 
 <!DOCTYPE html>
@@ -294,27 +330,27 @@ if ($result_employees && $result_employees->num_rows > 0) {
                     </div>
                 </div>
 
+                <!-- Person Accountable -->
                 <div class="row mb-3">
-    <div class="col-md-12">
-        <label for="person_accountable" class="form-label">Person Accountable</label>
-        
-        <!-- Visible Input for Name -->
-        <input type="text" class="form-control" name="person_accountable_name" id="person_accountable"
-               list="employeeList" placeholder="Type to search employee" autocomplete="off"
-               value="<?= isset($asset_details['employee_id']) ? htmlspecialchars($asset_details['employee_id']) : '' ?>">
+                    <div class="col-md-12">
+                        <label for="person_accountable" class="form-label">Person Accountable</label>
 
-        <!-- Hidden Input for Employee ID -->
-        <input type="hidden" name="employee_id" id="employee_id">
+                        <!-- Visible Input for Name -->
+                        <input type="text" class="form-control" name="person_accountable_name" id="person_accountable"
+                            list="employeeList" placeholder="Type to search employee" autocomplete="off"
+                            value="<?= isset($asset_details['employee_id']) ? htmlspecialchars($asset_details['employee_id']) : '' ?>">
 
-        <!-- Datalist -->
-        <datalist id="employeeList">
-            <?php foreach ($employees as $emp): ?>
-                <option data-id="<?= $emp['employee_id'] ?>" value="<?= htmlspecialchars($emp['name']) ?>"></option>
-            <?php endforeach; ?>
-        </datalist>
-    </div>
-</div>
+                        <!-- Hidden Input for Employee ID -->
+                        <input type="hidden" name="employee_id" id="employee_id" value="<?= isset($asset_details['employee_id']) ? htmlspecialchars($asset_details['employee_id']) : '' ?>">
 
+                        <!-- Datalist -->
+                        <datalist id="employeeList">
+                            <?php foreach ($employees as $emp): ?>
+                                <option data-id="<?= $emp['employee_id'] ?>" value="<?= htmlspecialchars($emp['name']) ?>"></option>
+                            <?php endforeach; ?>
+                        </datalist>
+                    </div>
+                </div>
 
                 <!-- Acquired Date and Counted Date -->
                 <div class="row mb-3">
@@ -347,20 +383,20 @@ if ($result_employees && $result_employees->num_rows > 0) {
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="js/dashboard.js"></script>
     <script>
-document.getElementById('person_accountable').addEventListener('input', function() {
-    const inputVal = this.value;
-    const options = document.querySelectorAll('#employeeList option');
-    let selectedId = '';
+        document.getElementById('person_accountable').addEventListener('input', function() {
+            const inputVal = this.value;
+            const options = document.querySelectorAll('#employeeList option');
+            let selectedId = '';
 
-    options.forEach(option => {
-        if (option.value === inputVal) {
-            selectedId = option.getAttribute('data-id');
-        }
-    });
+            options.forEach(option => {
+                if (option.value === inputVal) {
+                    selectedId = option.getAttribute('data-id');
+                }
+            });
 
-    document.getElementById('employee_id').value = selectedId;
-});
-</script>
+            document.getElementById('employee_id').value = selectedId;
+        });
+    </script>
 
 </body>
 
