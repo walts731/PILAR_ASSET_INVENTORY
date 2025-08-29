@@ -14,14 +14,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_quantity'])) {
   $request_id = intval($_POST['request_id']);
   $new_quantity = intval($_POST['new_quantity']);
 
+  // Validate new quantity is positive
+  if ($new_quantity <= 0) {
+    $_SESSION['error_message'] = "Quantity must be greater than 0.";
+    header("Location: borrow_requests.php");
+    exit();
+  }
+
+  // Check if request belongs to user and is still pending
+  $check_stmt = $conn->prepare("
+    SELECT br.status, a.quantity as max_quantity, a.asset_name
+    FROM borrow_requests br
+    JOIN assets a ON br.asset_id = a.id
+    WHERE br.id = ? AND br.user_id = ?
+  ");
+  $check_stmt->bind_param("ii", $request_id, $user_id);
+  $check_stmt->execute();
+  $check_result = $check_stmt->get_result();
+  
+  if ($check_result->num_rows === 0) {
+    $_SESSION['error_message'] = "Request not found or unauthorized.";
+    header("Location: borrow_requests.php");
+    exit();
+  }
+  
+  $request_data = $check_result->fetch_assoc();
+  $check_stmt->close();
+  
+  if ($request_data['status'] !== 'pending') {
+    $_SESSION['error_message'] = "Can only edit pending requests.";
+    header("Location: borrow_requests.php");
+    exit();
+  }
+  
+  if ($new_quantity > $request_data['max_quantity']) {
+    $_SESSION['error_message'] = "Requested quantity ({$new_quantity}) exceeds available quantity ({$request_data['max_quantity']}) for {$request_data['asset_name']}.";
+    header("Location: borrow_requests.php");
+    exit();
+  }
+
   $stmt = $conn->prepare("
     UPDATE borrow_requests
     SET quantity = ?
-    WHERE id = ? AND user_id = ?
+    WHERE id = ? AND user_id = ? AND status = 'pending'
   ");
   $stmt->bind_param("iii", $new_quantity, $request_id, $user_id);
-  $stmt->execute();
-  $_SESSION['success_message'] = "Quantity updated successfully.";
+  
+  if ($stmt->execute() && $stmt->affected_rows > 0) {
+    $_SESSION['success_message'] = "Quantity updated successfully.";
+  } else {
+    $_SESSION['error_message'] = "Failed to update quantity.";
+  }
+  $stmt->close();
   header("Location: borrow_requests.php");
   exit();
 }
@@ -29,18 +73,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_quantity'])) {
 // Handle cancel selected
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_requests'])) {
   $selected_ids = $_POST['selected_requests'];
+  
+  if (empty($selected_ids)) {
+    $_SESSION['error_message'] = "No requests selected for cancellation.";
+    header("Location: borrow_requests.php");
+    exit();
+  }
+  
+  // Validate all selected IDs are integers
+  $selected_ids = array_map('intval', $selected_ids);
+  $selected_ids = array_filter($selected_ids, function($id) { return $id > 0; });
+  
+  if (empty($selected_ids)) {
+    $_SESSION['error_message'] = "Invalid request IDs provided.";
+    header("Location: borrow_requests.php");
+    exit();
+  }
+  
   $placeholders = implode(',', array_fill(0, count($selected_ids), '?'));
   $types = str_repeat('i', count($selected_ids));
 
-  $stmt = $conn->prepare("DELETE FROM borrow_requests WHERE id IN ($placeholders) AND user_id = ?");
+  // Only allow cancellation of pending requests that belong to the user
+  $stmt = $conn->prepare("DELETE FROM borrow_requests WHERE id IN ($placeholders) AND user_id = ? AND status = 'pending'");
   $params = array_merge($selected_ids, [$user_id]);
   $stmt->bind_param($types . 'i', ...$params);
   $stmt->execute();
+  
+  $cancelled_count = $stmt->affected_rows;
+  $stmt->close();
 
-  $_SESSION['success_message'] = "Selected borrow requests have been cancelled.";
+  if ($cancelled_count > 0) {
+    $_SESSION['success_message'] = "$cancelled_count borrow request(s) have been cancelled.";
+  } else {
+    $_SESSION['error_message'] = "No pending requests were found to cancel.";
+  }
   header("Location: borrow_requests.php");
   exit();
 }
+
+// Debug: Check user_id and session
+error_log("Debug: User ID from session = " . $user_id);
+error_log("Debug: Session data = " . print_r($_SESSION, true));
+
+// First, let's check if there are ANY borrow requests in the database
+$check_all = $conn->query("SELECT COUNT(*) as total FROM borrow_requests");
+$total_requests = $check_all->fetch_assoc()['total'];
+error_log("Debug: Total borrow requests in database = " . $total_requests);
+
+// Check if there are requests for this specific user_id
+$check_user = $conn->prepare("SELECT COUNT(*) as user_total FROM borrow_requests WHERE user_id = ?");
+$check_user->bind_param("i", $user_id);
+$check_user->execute();
+$user_total = $check_user->get_result()->fetch_assoc()['user_total'];
+error_log("Debug: Borrow requests for user $user_id = " . $user_total);
+
+// Let's also check what user_ids exist in borrow_requests
+$check_users = $conn->query("SELECT DISTINCT user_id FROM borrow_requests");
+$existing_users = [];
+while ($row = $check_users->fetch_assoc()) {
+    $existing_users[] = $row['user_id'];
+}
+error_log("Debug: User IDs in borrow_requests table = " . implode(', ', $existing_users));
 
 // Fetch requests with max quantity
 $stmt = $conn->prepare("
@@ -54,6 +147,22 @@ $stmt = $conn->prepare("
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
+
+// Debug: Check if any results found
+$row_count = $result->num_rows;
+error_log("Debug: Found $row_count borrow requests for user $user_id after JOIN query");
+
+// Store all rows in an array for display
+$borrow_requests = [];
+if ($row_count > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $borrow_requests[] = $row;
+    }
+    // Debug: Show sample data
+    if (!empty($borrow_requests)) {
+        error_log("Debug: Sample row data = " . print_r($borrow_requests[0], true));
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -82,6 +191,17 @@ $result = $stmt->get_result();
       </div>
     <?php endif; ?>
 
+    <!-- Debug Information -->
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+      <strong>Debug Info:</strong><br>
+      User ID: <?= $user_id ?><br>
+      Total requests in DB: <?= $total_requests ?><br>
+      Requests for this user: <?= $user_total ?><br>
+      User IDs in DB: <?= implode(', ', $existing_users) ?><br>
+      Query result count: <?= $row_count ?>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
     <div class="card shadow-sm">
       <form method="POST">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -105,41 +225,57 @@ $result = $stmt->get_result();
                 </tr>
               </thead>
               <tbody>
-                <?php while ($row = $result->fetch_assoc()): ?>
+                <?php if ($row_count > 0): ?>
+                  <?php foreach ($borrow_requests as $row): ?>
+                    <tr>
+                      <td><input type="checkbox" name="selected_requests[]" value="<?= $row['id'] ?>"></td>
+                      <td><?= htmlspecialchars($row['asset_name']) ?></td>
+                      <td><?= htmlspecialchars($row['office_name']) ?></td>
+                      <td>
+                        <?php
+                          $badge = match($row['status']) {
+                            'pending' => 'warning',
+                            'borrowed' => 'success',
+                            'rejected' => 'danger',
+                            'returned' => 'info',
+                            default => 'secondary'
+                          };
+                        ?>
+                        <span class="badge bg-<?= $badge ?>"><?= ucfirst($row['status']) ?></span>
+                      </td>
+                      <td><?= $row['quantity'] ?></td>
+                      <td><?= date('F j, Y g:i A', strtotime($row['requested_at'])) ?></td>
+                      <td>
+                        <?php if ($row['status'] === 'pending'): ?>
+                          <button type="button"
+                                  class="btn btn-sm btn-outline-primary edit-btn"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#editModal"
+                                  data-id="<?= $row['id'] ?>"
+                                  data-quantity="<?= $row['quantity'] ?>"
+                                  data-max="<?= $row['max_quantity'] ?>">
+                            <i class="bi bi-pencil"></i> Edit
+                          </button>
+                        <?php else: ?>
+                          <span class="text-muted small">N/A</span>
+                        <?php endif; ?>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
                   <tr>
-                    <td><input type="checkbox" name="selected_requests[]" value="<?= $row['id'] ?>"></td>
-                    <td><?= htmlspecialchars($row['asset_name']) ?></td>
-                    <td><?= htmlspecialchars($row['office_name']) ?></td>
-                    <td>
-                      <?php
-                        $badge = match($row['status']) {
-                          'pending' => 'warning',
-                          'approved' => 'success',
-                          'declined' => 'danger',
-                          default => 'secondary'
-                        };
-                      ?>
-                      <span class="badge bg-<?= $badge ?>"><?= ucfirst($row['status']) ?></span>
-                    </td>
-                    <td><?= $row['quantity'] ?></td>
-                    <td><?= date('F j, Y g:i A', strtotime($row['requested_at'])) ?></td>
-                    <td>
-                      <?php if ($row['status'] === 'pending'): ?>
-                        <button type="button"
-                                class="btn btn-sm btn-outline-primary edit-btn"
-                                data-bs-toggle="modal"
-                                data-bs-target="#editModal"
-                                data-id="<?= $row['id'] ?>"
-                                data-quantity="<?= $row['quantity'] ?>"
-                                data-max="<?= $row['max_quantity'] ?>">
-                          <i class="bi bi-pencil"></i> Edit
-                        </button>
-                      <?php else: ?>
-                        <span class="text-muted small">N/A</span>
-                      <?php endif; ?>
+                    <td colspan="7" class="text-center py-4">
+                      <div class="text-muted">
+                        <i class="bi bi-inbox display-4 d-block mb-3"></i>
+                        <h5>No Borrow Requests Found</h5>
+                        <p>You haven't made any borrow requests yet.</p>
+                        <a href="borrow.php" class="btn btn-primary btn-sm">
+                          <i class="bi bi-plus-circle"></i> Make a Borrow Request
+                        </a>
+                      </div>
                     </td>
                   </tr>
-                <?php endwhile; ?>
+                <?php endif; ?>
               </tbody>
             </table>
           </div>
@@ -176,13 +312,17 @@ $result = $stmt->get_result();
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script>
   $(document).ready(function () {
-    $('#requestsTable').DataTable();
+    // Only initialize DataTable if there are rows with data
+    <?php if ($row_count > 0): ?>
+      $('#requestsTable').DataTable();
+    <?php endif; ?>
 
+    // Check all functionality - only if checkbox exists
     $('#checkAll').on('change', function () {
       $('input[name="selected_requests[]"]').prop('checked', this.checked);
     });
 
-    // Fill modal with correct data
+    // Fill modal with correct data - only bind if edit buttons exist
     $('.edit-btn').on('click', function () {
       const id = $(this).data('id');
       const quantity = $(this).data('quantity');

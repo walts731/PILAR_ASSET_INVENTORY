@@ -43,7 +43,7 @@ while ($row = $office_result->fetch_assoc()) {
 $office_stmt->close();
 
 // Fetch available assets
-$stmt = $conn->prepare("SELECT id, asset_name, description, quantity, unit, value, acquisition_date FROM assets WHERE office_id = ? AND status = 'Available'");
+$stmt = $conn->prepare("SELECT id, asset_name, description, quantity, unit, value, acquisition_date FROM assets WHERE office_id = ? AND status = 'available'");
 $stmt->bind_param("i", $selected_office_id);
 $stmt->execute();
 $available_assets = $stmt->get_result();
@@ -56,7 +56,7 @@ FROM borrow_requests br
 JOIN assets a ON br.asset_id = a.id
 JOIN users u ON br.user_id = u.id
 JOIN offices o ON br.office_id = o.id
-WHERE br.status IN ('approved', 'borrowed')
+WHERE br.status = 'borrowed'
 ORDER BY br.approved_at DESC
 ";
 $borrowed_assets = $conn->query($borrowed_query);
@@ -100,16 +100,16 @@ $borrowed_assets = $conn->query($borrowed_query);
 
             <ul class="nav nav-tabs" id="assetTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="available-tab" data-bs-toggle="tab" data-bs-target="#available" type="button" role="tab">Available Assets</button>
+                    <button class="nav-link active" id="available-tab" data-bs-toggle="tab" data-bs-target="#available" type="button" role="tab" aria-controls="available" aria-selected="true">Available Assets</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="borrowed-tab" data-bs-toggle="tab" data-bs-target="#borrowed" type="button" role="tab">Borrowed Assets</button>
+                    <button class="nav-link" id="borrowed-tab" data-bs-toggle="tab" data-bs-target="#borrowed" type="button" role="tab" aria-controls="borrowed" aria-selected="false">Borrowed Assets</button>
                 </li>
             </ul>
 
             <div class="tab-content mt-3" id="assetTabsContent">
                 <!-- Available Assets -->
-                <div class="tab-pane fade show active" id="available" role="tabpanel">
+                <div class="tab-pane fade show active" id="available" role="tabpanel" aria-labelledby="available-tab">
                     <div class="card shadow-sm">
                         <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                             <div><i class="bi bi-table"></i> List of Available Assets</div>
@@ -184,7 +184,7 @@ $borrowed_assets = $conn->query($borrowed_query);
                 </div>
 
                 <!-- Borrowed Assets -->
-                <div class="tab-pane fade" id="borrowed" role="tabpanel">
+                <div class="tab-pane fade" id="borrowed" role="tabpanel" aria-labelledby="borrowed-tab">
                     <div class="card shadow-sm">
                         <div class="card-header">
                             <i class="bi bi-box-arrow-up"></i> Borrowed Assets (Across All Offices)

@@ -78,7 +78,7 @@ $result = $stmt->get_result();
                   <td><?= date('F j, Y h:i A', strtotime($row['requested_at'])) ?></td>
                   <td>
                     <span class="badge bg-<?php
-                      echo $row['status'] === 'approved' ? 'success' :
+                      echo $row['status'] === 'borrowed' ? 'success' :
                           ($row['status'] === 'rejected' ? 'danger' :
                           ($row['status'] === 'returned' ? 'secondary' : 'warning'));
                     ?>">
