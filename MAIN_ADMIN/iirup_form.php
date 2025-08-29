@@ -1,6 +1,6 @@
 <?php
-// Fetch latest iirup_form record
-$sql = "SELECT accountable_officer, designation, office 
+// Fetch latest iirup_form record (including header_image)
+$sql = "SELECT accountable_officer, designation, office, header_image 
         FROM iirup_form 
         ORDER BY id DESC 
         LIMIT 1";
@@ -9,13 +9,16 @@ $result = $conn->query($sql);
 $accountable_officer = "";
 $designation = "";
 $office = "";
+$header_image = "";
 
 if ($result && $result->num_rows > 0) {
     $row = $result->fetch_assoc();
     $accountable_officer = htmlspecialchars($row['accountable_officer']);
     $designation = htmlspecialchars($row['designation']);
     $office = htmlspecialchars($row['office']);
+    $header_image = htmlspecialchars($row['header_image']);
 }
+
 
 // Fetch office list
 $offices = [];
@@ -37,6 +40,17 @@ if ($result_assets && $result_assets->num_rows > 0) {
     }
 }
 ?>
+<?php if (!empty($header_image)): ?>
+    <div style="text-align: center; margin-bottom: 15px;">
+        <img src="../img/<?= $header_image ?>" 
+             alt="Header Image" 
+             style="max-height: 120px; display: block; margin: 0 auto;">
+        <div style="font-size: 12px; color: gray; margin-top: 5px;">
+            As of <?= date("F, Y") ?>
+        </div>
+    </div>
+<?php endif; ?>
+
 
 <!-- IIRUP FORM HEADER -->
 <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 20px;" class="mb-3">
