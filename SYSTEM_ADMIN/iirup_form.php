@@ -54,7 +54,7 @@ if ($result_footer && $result_footer->num_rows > 0) {
     </div>
 <?php endif; ?>
 
-<form method="POST" action="save_iirup_header_footer.php">
+<form method="POST" action="save_iirup_header_footer.php" enctype="multipart/form-data">
     <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
 
     <!-- HEADER SECTION -->
