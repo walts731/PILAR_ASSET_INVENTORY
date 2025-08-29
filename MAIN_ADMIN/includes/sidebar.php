@@ -133,7 +133,10 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
                     </a>
                 <?php endforeach; ?>
                 <a class="nav-link <?= ($page == 'Saved MR') ? 'active' : '' ?>" href="saved_mr.php">
-                    MR
+                    Property Tags
+                </a>
+                <a class="nav-link <?= ($page == 'Saved Red Tags') ? 'active' : '' ?>" href="red_tags.php">
+                    Red Tags
                 </a>
             </div>
 
