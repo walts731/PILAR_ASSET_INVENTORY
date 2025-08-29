@@ -90,11 +90,6 @@ $low_stock_count = count($low_stock_items);
   ?>
 </div>
 
-
-
-
-
-
   <!-- Right Side Controls -->
   <div class="order-2 order-sm-3 d-flex align-items-center gap-3 ms-auto flex-wrap justify-content-end">
 

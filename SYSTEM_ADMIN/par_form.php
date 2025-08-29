@@ -36,13 +36,12 @@ while ($row = $office_query->fetch_assoc()) {
 ?>
 
 <div class="container mt-3">
-    <h3>PAR Header & Footer Settings</h3>
     <form method="post" action="save_par_header_footer.php" enctype="multipart/form-data">
         <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
 
         <!-- HEADER SETTINGS -->
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header ">
                 Header Settings
             </div>
             <div class="card-body">
@@ -110,6 +109,6 @@ while ($row = $office_query->fetch_assoc()) {
             </div>
         </div>
 
-        <button type="submit" class="btn btn-info">Save Header & Footer</button>
+        <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-send-check-fill"></i>Save</button>
     </form>
 </div>

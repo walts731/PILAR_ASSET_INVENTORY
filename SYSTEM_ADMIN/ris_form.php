@@ -133,7 +133,7 @@ if ($form_id) {
     </div>
 
     <!-- Submit Button -->
-    <button type="submit" class="btn btn-success">
-        <i class="bi bi-send-check-fill"></i> Save RIS
+    <button type="submit" class="btn btn-primary btn-lg">
+        <i class="bi bi-send-check-fill"></i> Save 
     </button>
 </form>

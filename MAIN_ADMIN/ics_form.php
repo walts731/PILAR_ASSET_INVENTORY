@@ -1,4 +1,9 @@
 <?php
+require_once '../connect.php';
+
+// Get form_id from URL, default to null if not provided
+$form_id = isset($_GET['id']) ? intval($_GET['id']) : null;
+
 // Fetch the latest ICS data (remove conditional by $ics_id)
 $sql = "SELECT id, header_image, entity_name, fund_cluster, ics_no, 
                received_from_name, received_from_position, 
@@ -33,41 +38,113 @@ if ($result && $result->num_rows > 0) {
     }
 }
 
-// Fetch description + unit cost + quantity from assets
+// Fetch description + unit cost + quantity + unit from assets
 $description_details = [];
-$result = $conn->query("SELECT description, value AS unit_cost, quantity FROM assets");
+$result = $conn->query("SELECT description, value AS unit_cost, quantity, unit FROM assets");
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $description = $row['description'];
-        $description_details[$description] = [
-            'unit_cost' => $row['unit_cost'],
-            'quantity' => $row['quantity']
-        ];
+        // Only add to the details if quantity is greater than 0
+        if ($row['quantity'] > 0) {
+            $description_details[$description] = [
+                'unit_cost' => $row['unit_cost'],
+                'quantity' => $row['quantity'],
+                'unit' => $row['unit']
+            ];
+        }
     }
 }
+
+
+// Fetch office options
+$office_options = [];
+$result = $conn->query("SELECT id, office_name FROM offices");
+if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $office_options[] = $row;
+    }
+}
+
+function generateICSNo($conn)
+{
+    $year = date("Y");
+
+    // Query the latest ics_no for this year
+    $sql = "SELECT ics_no 
+            FROM ics_form 
+            WHERE ics_no LIKE 'ICS-$year-%' 
+            ORDER BY id DESC LIMIT 1";
+    $result = $conn->query($sql);
+
+    if ($result && $row = $result->fetch_assoc()) {
+        // Extract the last number
+        $lastNo = intval(substr($row['ics_no'], -4));
+        $nextNo = str_pad($lastNo + 1, 4, "0", STR_PAD_LEFT);
+    } else {
+        // First number of the year
+        $nextNo = "0001";
+    }
+
+    return "ICS-$year-$nextNo";
+}
+
+// Generate the next ICS number
+$new_ics_no = generateICSNo($conn);
+
+
 ?>
-
-
+<!-- Top-right button -->
+<div class="d-flex justify-content-end mb-3">
+    <a href="saved_ics.php?id=<?= htmlspecialchars($form_id) ?>" class="btn btn-info">
+        <i class="bi bi-folder-check"></i> View Saved ICS
+    </a>
+</div>
 <div class="card mt-4">
     <div class="card-body">
         <!-- Inventory Custodian Slip Heading -->
 
-        <form method="post" action="save_ics.php" enctype="multipart/form-data">
+        <form method="post" action="save_ics_items.php" enctype="multipart/form-data">
+            <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
+            <!-- ICS Form ID from database -->
+            <input type="hidden" name="ics_id" value="<?= htmlspecialchars($ics_data['id'] ?? '') ?>">
             <div class="mb-3 text-center">
                 <?php if (!empty($ics_data['header_image'])): ?>
                     <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
                         class="img-fluid mb-2"
                         style="max-width: 100%; height: auto; object-fit: contain;">
+
+                    <!-- Hidden input ensures it gets submitted -->
+                    <input type="hidden" name="header_image" value="<?= htmlspecialchars($ics_data['header_image']) ?>">
+                <?php else: ?>
+                    <p class="text-muted">No header image available</p>
                 <?php endif; ?>
+
             </div>
 
             <div class="row mb-3">
                 <!-- ENTITY NAME -->
                 <div class="col-6">
                     <label class="form-label fw-semibold">ENTITY NAME</label>
-                    <input type="text" class="form-control" name="entity_name" value="<?= htmlspecialchars($ics_data['entity_name']) ?>">
+                    <input type="text" class="form-control" name="entity_name"
+                        value="<?= htmlspecialchars($ics_data['entity_name']) ?>">
+                </div>
+
+                <!-- OFFICE -->
+                <div class="col-6">
+                    <label class="form-label fw-semibold">
+                        OFFICE <span style="color: red;">*</span>
+                    </label>
+                    <select class="form-select" name="office_id" required>
+                        <option value="" disabled selected>Select office</option>
+                        <?php foreach ($office_options as $office): ?>
+                            <option value="<?= htmlspecialchars($office['id']) ?>">
+                                <?= htmlspecialchars($office['office_name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
             </div>
+
 
             <div class="row">
                 <!-- FUND CLUSTER -->
@@ -79,8 +156,10 @@ if ($result && $result->num_rows > 0) {
                 <!-- ICS NO -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">ICS NO.</label>
-                    <input type="text" class="form-control" name="ics_no" value="<?= htmlspecialchars($ics_data['ics_no']) ?>">
+                    <input type="text" class="form-control" name="ics_no"
+                        value="<?= htmlspecialchars($new_ics_no) ?>" readonly>
                 </div>
+
             </div>
 
             <!-- Items Table -->
@@ -245,6 +324,12 @@ if ($result && $result->num_rows > 0) {
 
             <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-send-check-fill"></i>Save</button>
         </form>
+        <!-- Button to go to Saved ICS -->
+        <div class="mt-3">
+            <a href="saved_ics.php" class="btn btn-info">
+                <i class="bi bi-folder-check"></i> View Saved ICS
+            </a>
+        </div>
 
         <!-- Duplicate Asset Modal -->
         <div class="modal fade" id="duplicateModal" tabindex="-1" aria-labelledby="duplicateModalLabel" aria-hidden="true">
@@ -268,6 +353,30 @@ if ($result && $result->num_rows > 0) {
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+    const descriptions = <?= json_encode(array_keys($description_details)) ?>;
+    
+    document.querySelectorAll('.description-field').forEach(input => {
+        input.addEventListener('input', function() {
+            const val = this.value.toLowerCase();
+            const list = descriptions.filter(d => d.toLowerCase().includes(val));
+            
+            // Remove existing suggestions
+            let datalist = this.nextElementSibling;
+            if (!datalist || datalist.tagName.toLowerCase() !== 'datalist') {
+                datalist = document.createElement('datalist');
+                this.setAttribute('list', datalist.id = 'tempList' + Math.random().toString(36).substr(2,5));
+                this.after(datalist);
+            }
+            datalist.innerHTML = '';
+            list.forEach(d => {
+                const option = document.createElement('option');
+                option.value = d;
+                datalist.appendChild(option);
+            });
+        });
+    });
+});
     document.addEventListener('DOMContentLoaded', function() {
         const tableBody = document.getElementById('ics-items-body');
         const addRowBtn = document.getElementById('addRowBtn');
@@ -317,12 +426,28 @@ if ($result && $result->num_rows > 0) {
                 if (descriptionMap[selectedDesc]) {
                     const {
                         unit_cost,
-                        quantity
+                        quantity,
+                        unit
                     } = descriptionMap[selectedDesc];
                     if (unitCostInput) unitCostInput.value = unit_cost;
                     if (quantityInput) {
                         quantityInput.max = quantity;
                         quantityInput.placeholder = `Max: ${quantity}`;
+                    }
+
+                    // Auto-fill unit
+                    const unitSelect = row.querySelector('select[name="unit[]"]');
+                    if (unitSelect) {
+                        // Find option that matches
+                        let found = false;
+                        for (let i = 0; i < unitSelect.options.length; i++) {
+                            if (unitSelect.options[i].value === unit) {
+                                unitSelect.selectedIndex = i;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) unitSelect.selectedIndex = 0; // fallback
                     }
                 } else {
                     // If user typed something not in map, clear any limits
@@ -330,8 +455,11 @@ if ($result && $result->num_rows > 0) {
                         quantityInput.removeAttribute('max');
                         quantityInput.placeholder = '';
                     }
+                    const unitSelect = row.querySelector('select[name="unit[]"]');
+                    if (unitSelect) unitSelect.selectedIndex = 0;
                 }
             }
+
 
             const quantity = parseFloat(quantityInput?.value) || 0;
             const unitCost = parseFloat(unitCostInput?.value) || 0;

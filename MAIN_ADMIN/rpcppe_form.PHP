@@ -22,11 +22,30 @@ if ($result && $result->num_rows > 0) {
     $chairman_inventory = $row['chairman_inventory'];
     $mayor = $row['mayor'];
 }
+
+// Fetch latest header image from rpcppe_form (if it exists)
+$header_image = "";
+$sql_header = "SELECT header_image FROM rpcppe_form ORDER BY id DESC LIMIT 1";
+$result_header = $conn->query($sql_header);
+if ($result_header && $result_header->num_rows > 0) {
+    $row_header = $result_header->fetch_assoc();
+    $header_image = $row_header['header_image'];
+}
+
 ?>
 
 <form method="POST" class="container mt-3">
     <!-- First Header Table -->
     <table class="table table-bordered align-middle">
+        <?php if (!empty($header_image)): ?>
+    <div class="text-center mb-3">
+        <img src="../img/<?= htmlspecialchars($header_image) ?>" 
+             alt="Header Image" 
+             class="img-fluid rounded shadow-sm" 
+             style="max-height: 120px;">
+        <p class="mt-2 fw-semibold">As of <?= date("F, Y") ?></p>
+    </div>
+<?php endif; ?>
         <tr>
             <td rowspan="2" class="align-middle text-center">For which</td>
             <td class="p-0 text-center">
