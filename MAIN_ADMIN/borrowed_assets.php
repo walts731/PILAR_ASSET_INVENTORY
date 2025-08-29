@@ -22,15 +22,15 @@ if (!isset($_SESSION['office_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Fetch borrowed assets
-$query = "
-  SELECT br.id, a.asset_name, a.description, a.unit, br.status, br.quantity, br.requested_at, br.approved_at, o.office_name
-  FROM borrow_requests br
-  JOIN assets a ON br.asset_id = a.id
-  JOIN offices o ON br.office_id = o.id
-  WHERE br.user_id = ? AND br.status IN ('approved', 'borrowed')
-  ORDER BY br.approved_at DESC
-";
+  // Fetch borrowed assets
+  $query = "
+    SELECT br.id, a.asset_name, a.description, a.unit, br.status, br.quantity, br.requested_at, br.approved_at, o.office_name
+    FROM borrow_requests br
+    JOIN assets a ON br.asset_id = a.id
+    JOIN offices o ON br.office_id = o.id
+    WHERE br.user_id = ? AND br.status = 'borrowed'
+    ORDER BY br.approved_at DESC
+  ";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
