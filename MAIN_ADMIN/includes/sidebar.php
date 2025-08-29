@@ -93,30 +93,29 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
             </a>
 
             <!-- Inventory dropdown -->
-<a class="<?= ($page == 'inventory' || $page == 'inventory_category' || $page == 'infrastructure_inventory') ? 'active' : '' ?>"
-    data-bs-toggle="collapse" href="#inventorySubMenu" role="button"
-    aria-expanded="<?= ($page == 'inventory' || $page == 'inventory_category' || $page == 'infrastructure_inventory') ? 'true' : 'false' ?>"
-    aria-controls="inventorySubMenu">
-    <i class="bi bi-box-seam"></i> Inventory
-    <i class="bi bi-caret-down-fill float-end"></i>
-</a>
-<div class="collapse ps-4 <?= ($page == 'inventory' || $page == 'inventory_category' || $page == 'infrastructure_inventory') ? 'show' : '' ?>"
-    id="inventorySubMenu">
-    <a class="nav-link <?= ($page == 'inventory') ? 'active' : '' ?>" href="inventory.php">All</a>
-    
-    <?php foreach ($categories as $cat): ?>
-        <a class="nav-link <?= (isset($_GET['category']) && $_GET['category'] == $cat['id'] && $page == 'inventory_category') ? 'active' : '' ?>"
-            href="inventory_category.php?category=<?= $cat['id'] ?>">
-            <?= htmlspecialchars($cat['category_name']) ?>
-        </a>
-    <?php endforeach; ?>
-    
-    <!-- Static Infrastructure Inventory -->
-    <a class="nav-link <?= ($page == 'infrastructure_inventory') ? 'active' : '' ?>" href="infrastructure_inventory.php">
-        Infrastructure
-    </a>
-</div>
+            <a class="<?= ($page == 'inventory' || $page == 'inventory_category' || $page == 'infrastructure_inventory') ? 'active' : '' ?>"
+                data-bs-toggle="collapse" href="#inventorySubMenu" role="button"
+                aria-expanded="<?= ($page == 'inventory' || $page == 'inventory_category' || $page == 'infrastructure_inventory') ? 'true' : 'false' ?>"
+                aria-controls="inventorySubMenu">
+                <i class="bi bi-box-seam"></i> Inventory
+                <i class="bi bi-caret-down-fill float-end"></i>
+            </a>
+            <div class="collapse ps-4 <?= ($page == 'inventory' || $page == 'inventory_category' || $page == 'infrastructure_inventory') ? 'show' : '' ?>"
+                id="inventorySubMenu">
+                <a class="nav-link <?= ($page == 'inventory') ? 'active' : '' ?>" href="inventory.php">All</a>
 
+                <?php foreach ($categories as $cat): ?>
+                    <a class="nav-link <?= (isset($_GET['category']) && $_GET['category'] == $cat['id'] && $page == 'inventory_category') ? 'active' : '' ?>"
+                        href="inventory_category.php?category=<?= $cat['id'] ?>">
+                        <?= htmlspecialchars($cat['category_name']) ?>
+                    </a>
+                <?php endforeach; ?>
+
+                <!-- Static Infrastructure Inventory -->
+                <a class="nav-link <?= ($page == 'infrastructure_inventory') ? 'active' : '' ?>" href="infrastructure_inventory.php">
+                    Infrastructure
+                </a>
+            </div>
 
             <!-- Forms dropdown -->
             <a class="<?= $formActive ? 'active' : '' ?>"
@@ -133,6 +132,9 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
                         <?= htmlspecialchars($category['category']) ?>
                     </a>
                 <?php endforeach; ?>
+                <a class="nav-link <?= ($page == 'Saved MR') ? 'active' : '' ?>" href="saved_mr.php">
+                    MR
+                </a>
             </div>
 
             <a href="borrow.php" class="<?= ($page == 'borrow') ? 'active' : '' ?>">
