@@ -321,11 +321,11 @@ $stmt->close();
         $threshold = 5;
 
         if ($selected_office === "all") {
-          // Fetch all consumables across offices
-          $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable'");
+          // Fetch all consumables across offices but only with quantity > 0
+          $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable' AND quantity > 0");
         } else {
-          // Fetch consumables for a specific office
-          $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable' AND office_id = ?");
+          // Fetch consumables for a specific office but only with quantity > 0
+          $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable' AND office_id = ? AND quantity > 0");
           $cres->bind_param("i", $selected_office);
         }
 
@@ -431,13 +431,23 @@ $stmt->close();
                 <tbody>
                   <?php
                   $threshold = 5; // adjust threshold if needed
-                  $stmt = $conn->prepare("
-                            SELECT a.*, c.category_name 
-                            FROM assets a 
-                            JOIN categories c ON a.category = c.id 
-                            WHERE a.type = 'consumable' AND a.office_id = ?
-                          ");
-                  $stmt->bind_param("i", $selected_office);
+                  if ($selected_office === "all") {
+                    $stmt = $conn->prepare("
+    SELECT a.*, c.category_name 
+    FROM assets a 
+    JOIN categories c ON a.category = c.id 
+    WHERE a.type = 'consumable' AND a.quantity > 0
+  ");
+                  } else {
+                    $stmt = $conn->prepare("
+    SELECT a.*, c.category_name 
+    FROM assets a 
+    JOIN categories c ON a.category = c.id 
+    WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0
+  ");
+                    $stmt->bind_param("i", $selected_office);
+                  }
+
                   $stmt->execute();
                   $result = $stmt->get_result();
                   while ($row = $result->fetch_assoc()):

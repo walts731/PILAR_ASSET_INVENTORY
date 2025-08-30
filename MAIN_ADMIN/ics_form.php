@@ -39,8 +39,12 @@ if ($result && $result->num_rows > 0) {
 }
 
 // Fetch description + unit cost + quantity + unit from assets
+// Fetch description + unit cost + quantity + unit only for type = 'asset'
 $description_details = [];
-$result = $conn->query("SELECT description, value AS unit_cost, quantity, unit FROM assets");
+$result = $conn->query("SELECT description, value AS unit_cost, quantity, unit 
+                        FROM assets 
+                        WHERE type = 'asset'");
+
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $description = $row['description'];
