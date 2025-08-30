@@ -82,12 +82,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
     $unit = $_POST['unit'];
     $acquisition_date = $_POST['acquisition_date'];
     $acquisition_cost = $_POST['acquisition_cost'];
-    $person_accountable_name = $_POST['person_accountable_name']; // Visible name
-    $employee_id = $_POST['employee_id']; // Hidden employee ID
+    $person_accountable_name = $_POST['person_accountable_name']; 
+    $employee_id = $_POST['employee_id']; 
     $acquired_date = $_POST['acquired_date'];
     $counted_date = $_POST['counted_date'];
 
-    // --- Prioritize updating the employee_id in the assets table first ---
+    // --- Update employee_id in assets table ---
     if ($employee_id) {
         $stmt_update_employee = $conn->prepare("UPDATE assets SET employee_id = ? WHERE id = ?");
         $stmt_update_employee->bind_param("ii", $employee_id, $asset_id);
@@ -98,6 +98,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
             exit();
         }
         $stmt_update_employee->close();
+    }
+
+    // --- ✅ NEW: Update inventory_tag in assets table ---
+    if ($asset_id && $inventory_tag) {
+        $stmt_update_tag = $conn->prepare("UPDATE assets SET inventory_tag = ? WHERE id = ?");
+        $stmt_update_tag->bind_param("si", $inventory_tag, $asset_id);
+        $stmt_update_tag->execute();
+        $stmt_update_tag->close();
     }
 
     // Insert into mr_details
@@ -134,6 +142,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
     }
     $stmt_insert->close();
 }
+
 
 // --- End of PHP code for form submission and insertion ---
 

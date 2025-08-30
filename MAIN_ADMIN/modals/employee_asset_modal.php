@@ -21,6 +21,7 @@
             <tbody id="assetsTableBody">
               <tr>
                 <td colspan="6" class="text-center text-muted">Select an employee to view assets.</td>
+                
               </tr>
             </tbody>
           </table>
@@ -28,3 +29,5 @@
       </div>
     </div>
   </div>
+
+  

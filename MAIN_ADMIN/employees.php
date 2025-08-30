@@ -226,8 +226,6 @@ while ($row = $result->fetch_assoc()) {
     </div>
   </div>
 
-
-
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -331,6 +329,25 @@ while ($row = $result->fetch_assoc()) {
 
       $("#editEmployeeModal").modal("show");
     });
+
+    $(document).on('click', '.transfer-asset', function () {
+  // pass hidden values
+  $('#transfer_asset_id').val($(this).data('asset-id'));
+  $('#transfer_inventory_tag').val($(this).data('inventory-tag'));
+  $('#transfer_current_employee_id').val($(this).data('current-employee-id'));
+
+  // reset datalist (reload from PHP, avoid duplicates)
+  let currentEmpId = $(this).data('current-employee-id');
+  $('#employeesList option').each(function () {
+    if ($(this).val().startsWith(currentEmpId + " -")) {
+      $(this).remove();
+    }
+  });
+
+  // show modal
+  $('#transferModal').modal('show');
+});
+
   </script>
 </body>
 
@@ -341,3 +358,47 @@ while ($row = $result->fetch_assoc()) {
 <?php include 'modals/import_employee_modal.php'; ?>
 <?php include 'modals/employee_duplicate_modal.php'; ?>
 <?php include 'modals/add_employee_duplicate_modal.php'; ?>
+<!-- Transfer Asset Modal -->
+<div class="modal fade" id="transferModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="transferForm" method="POST" action="transfer_asset.php">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Transfer Asset</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <!-- hidden fields -->
+          <input type="hidden" name="asset_id" id="transfer_asset_id">
+          <input type="hidden" name="inventory_tag" id="transfer_inventory_tag">
+          <input type="hidden" name="current_employee_id" id="transfer_current_employee_id">
+
+          <label for="new_employee" class="form-label">Select New Employee</label>
+          <input class="form-control" list="employeesList" name="new_employee" id="new_employee"
+                 placeholder="Type to search employee..." required>
+
+          <datalist id="employeesList">
+            <?php
+              // load all employees (exclude later in JS)
+              $empRes = $conn->query("SELECT employee_id, name FROM employees");
+              while ($emp = $empRes->fetch_assoc()) {
+                echo "<option value='{$emp['employee_id']} - {$emp['name']}'>";
+              }
+            ?>
+          </datalist>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Confirm Transfer</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+
+
