@@ -116,11 +116,12 @@ $stmt->close();
         <?php
         $total = $active = $borrowed = $red_tagged = 0;
         if ($selected_office === "all") {
-          $res = $conn->prepare("SELECT status, red_tagged FROM assets WHERE type = 'asset'");
+          $res = $conn->prepare("SELECT status, red_tagged FROM assets WHERE type = 'asset' AND quantity > 0");
         } else {
-          $res = $conn->prepare("SELECT status, red_tagged FROM assets WHERE type = 'asset' AND office_id = ?");
+          $res = $conn->prepare("SELECT status, red_tagged FROM assets WHERE type = 'asset' AND office_id = ? AND quantity > 0");
           $res->bind_param("i", $selected_office);
         }
+
         $res->execute();
         $resResult = $res->get_result();
         while ($r = $resResult->fetch_assoc()) {
@@ -222,17 +223,18 @@ $stmt->close();
     SELECT a.*, c.category_name 
     FROM assets a 
     JOIN categories c ON a.category = c.id 
-    WHERE a.type = 'asset'
+    WHERE a.type = 'asset' AND a.quantity > 0
   ");
                   } else {
                     $stmt = $conn->prepare("
     SELECT a.*, c.category_name 
     FROM assets a 
     JOIN categories c ON a.category = c.id 
-    WHERE a.type = 'asset' AND a.office_id = ?
+    WHERE a.type = 'asset' AND a.office_id = ? AND a.quantity > 0
   ");
                     $stmt->bind_param("i", $selected_office);
                   }
+
                   $stmt->execute();
                   $result = $stmt->get_result();
                   while ($row = $result->fetch_assoc()):
