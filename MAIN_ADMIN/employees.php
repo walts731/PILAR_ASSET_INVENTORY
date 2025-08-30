@@ -41,11 +41,17 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
 $employees = [];
 $result = $conn->query("
   SELECT e.employee_id, e.employee_no, e.name, e.status, e.date_added, e.image,
-         e.office_id, o.office_name
+         e.office_id, o.office_name,
+         CASE 
+           WHEN EXISTS (SELECT 1 FROM mr_details m WHERE m.person_accountable = e.name) 
+           THEN 'uncleared'
+           ELSE 'cleared'
+         END AS clearance_status
   FROM employees e
   LEFT JOIN offices o ON e.office_id = o.id
   ORDER BY e.date_added DESC
 ");
+
 while ($row = $result->fetch_assoc()) {
   $employees[] = $row;
 }
@@ -94,7 +100,8 @@ while ($row = $result->fetch_assoc()) {
                 <th>Employee No</th>
                 <th>Name</th>
                 <th>Office</th>
-                <th>Status</th>
+                <th>Employment Status</th>
+                <th>Clearance Status</th>
                 <th>Date Added</th>
                 <th>Image</th>
                 <th>Action</th>
@@ -110,6 +117,11 @@ while ($row = $result->fetch_assoc()) {
                     <span class="badge 
                       <?= $emp['status'] == 'permanent' ? 'bg-success' : ($emp['status'] == 'contractual' ? 'bg-warning text-dark' : ($emp['status'] == 'resigned' ? 'bg-secondary' : 'bg-info')) ?>">
                       <?= htmlspecialchars(ucfirst($emp['status'])) ?>
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge <?= $emp['clearance_status'] == 'cleared' ? 'bg-success' : 'bg-danger' ?>">
+                      <?= ucfirst($emp['clearance_status']) ?>
                     </span>
                   </td>
                   <td><?= date("F d, Y", strtotime($emp['date_added'])) ?></td>
@@ -221,7 +233,7 @@ while ($row = $result->fetch_assoc()) {
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script src="js/dashboard.js"></script>
+  <script src="js/dashboard.js"></script>
   <script>
     const systemLogo = "<?= $systemLogo ?>";
 
