@@ -38,12 +38,11 @@ if ($result && $result->num_rows > 0) {
     }
 }
 
-// Fetch description + unit cost + quantity + unit from assets
-// Fetch description + unit cost + quantity + unit only for type = 'asset'
+// Fetch description + unit cost + quantity + unit only for type = 'asset' and quantity > 0
 $description_details = [];
 $result = $conn->query("SELECT description, value AS unit_cost, quantity, unit 
                         FROM assets 
-                        WHERE type = 'asset'");
+                        WHERE type = 'asset' AND quantity > 0");
 
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
@@ -58,7 +57,6 @@ if ($result && $result->num_rows > 0) {
         }
     }
 }
-
 
 // Fetch office options
 $office_options = [];
