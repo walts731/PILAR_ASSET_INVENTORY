@@ -41,7 +41,7 @@ if ($result && $result->num_rows > 0) {
   <div class="container-fluid py-4">
     <div class="card shadow-sm">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold"><i class="bi bi-list-check"></i> Saved MR Records</h5>
+        <h5 class="mb-0 fw-bold"><i class="bi bi-list-check"></i> Saved Property Tags Records</h5>
       </div>
       <div class="card-body">
         <?php if (!empty($mr_records)): ?>
@@ -66,7 +66,7 @@ if ($result && $result->num_rows > 0) {
                     <td><?= htmlspecialchars($mr['person_accountable']) ?></td>
                     <td><?= date('F d, Y', strtotime($mr['created_at'])) ?></td>
                     <td class="text-center">
-                      <a href="view_mr.php?id=<?= urlencode($mr['mr_id']) ?>" class="btn btn-sm btn-primary">
+                      <a href="view_mr.php?id=<?= urlencode($mr['mr_id']) ?>" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-eye"></i> View
                       </a>
                     </td>

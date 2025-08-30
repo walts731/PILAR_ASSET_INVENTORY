@@ -220,7 +220,7 @@ $stmt_assets->close();
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Create MR</title>
+    <title>Create Property Tag</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
@@ -257,10 +257,10 @@ $stmt_assets->close();
             <!-- Card wrapper -->
             <div class="card shadow">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="m-0">Create MR</h5>
+                    <h5 class="m-0">Create Property Tag</h5>
                     <!-- Top-right button (optional) -->
                     <a href="saved_mr.php" class="btn btn-info btn-sm">
-                        <i class="bi bi-folder-check"></i> View Saved MR
+                        <i class="bi bi-folder-check"></i> View Saved Property Tags
                     </a>
                 </div>
                 <!-- Header: Logo, QR, and GOV LABEL -->
@@ -397,7 +397,7 @@ $stmt_assets->close();
                         </button>
 
                         <?php if ($existing_mr_check): ?>
-                            <a href="print_mr.php?item_id=<?= htmlspecialchars($item_id) ?>" class="btn btn-info ms-2">Print MR</a>
+                            <a href="print_mr.php?item_id=<?= htmlspecialchars($item_id) ?>" class="btn btn-info ms-2">Print</a>
                         <?php endif; ?>
                     </form>
                 </div>

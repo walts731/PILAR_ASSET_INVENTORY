@@ -131,7 +131,7 @@ $stmt->close();
                       <td><?= htmlspecialchars($item['estimated_useful_life']) ?></td>
                       <td>
                         <a href="create_mr.php?item_id=<?= htmlspecialchars($item['item_id']) ?>&ics_id=<?= htmlspecialchars($ics['ics_id']) ?>" class="btn btn-primary btn-sm">
-                          Create MR
+                          Create Property Tag
                         </a>
 
                       </td> <!-- Create MR button -->
