@@ -71,7 +71,7 @@ $units = $unit_query->fetch_all(MYSQLI_ASSOC);
                     <label for="status" class="form-label">Status</label> <span class="text-danger">*</span>
                     <select name="status" id="status" class="form-select" required>
                         <option value="available">Available</option>
-                        <option value="borrowed">Borrowed</option>
+                        <option value="unavailable">Not Available</option>
                     </select>
                 </div>
 
