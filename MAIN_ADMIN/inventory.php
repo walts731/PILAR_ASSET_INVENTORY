@@ -563,6 +563,13 @@ $stmt->close();
             document.getElementById('viewLastUpdated').textContent = formatDateFormal(data.last_updated);
             document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
 
+            // NEW OPTIONAL FIELDS
+        document.getElementById('viewSerialNo').textContent = data.serial_no ?? '';
+        document.getElementById('viewCode').textContent = data.code ?? '';
+        document.getElementById('viewPropertyNo').textContent = data.property_no ?? '';
+        document.getElementById('viewModel').textContent = data.model ?? '';
+        document.getElementById('viewBrand').textContent = data.brand ?? '';
+        
             // Images
             document.getElementById('viewQrCode').src = '../img/' + data.qr_code;
             document.getElementById('municipalLogoImg').src = '../img/' + data.system_logo;

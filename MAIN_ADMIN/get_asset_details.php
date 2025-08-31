@@ -19,6 +19,11 @@ if (isset($_GET['id'])) {
       a.qr_code,
       a.image,
       a.type,
+      a.serial_no,       -- NEW optional field
+      a.code,            -- NEW optional field
+      a.property_no,     -- NEW optional field
+      a.model,           -- NEW optional field
+      a.brand,           -- NEW optional field
       c.category_name,
       c.type AS category_type,
       o.office_name,

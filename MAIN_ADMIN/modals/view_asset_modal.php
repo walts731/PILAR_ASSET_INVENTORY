@@ -36,6 +36,13 @@
               <p class="mb-1"><strong>Status:</strong> <span id="viewStatus"></span></p>
               <p class="mb-1"><strong>Quantity:</strong> <span id="viewQuantity"></span></p>
               <p class="mb-1"><strong>Unit:</strong> <span id="viewUnit"></span></p>
+
+              <!-- NEW OPTIONAL FIELDS -->
+              <p class="mb-1"><strong>Serial No.:</strong> <span id="viewSerialNo"></span></p>
+              <p class="mb-1"><strong>Code:</strong> <span id="viewCode"></span></p>
+              <p class="mb-1"><strong>Property No.:</strong> <span id="viewPropertyNo"></span></p>
+              <p class="mb-1"><strong>Model:</strong> <span id="viewModel"></span></p>
+              <p class="mb-1"><strong>Brand:</strong> <span id="viewBrand"></span></p>
             </div>
           </div>
 
@@ -56,7 +63,7 @@
 </div>
 
 <script>
-  document.querySelectorAll('.viewAssetBtn').forEach(button => {
+document.querySelectorAll('.viewAssetBtn').forEach(button => {
   button.addEventListener('click', function () {
     const assetId = this.getAttribute('data-id');
 
@@ -76,11 +83,19 @@
         document.getElementById('viewStatus').textContent = data.status;
         document.getElementById('viewQuantity').textContent = data.quantity;
         document.getElementById('viewUnit').textContent = data.unit;
+
+        // NEW OPTIONAL FIELDS
+        document.getElementById('viewSerialNo').textContent = data.serial_no ?? '';
+        document.getElementById('viewCode').textContent = data.code ?? '';
+        document.getElementById('viewPropertyNo').textContent = data.property_no ?? '';
+        document.getElementById('viewModel').textContent = data.model ?? '';
+        document.getElementById('viewBrand').textContent = data.brand ?? '';
+
         document.getElementById('viewAcquisitionDate').textContent = data.acquisition_date;
         document.getElementById('viewLastUpdated').textContent = data.last_updated;
         document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
 
-        //  COMPUTE TOTAL VALUE
+        // COMPUTE TOTAL VALUE
         const totalValue = parseFloat(data.value) * parseInt(data.quantity);
         document.getElementById('viewTotalValue').textContent = totalValue.toFixed(2);
 
@@ -91,5 +106,4 @@
       });
   });
 });
-
 </script>
