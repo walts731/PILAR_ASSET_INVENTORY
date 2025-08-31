@@ -12,6 +12,11 @@ $offices = $office_query->fetch_all(MYSQLI_ASSOC);
 // Fetch units
 $unit_query = $conn->query("SELECT id, unit_name FROM unit");
 $units = $unit_query->fetch_all(MYSQLI_ASSOC);
+
+// Auto-generate property number (example format: PROP-0001)
+$property_query = $conn->query("SELECT COUNT(*) AS total FROM assets");
+$totalAssets = $property_query->fetch_assoc()['total'] + 1;
+$property_no = "PROP-" . str_pad($totalAssets, 4, "0", STR_PAD_LEFT);
 ?>
 
 <!-- Add Asset Modal -->
@@ -28,6 +33,34 @@ $units = $unit_query->fetch_all(MYSQLI_ASSOC);
                     <label for="description" class="form-label">Description</label> <span class="text-danger">*</span>
                     <textarea name="description" id="description" class="form-control" rows="2" required></textarea>
                 </div>
+
+                <!-- Optional Fields -->
+                <div class="col-md-4">
+                    <label for="serial_no" class="form-label">Serial No.</label>
+                    <input type="text" name="serial_no" id="serial_no" class="form-control">
+                </div>
+
+                <div class="col-md-4">
+                    <label for="code" class="form-label">Code</label>
+                    <input type="text" name="code" id="code" class="form-control">
+                </div>
+
+                <div class="col-md-4">
+                    <label for="property_no" class="form-label">Property No.</label>
+                    <input type="text" name="property_no" id="property_no" class="form-control" 
+                           value="<?= $property_no ?>" readonly>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="model" class="form-label">Model</label>
+                    <input type="text" name="model" id="model" class="form-control">
+                </div>
+
+                <div class="col-md-6">
+                    <label for="brand" class="form-label">Brand</label>
+                    <input type="text" name="brand" id="brand" class="form-control">
+                </div>
+                <!-- End Optional Fields -->
 
                 <div class="col-md-12">
                     <div class="row align-items-center">
@@ -111,7 +144,6 @@ $units = $unit_query->fetch_all(MYSQLI_ASSOC);
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </div>
-
         </form>
     </div>
 </div>

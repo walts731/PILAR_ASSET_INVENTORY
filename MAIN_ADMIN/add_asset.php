@@ -20,9 +20,15 @@ $type        = mysqli_real_escape_string($conn, $_POST['type']);
 $acquired    = date('Y-m-d');
 $red_tagged  = 0;
 
+// New optional fields
+$serial_no   = !empty($_POST['serial_no']) ? mysqli_real_escape_string($conn, $_POST['serial_no']) : null;
+$code        = !empty($_POST['code']) ? mysqli_real_escape_string($conn, $_POST['code']) : null;
+$property_no = !empty($_POST['property_no']) ? mysqli_real_escape_string($conn, $_POST['property_no']) : null;
+$model       = !empty($_POST['model']) ? mysqli_real_escape_string($conn, $_POST['model']) : null;
+$brand       = !empty($_POST['brand']) ? mysqli_real_escape_string($conn, $_POST['brand']) : null;
+
 // Image handling
 $image_filename = null;
-
 if (isset($_FILES['asset_image']) && $_FILES['asset_image']['error'] === UPLOAD_ERR_OK) {
     $image_tmp = $_FILES['asset_image']['tmp_name'];
     $image_name = basename($_FILES['asset_image']['name']);
@@ -42,9 +48,17 @@ if (isset($_FILES['asset_image']) && $_FILES['asset_image']['error'] === UPLOAD_
 // Insert asset into the database
 $sql = "
   INSERT INTO assets 
-    (category, description, quantity, unit, value, status, office_id, type, red_tagged, acquisition_date, last_updated, image)
+    (category, description, quantity, unit, value, status, office_id, type, red_tagged, 
+     acquisition_date, last_updated, image, serial_no, code, property_no, model, brand)
   VALUES 
-    ($category, '$description', $quantity, '$unit', $value, '$status', $office_id, '$type', $red_tagged, '$acquired', '$acquired', " . ($image_filename ? "'$image_filename'" : "NULL") . ")
+    ($category, '$description', $quantity, '$unit', $value, '$status', $office_id, '$type', $red_tagged, 
+     '$acquired', '$acquired', " . ($image_filename ? "'$image_filename'" : "NULL") . ",
+     " . ($serial_no ? "'$serial_no'" : "NULL") . ",
+     " . ($code ? "'$code'" : "NULL") . ",
+     " . ($property_no ? "'$property_no'" : "NULL") . ",
+     " . ($model ? "'$model'" : "NULL") . ",
+     " . ($brand ? "'$brand'" : "NULL") . "
+    )
 ";
 
 if (mysqli_query($conn, $sql)) {
