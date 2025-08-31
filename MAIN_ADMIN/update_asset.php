@@ -14,6 +14,13 @@ if (
     $status = mysqli_real_escape_string($conn, $_POST['status']);
     $office = intval($_POST['office']);
 
+    // ✅ New optional fields (sanitize safely)
+    $serial_no   = isset($_POST['serial_no'])   ? mysqli_real_escape_string($conn, $_POST['serial_no'])   : '';
+    $code        = isset($_POST['code'])        ? mysqli_real_escape_string($conn, $_POST['code'])        : '';
+    $property_no = isset($_POST['property_no']) ? mysqli_real_escape_string($conn, $_POST['property_no']) : '';
+    $model       = isset($_POST['model'])       ? mysqli_real_escape_string($conn, $_POST['model'])       : '';
+    $brand       = isset($_POST['brand'])       ? mysqli_real_escape_string($conn, $_POST['brand'])       : '';
+
     // Image handling
     $image_query = "";
     if (isset($_FILES['image']) && $_FILES['image']['error'] == UPLOAD_ERR_OK) {
@@ -37,7 +44,7 @@ if (
         }
     }
 
-    // Update query
+    // ✅ Update query with new fields
     $sql = "
         UPDATE assets 
         SET 
@@ -46,6 +53,11 @@ if (
             quantity = $quantity,
             unit = '$unit',
             status = '$status',
+            serial_no = '$serial_no',
+            code = '$code',
+            property_no = '$property_no',
+            model = '$model',
+            brand = '$brand',
             last_updated = NOW()
             $image_query
         WHERE id = $id AND type = 'asset'

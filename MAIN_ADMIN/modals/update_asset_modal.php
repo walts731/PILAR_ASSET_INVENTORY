@@ -32,7 +32,7 @@
             </select>
           </div>
 
-          <!-- Unit (Dynamic from units table) -->
+          <!-- Unit -->
           <div class="col-md-6">
             <label for="edit_asset_unit" class="form-label">Unit</label>
             <select class="form-select" name="unit" id="edit_asset_unit" required>
@@ -60,6 +60,32 @@
               <option value="borrowed">Borrowed</option>
               <option value="unavailable">Unavailable</option>
             </select>
+          </div>
+
+          <!-- 🔹 New Optional Fields -->
+          <div class="col-md-6">
+            <label for="edit_asset_serial" class="form-label">Serial No</label>
+            <input type="text" class="form-control" name="serial_no" id="edit_asset_serial">
+          </div>
+
+          <div class="col-md-6">
+            <label for="edit_asset_code" class="form-label">Code</label>
+            <input type="text" class="form-control" name="code" id="edit_asset_code">
+          </div>
+
+          <div class="col-md-6">
+            <label for="edit_asset_property" class="form-label">Property No</label>
+            <input type="text" class="form-control" name="property_no" id="edit_asset_property">
+          </div>
+
+          <div class="col-md-6">
+            <label for="edit_asset_model" class="form-label">Model</label>
+            <input type="text" class="form-control" name="model" id="edit_asset_model">
+          </div>
+
+          <div class="col-md-6">
+            <label for="edit_asset_brand" class="form-label">Brand</label>
+            <input type="text" class="form-control" name="brand" id="edit_asset_brand">
           </div>
 
           <!-- Image Upload and Preview -->

@@ -171,18 +171,26 @@ $(document).on("click", ".updateAssetBtn", function () {
     $("#edit_asset_status").val($(this).data("status"));
     $("#edit_asset_office").val($(this).data("office"));
 
+    // 🔹 Optional fields
+    $("#edit_asset_serial").val($(this).data("serial"));
+    $("#edit_asset_code").val($(this).data("code"));
+    $("#edit_asset_property").val($(this).data("property"));
+    $("#edit_asset_model").val($(this).data("model"));
+    $("#edit_asset_brand").val($(this).data("brand"));
+
     // Set current image
     const imgPath = "../img/assets/" + $(this).data("image");
     $("#edit_asset_preview").attr("src", imgPath).show();
-  });
+});
 
-  // Live preview for new image selection
-  $("#edit_asset_image").on("change", function () {
+// Live preview for new image selection
+$("#edit_asset_image").on("change", function () {
     const [file] = this.files;
     if (file) {
-      $("#edit_asset_preview").attr("src", URL.createObjectURL(file)).show();
+        $("#edit_asset_preview").attr("src", URL.createObjectURL(file)).show();
     }
-  });
+});
+
 
 // Delete Asset Modal
 $(document).ready(function () {

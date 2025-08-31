@@ -283,6 +283,11 @@ $stmt->close();
                             data-status="<?= $row['status'] ?>"
                             data-office="<?= $row['office_id'] ?>"
                             data-image="<?= $row['image'] ?>"
+                            data-serial="<?= htmlspecialchars($row['serial_no']) ?>"
+                            data-code="<?= htmlspecialchars($row['code']) ?>"
+                            data-property="<?= htmlspecialchars($row['property_no']) ?>"
+                            data-model="<?= htmlspecialchars($row['model']) ?>"
+                            data-brand="<?= htmlspecialchars($row['brand']) ?>"
                             data-bs-toggle="modal"
                             data-bs-target="#updateAssetModal">
                             <i class="bi bi-pencil-square"></i>
@@ -564,12 +569,12 @@ $stmt->close();
             document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
 
             // NEW OPTIONAL FIELDS
-        document.getElementById('viewSerialNo').textContent = data.serial_no ?? '';
-        document.getElementById('viewCode').textContent = data.code ?? '';
-        document.getElementById('viewPropertyNo').textContent = data.property_no ?? '';
-        document.getElementById('viewModel').textContent = data.model ?? '';
-        document.getElementById('viewBrand').textContent = data.brand ?? '';
-        
+            document.getElementById('viewSerialNo').textContent = data.serial_no ?? '';
+            document.getElementById('viewCode').textContent = data.code ?? '';
+            document.getElementById('viewPropertyNo').textContent = data.property_no ?? '';
+            document.getElementById('viewModel').textContent = data.model ?? '';
+            document.getElementById('viewBrand').textContent = data.brand ?? '';
+
             // Images
             document.getElementById('viewQrCode').src = '../img/' + data.qr_code;
             document.getElementById('municipalLogoImg').src = '../img/' + data.system_logo;
