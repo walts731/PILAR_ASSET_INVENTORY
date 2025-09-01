@@ -57,6 +57,7 @@ if ($category) {
     JOIN categories c ON a.category = c.id
     LEFT JOIN offices o ON a.office_id = o.id
     WHERE a.category = ?
+    AND a.quantity > 0
   ");
   $stmt->bind_param("i", $category_id);
   $stmt->execute();
@@ -189,6 +190,10 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
             document.getElementById('viewAcquisitionDate').textContent = data.acquisition_date;
             document.getElementById('viewLastUpdated').textContent = data.last_updated;
             document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
+            document.getElementById('viewBrand').textContent = data.brand;
+            document.getElementById('viewModel').textContent = data.model;
+            document.getElementById('viewInventoryTag').textContent = data.inventory_tag;
+            document.getElementById('viewEmployeeName').textContent = data.employee_name ?? '';
 
             // Compute total
             const totalValue = parseFloat(data.value) * parseInt(data.quantity);
