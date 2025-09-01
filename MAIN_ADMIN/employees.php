@@ -178,6 +178,7 @@ while ($row = $result->fetch_assoc()) {
               <img id="municipalLogoImg" src="<?= htmlspecialchars($systemLogo) ?>" alt="Municipal Logo" style="height: 70px;">
               <div class="text-center flex-grow-1">
                 <h6 class="m-0 text-uppercase fw-bold">Government Property</h6>
+                <p class="m-0 small"><strong>Inventory Tag:</strong> <span id="viewInventoryTag"></span></p>
               </div>
               <img id="viewQrCode" src="" alt="QR Code" style="height: 70px;">
             </div>
@@ -207,6 +208,7 @@ while ($row = $result->fetch_assoc()) {
                 <p class="mb-1"><strong>Serial No:</strong> <span id="viewSerialNo"></span></p>
                 <p class="mb-1"><strong>Property No:</strong> <span id="viewPropertyNo"></span></p>
                 <p class="mb-1"><strong>Code:</strong> <span id="viewCode"></span></p>
+                <p class="mb-1"><strong>Brand:</strong> <span id="viewBrand"></span></p>
               </div>
             </div>
 
@@ -289,6 +291,8 @@ while ($row = $result->fetch_assoc()) {
             document.getElementById('viewAcquisitionDate').textContent = data.acquisition_date;
             document.getElementById('viewLastUpdated').textContent = data.last_updated;
             document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
+            document.getElementById('viewInventoryTag').textContent = data.inventory_tag;
+            document.getElementById('viewBrand').textContent = data.brand;
 
             // Compute total
             const totalValue = parseFloat(data.value) * parseInt(data.quantity);

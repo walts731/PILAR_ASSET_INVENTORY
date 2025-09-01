@@ -17,17 +17,16 @@ if (isset($_GET['employee_id'])) {
   if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
       echo "<tr>
-              <td>" . htmlspecialchars($row['asset_name']) . "</td>
               <td>" . htmlspecialchars($row['description']) . "</td>
               <td>" . htmlspecialchars($row['status']) . "</td>
               <td>" . htmlspecialchars($row['serial_no']) . "</td>
               <td>" . htmlspecialchars($row['property_no']) . "</td>
               <td>
-                <button class='btn btn-sm btn-info view-asset-details' data-id='". (int)$row['id'] ."'>
+                <button class='btn btn-sm btn-primary view-asset-details' data-id='". (int)$row['id'] ."'>
                   <i class='bi bi-eye'></i> View
                 </button>
 
-                <button class='btn btn-sm btn-warning transfer-asset'
+                <button class='btn btn-sm btn-info transfer-asset'
                   data-asset-id='". (int)$row['id'] ."'
                   data-inventory-tag='". htmlspecialchars($row['inventory_tag']) ."'
                   data-current-employee-id='". (int)$employee_id ."'>

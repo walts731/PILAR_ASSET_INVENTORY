@@ -7,10 +7,9 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <table class="table table-bordered">
+          <table class="table ">
             <thead>
               <tr>
-                <th>Asset Name</th>
                 <th>Description</th>
                 <th>Status</th>
                 <th>Serial No</th>
