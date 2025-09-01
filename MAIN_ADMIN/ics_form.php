@@ -38,24 +38,31 @@ if ($result && $result->num_rows > 0) {
     }
 }
 
-// Fetch description + unit cost + quantity + unit only for type = 'asset', quantity > 0, and value < 50000
+// Fetch description + unit cost + quantity + unit + office + property_no
 $description_details = [];
-$result = $conn->query("SELECT description, value AS unit_cost, quantity, unit 
-                        FROM assets 
-                        WHERE type = 'asset' 
-                          AND quantity > 0 
-                          AND value < 50000");
+$sql = "SELECT a.description, a.property_no, a.value AS unit_cost, a.quantity, a.unit, o.office_name
+        FROM assets a
+        LEFT JOIN offices o ON a.office_id = o.id
+        WHERE a.type = 'asset' 
+          AND a.quantity > 0 
+          AND a.value < 50000";
 
+$result = $conn->query($sql);
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        $description = $row['description'];
-        $description_details[$description] = [
-            'unit_cost' => $row['unit_cost'],
-            'quantity' => $row['quantity'],
-            'unit' => $row['unit']
+        // Build the display string for the datalist
+        $displayText = $row['description'] . " (" . $row['office_name'] . ") - " . $row['property_no'];
+
+        $description_details[$displayText] = [
+            'unit_cost'   => $row['unit_cost'],
+            'quantity'    => $row['quantity'],
+            'unit'        => $row['unit'],
+            'office'      => $row['office_name'],
+            'property_no' => $row['property_no']
         ];
     }
 }
+
 
 
 // Fetch office options
@@ -430,8 +437,10 @@ $new_ics_no = generateICSNo($conn);
                     const {
                         unit_cost,
                         quantity,
-                        unit
+                        unit,
+                        property_no
                     } = descriptionMap[selectedDesc];
+
                     if (unitCostInput) unitCostInput.value = unit_cost;
                     if (quantityInput) {
                         quantityInput.max = quantity;
@@ -441,7 +450,6 @@ $new_ics_no = generateICSNo($conn);
                     // Auto-fill unit
                     const unitSelect = row.querySelector('select[name="unit[]"]');
                     if (unitSelect) {
-                        // Find option that matches
                         let found = false;
                         for (let i = 0; i < unitSelect.options.length; i++) {
                             if (unitSelect.options[i].value === unit) {
@@ -452,6 +460,12 @@ $new_ics_no = generateICSNo($conn);
                         }
                         if (!found) unitSelect.selectedIndex = 0; // fallback
                     }
+
+                    // ✅ Auto-insert property_no into item_no field
+                    const itemNoInput = row.querySelector('input[name="item_no[]"]');
+                    if (itemNoInput) {
+                        itemNoInput.value = property_no;
+                    }
                 } else {
                     // If user typed something not in map, clear any limits
                     if (quantityInput) {
@@ -460,9 +474,12 @@ $new_ics_no = generateICSNo($conn);
                     }
                     const unitSelect = row.querySelector('select[name="unit[]"]');
                     if (unitSelect) unitSelect.selectedIndex = 0;
+
+                    // clear item_no if not matched
+                    const itemNoInput = row.querySelector('input[name="item_no[]"]');
+                    if (itemNoInput) itemNoInput.value = '';
                 }
             }
-
 
             const quantity = parseFloat(quantityInput?.value) || 0;
             const unitCost = parseFloat(unitCostInput?.value) || 0;
