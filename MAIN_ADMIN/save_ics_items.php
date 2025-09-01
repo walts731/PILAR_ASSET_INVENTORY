@@ -19,7 +19,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $received_from_position = $_POST['received_from_position'] ?? '';
     $received_by_name = $_POST['received_by_name'] ?? '';
     $received_by_position = $_POST['received_by_position'] ?? '';
-    $office_id = intval($_POST['office_id'] ?? 0);
+
+    // Handle OFFICE selection (can be numeric ID or "outside_lgu")
+    $office_input = $_POST['office_id'] ?? 0;
+    $is_outside_lgu = ($office_input === 'outside_lgu');
+    $office_id = $is_outside_lgu ? 0 : intval($office_input);
 
     // Insert new ICS form
     $stmt = $conn->prepare("INSERT INTO ics_form 
@@ -35,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $received_from_position,
         $received_by_name,
         $received_by_position,
-        $office_id
+        $office_id // 0 if "Outside LGU"
     );
     $stmt->execute();
     $ics_id = $conn->insert_id;
@@ -69,14 +73,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($description) || $quantity <= 0) continue;
 
-        // Update main stock
+        // Always deduct from main stock
         $stmt_update_assets->bind_param("ds", $quantity, $description);
         $stmt_update_assets->execute();
 
-        // Transfer asset to office and get the inserted asset ID
-        $latest_asset_id = $office_id > 0 
-            ? transferAssetToOffice($conn, $description, $unit_cost, $quantity, $office_id) 
-            : getMainStockAssetId($conn, $description);
+        // Decide asset_id
+        if ($is_outside_lgu) {
+            // ✅ Just reduce main stock, no transfer
+            $latest_asset_id = getMainStockAssetId($conn, $description);
+        } elseif ($office_id > 0) {
+            // ✅ Transfer asset to office
+            $latest_asset_id = transferAssetToOffice($conn, $description, $unit_cost, $quantity, $office_id);
+        } else {
+            // ✅ Default to main stock asset
+            $latest_asset_id = getMainStockAssetId($conn, $description);
+        }
 
         // Insert ICS item with the latest asset_id
         $stmt_items->bind_param(
