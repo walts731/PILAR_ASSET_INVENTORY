@@ -50,10 +50,12 @@ $sql = "SELECT a.description, a.property_no, a.value AS unit_cost, a.quantity, a
 $result = $conn->query($sql);
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        // Build the display string for the datalist
+        // build preview text for dropdown
         $displayText = $row['description'] . " (" . $row['office_name'] . ") - " . $row['property_no'];
 
-        $description_details[$displayText] = [
+        // use plain description as key
+        $description_details[$row['description']] = [
+            'preview'     => $displayText,   // ✅ what will show in dropdown
             'unit_cost'   => $row['unit_cost'],
             'quantity'    => $row['quantity'],
             'unit'        => $row['unit'],
@@ -62,6 +64,7 @@ if ($result && $result->num_rows > 0) {
         ];
     }
 }
+
 
 
 
@@ -141,7 +144,7 @@ $new_ics_no = generateICSNo($conn);
                 <!-- OFFICE -->
                 <div class="col-6">
                     <label class="form-label fw-semibold">
-                        OFFICE <span style="color: red;">*</span>
+                        DESTINATION <span style="color: red;">*</span>
                     </label>
                     <select class="form-select" name="office_id" required>
                         <option value="" disabled selected>Select office</option>
