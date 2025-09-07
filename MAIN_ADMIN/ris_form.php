@@ -71,9 +71,9 @@ $stmt->close();
         value="<?= htmlspecialchars($ris_data['sai_no'] ?? '') ?>">
     </div>
     <div class="col-md-3">
-      <label for="reason_for_transfer" class="form-label fw-semibold">Reason for Transfer</label>
-      <input type="text" class="form-control" id="reason_for_transfer" name="reason_for_transfer"
-        value="<?= htmlspecialchars($ris_data['reason_for_transfer'] ?? '') ?>">
+      <label for="date" class="form-label fw-semibold">Date</label>
+      <input type="date" class="form-control" id="date" name="date"
+        value="<?= htmlspecialchars($ris_data['date'] ?? date('Y-m-d')) ?>">
     </div>
   </div>
 
@@ -125,7 +125,7 @@ $stmt->close();
       <?php endfor; ?>
       <datalist id="asset_list">
         <?php
-        $assets_query = $conn->query("SELECT id, description, quantity, unit, value FROM assets ORDER BY description ASC");
+        $assets_query = $conn->query("SELECT id, description, quantity, unit, value FROM assets WHERE quantity > 0 AND type = 'consumable' ORDER BY description ASC");
         while ($asset = $assets_query->fetch_assoc()):
         ?>
           <option value="<?= htmlspecialchars($asset['description']) ?>"
