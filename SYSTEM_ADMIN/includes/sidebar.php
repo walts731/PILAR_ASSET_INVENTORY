@@ -14,27 +14,6 @@ if ($result && $result->num_rows > 0) {
 
 // Get current page
 $page = basename($_SERVER['PHP_SELF'], ".php");
-
-// Fetch inventory categories
-$categories = [];
-$categoryResult = $conn->query("SELECT id, category_name FROM categories");
-if ($categoryResult && $categoryResult->num_rows > 0) {
-    while ($row = $categoryResult->fetch_assoc()) {
-        $categories[] = $row;
-    }
-}
-
-// Fetch unique form categories WITH id (the first form per category)
-$form_categories = [];
-$formCatResult = $conn->query("SELECT MIN(id) AS id, category FROM forms WHERE category IS NOT NULL AND category != '' GROUP BY category");
-if ($formCatResult && $formCatResult->num_rows > 0) {
-    while ($row = $formCatResult->fetch_assoc()) {
-        $form_categories[] = $row;
-    }
-}
-
-// Determine if Forms dropdown should be active
-$formActive = ($page == 'forms' && isset($_GET['id']));
 ?>
 
 <!-- SIDEBAR STYLES -->
@@ -96,8 +75,12 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
                 <i class="bi bi-file-text"></i> Forms
             </a>
 
-             <a href="../SYSTEM_ADMIN/manage_offices.php" class="<?= ($page == 'manage_offices') ? 'active' : '' ?>">
+            <a href="../SYSTEM_ADMIN/manage_offices.php" class="<?= ($page == 'manage_offices') ? 'active' : '' ?>">
                 <i class="bi bi-building"></i> Offices
+            </a>
+
+            <a href="../SYSTEM_ADMIN/manage_categories.php" class="<?= ($page == 'manage_categories') ? 'active' : '' ?>">
+                <i class="bi bi-tags"></i> Categories
             </a>
 
             <a href="../SYSTEM_ADMIN/edit_system.php" class="<?= ($page == 'System') ? 'active' : '' ?>">
