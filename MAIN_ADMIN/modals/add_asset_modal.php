@@ -2,7 +2,7 @@
 require_once '../connect.php';
 
 // Fetch categories for assets
-$category_query = $conn->query("SELECT id, category_name FROM categories WHERE type = 'asset'");
+$category_query = $conn->query("SELECT id, category_name FROM categories");
 $categories = $category_query->fetch_all(MYSQLI_ASSOC);
 
 // Fetch offices
@@ -13,10 +13,15 @@ $offices = $office_query->fetch_all(MYSQLI_ASSOC);
 $unit_query = $conn->query("SELECT id, unit_name FROM unit");
 $units = $unit_query->fetch_all(MYSQLI_ASSOC);
 
-// Auto-generate property number (example format: PROP-0001)
-$property_query = $conn->query("SELECT COUNT(*) AS total FROM assets");
+// Auto-generate property number (for assets)
+$property_query = $conn->query("SELECT COUNT(*) AS total FROM assets WHERE type='asset'");
 $totalAssets = $property_query->fetch_assoc()['total'] + 1;
 $property_no = "PROP-" . str_pad($totalAssets, 4, "0", STR_PAD_LEFT);
+
+// Auto-generate stock number (for consumables)
+$stock_query = $conn->query("SELECT COUNT(*) AS total FROM assets WHERE type='consumable'");
+$totalStock = $stock_query->fetch_assoc()['total'] + 1;
+$stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
 ?>
 
 <!-- Add Asset Modal -->
@@ -45,10 +50,17 @@ $property_no = "PROP-" . str_pad($totalAssets, 4, "0", STR_PAD_LEFT);
                     <input type="text" name="code" id="code" class="form-control">
                 </div>
 
-                <div class="col-md-4">
+                <!-- Property / Stock No. -->
+                <div class="col-md-4" id="propertyNoGroup">
                     <label for="property_no" class="form-label">Property No.</label>
-                    <input type="text" name="property_no" id="property_no" class="form-control" 
+                    <input type="text" name="property_no" id="property_no" class="form-control"
                            value="<?= $property_no ?>" readonly>
+                </div>
+
+                <div class="col-md-4 d-none" id="stockNoGroup">
+                    <label for="stock_no" class="form-label">Stock No.</label>
+                    <input type="text" name="stock_no" id="stock_no" class="form-control"
+                           value="<?= $stock_no ?>" readonly>
                 </div>
 
                 <div class="col-md-6">
@@ -148,8 +160,9 @@ $property_no = "PROP-" . str_pad($totalAssets, 4, "0", STR_PAD_LEFT);
     </div>
 </div>
 
-<!-- Image Preview Script -->
+<!-- Scripts -->
 <script>
+    // Preview uploaded image
     function previewImage(event) {
         const preview = document.getElementById('assetImagePreview');
         const file = event.target.files[0];
@@ -161,4 +174,22 @@ $property_no = "PROP-" . str_pad($totalAssets, 4, "0", STR_PAD_LEFT);
             preview.classList.add('d-none');
         }
     }
+
+    // Toggle Property No. / Stock No.
+    document.getElementById('type').addEventListener('change', function() {
+        const propertyGroup = document.getElementById('propertyNoGroup');
+        const stockGroup = document.getElementById('stockNoGroup');
+
+        if (this.value === 'consumable') {
+            propertyGroup.classList.add('d-none');
+            stockGroup.classList.remove('d-none');
+            document.getElementById('property_no').disabled = true;
+            document.getElementById('stock_no').disabled = false;
+        } else {
+            stockGroup.classList.add('d-none');
+            propertyGroup.classList.remove('d-none');
+            document.getElementById('stock_no').disabled = true;
+            document.getElementById('property_no').disabled = false;
+        }
+    });
 </script>

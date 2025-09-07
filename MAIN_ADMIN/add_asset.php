@@ -23,7 +23,7 @@ $red_tagged  = 0;
 // New optional fields
 $serial_no   = !empty($_POST['serial_no']) ? mysqli_real_escape_string($conn, $_POST['serial_no']) : null;
 $code        = !empty($_POST['code']) ? mysqli_real_escape_string($conn, $_POST['code']) : null;
-$property_no = !empty($_POST['property_no']) ? mysqli_real_escape_string($conn, $_POST['property_no']) : null;
+$stock_no    = !empty($_POST['stock_no']) ? mysqli_real_escape_string($conn, $_POST['stock_no']) : null; // will be used as property_no
 $model       = !empty($_POST['model']) ? mysqli_real_escape_string($conn, $_POST['model']) : null;
 $brand       = !empty($_POST['brand']) ? mysqli_real_escape_string($conn, $_POST['brand']) : null;
 
@@ -45,6 +45,9 @@ if (isset($_FILES['asset_image']) && $_FILES['asset_image']['error'] === UPLOAD_
     }
 }
 
+// Force property_no to take the same value as stock_no
+$propertyNoValue = $stock_no ? "'$stock_no'" : "NULL";
+
 // Insert asset into the database
 $sql = "
   INSERT INTO assets 
@@ -55,7 +58,7 @@ $sql = "
      '$acquired', '$acquired', " . ($image_filename ? "'$image_filename'" : "NULL") . ",
      " . ($serial_no ? "'$serial_no'" : "NULL") . ",
      " . ($code ? "'$code'" : "NULL") . ",
-     " . ($property_no ? "'$property_no'" : "NULL") . ",
+     $propertyNoValue,
      " . ($model ? "'$model'" : "NULL") . ",
      " . ($brand ? "'$brand'" : "NULL") . "
     )
@@ -73,10 +76,9 @@ if (mysqli_query($conn, $sql)) {
     $update = "UPDATE assets SET qr_code = '$qr_filename' WHERE id = $asset_id";
     mysqli_query($conn, $update);
 
-    header("Location: inventory.php?add=success&qr=" . urlencode($qr_filename));
+    header("Location: inventory.php?add=success&qr=" . urlencode($qr_filename) . "&office_id=" . $office_id);
     exit();
 } else {
     echo "Error inserting asset: " . mysqli_error($conn);
     exit();
 }
-?>
