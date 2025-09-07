@@ -79,8 +79,8 @@ $page = basename($_SERVER['PHP_SELF'], ".php");
                 <i class="bi bi-building"></i> Offices
             </a>
 
-            <a href="../SYSTEM_ADMIN/manage_categories.php" class="<?= ($page == 'manage_categories') ? 'active' : '' ?>">
-                <i class="bi bi-tags"></i> Categories
+            <a href="../SYSTEM_ADMIN/manage_units.php" class="<?= ($page == 'manage_units') ? 'active' : '' ?>">
+                <i class="bi bi-bounding-box"></i> Units
             </a>
 
             <a href="../SYSTEM_ADMIN/edit_system.php" class="<?= ($page == 'System') ? 'active' : '' ?>">
