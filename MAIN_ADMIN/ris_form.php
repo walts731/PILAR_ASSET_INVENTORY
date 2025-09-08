@@ -33,13 +33,16 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
   <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
 
   <!-- Header Image -->
-  <div class="mb-3 text-center">
-    <?php if (!empty($ris_data['header_image'])): ?>
-      <img src="../img/<?= htmlspecialchars($ris_data['header_image']) ?>"
-        class="img-fluid mb-3"
-        style="max-width: 100%; height: auto; object-fit: contain;">
-    <?php endif; ?>
-  </div>
+<div class="mb-3 text-center">
+  <input type="file" name="header_image" class="form-control" accept="image/*">
+  
+  <?php if (!empty($ris_data['header_image'])): ?>
+    <img src="../img/<?= htmlspecialchars($ris_data['header_image']) ?>"
+      class="img-fluid mb-3"
+      style="max-width: 100%; height: auto; object-fit: contain;">
+  <?php endif; ?>
+</div>
+
 
   <!-- Row 1: Division, Responsibility Center, RIS No., Date -->
   <div class="row mb-3">

@@ -11,7 +11,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $responsibility_code = $_POST['responsibility_code'] ?? '';
     $sai_no = $_POST['sai_no'] ?? '';
     $purpose = $_POST['purpose'] ?? '';
+// ✅ Handle header image upload
+    $header_image = null;
+    if (isset($_FILES['header_image']) && $_FILES['header_image']['error'] === UPLOAD_ERR_OK) {
+        $upload_dir = "../img/";
+        $file_name = time() . "_" . basename($_FILES['header_image']['name']);
+        $target_path = $upload_dir . $file_name;
 
+        if (move_uploaded_file($_FILES['header_image']['tmp_name'], $target_path)) {
+            $header_image = $file_name;
+        }
+    }
     // Footer
     $requested_by_name = $_POST['requested_by_name'] ?? '';
     $requested_by_designation = $_POST['requested_by_designation'] ?? '';
@@ -33,46 +43,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $form_id = isset($_POST['form_id']) ? (int)$_POST['form_id'] : 0;
 
-    
 
     // Insert RIS header
     $stmt = $conn->prepare("
     INSERT INTO ris_form (
-        form_id,
+        form_id, header_image,
         division, responsibility_center, ris_no, date, office_id, responsibility_code, sai_no, reason_for_transfer,
         requested_by_name, requested_by_designation, requested_by_date,
         approved_by_name, approved_by_designation, approved_by_date,
         issued_by_name, issued_by_designation, issued_by_date,
         received_by_name, received_by_designation, received_by_date,
         footer_date
-    ) VALUES (?,?,?,?,?,?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?)
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 ");
 
     $stmt->bind_param(
-        "issssissssssssssssssss",
-        $form_id,
-        $division,
-        $responsibility_center,
-        $ris_no,
-        $date,
-        $office_id,
-        $responsibility_code,
-        $sai_no,
-        $purpose,
-        $requested_by_name,
-        $requested_by_designation,
-        $requested_by_date,
-        $approved_by_name,
-        $approved_by_designation,
-        $approved_by_date,
-        $issued_by_name,
-        $issued_by_designation,
-        $issued_by_date,
-        $received_by_name,
-        $received_by_designation,
-        $received_by_date,
-        $footer_date
-    );
+    "issssisssssssssssssssss",
+    $form_id,
+    $header_image,   // ✅ add this parameter
+    $division,
+    $responsibility_center,
+    $ris_no,
+    $date,
+    $office_id,
+    $responsibility_code,
+    $sai_no,
+    $purpose,
+    $requested_by_name,
+    $requested_by_designation,
+    $requested_by_date,
+    $approved_by_name,
+    $approved_by_designation,
+    $approved_by_date,
+    $issued_by_name,
+    $issued_by_designation,
+    $issued_by_date,
+    $received_by_name,
+    $received_by_designation,
+    $received_by_date,
+    $footer_date
+);
+
 
 
     if ($stmt->execute()) {
