@@ -1,6 +1,8 @@
 <?php
 require_once '../connect.php';
 
+$form_id = $_GET['id'] ?? '';
+
 // Fetch the very first row only
 $stmt = $conn->prepare("SELECT * FROM ris_form ORDER BY id ASC LIMIT 1");
 $stmt->execute();
@@ -27,7 +29,8 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
 ?>
 
 
-<form method="POST" enctype="multipart/form-data">
+<form method="POST" action="save_ris.php" enctype="multipart/form-data">
+  <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
 
   <!-- Header Image -->
   <div class="mb-3 text-center">
@@ -117,7 +120,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         <tr>
           <td><input type="text" class="form-control" name="stock_no[]"></td>
           <td>
-            <select name="unit[]" class="form-select" required>
+            <select name="unit[]" class="form-select">
               <option value="" disabled selected>Select Unit</option>
               <?php
               $unit_query = $conn->query("SELECT id, unit_name FROM unit ORDER BY unit_name ASC");
@@ -195,10 +198,10 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
       </tr>
       <tr>
         <td>Date:</td>
-        <td><input type="date" class="form-control" name="requested_by_date" value="<?= htmlspecialchars($ris_data['requested_by_date'] ?? date('Y-m-d')) ?>"></td>
-        <td><input type="date" class="form-control" name="approved_by_date" value="<?= htmlspecialchars($ris_data['approved_by_date'] ?? date('Y-m-d')) ?>"></td>
-        <td><input type="date" class="form-control" name="issued_by_date" value="<?= htmlspecialchars($ris_data['issued_by_date'] ?? date('Y-m-d')) ?>"></td>
-        <td><input type="date" class="form-control" name="received_by_date" value="<?= htmlspecialchars($ris_data['received_by_date'] ?? date('Y-m-d')) ?>"></td>
+        <td><input type="date" class="form-control" name="requested_by_date" value="<?= date('Y-m-d') ?>"></td>
+        <td><input type="date" class="form-control" name="approved_by_date" value="<?= date('Y-m-d') ?>"></td>
+        <td><input type="date" class="form-control" name="issued_by_date" value="<?= date('Y-m-d') ?>"></td>
+        <td><input type="date" class="form-control" name="received_by_date" value="<?= date('Y-m-d') ?>"></td>
       </tr>
       <tr>
         <td>Footer Date:</td>
