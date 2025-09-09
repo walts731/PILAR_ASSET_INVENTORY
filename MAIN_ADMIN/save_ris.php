@@ -2,7 +2,7 @@
 require_once '../connect.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // HEADER + FOOTER (same as before)
+    // HEADER + FOOTER fields
     $division = $_POST['division'] ?? '';
     $responsibility_center = $_POST['responsibility_center'] ?? '';
     $ris_no = $_POST['ris_no'] ?? '';
@@ -11,18 +11,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $responsibility_code = $_POST['responsibility_code'] ?? '';
     $sai_no = $_POST['sai_no'] ?? '';
     $purpose = $_POST['purpose'] ?? '';
-// ✅ Handle header image upload
-    $header_image = null;
-    if (isset($_FILES['header_image']) && $_FILES['header_image']['error'] === UPLOAD_ERR_OK) {
-        $upload_dir = "../img/";
-        $file_name = time() . "_" . basename($_FILES['header_image']['name']);
-        $target_path = $upload_dir . $file_name;
 
-        if (move_uploaded_file($_FILES['header_image']['tmp_name'], $target_path)) {
-            $header_image = $file_name;
+    // ✅ Handle header image upload with fallback to existing
+    $header_image = $_POST['existing_header_image'] ?? null; // existing image
+    if (isset($_FILES['header_image']) && $_FILES['header_image']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath = $_FILES['header_image']['tmp_name'];
+        $fileName = $_FILES['header_image']['name'];
+        $fileExtension = pathinfo($fileName, PATHINFO_EXTENSION);
+
+        // Sanitize + unique filename
+        $newFileName = time() . '_' . preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $fileName);
+        $uploadDir = '../img/';
+        $destPath = $uploadDir . $newFileName;
+
+        if (move_uploaded_file($fileTmpPath, $destPath)) {
+            $header_image = $newFileName; // save just filename
         }
     }
-    // Footer
+
+    // Footer fields
     $requested_by_name = $_POST['requested_by_name'] ?? '';
     $requested_by_designation = $_POST['requested_by_designation'] ?? '';
     $requested_by_date = $_POST['requested_by_date'] ?? null;
@@ -40,63 +47,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $received_by_date = $_POST['received_by_date'] ?? null;
 
     $footer_date = $_POST['footer_date'] ?? null;
-
     $form_id = isset($_POST['form_id']) ? (int)$_POST['form_id'] : 0;
-
 
     // Insert RIS header
     $stmt = $conn->prepare("
-    INSERT INTO ris_form (
-        form_id, header_image,
-        division, responsibility_center, ris_no, date, office_id, responsibility_code, sai_no, reason_for_transfer,
-        requested_by_name, requested_by_designation, requested_by_date,
-        approved_by_name, approved_by_designation, approved_by_date,
-        issued_by_name, issued_by_designation, issued_by_date,
-        received_by_name, received_by_designation, received_by_date,
-        footer_date
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-");
+        INSERT INTO ris_form (
+            form_id, header_image,
+            division, responsibility_center, ris_no, date, office_id, responsibility_code, sai_no, reason_for_transfer,
+            requested_by_name, requested_by_designation, requested_by_date,
+            approved_by_name, approved_by_designation, approved_by_date,
+            issued_by_name, issued_by_designation, issued_by_date,
+            received_by_name, received_by_designation, received_by_date,
+            footer_date
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    ");
 
     $stmt->bind_param(
-    "issssisssssssssssssssss",
-    $form_id,
-    $header_image,   // ✅ add this parameter
-    $division,
-    $responsibility_center,
-    $ris_no,
-    $date,
-    $office_id,
-    $responsibility_code,
-    $sai_no,
-    $purpose,
-    $requested_by_name,
-    $requested_by_designation,
-    $requested_by_date,
-    $approved_by_name,
-    $approved_by_designation,
-    $approved_by_date,
-    $issued_by_name,
-    $issued_by_designation,
-    $issued_by_date,
-    $received_by_name,
-    $received_by_designation,
-    $received_by_date,
-    $footer_date
-);
-
-
+        "issssisssssssssssssssss",
+        $form_id,
+        $header_image,   // ✅ handle header image here
+        $division,
+        $responsibility_center,
+        $ris_no,
+        $date,
+        $office_id,
+        $responsibility_code,
+        $sai_no,
+        $purpose,
+        $requested_by_name,
+        $requested_by_designation,
+        $requested_by_date,
+        $approved_by_name,
+        $approved_by_designation,
+        $approved_by_date,
+        $issued_by_name,
+        $issued_by_designation,
+        $issued_by_date,
+        $received_by_name,
+        $received_by_designation,
+        $received_by_date,
+        $footer_date
+    );
 
     if ($stmt->execute()) {
-        // Get the inserted RIS Form ID
         $ris_form_id = $stmt->insert_id;
         $stmt->close();
 
-        // Now insert RIS items
+        // Insert RIS items
         if (!empty($_POST['description'])) {
             $stock_nos   = $_POST['stock_no'] ?? [];
             $units       = $_POST['unit'] ?? [];
             $descriptions = $_POST['description'] ?? [];
-            $quantities  = $_POST['quantity'] ?? [];
+            $quantities  = $_POST['req_quantity'] ?? []; // corrected from 'quantity'
             $prices      = $_POST['price'] ?? [];
             $totals      = $_POST['total'] ?? [];
 
@@ -121,9 +123,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         echo "<script>
-    alert('RIS Form & Items saved successfully!');
-    window.location='forms.php?id={$form_id}';
-</script>";
+            alert('RIS Form & Items saved successfully!');
+            window.location='forms.php?id={$form_id}';
+        </script>";
     } else {
         echo "Error: " . $stmt->error;
     }

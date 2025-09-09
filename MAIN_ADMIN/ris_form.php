@@ -3,12 +3,13 @@ require_once '../connect.php';
 
 $form_id = $_GET['id'] ?? '';
 
-// Fetch the very first row only
-$stmt = $conn->prepare("SELECT * FROM ris_form ORDER BY id ASC LIMIT 1");
+// Fetch the latest row only
+$stmt = $conn->prepare("SELECT * FROM ris_form ORDER BY id DESC LIMIT 1");
 $stmt->execute();
 $result = $stmt->get_result();
 $ris_data = $result->fetch_assoc() ?? [];
 $stmt->close();
+
 
 // Auto-generate RIS No.
 $ris_prefix = "RIS-" . date("Y") . "-";
@@ -33,13 +34,16 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
   <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
 
   <!-- Header Image -->
+<!-- Header Image -->
 <div class="mb-3 text-center">
   <input type="file" name="header_image" class="form-control" accept="image/*">
   
   <?php if (!empty($ris_data['header_image'])): ?>
     <img src="../img/<?= htmlspecialchars($ris_data['header_image']) ?>"
-      class="img-fluid mb-3"
-      style="max-width: 100%; height: auto; object-fit: contain;">
+         class="img-fluid mb-3"
+         style="max-width: 100%; height: auto; object-fit: contain;">
+    <!-- Keep old image in a hidden input -->
+    <input type="hidden" name="existing_header_image" value="<?= htmlspecialchars($ris_data['header_image']) ?>">
   <?php endif; ?>
 </div>
 
