@@ -101,6 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $quantities  = $_POST['req_quantity'] ?? []; // corrected from 'quantity'
             $prices      = $_POST['price'] ?? [];
             $totals      = $_POST['total'] ?? [];
+            $asset_ids = $_POST['asset_id'] ?? [];
 
             $item_stmt = $conn->prepare("
                 INSERT INTO ris_items (ris_form_id, stock_no, unit, description, quantity, price, total)
@@ -110,22 +111,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($descriptions as $i => $desc) {
                 if (trim($desc) === '') continue; // skip empty rows
 
+                $asset_id = (int)($asset_ids[$i] ?? 0);
                 $stock = $stock_nos[$i] ?? '';
                 $unit = $units[$i] ?? '';
                 $qty = (int)($quantities[$i] ?? 0);
                 $price = (float)($prices[$i] ?? 0);
                 $total = (float)($totals[$i] ?? 0);
 
+                // Insert into ris_items
                 $item_stmt->bind_param("isssidd", $ris_form_id, $stock, $unit, $desc, $qty, $price, $total);
                 $item_stmt->execute();
+
+                // ✅ Deduct and duplicate into assets if valid
+                if ($asset_id > 0 && $qty > 0) {
+                    // 1. Fetch original asset details
+                    $fetch_stmt = $conn->prepare("SELECT id, asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, inventory_tag FROM assets WHERE id = ?");
+                    $fetch_stmt->bind_param("i", $asset_id);
+                    $fetch_stmt->execute();
+                    $asset_result = $fetch_stmt->get_result();
+                    $asset = $asset_result->fetch_assoc();
+                    $fetch_stmt->close();
+
+                    if ($asset) {
+                        // 2. Update original asset quantity
+                        $update_stmt = $conn->prepare("UPDATE assets SET quantity = GREATEST(quantity - ?, 0) WHERE id = ?");
+                        $update_stmt->bind_param("ii", $qty, $asset_id);
+                        $update_stmt->execute();
+                        $update_stmt->close();
+
+                        // 3. Insert a new asset record with updated quantity + new office_id
+                        $new_quantity = $qty; // moved quantity
+
+                        // Escape all values to prevent SQL injection
+                        $asset_name      = $conn->real_escape_string($asset['asset_name']);
+                        $category        = $conn->real_escape_string($asset['category']);
+                        $description     = $conn->real_escape_string($asset['description']);
+                        $unit            = $conn->real_escape_string($asset['unit']);
+                        $status          = $conn->real_escape_string($asset['status']);
+                        $acquisition_date = $conn->real_escape_string($asset['acquisition_date']);
+                        $employee_id_sql = is_null($employee_id) ? "NULL" : $employee_id;
+                        $red_tagged      = (int)$asset['red_tagged'];
+                        $value           = (float)$asset['value'];
+                        $qr_code         = $conn->real_escape_string($asset['qr_code']);
+                        $type            = $conn->real_escape_string($asset['type']);
+                        $image           = $conn->real_escape_string($asset['image']);
+                        $serial_no       = $conn->real_escape_string($asset['serial_no']);
+                        $code            = $conn->real_escape_string($asset['code']);
+                        $property_no     = $conn->real_escape_string($asset['property_no']);
+                        $model           = $conn->real_escape_string($asset['model']);
+                        $brand           = $conn->real_escape_string($asset['brand']);
+                        $inventory_tag   = $conn->real_escape_string($asset['inventory_tag']);
+
+                        $sql = "
+INSERT INTO assets (
+    asset_name, category, description, quantity, unit, status,
+    acquisition_date, office_id, employee_id, red_tagged,
+    value, qr_code, type, image, serial_no,
+    code, property_no, model, brand, inventory_tag
+) VALUES (
+    '$asset_name', '$category', '$description', $new_quantity, '$unit', '$status',
+    '$acquisition_date', $office_id, $employee_id_sql, $red_tagged,
+    $value, '$qr_code', '$type', '$image', '$serial_no',
+    '$code', '$property_no', '$model', '$brand', '$inventory_tag'
+)";
+
+                        if (!$conn->query($sql)) {
+                            echo "Error inserting asset: " . $conn->error;
+                        }
+                    }
+                }
             }
+
             $item_stmt->close();
         }
 
-        echo "<script>
-            alert('RIS Form & Items saved successfully!');
-            window.location='forms.php?id={$form_id}';
-        </script>";
+        header("Location: forms.php?id={$form_id}&add=success");
+        exit;
     } else {
         echo "Error: " . $stmt->error;
     }

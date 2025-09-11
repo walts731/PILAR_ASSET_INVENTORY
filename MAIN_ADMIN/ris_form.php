@@ -28,24 +28,30 @@ $sai_count = $sai_result['count'] + 1;
 $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
 
 ?>
+<?php if (isset($_GET['add']) && $_GET['add'] === 'success'): ?>
+    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+        <strong>Success!</strong> RIS Form & Items saved successfully.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
 
 
 <form method="POST" action="save_ris.php" enctype="multipart/form-data">
   <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
 
   <!-- Header Image -->
-<!-- Header Image -->
-<div class="mb-3 text-center">
-  <input type="file" name="header_image" class="form-control" accept="image/*">
-  
-  <?php if (!empty($ris_data['header_image'])): ?>
-    <img src="../img/<?= htmlspecialchars($ris_data['header_image']) ?>"
-         class="img-fluid mb-3"
-         style="max-width: 100%; height: auto; object-fit: contain;">
-    <!-- Keep old image in a hidden input -->
-    <input type="hidden" name="existing_header_image" value="<?= htmlspecialchars($ris_data['header_image']) ?>">
-  <?php endif; ?>
-</div>
+  <!-- Header Image -->
+  <div class="mb-3 text-center">
+    <input type="file" name="header_image" class="form-control" accept="image/*">
+
+    <?php if (!empty($ris_data['header_image'])): ?>
+      <img src="../img/<?= htmlspecialchars($ris_data['header_image']) ?>"
+        class="img-fluid mb-3"
+        style="max-width: 100%; height: auto; object-fit: contain;">
+      <!-- Keep old image in a hidden input -->
+      <input type="hidden" name="existing_header_image" value="<?= htmlspecialchars($ris_data['header_image']) ?>">
+    <?php endif; ?>
+  </div>
 
 
   <!-- Row 1: Division, Responsibility Center, RIS No., Date -->
@@ -125,6 +131,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
     <tbody>
       <?php for ($i = 0; $i < 5; $i++): ?>
         <tr>
+          <input type="hidden" name="asset_id[]">
           <td><input type="text" class="form-control" name="stock_no[]"></td>
           <td>
             <select name="unit[]" class="form-select">
@@ -152,20 +159,25 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
       <?php endfor; ?>
       <datalist id="asset_list">
         <?php
-        $assets_query = $conn->query("SELECT id, description, quantity, unit, value, property_no 
-                              FROM assets 
-                              WHERE quantity > 0 AND type = 'consumable' 
-                              ORDER BY description ASC");
-        while ($asset = $assets_query->fetch_assoc()):
-        ?>
-          <option value="<?= htmlspecialchars($asset['description']) ?>"
-            data-id="<?= $asset['id'] ?>"
-            data-stock="<?= $asset['quantity'] ?>"
-            data-unit="<?= htmlspecialchars($asset['unit']) ?>"
-            data-price="<?= $asset['value'] ?>"
-            data-property="<?= htmlspecialchars($asset['property_no']) ?>">
-          <?php endwhile; ?>
+$assets_query = $conn->query("
+    SELECT a.id, a.description, a.quantity, a.unit, a.value, a.property_no, o.office_name
+    FROM assets a
+    LEFT JOIN offices o ON a.office_id = o.id
+    WHERE a.quantity > 0 AND a.type = 'consumable'
+    ORDER BY a.description ASC
+");
+while ($asset = $assets_query->fetch_assoc()):
+?>
+  <option 
+    value="<?= htmlspecialchars($asset['description'] . ' (' . $asset['office_name'] . ')') ?>"
+    data-id="<?= $asset['id'] ?>"
+    data-stock="<?= $asset['quantity'] ?>"
+    data-unit="<?= htmlspecialchars($asset['unit']) ?>"
+    data-price="<?= $asset['value'] ?>"
+    data-property="<?= htmlspecialchars($asset['property_no']) ?>">
+</option>
 
+<?php endwhile; ?>
       </datalist>
     </tbody>
   </table>
@@ -290,6 +302,12 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
             priceInput.value = option.dataset.price;
           }
 
+          // Autofill asset_id hidden field
+          const assetIdInput = row.querySelector("input[name='asset_id[]']");
+          if (assetIdInput) {
+            assetIdInput.value = option ? option.dataset.id : "";
+          }
+
           // ✅ Autofill stock_no (property_no)
           if (stockNoInput && option.dataset.property) {
             stockNoInput.value = option.dataset.property;
@@ -311,6 +329,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
       const newRow = document.createElement("tr");
       newRow.innerHTML = `
       <td><input type="text" class="form-control" name="stock_no[]" readonly></td>
+      <input type="hidden" name="asset_id[]">
       <td>
         <select name="unit[]" class="form-select" required>
           <option value="" disabled selected>Select Unit</option>
