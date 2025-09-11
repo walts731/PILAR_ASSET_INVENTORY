@@ -34,7 +34,10 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <?php endif; ?>
-
+<!-- Navigate to Saved RIS (floated right) -->
+<a href="saved_ris.php?id=<?= urlencode($form_id) ?>" class="btn btn-info float-end mb-3">
+  <i class="bi bi-archive-fill"></i> View Saved RIS
+</a>
 
 <form method="POST" action="save_ris.php" enctype="multipart/form-data">
   <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
@@ -230,6 +233,11 @@ while ($asset = $assets_query->fetch_assoc()):
   </table>
 
   <button type="submit" class="btn btn-primary"><i class="bi bi-send-check-fill"></i>Save</button>
+
+  <!-- Navigate to Saved RIS -->
+<a href="saved_ris.php?id=<?= urlencode($form_id) ?>" class="btn btn-info ms-2">
+  <i class="bi bi-archive-fill"></i> View Saved RIS
+</a>
 </form>
 
 <script>
