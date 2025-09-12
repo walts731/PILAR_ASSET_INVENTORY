@@ -29,10 +29,10 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
 
 ?>
 <?php if (isset($_GET['add']) && $_GET['add'] === 'success'): ?>
-    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-        <strong>Success!</strong> RIS Form & Items saved successfully.
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
+  <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+    <strong>Success!</strong> RIS Form & Items saved successfully.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
 <?php endif; ?>
 <!-- Navigate to Saved RIS (floated right) -->
 <a href="saved_ris.php?id=<?= urlencode($form_id) ?>" class="btn btn-info float-end mb-3">
@@ -77,7 +77,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
     <div class="col-md-3">
       <label for="date" class="form-label fw-semibold">Date</label>
       <input type="date" class="form-control" id="date" name="date"
-        value="<?= htmlspecialchars($ris_data['date'] ?? date('Y-m-d')) ?>">
+        value="<?= date('Y-m-d') ?>">
     </div>
   </div>
 
@@ -109,7 +109,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
     <div class="col-md-3">
       <label for="date" class="form-label fw-semibold">Date</label>
       <input type="date" class="form-control" id="date" name="date"
-        value="<?= htmlspecialchars($ris_data['date'] ?? date('Y-m-d')) ?>">
+        value="<?= date('Y-m-d') ?>">
     </div>
   </div>
 
@@ -162,25 +162,25 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
       <?php endfor; ?>
       <datalist id="asset_list">
         <?php
-$assets_query = $conn->query("
+        $assets_query = $conn->query("
     SELECT a.id, a.description, a.quantity, a.unit, a.value, a.property_no, o.office_name
     FROM assets a
     LEFT JOIN offices o ON a.office_id = o.id
     WHERE a.quantity > 0 AND a.type = 'consumable'
     ORDER BY a.description ASC
 ");
-while ($asset = $assets_query->fetch_assoc()):
-?>
-  <option 
-    value="<?= htmlspecialchars($asset['description'] . ' (' . $asset['office_name'] . ')') ?>"
-    data-id="<?= $asset['id'] ?>"
-    data-stock="<?= $asset['quantity'] ?>"
-    data-unit="<?= htmlspecialchars($asset['unit']) ?>"
-    data-price="<?= $asset['value'] ?>"
-    data-property="<?= htmlspecialchars($asset['property_no']) ?>">
-</option>
+        while ($asset = $assets_query->fetch_assoc()):
+        ?>
+          <option
+            value="<?= htmlspecialchars($asset['description'] . ' (' . $asset['office_name'] . ')') ?>"
+            data-id="<?= $asset['id'] ?>"
+            data-stock="<?= $asset['quantity'] ?>"
+            data-unit="<?= htmlspecialchars($asset['unit']) ?>"
+            data-price="<?= $asset['value'] ?>"
+            data-property="<?= htmlspecialchars($asset['property_no']) ?>">
+          </option>
 
-<?php endwhile; ?>
+        <?php endwhile; ?>
       </datalist>
     </tbody>
   </table>
@@ -235,9 +235,9 @@ while ($asset = $assets_query->fetch_assoc()):
   <button type="submit" class="btn btn-primary"><i class="bi bi-send-check-fill"></i>Save</button>
 
   <!-- Navigate to Saved RIS -->
-<a href="saved_ris.php?id=<?= urlencode($form_id) ?>" class="btn btn-info ms-2">
-  <i class="bi bi-archive-fill"></i> View Saved RIS
-</a>
+  <a href="saved_ris.php?id=<?= urlencode($form_id) ?>" class="btn btn-info ms-2">
+    <i class="bi bi-archive-fill"></i> View Saved RIS
+  </a>
 </form>
 
 <script>

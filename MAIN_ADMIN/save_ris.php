@@ -125,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // ✅ Deduct and duplicate into assets if valid
                 if ($asset_id > 0 && $qty > 0) {
                     // 1. Fetch original asset details
-                    $fetch_stmt = $conn->prepare("SELECT id, asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, inventory_tag FROM assets WHERE id = ?");
+                    $fetch_stmt = $conn->prepare("SELECT * FROM assets WHERE id = ?");
                     $fetch_stmt->bind_param("i", $asset_id);
                     $fetch_stmt->execute();
                     $asset_result = $fetch_stmt->get_result();
@@ -139,44 +139,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $update_stmt->execute();
                         $update_stmt->close();
 
-                        // 3. Insert a new asset record with updated quantity + new office_id
-                        $new_quantity = $qty; // moved quantity
+                        // 3. Check if asset already exists in target office (by property_no + office_id)
+                        $check_stmt = $conn->prepare("SELECT id, quantity FROM assets WHERE property_no = ? AND office_id = ?");
+                        $check_stmt->bind_param("si", $asset['property_no'], $office_id);
+                        $check_stmt->execute();
+                        $check_result = $check_stmt->get_result();
+                        $existing_asset = $check_result->fetch_assoc();
+                        $check_stmt->close();
 
-                        // Escape all values to prevent SQL injection
-                        $asset_name      = $conn->real_escape_string($asset['asset_name']);
-                        $category        = $conn->real_escape_string($asset['category']);
-                        $description     = $conn->real_escape_string($asset['description']);
-                        $unit            = $conn->real_escape_string($asset['unit']);
-                        $status          = $conn->real_escape_string($asset['status']);
-                        $acquisition_date = $conn->real_escape_string($asset['acquisition_date']);
-                        $employee_id_sql = is_null($employee_id) ? "NULL" : $employee_id;
-                        $red_tagged      = (int)$asset['red_tagged'];
-                        $value           = (float)$asset['value'];
-                        $qr_code         = $conn->real_escape_string($asset['qr_code']);
-                        $type            = $conn->real_escape_string($asset['type']);
-                        $image           = $conn->real_escape_string($asset['image']);
-                        $serial_no       = $conn->real_escape_string($asset['serial_no']);
-                        $code            = $conn->real_escape_string($asset['code']);
-                        $property_no     = $conn->real_escape_string($asset['property_no']);
-                        $model           = $conn->real_escape_string($asset['model']);
-                        $brand           = $conn->real_escape_string($asset['brand']);
-                        $inventory_tag   = $conn->real_escape_string($asset['inventory_tag']);
+                        if ($existing_asset) {
+                            // ✅ Restock existing office asset
+                            $updated_qty = $existing_asset['quantity'] + $qty;
 
-                        $sql = "
-INSERT INTO assets (
-    asset_name, category, description, quantity, unit, status,
-    acquisition_date, office_id, employee_id, red_tagged,
-    value, qr_code, type, image, serial_no,
-    code, property_no, model, brand, inventory_tag
-) VALUES (
-    '$asset_name', '$category', '$description', $new_quantity, '$unit', '$status',
-    '$acquisition_date', $office_id, $employee_id_sql, $red_tagged,
-    $value, '$qr_code', '$type', '$image', '$serial_no',
-    '$code', '$property_no', '$model', '$brand', '$inventory_tag'
-)";
+                            $restock_stmt = $conn->prepare("UPDATE assets SET quantity = ?, added_stock = ?, last_updated = NOW() WHERE id = ?");
+                            $restock_stmt->bind_param("iii", $updated_qty, $qty, $existing_asset['id']);
+                            $restock_stmt->execute();
+                            $restock_stmt->close();
+                        } else {
+                            // ❌ Not found → Insert as new asset for this office
+                            $new_quantity = $qty; // moved quantity
 
-                        if (!$conn->query($sql)) {
-                            echo "Error inserting asset: " . $conn->error;
+                            $sql = "
+    INSERT INTO assets (
+        asset_name, category, description, quantity, added_stock, unit, status,
+        acquisition_date, office_id, employee_id, red_tagged,
+        value, qr_code, type, image, serial_no,
+        code, property_no, model, brand, inventory_tag, last_updated
+    ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, NOW()
+    )";
+
+                            $insert_stmt = $conn->prepare($sql);
+                            $insert_stmt->bind_param(
+                                "ssiiisssiiissssssss",
+                                $asset['asset_name'],
+                                $asset['category'],
+                                $asset['description'],
+                                $new_quantity,
+                                $qty, // ✅ set added_stock to this qty
+                                $asset['unit'],
+                                $asset['status'],
+                                $asset['acquisition_date'],
+                                $office_id,
+                                $asset['employee_id'],
+                                $asset['red_tagged'],
+                                $asset['value'],
+                                $asset['qr_code'],
+                                $asset['type'],
+                                $asset['image'],
+                                $asset['serial_no'],
+                                $asset['code'],
+                                $asset['property_no'],
+                                $asset['model'],
+                                $asset['brand'],
+                                $asset['inventory_tag']
+                            );
+
+                            if (!$insert_stmt->execute()) {
+                                echo "Error inserting asset: " . $insert_stmt->error;
+                            }
+                            $insert_stmt->close();
                         }
                     }
                 }
