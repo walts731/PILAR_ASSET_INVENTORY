@@ -425,9 +425,11 @@ $stmt->close();
                 <thead class="table-light">
                   <tr>
                     <th><input type="checkbox" id="selectAllConsumables" /></th>
+                    <th>Stock No</th>
                     <th>Description</th>
-                    <th>Category</th>
                     <th>Qty</th>
+                    <th>Added Stock</th>
+                    <th>Updated Stock</th>
                     <th>Unit</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -438,18 +440,18 @@ $stmt->close();
                   $threshold = 5; // adjust threshold if needed
                   if ($selected_office === "all") {
                     $stmt = $conn->prepare("
-    SELECT a.*, c.category_name 
-    FROM assets a 
-    JOIN categories c ON a.category = c.id 
-    WHERE a.type = 'consumable' AND a.quantity > 0
-  ");
+                        SELECT a.*, c.category_name 
+                        FROM assets a 
+                        JOIN categories c ON a.category = c.id 
+                        WHERE a.type = 'consumable' AND a.quantity > 0
+                      ");
                   } else {
                     $stmt = $conn->prepare("
-    SELECT a.*, c.category_name 
-    FROM assets a 
-    JOIN categories c ON a.category = c.id 
-    WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0
-  ");
+                        SELECT a.*, c.category_name 
+                        FROM assets a 
+                        JOIN categories c ON a.category = c.id 
+                        WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0
+                      ");
                     $stmt->bind_param("i", $selected_office);
                   }
 
@@ -460,9 +462,11 @@ $stmt->close();
                   ?>
                     <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
                       <td><input type="checkbox" class="consumable-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
+                      <td><?= htmlspecialchars($row['property_no']) ?></td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
-                      <td><?= htmlspecialchars($row['category_name']) ?></td>
                       <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['quantity'] ?></td>
+                      <td><?= $row['added_stock'] ?></td>
+                      <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['updated_stock'] ?></td>
                       <td><?= $row['unit'] ?></td>
                       <td>
                         <span class="badge bg-<?= $row['status'] === 'available' ? 'success' : 'secondary' ?>">
@@ -545,55 +549,54 @@ $stmt->close();
     }
 
     document.querySelectorAll('.viewAssetBtn').forEach(button => {
-  button.addEventListener('click', function() {
-    const assetId = this.getAttribute('data-id');
+      button.addEventListener('click', function() {
+        const assetId = this.getAttribute('data-id');
 
-    fetch(`get_asset_details.php?id=${assetId}`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.error) {
-          alert(data.error);
-          return;
-        }
+        fetch(`get_asset_details.php?id=${assetId}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.error) {
+              alert(data.error);
+              return;
+            }
 
-        // Text content
-        document.getElementById('viewOfficeName').textContent = data.office_name;
-        document.getElementById('viewCategoryName').textContent = `${data.category_name} (${data.category_type})`;
-        document.getElementById('viewType').textContent = data.type;
-        document.getElementById('viewStatus').textContent = data.status;
-        document.getElementById('viewQuantity').textContent = data.quantity;
-        document.getElementById('viewUnit').textContent = data.unit;
-        document.getElementById('viewDescription').textContent = data.description;
-        document.getElementById('viewAcquisitionDate').textContent = formatDateFormal(data.acquisition_date);
-        document.getElementById('viewLastUpdated').textContent = formatDateFormal(data.last_updated);
-        document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
+            // Text content
+            document.getElementById('viewOfficeName').textContent = data.office_name;
+            document.getElementById('viewCategoryName').textContent = `${data.category_name} (${data.category_type})`;
+            document.getElementById('viewType').textContent = data.type;
+            document.getElementById('viewStatus').textContent = data.status;
+            document.getElementById('viewQuantity').textContent = data.quantity;
+            document.getElementById('viewUnit').textContent = data.unit;
+            document.getElementById('viewDescription').textContent = data.description;
+            document.getElementById('viewAcquisitionDate').textContent = formatDateFormal(data.acquisition_date);
+            document.getElementById('viewLastUpdated').textContent = formatDateFormal(data.last_updated);
+            document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
 
-        // Optional fields
-        document.getElementById('viewSerialNo').textContent = data.serial_no ?? '';
-        document.getElementById('viewCode').textContent = data.code ?? '';
-        document.getElementById('viewPropertyNo').textContent = data.property_no ?? '';
-        document.getElementById('viewModel').textContent = data.model ?? '';
-        document.getElementById('viewBrand').textContent = data.brand ?? '';
+            // Optional fields
+            document.getElementById('viewSerialNo').textContent = data.serial_no ?? '';
+            document.getElementById('viewCode').textContent = data.code ?? '';
+            document.getElementById('viewPropertyNo').textContent = data.property_no ?? '';
+            document.getElementById('viewModel').textContent = data.model ?? '';
+            document.getElementById('viewBrand').textContent = data.brand ?? '';
 
-        // 🔹 New fields
-        document.getElementById('viewInventoryTag').textContent = data.inventory_tag ?? '';
-        document.getElementById('viewEmployeeName').textContent = data.employee_name ?? '';
+            // 🔹 New fields
+            document.getElementById('viewInventoryTag').textContent = data.inventory_tag ?? '';
+            document.getElementById('viewEmployeeName').textContent = data.employee_name ?? '';
 
-        // Compute total value
-        const totalValue = parseFloat(data.value) * parseInt(data.quantity);
-        document.getElementById('viewTotalValue').textContent = totalValue.toFixed(2);
+            // Compute total value
+            const totalValue = parseFloat(data.value) * parseInt(data.quantity);
+            document.getElementById('viewTotalValue').textContent = totalValue.toFixed(2);
 
-        // Images
-        document.getElementById('viewQrCode').src = '../img/' + data.qr_code;
-        document.getElementById('municipalLogoImg').src = '../img/' + data.system_logo;
-        document.getElementById('viewAssetImage').src = '../img/assets/' + data.image;
-      })
-      .catch(error => {
-        console.error('Error:', error);
+            // Images
+            document.getElementById('viewQrCode').src = '../img/' + data.qr_code;
+            document.getElementById('municipalLogoImg').src = '../img/' + data.system_logo;
+            document.getElementById('viewAssetImage').src = '../img/assets/' + data.image;
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
       });
-  });
-});
-
+    });
   </script>
 
 
