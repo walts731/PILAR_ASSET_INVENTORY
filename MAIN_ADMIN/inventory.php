@@ -427,11 +427,12 @@ $stmt->close();
                     <th><input type="checkbox" id="selectAllConsumables" /></th>
                     <th>Stock No</th>
                     <th>Description</th>
-                    <th>Qty</th>
-                    <th>Added Stock</th>
-                    <th>Updated Stock</th>
+                    <th>On Hand</th>
+                    <th>Restocked Qty</th>
+                    <th>Available Stock</th>
                     <th>Unit</th>
                     <th>Status</th>
+                    <th>Last Updated</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -473,6 +474,7 @@ $stmt->close();
                           <?= ucfirst($row['status']) ?>
                         </span>
                       </td>
+                      <td><?= date('M d, Y', strtotime($row['last_updated'])) ?></td>
                       <td>
                         <!-- View Button -->
                         <button type="button"
