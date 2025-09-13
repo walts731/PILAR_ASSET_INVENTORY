@@ -50,44 +50,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form_id = isset($_POST['form_id']) ? (int)$_POST['form_id'] : 0;
 
     // Insert RIS header
-    $stmt = $conn->prepare("
-        INSERT INTO ris_form (
-            form_id, header_image,
-            division, responsibility_center, ris_no, date, office_id, responsibility_code, sai_no, reason_for_transfer,
-            requested_by_name, requested_by_designation, requested_by_date,
-            approved_by_name, approved_by_designation, approved_by_date,
-            issued_by_name, issued_by_designation, issued_by_date,
-            received_by_name, received_by_designation, received_by_date,
-            footer_date
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    ");
+   // Insert RIS header
+$stmt = $conn->prepare("
+    INSERT INTO ris_form (
+        form_id, header_image,
+        division, responsibility_center, ris_no, date, office_id, responsibility_code, sai_no, reason_for_transfer,
+        requested_by_name, requested_by_designation, requested_by_date,
+        approved_by_name, approved_by_designation, approved_by_date,
+        issued_by_name, issued_by_designation, issued_by_date,
+        received_by_name, received_by_designation, received_by_date,
+        footer_date
+    ) VALUES (?,?,?,?,?, NOW(), ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+");
+
 
     $stmt->bind_param(
-        "issssisssssssssssssssss",
-        $form_id,
-        $header_image,   // ✅ handle header image here
-        $division,
-        $responsibility_center,
-        $ris_no,
-        $date,
-        $office_id,
-        $responsibility_code,
-        $sai_no,
-        $purpose,
-        $requested_by_name,
-        $requested_by_designation,
-        $requested_by_date,
-        $approved_by_name,
-        $approved_by_designation,
-        $approved_by_date,
-        $issued_by_name,
-        $issued_by_designation,
-        $issued_by_date,
-        $received_by_name,
-        $received_by_designation,
-        $received_by_date,
-        $footer_date
-    );
+    "issssissssssssssssssss",
+    $form_id,              // i
+    $header_image,         // s
+    $division,             // s
+    $responsibility_center,// s
+    $ris_no,               // s ✅ fixed
+    $office_id,            // i
+    $responsibility_code,  // s
+    $sai_no,               // s
+    $purpose,              // s
+    $requested_by_name,    // s
+    $requested_by_designation, // s
+    $requested_by_date,    // s
+    $approved_by_name,     // s
+    $approved_by_designation, // s
+    $approved_by_date,     // s
+    $issued_by_name,       // s
+    $issued_by_designation,// s
+    $issued_by_date,       // s
+    $received_by_name,     // s
+    $received_by_designation, // s
+    $received_by_date,     // s
+    $footer_date           // s
+);
+
 
     if ($stmt->execute()) {
         $ris_form_id = $stmt->insert_id;
@@ -166,42 +168,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         value, qr_code, type, image, serial_no,
         code, property_no, model, brand, inventory_tag, last_updated
     ) VALUES (
-        ?, ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?,
-        ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?, NOW()
-    )";
+        '" . $conn->real_escape_string($asset['asset_name']) . "',
+        '" . $conn->real_escape_string($asset['category']) . "',
+        '" . $conn->real_escape_string($asset['description']) . "',
+        '$new_quantity',
+        '$qty',
+        '" . $conn->real_escape_string($asset['unit']) . "',
+        '" . $conn->real_escape_string($asset['status']) . "',
+        '" . $conn->real_escape_string($asset['acquisition_date']) . "',
+        '$office_id',
+        NULL, -- ✅ employee_id is forced NULL here
+        '" . $conn->real_escape_string($asset['red_tagged']) . "',
+        '" . $conn->real_escape_string($asset['value']) . "',
+        '" . $conn->real_escape_string($asset['qr_code']) . "',
+        '" . $conn->real_escape_string($asset['type']) . "',
+        '" . $conn->real_escape_string($asset['image']) . "',
+        '" . $conn->real_escape_string($asset['serial_no']) . "',
+        '" . $conn->real_escape_string($asset['code']) . "',
+        '" . $conn->real_escape_string($asset['property_no']) . "',
+        '" . $conn->real_escape_string($asset['model']) . "',
+        '" . $conn->real_escape_string($asset['brand']) . "',
+        '" . $conn->real_escape_string($asset['inventory_tag']) . "',
+        NOW()
+    )
+";
 
-                            $insert_stmt = $conn->prepare($sql);
-                            $insert_stmt->bind_param(
-                                "ssiiisssiiissssssss",
-                                $asset['asset_name'],
-                                $asset['category'],
-                                $asset['description'],
-                                $new_quantity,
-                                $qty, // ✅ set added_stock to this qty
-                                $asset['unit'],
-                                $asset['status'],
-                                $asset['acquisition_date'],
-                                $office_id,
-                                $asset['employee_id'],
-                                $asset['red_tagged'],
-                                $asset['value'],
-                                $asset['qr_code'],
-                                $asset['type'],
-                                $asset['image'],
-                                $asset['serial_no'],
-                                $asset['code'],
-                                $asset['property_no'],
-                                $asset['model'],
-                                $asset['brand'],
-                                $asset['inventory_tag']
-                            );
 
-                            if (!$insert_stmt->execute()) {
-                                echo "Error inserting asset: " . $insert_stmt->error;
+                            if ($conn->query($sql)) {
+                                // success
+                            } else {
+                                echo "Error: " . $conn->error;
                             }
-                            $insert_stmt->close();
                         }
                     }
                 }
