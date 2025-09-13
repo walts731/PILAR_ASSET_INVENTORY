@@ -73,7 +73,7 @@ while ($row = $res->fetch_assoc()) {
             <div class="card-body">
               <?php
               $total = $active = $borrowed = $red_tagged = 0;
-              $res = $conn->query("SELECT status, red_tagged FROM assets WHERE type = 'asset'");
+              $res = $conn->query("SELECT status, red_tagged FROM assets WHERE type = 'asset' AND quantity > 0");
               while ($r = $res->fetch_assoc()) {
                 $total++;
                 if ($r['status'] === 'available') $active++;

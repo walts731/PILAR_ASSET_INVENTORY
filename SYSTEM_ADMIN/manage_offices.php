@@ -44,11 +44,14 @@ if ($result && $result->num_rows > 0) {
             <div class="card shadow">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Manage Offices</h5>
-                    <!-- Add Office Button -->
-                    <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
-                        <i class="bi bi-plus-circle"></i> Add Office
-                    </button>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-secondary me-2">Total: <?= count($offices) ?></span>
+                        <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
+                            <i class="bi bi-plus-circle"></i> Add Office
+                        </button>
+                    </div>
                 </div>
+
                 <div class="card-body">
                     <!-- Bootstrap Alert -->
                     <?php if (isset($_SESSION['message'])): ?>
