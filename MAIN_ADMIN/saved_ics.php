@@ -86,7 +86,7 @@ if ($result && $result->num_rows > 0) {
                     <small class="text-muted"><?= htmlspecialchars($ics['received_by_position']) ?></small>
                   </td>
                   <td class="text-center">
-                    <a href="view_ics.php?id=<?= $ics['ics_id'] ?>" class="btn btn-sm btn-primary">
+                    <a href="view_ics.php?id=<?= $ics['ics_id'] ?>&form_id=<?php echo $form_id ?>" class="btn btn-sm btn-primary">
                       <i class="bi bi-eye"></i> View
                     </a>
                   </td>

@@ -7,6 +7,7 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 $ics_id = isset($_GET['ics_id']) ? intval($_GET['ics_id']) : null;
+$ics_form_id = $_GET['form_id'] ?? '';
 
 
 // Fetch the municipal logo from the system table
@@ -241,7 +242,7 @@ $stmt_assets->close();
 
     <div class="main">
         <?php include 'includes/topbar.php'; ?>
-        <a href="view_ics.php?id=<?= htmlspecialchars($ics_id) ?>" class="btn btn-secondary">
+        <a href="view_ics.php?id=<?= htmlspecialchars($ics_id) ?>&form_id=<?php echo $ics_form_id ?>" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Back to View ICS
         </a>
 

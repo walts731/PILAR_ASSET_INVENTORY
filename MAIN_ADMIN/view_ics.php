@@ -13,6 +13,8 @@ if ($ics_id <= 0) {
   die("Invalid ICS ID.");
 }
 
+$ics_form_id = $_GET['form_id'] ?? '';
+
 // Fetch ICS form details
 $sql = "SELECT f.id AS ics_id, f.header_image, f.entity_name, f.fund_cluster, f.ics_no,
                f.received_from_name, f.received_from_position,
@@ -65,7 +67,7 @@ $stmt->close();
 
     <div class="container py-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="saved_ics.php" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Saved ICS</a>
+        <a href="saved_ics.php?id=<?php echo $ics_form_id ?>" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Saved ICS</a>
       </div>
 
       <div class="card mb-5 shadow-sm">
@@ -130,7 +132,7 @@ $stmt->close();
                       <td><?= htmlspecialchars($item['item_no']) ?></td>
                       <td><?= htmlspecialchars($item['estimated_useful_life']) ?></td>
                       <td>
-                        <a href="create_mr.php?item_id=<?= htmlspecialchars($item['item_id']) ?>&ics_id=<?= htmlspecialchars($ics['ics_id']) ?>" class="btn btn-primary btn-sm">
+                        <a href="create_mr.php?item_id=<?= htmlspecialchars($item['item_id']) ?>&ics_id=<?= htmlspecialchars($ics['ics_id']) ?>&form_id=<?php echo $ics_form_id ?>" class="btn btn-primary btn-sm">
                           Create Property Tag
                         </a>
 
