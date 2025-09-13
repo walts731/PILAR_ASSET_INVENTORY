@@ -205,6 +205,7 @@ $stmt->close();
                 <thead class="table-light">
                   <tr>
                     <th><input type="checkbox" id="selectAllAssets" /></th>
+                    <th>Property no</th>
                     <th>Description</th>
                     <th>Category</th>
                     <th>Qty</th>
@@ -242,6 +243,7 @@ $stmt->close();
                   ?>
                     <tr>
                       <td><input type="checkbox" class="asset-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
+                      <td><?= htmlspecialchars($row['property_no']) ?></td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td><?= htmlspecialchars($row['category_name']) ?></td>
                       <td><?= $row['quantity'] ?></td>

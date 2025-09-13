@@ -79,7 +79,7 @@ if ($result && $result->num_rows > 0) {
                   <td><?= htmlspecialchars($ris['issued_by_name']) ?></td>
                   <td><?= htmlspecialchars($ris['received_by_name']) ?></td>
                   <td class="text-center">
-                    <a href="view_ris.php?id=<?= $ris['ris_id'] ?>" class="btn btn-sm btn-primary">
+                    <a href="view_ris.php?id=<?= $ris['ris_id'] ?>&form_id=<?php echo $form_id ?>" class="btn btn-sm btn-primary">
                       <i class="bi bi-eye"></i> View
                     </a>
                   </td>

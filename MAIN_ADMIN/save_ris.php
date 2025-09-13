@@ -70,7 +70,7 @@ $stmt = $conn->prepare("
     $header_image,         // s
     $division,             // s
     $responsibility_center,// s
-    $ris_no,               // s ✅ fixed
+    $ris_no,               // s 
     $office_id,            // i
     $responsibility_code,  // s
     $sai_no,               // s
