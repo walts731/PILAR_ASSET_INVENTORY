@@ -54,7 +54,7 @@ $item_stmt->close();
         <?php include 'includes/topbar.php'; ?>
 
         <!-- Back button -->
-        <a href="saved_ris.php?id=<?php echo $ris_form_id?>" class="btn btn-secondary mb-3">
+        <a href="saved_ris.php?id=<?php echo $ris_form_id ?>" class="btn btn-secondary mb-3">
             <i class="bi bi-arrow-left"></i> Back to Saved RIS
         </a>
 
@@ -146,9 +146,9 @@ $item_stmt->close();
         </table>
 
         <div class="col-md-12">
-                <label class="form-label fw-semibold">Purpose</label>
-                <input type="text" class="form-control" value="<?= htmlspecialchars($ris_data['reason_for_transfer'] ?? '') ?>" readonly>
-            </div>
+            <label class="form-label fw-semibold">Purpose</label>
+            <input type="text" class="form-control" value="<?= htmlspecialchars($ris_data['reason_for_transfer'] ?? '') ?>" readonly>
+        </div>
 
         <!-- FOOTER -->
         <table class="table table-bordered text-center align-middle">
@@ -185,6 +185,14 @@ $item_stmt->close();
                 </tr>
             </tbody>
         </table>
+
+        <!-- Export / Print -->
+        <div class="mb-5">
+            <a href="generate_ris_pdf.php?id=<?= $ris_data['id'] ?>" class="btn btn-success">
+                <i class="bi bi-printer"></i> Print / Export PDF
+            </a>
+
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

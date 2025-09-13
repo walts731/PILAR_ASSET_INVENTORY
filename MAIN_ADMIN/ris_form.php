@@ -225,10 +225,13 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         <td><input type="date" class="form-control" name="issued_by_date" value="<?= date('Y-m-d') ?>"></td>
         <td><input type="date" class="form-control" name="received_by_date" value="<?= date('Y-m-d') ?>"></td>
       </tr>
-      <tr>
-        <td>Footer Date:</td>
-        <td colspan="4"><input type="date" class="form-control" name="footer_date" value="<?= htmlspecialchars($ris_data['footer_date'] ?? date('Y-m-d')) ?>"></td>
-      </tr>
+      <tr style="display:none;">
+  <td>Footer Date:</td>
+  <td colspan="4">
+    <input type="hidden" name="footer_date" value="<?= htmlspecialchars($ris_data['footer_date'] ?? date('Y-m-d')) ?>">
+  </td>
+</tr>
+
     </tbody>
   </table>
 
