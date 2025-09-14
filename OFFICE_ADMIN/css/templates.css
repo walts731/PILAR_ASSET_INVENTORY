@@ -1,0 +1,113 @@
+        /* Landscape preview box */
+.preview-box {
+    width: 100%;
+    max-width: 1120px; /* ~A4 landscape width */
+    aspect-ratio: 4 / 3;
+    margin: auto;
+    background: white;
+    border: 1px solid #ddd;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow: auto;
+}
+
+
+        .toolbar button {
+            margin-right: 5px;
+        }
+
+        .rich-input {
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 100px;
+            background: #fff;
+        }
+
+        .blank {
+            display: inline-block;
+            min-width: 100px;
+            border-bottom: 1px solid #000;
+        }
+
+        .toolbar .btn.active {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+
+        .submit-btn {
+            background-color: rgb(44, 110, 215);
+            color: white;
+            padding: 6px 12px;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .submit-btn:hover {
+            background-color: rgb(9, 96, 184);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .rich-input {
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 80px;
+            background: #fff;
+        }
+
+        .preview-box {
+            border: 1px solid #ccc;
+            padding: 20px;
+            background-color: #fff;
+            height: 100%;
+        }
+
+        .blank {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            width: 100px;
+        }
+
+        .preview-logo img {
+            height: 60px;
+        }
+
+        .submit-btn {
+            background-color: rgb(44, 110, 215);
+            color: white;
+            padding: 6px 12px;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .submit-btn:hover {
+            background-color: rgb(9, 96, 184);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .rich-input table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.rich-input td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    min-width: 60px;
+}
+
+/* Optional clarity: borderless tables still have padding */
+.rich-input table td {
+    padding: 6px;
+    min-width: 60px;
+}

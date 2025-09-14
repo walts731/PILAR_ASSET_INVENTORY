@@ -40,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         header("Location: SYSTEM_ADMIN/system_admin_dashboard.php?office=" . $user["office_id"]);
                         break;
                     case "office_admin":
-                        header("Location: ADMIN/admin_dashboard.php?office=" . $user["office_id"]);
+                        header("Location: OFFICE_ADMIN/admin_dashboard.php?office=" . $user["office_id"]);
                         break;
                     case "admin":
                         header("Location: MAIN_ADMIN/admin_dashboard.php?office=" . $user["office_id"]);
