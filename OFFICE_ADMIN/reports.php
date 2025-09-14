@@ -2,7 +2,6 @@
 require_once '../connect.php';
 session_start();
 
-// Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../index.php");
     exit();
@@ -21,20 +20,20 @@ if (!isset($_SESSION['office_id'])) {
     $stmt->close();
 }
 
-$office_id = $_SESSION['office_id'];
-
 // Fetch full name
 $user_name = '';
-$stmt = $conn->prepare("SELECT fullname, role FROM users WHERE id = ?");
+$stmt = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
 $stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
-$stmt->bind_result($fullname, $role);
-$stmt->fetch();
+$stmt->bind_result($fullname);
+if ($stmt->fetch()) {
+    $user_name = $fullname;
+}
 $stmt->close();
 
 // Fetch reports
+$role = $_SESSION['role'];
 if ($role === 'admin') {
-    // Admin sees all reports
     $result = $conn->query("
         SELECT gr.*, u.fullname
         FROM generated_reports gr
@@ -42,15 +41,14 @@ if ($role === 'admin') {
         ORDER BY gr.generated_at DESC
     ");
 } else {
-    // Non-admin sees reports only from their office
     $stmt = $conn->prepare("
         SELECT gr.*, u.fullname
         FROM generated_reports gr
         JOIN users u ON gr.user_id = u.id
-        WHERE u.office_id = ?
+        WHERE gr.user_id = ?
         ORDER BY gr.generated_at DESC
     ");
-    $stmt->bind_param("i", $office_id);
+    $stmt->bind_param("i", $_SESSION['user_id']);
     $stmt->execute();
     $result = $stmt->get_result();
     $stmt->close();
@@ -120,22 +118,27 @@ if ($role === 'admin') {
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php
-                                while ($row = $result->fetch_assoc()):
-                                    $filepath = '../generated_reports/' . $row['filename'];
-                                    if (!file_exists($filepath)) continue;
-                                ?>
+                                <?php if ($result && $result->num_rows > 0): ?>
+                                    <?php while ($row = $result->fetch_assoc()): 
+                                        $filepath = '../generated_reports/' . $row['filename'];
+                                        if (!file_exists($filepath)) continue;
+                                    ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($row['filename']) ?></td>
+                                            <td><?= htmlspecialchars($row['fullname']) ?></td>
+                                            <td><?= date("M d, Y h:i A", strtotime($row['generated_at'])) ?></td>
+                                            <td>
+                                                <a class="download-btn btn btn-sm rounded-pill" href="<?= $filepath ?>" target="_blank">
+                                                    <i class="bi bi-download"></i> Download
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                <?php else: ?>
                                     <tr>
-                                        <td><?= htmlspecialchars($row['filename']) ?></td>
-                                        <td><?= htmlspecialchars($row['fullname']) ?></td>
-                                        <td><?= date("M d, Y h:i A", strtotime($row['generated_at'])) ?></td>
-                                        <td>
-                                            <a class="download-btn btn btn-sm rounded-pill" href="<?= $filepath ?>" target="_blank">
-                                                <i class="bi bi-download"></i> Download
-                                            </a>
-                                        </td>
+                                        <td colspan="4" class="text-center">No reports found</td>
                                     </tr>
-                                <?php endwhile; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>

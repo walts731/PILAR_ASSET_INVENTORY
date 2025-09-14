@@ -120,7 +120,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets'])) 
     </tr>';
     }
 
-
     $html .= '</tbody></table>';
 
     // Generate PDF
@@ -138,14 +137,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets'])) 
     $savePath = '../generated_reports/' . $reportFilename;
     file_put_contents($savePath, $pdfOutput);
 
-    // Optional: Insert log into reports table
+    // Insert log into reports table with office_id
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
     $userId = $_SESSION['user_id'] ?? null;
+
     if ($userId) {
-        $insert = $conn->prepare("INSERT INTO generated_reports (user_id, filename, generated_at) VALUES (?, ?, NOW())");
-        $insert->bind_param("is", $userId, $reportFilename);
+        // Get the user's office_id
+        $officeQuery = $conn->prepare("SELECT office_id FROM users WHERE id = ?");
+        $officeQuery->bind_param("i", $userId);
+        $officeQuery->execute();
+        $officeResult = $officeQuery->get_result();
+        $officeRow = $officeResult->fetch_assoc();
+        $officeId = $officeRow['office_id'] ?? null;
+
+        $insert = $conn->prepare("INSERT INTO generated_reports (user_id, office_id, filename, generated_at) VALUES (?, ?, ?, NOW())");
+        $insert->bind_param("iis", $userId, $officeId, $reportFilename);
         $insert->execute();
     }
 

@@ -1,52 +1,92 @@
 <?php
-require_once '../connect.php';
+// includes/sidebar.php
 
-// Ensure office_id is set
-if (!isset($_SESSION['office_id'])) {
-    $user_id = $_SESSION['user_id'];
-    $stmt = $conn->prepare("SELECT office_id FROM users WHERE user_id = ?");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $stmt->bind_result($office_id);
-    if ($stmt->fetch()) {
-        $_SESSION['office_id'] = $office_id;
-    }
-    $stmt->close();
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-$office_id = $_SESSION['office_id'];
+// Optional: show PHP errors while debugging. Comment out in production.
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
-// Fetch system settings
+// Ensure DB connection (path is relative to this sidebar file)
+if (!isset($conn) || !$conn) {
+    require_once __DIR__ . '/../connect.php';
+}
+
+// If user is not logged in, redirect to login (adjust path if needed)
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+    header('Location: ../index.php'); // change if your login is elsewhere
+    exit();
+}
+
+$user_id = (int) $_SESSION['user_id'];
+
+// Fetch user's office_id and fullname (using bind_result for wide compatibility)
+$fullname = '';
+$db_office_id = null;
+$stmt = $conn->prepare('SELECT office_id, fullname FROM users WHERE id = ? LIMIT 1');
+if ($stmt) {
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $stmt->bind_result($db_office_id, $db_fullname);
+    if ($stmt->fetch()) {
+        if (!isset($_SESSION['office_id']) || empty($_SESSION['office_id'])) {
+            $_SESSION['office_id'] = $db_office_id;
+        }
+        $fullname = $db_fullname ?? '';
+    }
+    $stmt->close();
+} else {
+    error_log('Sidebar: prepare failed for users query: ' . $conn->error);
+}
+
+// Make sure we have $office_id variable for later use
+$office_id = $_SESSION['office_id'] ?? null;
+
+// Fetch system settings (simple query)
 $system = [
     'logo' => 'default-logo.png',
     'system_title' => 'Inventory System'
 ];
-$result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
-if ($result && $result->num_rows > 0) {
-    $system = $result->fetch_assoc();
+$res = $conn->query('SELECT logo, system_title FROM system LIMIT 1');
+if ($res && $res->num_rows > 0) {
+    $system = $res->fetch_assoc();
 }
 
-// Current page
-$page = basename($_SERVER['PHP_SELF'], ".php");
+// Current page for active link highlighting
+$page = basename($_SERVER['PHP_SELF'], '.php');
 
-// Fetch categories that have assets in this office
+// Fetch categories that have assets in this office (only if $office_id is available)
 $categories = [];
-$categoryQuery = "
-    SELECT c.id, c.category_name
-    FROM categories c
-    JOIN assets a ON a.category = c.id
-    WHERE a.office_id = ? AND a.quantity > 0
-    GROUP BY c.id
-    ORDER BY c.category_name
-";
-$stmt = $conn->prepare($categoryQuery);
-$stmt->bind_param("i", $office_id);
-$stmt->execute();
-$result = $stmt->get_result();
-while ($row = $result->fetch_assoc()) {
-    $categories[] = $row;
+if (!empty($office_id)) {
+    $categoryQuery = "
+        SELECT c.id, c.category_name
+        FROM categories c
+        JOIN assets a ON a.category = c.id
+        WHERE a.office_id = ? AND a.quantity > 0
+        GROUP BY c.id
+        ORDER BY c.category_name
+    ";
+    $stmt = $conn->prepare($categoryQuery);
+    if ($stmt) {
+        $stmt->bind_param('i', $office_id);
+        $stmt->execute();
+        // use bind_result loop for compatibility
+        $stmt->bind_result($cat_id, $cat_name);
+        while ($stmt->fetch()) {
+            $categories[] = ['id' => $cat_id, 'category_name' => $cat_name];
+        }
+        $stmt->close();
+    } else {
+        error_log('Sidebar: prepare failed for categories query: ' . $conn->error);
+    }
 }
-$stmt->close();
+
+// Debug helper: an HTML comment you can view via "View Source"
+// (safe to leave while debugging; remove or comment out in production)
+echo "<!-- SIDEBAR DEBUG: user_id={$user_id} | office_id=" . htmlspecialchars($office_id ?? 'NULL') . " | fullname=" . htmlspecialchars($fullname) . " -->";
 ?>
 
 <!-- SIDEBAR STYLES -->
@@ -91,8 +131,6 @@ $stmt->close();
                         <?= htmlspecialchars($cat['category_name']) ?>
                     </a>
                 <?php endforeach; ?>
-
-                
             </div>
 
             <a href="borrow.php" class="<?= ($page == 'borrow') ? 'active' : '' ?>"><i class="bi bi-arrow-left-right"></i> Borrow</a>
