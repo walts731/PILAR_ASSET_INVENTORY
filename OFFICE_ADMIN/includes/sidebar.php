@@ -70,7 +70,7 @@ $stmt->close();
 
         <!-- Navigation -->
         <nav class="nav flex-column">
-            <a href="../MAIN_ADMIN/admin_dashboard.php" class="<?= ($page == 'admin_dashboard') ? 'active' : '' ?>">
+            <a href="../OFFICE_ADMIN/admin_dashboard.php" class="<?= ($page == 'admin_dashboard') ? 'active' : '' ?>">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
 
