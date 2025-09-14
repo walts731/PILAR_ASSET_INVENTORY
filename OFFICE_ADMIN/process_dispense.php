@@ -2,7 +2,7 @@
 require_once '../connect.php';
 session_start();
 
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['office_id'])) {
     exit('Unauthorized');
 }
 
@@ -12,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $recipient_user_id = (int) $_POST['recipient_user_id'];
     $remarks = $_POST['remarks'] ?? '';
     $dispensed_by_user_id = $_SESSION['user_id'];
+    $office_id = (int) $_SESSION['office_id']; // ✅ include office_id
 
     // Start transaction
     $conn->begin_transaction();
@@ -32,10 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                        WHERE id = $asset_id";
         $conn->query($update_sql);
 
-        // Insert log
+        // Insert log with office_id
         $log_sql = "INSERT INTO consumption_log 
-                    (asset_id, quantity_consumed, recipient_user_id, dispensed_by_user_id, remarks, consumption_date) 
-                    VALUES ($asset_id, $quantity_consumed, $recipient_user_id, $dispensed_by_user_id, '$remarks', NOW())";
+                    (asset_id, office_id, quantity_consumed, recipient_user_id, dispensed_by_user_id, remarks, consumption_date) 
+                    VALUES ($asset_id, $office_id, $quantity_consumed, $recipient_user_id, $dispensed_by_user_id, '$remarks', NOW())";
         $conn->query($log_sql);
 
         $conn->commit();
