@@ -101,50 +101,57 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
 
         <?php if (count($assets) > 0): ?>
           <div class="card shadow-sm">
-
             <div class="card-body">
-              <div class="table-responsive">
-                <table id="inventoryTable" class="table table-hover table-sm align-middle table-borderless">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Description</th>
-                      <th>Category</th>
-                      <th>Quantity</th>
-                      <th>Unit</th>
-                      <th>Status</th>
-                      <th>Value</th>
-                      <th>Total Value</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <?php foreach ($assets as $asset): ?>
-                      <?php $totalValue = $asset['quantity'] * $asset['value']; ?>
+              <?php if (count($assets) > 0): ?>
+                <div class="table-responsive">
+                  <table id="inventoryTable" class="table table-hover table-sm align-middle table-borderless">
+                    <thead class="table-light">
                       <tr>
-                        <td><?= htmlspecialchars($asset['description']) ?></td>
-                        <td><?= htmlspecialchars($asset['category_name']) ?></td>
-                        <td><?= $asset['quantity'] ?></td>
-                        <td><?= htmlspecialchars($asset['unit']) ?></td>
-                        <td><?= htmlspecialchars($asset['status']) ?></td>
-                        <td>₱<?= number_format($asset['value'], 2) ?></td>
-                        <td>₱<?= number_format($totalValue, 2) ?></td>
-                        <td class="text-center">
-                          <button
-                            class="btn btn-sm btn-primary viewAssetBtn"
-                            data-bs-toggle="modal"
-                            data-bs-target="#viewAssetModal"
-                            data-id="<?= $asset['id'] ?>">
-                            <i class="bi bi-eye"></i>
-                          </button>
-                        </td>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Quantity</th>
+                        <th>Unit</th>
+                        <th>Status</th>
+                        <th>Value</th>
+                        <th>Total Value</th>
+                        <th>Action</th>
                       </tr>
-                    <?php endforeach; ?>
-                  </tbody>
-                  <?php include 'modals/inventory_category_modal.php'; ?>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      <?php foreach ($assets as $asset): ?>
+                        <?php $totalValue = $asset['quantity'] * $asset['value']; ?>
+                        <tr>
+                          <td><?= htmlspecialchars($asset['description']) ?></td>
+                          <td><?= htmlspecialchars($asset['category_name']) ?></td>
+                          <td><?= $asset['quantity'] ?></td>
+                          <td><?= htmlspecialchars($asset['unit']) ?></td>
+                          <td><?= htmlspecialchars($asset['status']) ?></td>
+                          <td>₱<?= number_format($asset['value'], 2) ?></td>
+                          <td>₱<?= number_format($totalValue, 2) ?></td>
+                          <td class="text-center">
+                            <button
+                              class="btn btn-sm btn-primary viewAssetBtn"
+                              data-bs-toggle="modal"
+                              data-bs-target="#viewAssetModal"
+                              data-id="<?= $asset['id'] ?>">
+                              <i class="bi bi-eye"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      <?php endforeach; ?>
+                    </tbody>
+                    <?php include 'modals/inventory_category_modal.php'; ?>
+                  </table>
+                </div>
+              <?php else: ?>
+                <div class="text-center py-5">
+                  <i class="bi bi-box-seam text-muted" style="font-size: 3rem;"></i>
+                  <p class="mt-3 mb-0 text-muted">No assets yet in this category.</p>
+                </div>
+              <?php endif; ?>
             </div>
           </div>
+
 
         <?php else: ?>
           <div class="alert alert-warning">No assets found in this category.</div>
