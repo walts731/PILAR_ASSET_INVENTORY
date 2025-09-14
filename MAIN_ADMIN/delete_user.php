@@ -2,12 +2,13 @@
 require_once '../connect.php';
 session_start();
 
-if (!isset($_SESSION['user_id']) || !isset($_GET['id'])) {
+if (!isset($_SESSION['user_id']) || !isset($_GET['id']) || !isset($_GET['office'])) {
   header("Location: user.php");
   exit();
 }
 
-$user_id = $_GET['id'];
+$user_id = intval($_GET['id']);
+$office_id = intval($_GET['office']); // capture office ID
 
 // Attempt deletion
 try {
@@ -16,17 +17,16 @@ try {
   $stmt->execute();
 
   if ($stmt->affected_rows > 0) {
-    header("Location: user.php?delete=success");
+    header("Location: user.php?office={$office_id}&delete=success");
   } else {
-    // Possibly locked or doesn't exist
-    header("Location: user.php?delete=locked");
+    header("Location: user.php?office={$office_id}&delete=locked");
   }
 } catch (mysqli_sql_exception $e) {
-  // Foreign key constraint violation
   if ($e->getCode() == 1451) {
-    header("Location: user.php?delete=locked");
+    // Foreign key constraint violation
+    header("Location: user.php?office={$office_id}&delete=locked");
   } else {
-    header("Location: user.php?delete=error");
+    header("Location: user.php?office={$office_id}&delete=error");
   }
 }
 exit();

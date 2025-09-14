@@ -183,6 +183,18 @@ $stmt->close();
                       </button>
                     </form>
                   <?php endif; ?>
+
+                  <button
+                    class="btn btn-sm btn-outline-dark rounded-pill deleteUserBtn"
+                    data-id="<?= $user['id'] ?>"
+                    data-fullname="<?= htmlspecialchars($user['fullname']) ?>"
+                    data-office="<?= $selected_office ?>"
+                    data-bs-toggle="modal"
+                    data-bs-target="#deleteUserModal"
+                    title="Delete User">
+                    <i class="bi bi-trash"></i>
+                  </button>
+
                 </td>
               </tr>
             <?php endwhile; ?>
