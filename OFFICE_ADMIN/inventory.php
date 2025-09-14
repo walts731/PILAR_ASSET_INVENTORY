@@ -3,38 +3,47 @@ require_once '../connect.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../index.php");
-    exit();
+  header("Location: ../index.php");
+  exit();
+}
+
+// Place this query near the top of your dashboard PHP file
+$users_result = $conn->query("SELECT id, fullname FROM users WHERE status = 'active' ORDER BY fullname ASC");
+$users_list = [];
+if ($users_result) {
+  while ($user_row = $users_result->fetch_assoc()) {
+    $users_list[] = $user_row;
+  }
 }
 
 // Fetch system info
 $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
 if ($result && $result->num_rows > 0) {
-    $system = $result->fetch_assoc();
+  $system = $result->fetch_assoc();
 }
 
 // Set office_id if not set
 if (!isset($_SESSION['office_id'])) {
-    $user_id = $_SESSION['user_id'];
-    $stmt = $conn->prepare("SELECT office_id FROM users WHERE user_id = ?");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $stmt->bind_result($office_id);
-    if ($stmt->fetch()) {
-        $_SESSION['office_id'] = $office_id;
-    }
-    $stmt->close();
+  $user_id = $_SESSION['user_id'];
+  $stmt = $conn->prepare("SELECT office_id FROM users WHERE user_id = ?");
+  $stmt->bind_param("i", $user_id);
+  $stmt->execute();
+  $stmt->bind_result($office_id);
+  if ($stmt->fetch()) {
+    $_SESSION['office_id'] = $office_id;
+  }
+  $stmt->close();
 }
 
 // Fetch office name
 $office_name = '';
 if (isset($_SESSION['office_id'])) {
-    $stmt = $conn->prepare("SELECT office_name FROM offices WHERE id = ?");
-    $stmt->bind_param("i", $_SESSION['office_id']);
-    $stmt->execute();
-    $stmt->bind_result($office_name);
-    $stmt->fetch();
-    $stmt->close();
+  $stmt = $conn->prepare("SELECT office_name FROM offices WHERE id = ?");
+  $stmt->bind_param("i", $_SESSION['office_id']);
+  $stmt->execute();
+  $stmt->bind_result($office_name);
+  $stmt->fetch();
+  $stmt->close();
 }
 
 // Fetch full name
@@ -47,6 +56,8 @@ $stmt->fetch();
 $stmt->close();
 
 $office_id = $_SESSION['office_id'];
+
+
 ?>
 
 <!DOCTYPE html>
@@ -72,7 +83,21 @@ $office_id = $_SESSION['office_id'];
     <?php include 'includes/topbar.php' ?>
 
     <?php include 'alerts/inventory_alerts.php'; ?>
+    <?php if (isset($_SESSION['success_message'])): ?>
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($_SESSION['success_message']); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      <?php unset($_SESSION['success_message']); ?>
+    <?php endif; ?>
 
+    <?php if (isset($_SESSION['error_message'])): ?>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($_SESSION['error_message']); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      <?php unset($_SESSION['error_message']); ?>
+    <?php endif; ?>
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
       <li class="nav-item" role="presentation">
@@ -84,6 +109,16 @@ $office_id = $_SESSION['office_id'];
     </ul>
 
     <div class="tab-content" id="inventoryTabsContent">
+      <?php
+      if (!empty($_SESSION['success_message'])) {
+        echo '<div class="alert alert-success">' . htmlspecialchars($_SESSION['success_message']) . '</div>';
+        unset($_SESSION['success_message']);
+      }
+      if (!empty($_SESSION['error_message'])) {
+        echo '<div class="alert alert-danger">' . htmlspecialchars($_SESSION['error_message']) . '</div>';
+        unset($_SESSION['error_message']);
+      }
+      ?>
 
       <!-- Assets Tab -->
       <div class="tab-pane fade show active" id="assets" role="tabpanel">
@@ -94,20 +129,20 @@ $office_id = $_SESSION['office_id'];
         $res->execute();
         $resResult = $res->get_result();
         while ($r = $resResult->fetch_assoc()) {
-            $total++;
-            if ($r['status'] === 'available') $active++;
-            if ($r['status'] === 'borrowed') $borrowed++;
-            if ($r['status'] === 'red_tagged') $red_tagged++;
+          $total++;
+          if ($r['status'] === 'available') $active++;
+          if ($r['status'] === 'borrowed') $borrowed++;
+          if ($r['status'] === 'red_tagged') $red_tagged++;
         }
         ?>
 
         <div class="row mb-4">
           <?php
           $cards = [
-              ['Total', $total, 'box-seam', 'primary'],
-              ['Available', $active, 'check-circle', 'info'],
-              ['Borrowed', $borrowed, 'arrow-left-right', 'primary'],
-              ['Red-Tagged', $red_tagged, 'exclamation-triangle', 'danger']
+            ['Total', $total, 'box-seam', 'primary'],
+            ['Available', $active, 'check-circle', 'info'],
+            ['Borrowed', $borrowed, 'arrow-left-right', 'primary'],
+            ['Red-Tagged', $red_tagged, 'exclamation-triangle', 'danger']
           ];
           foreach ($cards as [$title, $value, $icon, $color]): ?>
             <div class="col-12 col-sm-6 col-md-3 mb-3">
@@ -162,8 +197,8 @@ $office_id = $_SESSION['office_id'];
                   $stmt->execute();
                   $result = $stmt->get_result();
                   while ($row = $result->fetch_assoc()):
-                      $status_class = $row['status'] === 'available' ? 'success' : ($row['status'] === 'borrowed' ? 'warning' : 'secondary');
-                      if ($row['red_tagged']) $status_class = 'danger';
+                    $status_class = $row['status'] === 'available' ? 'success' : ($row['status'] === 'borrowed' ? 'warning' : 'secondary');
+                    if ($row['red_tagged']) $status_class = 'danger';
                   ?>
                     <tr>
                       <td><input type="checkbox" class="asset-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
@@ -207,20 +242,20 @@ $office_id = $_SESSION['office_id'];
         $cres->execute();
         $cresResult = $cres->get_result();
         while ($r = $cresResult->fetch_assoc()) {
-            $ctotal++;
-            if ($r['status'] === 'available') $cactive++;
-            if ($r['status'] === 'unavailable') $cunavailable++;
-            if ((int)$r['quantity'] <= $threshold) $clow_stock++;
+          $ctotal++;
+          if ($r['status'] === 'available') $cactive++;
+          if ($r['status'] === 'unavailable') $cunavailable++;
+          if ((int)$r['quantity'] <= $threshold) $clow_stock++;
         }
         ?>
 
         <div class="row mb-4">
           <?php
           $cards = [
-              ['Total', $ctotal, 'box-seam', 'primary'],
-              ['Available', $cactive, 'check-circle', 'info'],
-              ['Unavailable', $cunavailable, 'slash-circle', 'primary'],
-              ['Low Stock', $clow_stock, 'exclamation-triangle', 'info']
+            ['Total', $ctotal, 'box-seam', 'primary'],
+            ['Available', $cactive, 'check-circle', 'info'],
+            ['Unavailable', $cunavailable, 'slash-circle', 'primary'],
+            ['Low Stock', $clow_stock, 'exclamation-triangle', 'info']
           ];
           foreach ($cards as [$title, $value, $icon, $color]): ?>
             <div class="col-12 col-sm-6 col-md-3 mb-3">
@@ -256,7 +291,6 @@ $office_id = $_SESSION['office_id'];
                     <th>Description</th>
                     <th>On Hand</th>
                     <th>Restocked Qty</th>
-                    <th>Available Stock</th>
                     <th>Unit</th>
                     <th>Status</th>
                     <th>Last Updated</th>
@@ -275,7 +309,7 @@ $office_id = $_SESSION['office_id'];
                   $stmt->execute();
                   $result = $stmt->get_result();
                   while ($row = $result->fetch_assoc()):
-                      $is_low = $row['quantity'] <= $threshold;
+                    $is_low = $row['quantity'] <= $threshold;
                   ?>
                     <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
                       <td><input type="checkbox" class="consumable-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
@@ -283,7 +317,6 @@ $office_id = $_SESSION['office_id'];
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['quantity'] ?></td>
                       <td><?= $row['added_stock'] ?></td>
-                      <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['updated_stock'] ?></td>
                       <td><?= $row['unit'] ?></td>
                       <td><span class="badge bg-<?= $row['status'] === 'available' ? 'success' : 'secondary' ?>"><?= ucfirst($row['status']) ?></span></td>
                       <td><?= date('M d, Y', strtotime($row['last_updated'])) ?></td>
@@ -295,6 +328,14 @@ $office_id = $_SESSION['office_id'];
                         <?php else: ?>
                           <span class="text-muted small"><i class="bi bi-lock"></i></span>
                         <?php endif; ?>
+                        <button type="button" class="btn btn-sm btn-outline-success rounded-pill dispenseBtn"
+                          data-id="<?= $row['id'] ?>"
+                          data-name="<?= htmlspecialchars($row['description']) ?>"
+                          data-stock="<?= $row['quantity'] ?>"
+                          data-bs-toggle="modal"
+                          data-bs-target="#dispenseConsumableModal">
+                          <i class="bi bi-box-arrow-right"></i> Dispense
+                        </button>
                       </td>
                     </tr>
                   <?php endwhile; ?>
@@ -316,7 +357,7 @@ $office_id = $_SESSION['office_id'];
   <?php include 'modals/manage_categories_modal.php'; ?>
   <?php include 'modals/view_asset_modal.php'; ?>
   <?php include 'modals/import_csv_modal.php'; ?>
-
+  <?php include 'modals/dispense_consumable_modal.php'; ?>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
