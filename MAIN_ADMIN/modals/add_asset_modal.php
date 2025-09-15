@@ -54,13 +54,13 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
                 <div class="col-md-4" id="propertyNoGroup">
                     <label for="property_no" class="form-label">Property No.</label>
                     <input type="text" name="property_no" id="property_no" class="form-control"
-                           value="<?= $property_no ?>" readonly>
+                        value="<?= $property_no ?>" readonly>
                 </div>
 
                 <div class="col-md-4 d-none" id="stockNoGroup">
                     <label for="stock_no" class="form-label">Stock No.</label>
                     <input type="text" name="stock_no" id="stock_no" class="form-control"
-                           value="<?= $stock_no ?>" readonly>
+                        value="<?= $stock_no ?>" readonly>
                 </div>
 
                 <div class="col-md-6">
@@ -120,15 +120,7 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
                     </select>
                 </div>
 
-                <div class="col-md-4">
-                    <label for="office_id" class="form-label">Office</label> <span class="text-danger">*</span>
-                    <select name="office_id" id="office_id" class="form-select" required>
-                        <option value="" disabled selected>Select Office</option>
-                        <?php foreach ($offices as $office): ?>
-                            <option value="<?= $office['id'] ?>"><?= htmlspecialchars($office['office_name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                <input type="hidden" name="office_id" value="<?= $_SESSION['office_id'] ?>">
 
                 <div class="col-md-4">
                     <label for="type" class="form-label">Type</label> <span class="text-danger">*</span>

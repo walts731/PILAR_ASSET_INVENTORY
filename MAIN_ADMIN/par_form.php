@@ -1,25 +1,34 @@
 <?php
 require_once '../connect.php';
-$form_id = $_GET['id'] ?? null;
 
+// Default data
 $par_data = [
     'header_image' => '',
     'entity_name' => '',
     'fund_cluster' => '',
     'par_no' => '',
-    'office_id' => ''
+    'office_id' => '',
+    'position_office_left' => '',
+    'position_office_right' => '',
+    'date_received_left' => date('Y-m-d'),
+    'date_received_right' => date('Y-m-d')
 ];
 
-// Fetch PAR form data
-if ($form_id) {
-    $stmt = $conn->prepare("SELECT header_image, entity_name, fund_cluster, par_no, office_id, position_office_left, position_office_right FROM par_form WHERE form_id = ?");
-    $stmt->bind_param("i", $form_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($result && $result->num_rows > 0) {
-        $par_data = $result->fetch_assoc();
+// ✅ Always fetch the latest record
+$latest = $conn->query("SELECT * FROM par_form ORDER BY id DESC LIMIT 1");
+if ($latest && $latest->num_rows > 0) {
+    $par_data = $latest->fetch_assoc();
+
+    // Always auto-generate a new PAR number
+    if (preg_match('/PAR-(\d+)/', $par_data['par_no'], $matches)) {
+        $nextNum = str_pad(((int)$matches[1] + 1), 4, '0', STR_PAD_LEFT);
+        $par_data['par_no'] = "PAR-" . $nextNum;
+    } else {
+        $par_data['par_no'] = "PAR-0001";
     }
-    $stmt->close();
+} else {
+    // No previous record → start fresh
+    $par_data['par_no'] = "PAR-0001";
 }
 
 // Fetch offices for dropdown
@@ -29,17 +38,28 @@ while ($row = $office_query->fetch_assoc()) {
     $offices[] = $row;
 }
 
-// Fetch description + unit cost + quantity from assets
+// Fetch description + unit cost + quantity from assets 
+// (only type = 'asset', quantity > 0, and value >= 50,000)
 $description_details = [];
-$result = $conn->query("SELECT description, value AS unit_cost, quantity, acquisition_date, unit FROM assets");
+$result = $conn->query("
+    SELECT a.id, a.description, a.value AS unit_cost, a.quantity, a.acquisition_date, 
+           a.unit, a.property_no, o.office_name
+    FROM assets a
+    LEFT JOIN offices o ON a.office_id = o.id
+    WHERE a.type = 'asset' AND a.quantity > 0 AND a.value >= 50000
+");
+
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $desc = $row['description'];
         $description_details[$desc] = [
+            'id' => $row['id'],
             'unit_cost' => $row['unit_cost'],
             'quantity' => $row['quantity'],
             'acquisition_date' => $row['acquisition_date'],
-            'unit' => $row['unit']
+            'unit' => $row['unit'],
+            'property_no' => $row['property_no'],
+            'office_name' => $row['office_name'] // ✅ include office
         ];
     }
 }
@@ -54,70 +74,78 @@ while ($row = $unit_query->fetch_assoc()) {
 
 
 <div class="container mt-3">
+    <?php
+    if (isset($_GET['success']) && $_GET['success'] == 1): ?>
+        <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
+            PAR Form has been successfully saved!
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?>
 
     <form method="post" action="save_par_form.php" enctype="multipart/form-data">
         <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
 
         <div class="mb-3 text-center">
-    <?php if (!empty($par_data['header_image'])): ?>
-        <img src="../SYSTEM_ADMIN/img/<?= htmlspecialchars($par_data['header_image']) ?>" 
-             class="img-fluid mb-3" 
-             style="max-width: 100%; height: auto; object-fit: contain;">
-    <?php endif; ?>
-</div>
+            <?php if (!empty($par_data['header_image'])): ?>
+                <img src="../SYSTEM_ADMIN/img/<?= htmlspecialchars($par_data['header_image']) ?>"
+                    class="img-fluid mb-3"
+                    style="max-width: 100%; height: auto; object-fit: contain;">
+            <?php endif; ?>
+        </div>
 
 
-<table class="table table-bordered align-middle text-start" style="table-layout: fixed;">
-    <tbody>
-        <!-- Office/Location Row -->
-        <tr>
-            <td colspan="2">
-                <div class="row">
-                    <div class="col-md-3"></div>
-                    <div class="col-md-6 text-center">
-                        <label class="form-label fw-semibold mb-0">Office/Location</label>
-                        <select name="office_id" class="form-select text-center" required>
-                            <option value="">Select Office</option>
-                            <?php foreach ($offices as $office): ?>
-                                <option value="<?= htmlspecialchars($office['id']) ?>"
-                                    <?= ($office['id'] == $par_data['office_id']) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($office['office_name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-3"></div>
-                </div>
-            </td>
-        </tr>
+        <table class="table table-bordered align-middle text-start" style="table-layout: fixed;">
+            <tbody>
+                <!-- Office/Location Row -->
+                <tr>
+                    <td colspan="2">
+                        <div class="row">
+                            <div class="col-md-3"></div>
+                            <div class="col-md-6 text-center">
+                                <label class="form-label fw-semibold mb-0">Office/Location</label>
+                                <select name="office_id" class="form-select text-center" required>
+                                    <option value="">Select Office</option>
+                                    <?php foreach ($offices as $office): ?>
+                                        <option value="<?= htmlspecialchars($office['id']) ?>"
+                                            <?= ($office['id'] == $par_data['office_id']) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($office['office_name']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-3"></div>
+                        </div>
+                    </td>
+                </tr>
 
-        <!-- Entity Name and Blank -->
-        <tr>
-            <td>
-                <label class="form-label fw-semibold mb-0">Entity Name</label>
-                <input type="text" name="entity_name" class="form-control" 
-                       value="<?= htmlspecialchars($par_data['entity_name']) ?>" required>
-            </td>
-            <td>
-                <!-- Blank right cell -->
-            </td>
-        </tr>
+                <!-- Entity Name and Blank -->
+                <tr>
+                    <td>
+                        <label class="form-label fw-semibold mb-0">Entity Name</label>
+                        <input type="text" name="entity_name" class="form-control"
+                            value="<?= htmlspecialchars($par_data['entity_name']) ?>" required>
+                    </td>
+                    <td>
+                        <!-- Blank right cell -->
+                    </td>
+                </tr>
 
-        <!-- Fund Cluster and PAR No. -->
-        <tr>
-            <td>
-                <label class="form-label fw-semibold mb-0">Fund Cluster</label>
-                <input type="text" name="fund_cluster" class="form-control" 
-                       value="<?= htmlspecialchars($par_data['fund_cluster']) ?>" required>
-            </td>
-            <td>
-                <label class="form-label fw-semibold mb-0">PAR No.</label>
-                <input type="text" name="par_no" class="form-control" 
-                       value="<?= htmlspecialchars($par_data['par_no']) ?>" required>
-            </td>
-        </tr>
-    </tbody>
-</table>
+                <!-- Fund Cluster and PAR No. -->
+                <tr>
+                    <td>
+                        <label class="form-label fw-semibold mb-0">Fund Cluster</label>
+                        <input type="text" name="fund_cluster" class="form-control"
+                            value="<?= htmlspecialchars($par_data['fund_cluster']) ?>" required>
+                    </td>
+                    <td>
+                        <label class="form-label fw-semibold mb-0">PAR No.</label>
+                        <input type="text" name="par_no" class="form-control"
+                            value="<?= htmlspecialchars($par_data['par_no']) ?>" readonly>
+
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
 
         <!-- ITEM TABLE -->
@@ -138,7 +166,7 @@ while ($row = $unit_query->fetch_assoc()) {
                     <tr>
                         <td><input type="number" name="items[<?= $i ?>][quantity]" class="form-control text-end" id="qtyInput<?= $i ?>" min="1"></td>
                         <td>
-                            <select name="items[<?= $i ?>][unit]" class="form-select text-center" required>
+                            <select name="items[<?= $i ?>][unit]" class="form-select text-center">
                                 <option value="">Select Unit</option>
                                 <?php foreach ($units as $unit): ?>
                                     <option value="<?= htmlspecialchars($unit['unit_name']) ?>"><?= htmlspecialchars($unit['unit_name']) ?></option>
@@ -148,6 +176,7 @@ while ($row = $unit_query->fetch_assoc()) {
                         <td class="position-relative" style="width: 30%;">
                             <div class="input-group">
                                 <input type="text" name="items[<?= $i ?>][description]" class="form-control form-control-lg" list="descriptionList" id="descInput<?= $i ?>">
+                                <input type="hidden" name="items[<?= $i ?>][asset_id]" id="assetId<?= $i ?>">
                                 <button type="button"
                                     class="btn p-0 m-0 border-0 bg-transparent"
                                     onclick="clearDescription(<?= $i ?>)"
@@ -200,15 +229,18 @@ while ($row = $unit_query->fetch_assoc()) {
 
                         <datalist id="descriptionList">
                             <?php foreach ($description_details as $desc => $details): ?>
-                                <option value="<?= htmlspecialchars($desc) ?>"
+                                <option
+                                    value="<?= htmlspecialchars($desc) ?>"
+                                    label="<?= htmlspecialchars($details['office_name']) ?>"
+                                    data-asset-id="<?= htmlspecialchars($details['id']) ?>"
                                     data-unit-cost="<?= htmlspecialchars($details['unit_cost']) ?>"
                                     data-quantity="<?= htmlspecialchars($details['quantity']) ?>"
                                     data-date="<?= htmlspecialchars($details['acquisition_date']) ?>"
-                                    data-unit="<?= htmlspecialchars($details['unit']) ?>"></option>
+                                    data-unit="<?= htmlspecialchars($details['unit']) ?>"
+                                    data-property-no="<?= htmlspecialchars($details['property_no']) ?>">
+                                </option>
                             <?php endforeach; ?>
                         </datalist>
-
-
                     </tr>
                 <?php endfor; ?>
             <tfoot>
@@ -255,8 +287,9 @@ while ($row = $unit_query->fetch_assoc()) {
                     value="<?= htmlspecialchars($par_data['position_office_left'] ?? '') ?>">
                 <br>
                 <label>Date:</label>
-                <input type="date" name="date_received" class="form-control"
-                    value="<?= date('Y-d-m') ?>">
+                <input type="date" name="date_received_left"
+                    value="<?= date('Y-m-d') ?>"
+                    class="form-control">
             </div>
 
             <!-- Right: Issued by -->
@@ -271,8 +304,9 @@ while ($row = $unit_query->fetch_assoc()) {
                     value="<?= htmlspecialchars($par_data['position_office_right'] ?? '') ?>">
                 <br>
                 <label>Date:</label>
-                <input type="date" name="date_received" class="form-control"
-                    value="<?= date('Y-d-m') ?>">
+                <input type="date" name="date_received_right"
+                    value="<?= date('Y-m-d') ?>"
+                    class="form-control">
             </div>
         </div>
 
@@ -302,6 +336,7 @@ while ($row = $unit_query->fetch_assoc()) {
         <td class="position-relative">
     <div class="input-group">
         <input type="text" name="items[${rowIndex}][description]" class="form-control form-control-lg" list="descriptionList" id="descInput${rowIndex}">
+        <input type="hidden" name="items[<?= $i ?>][asset_id]" id="assetId<?= $i ?>">
         <button type="button"
                 class="btn p-0 m-0 border-0 bg-transparent"
                 onclick="clearDescription(${rowIndex})"
@@ -366,6 +401,8 @@ while ($row = $unit_query->fetch_assoc()) {
         const acqDateInput = document.getElementById('acqDate' + i);
         const amountInput = document.getElementById('amount' + i);
         const dataList = document.getElementById('descriptionList');
+        const assetIdInput = document.getElementById('assetId' + i);
+        const propertyNoInput = document.querySelector(`[name="items[${i}][property_no]"]`);
 
         // Auto-calculate amount
         qtyInput.addEventListener('input', calculateAmount);
@@ -381,6 +418,7 @@ while ($row = $unit_query->fetch_assoc()) {
 
         descInput.addEventListener('change', function() {
             const val = descInput.value.trim();
+            assetIdInput.value = ""; // reset first
 
             // Check all other description inputs for duplicates
             const descInputs = document.querySelectorAll('input[list="descriptionList"]');
@@ -401,14 +439,21 @@ while ($row = $unit_query->fetch_assoc()) {
             const options = dataList.options;
             for (let j = 0; j < options.length; j++) {
                 if (options[j].value === val) {
+                    const assetId = options[j].getAttribute('data-asset-id');
                     const unitCost = options[j].getAttribute('data-unit-cost');
                     const maxQty = options[j].getAttribute('data-quantity');
                     const acqDate = options[j].getAttribute('data-date');
                     const unit = options[j].getAttribute('data-unit');
+                    const propertyNo = options[j].getAttribute('data-property-no');
 
+                    assetIdInput.value = assetId;
                     unitCostInput.value = unitCost;
                     qtyInput.max = maxQty;
                     acqDateInput.value = acqDate;
+
+                    if (propertyNoInput) {
+                        propertyNoInput.value = propertyNo; // ✅ autofill property no
+                    }
 
                     const unitSelect = document.querySelector(`[name="items[${i}][unit]"]`);
                     if (unitSelect && unit) {
