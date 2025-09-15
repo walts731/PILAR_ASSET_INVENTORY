@@ -99,7 +99,7 @@ $stmt->close();
       </div>
 
       <div class="card-body table-responsive">
-        <table id="userTable" class="table table-striped align-middle">
+        <table id="userTable" class="table">
           <thead class="table-light">
             <tr>
               <th>Full Name</th>
@@ -184,16 +184,19 @@ $stmt->close();
                     </form>
                   <?php endif; ?>
 
-                  <button
-                    class="btn btn-sm btn-outline-dark rounded-pill deleteUserBtn"
-                    data-id="<?= $user['id'] ?>"
-                    data-fullname="<?= htmlspecialchars($user['fullname']) ?>"
-                    data-office="<?= $selected_office ?>"
-                    data-bs-toggle="modal"
-                    data-bs-target="#deleteUserModal"
-                    title="Delete User">
-                    <i class="bi bi-trash"></i>
-                  </button>
+                  <!-- Delete Button: only show if role is NOT admin -->
+                  <?php if ($user['role'] !== 'admin'): ?>
+                    <button
+                      class="btn btn-sm btn-outline-dark rounded-pill deleteUserBtn"
+                      data-id="<?= $user['id'] ?>"
+                      data-fullname="<?= htmlspecialchars($user['fullname']) ?>"
+                      data-office="<?= $selected_office ?>"
+                      data-bs-toggle="modal"
+                      data-bs-target="#deleteUserModal"
+                      title="Delete User">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  <?php endif; ?>
 
                 </td>
               </tr>
