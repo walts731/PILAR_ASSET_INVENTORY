@@ -134,6 +134,9 @@ echo "<!-- SIDEBAR DEBUG: user_id={$user_id} | office_id=" . htmlspecialchars($o
             </div>
 
             <a href="borrow.php" class="<?= ($page == 'borrow') ? 'active' : '' ?>"><i class="bi bi-arrow-left-right"></i> Borrow</a>
+            <a href="usage.php" class="<?= ($page == 'usage') ? 'active' : '' ?>">
+                <i class="bi bi-clock-history"></i> Usage
+            </a>
             <a href="reports.php" class="<?= ($page == 'reports') ? 'active' : '' ?>"><i class="bi bi-bar-chart-line"></i> Reports</a>
             <a href="user.php" class="<?= ($page == 'user') ? 'active' : '' ?>"><i class="bi bi-person"></i> Users</a>
             <a href="asset_archive.php" class="<?= ($page == 'asset_archive') ? 'active' : '' ?>"><i class="bi bi-archive"></i> Archive</a>
