@@ -7,14 +7,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $office_id = intval($_POST['office_id']);
     $entity_name = trim($_POST['entity_name']);
     $fund_cluster = trim($_POST['fund_cluster']);
-    $par_no = trim($_POST['par_no']);
+    $par_no = trim($_POST['par_no']); // Will be overwritten if insert
     $position_office_left = trim($_POST['position_office_left']);
     $position_office_right = trim($_POST['position_office_right']);
 
     // Handle header image upload
     $header_image = null;
     if (isset($_FILES['header_image']) && $_FILES['header_image']['error'] === UPLOAD_ERR_OK) {
-        $upload_dir = __DIR__ . "../img/";
+        $upload_dir = __DIR__ . "/../img/";
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0777, true);
         }
@@ -37,18 +37,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $check_stmt->close();
 
     if ($existing) {
-        // Update existing record
+        // --- UPDATE EXISTING RECORD ---
         if ($header_image) {
-            // Replace old image if new uploaded
-            if (!empty($existing['header_image']) && file_exists(__DIR__ . "../img/" . $existing['header_image'])) {
-                unlink(__DIR__ . "../img/" . $existing['header_image']);
+            if (!empty($existing['header_image']) && file_exists(__DIR__ . "/../img/" . $existing['header_image'])) {
+                unlink(__DIR__ . "/../img/" . $existing['header_image']);
             }
             $stmt = $conn->prepare("UPDATE par_form 
                 SET office_id=?, position_office_left=?, position_office_right=?, header_image=?, entity_name=?, fund_cluster=?, par_no=? 
                 WHERE form_id=?");
             $stmt->bind_param("issssssi", $office_id, $position_office_left, $position_office_right, $header_image, $entity_name, $fund_cluster, $par_no, $form_id);
         } else {
-            // Keep existing image
             $stmt = $conn->prepare("UPDATE par_form 
                 SET office_id=?, position_office_left=?, position_office_right=?, entity_name=?, fund_cluster=?, par_no=? 
                 WHERE form_id=?");
@@ -56,8 +54,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $stmt->execute();
         $stmt->close();
+
     } else {
-        // Insert new record
+        // --- INSERT NEW RECORD ---
+        // ✅ Auto-generate PAR No
+        $latest = $conn->query("SELECT par_no FROM par_form ORDER BY id DESC LIMIT 1");
+        if ($latest && $latest->num_rows > 0) {
+            $last = $latest->fetch_assoc();
+            if (preg_match('/PAR-(\d+)/', $last['par_no'], $matches)) {
+                $nextNum = str_pad(((int)$matches[1] + 1), 4, '0', STR_PAD_LEFT);
+                $par_no = "PAR-" . $nextNum;
+            } else {
+                $par_no = "PAR-0001";
+            }
+        } else {
+            $par_no = "PAR-0001";
+        }
+
         $stmt = $conn->prepare("INSERT INTO par_form (form_id, office_id, position_office_left, position_office_right, header_image, entity_name, fund_cluster, par_no) 
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("iissssss", $form_id, $office_id, $position_office_left, $position_office_right, $header_image, $entity_name, $fund_cluster, $par_no);

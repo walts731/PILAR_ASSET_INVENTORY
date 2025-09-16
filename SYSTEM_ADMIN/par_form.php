@@ -14,7 +14,7 @@ $par_data = [
     'position_office_right' => ''
 ];
 
-// Fetch PAR header/footer data
+// Fetch PAR header/footer data if editing
 if ($form_id) {
     $stmt = $conn->prepare("SELECT header_image, entity_name, fund_cluster, par_no, office_id, position_office_left, position_office_right 
                              FROM par_form WHERE form_id = ?");
@@ -27,11 +27,20 @@ if ($form_id) {
     $stmt->close();
 }
 
-// Fetch offices for dropdown
-$offices = [];
-$office_query = $conn->query("SELECT id, office_name FROM offices");
-while ($row = $office_query->fetch_assoc()) {
-    $offices[] = $row;
+// ✅ Auto-generate PAR No if creating a new form
+if (!$form_id || empty($par_data['par_no'])) {
+    $latest = $conn->query("SELECT par_no FROM par_form ORDER BY id DESC LIMIT 1");
+    if ($latest && $latest->num_rows > 0) {
+        $last = $latest->fetch_assoc();
+        if (preg_match('/PAR-(\d+)/', $last['par_no'], $matches)) {
+            $nextNum = str_pad(((int)$matches[1] + 1), 4, '0', STR_PAD_LEFT);
+            $par_data['par_no'] = "PAR-" . $nextNum;
+        } else {
+            $par_data['par_no'] = "PAR-0001";
+        }
+    } else {
+        $par_data['par_no'] = "PAR-0001";
+    }
 }
 ?>
 
@@ -45,12 +54,13 @@ while ($row = $office_query->fetch_assoc()) {
                 Header Settings
             </div>
             <div class="card-body">
+
                 <!-- Header Image Upload -->
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Header Image</label>
                     <?php if (!empty($par_data['header_image'])): ?>
                         <div class="mb-2 text-center">
-                            <img src="img/<?= htmlspecialchars($par_data['header_image']) ?>"
+                            <img src="../img/<?= htmlspecialchars($par_data['header_image']) ?>"
                                 alt="Header Image"
                                 class="img-fluid rounded border w-100"
                                 style="max-height:250px; object-fit: contain;">
@@ -64,28 +74,33 @@ while ($row = $office_query->fetch_assoc()) {
                     <label class="form-label fw-semibold">Office/Location</label>
                     <select name="office_id" class="form-select" required>
                         <option value="">Select Office</option>
-                        <?php foreach ($offices as $office): ?>
+                        <?php
+                        $office_query = $conn->query("SELECT id, office_name FROM offices");
+                        while ($office = $office_query->fetch_assoc()): ?>
                             <option value="<?= $office['id'] ?>" <?= ($office['id'] == $par_data['office_id']) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($office['office_name']) ?>
                             </option>
-                        <?php endforeach; ?>
+                        <?php endwhile; ?>
                     </select>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-semibold">Entity Name</label>
-                        <input type="text" name="entity_name" class="form-control" value="<?= htmlspecialchars($par_data['entity_name']) ?>">
+                        <input type="text" name="entity_name" class="form-control"
+                            value="<?= htmlspecialchars($par_data['entity_name']) ?>">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-semibold">Fund Cluster</label>
-                        <input type="text" name="fund_cluster" class="form-control" value="<?= htmlspecialchars($par_data['fund_cluster']) ?>">
+                        <input type="text" name="fund_cluster" class="form-control"
+                            value="<?= htmlspecialchars($par_data['fund_cluster']) ?>">
                     </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">PAR No.</label>
-                    <input type="text" name="par_no" class="form-control" value="<?= htmlspecialchars($par_data['par_no']) ?>">
+                    <!-- PAR Number (Auto-filled) -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">PAR No.</label>
+                        <input type="text" name="par_no" class="form-control"
+                            value="<?= htmlspecialchars($par_data['par_no']) ?>" readonly>
+                    </div>
                 </div>
             </div>
         </div>
@@ -99,16 +114,18 @@ while ($row = $office_query->fetch_assoc()) {
                 <div class="col-md-6 text-center mb-3">
                     <p class="fw-semibold">Received by:</p>
                     <input type="text" class="form-control text-center" name="position_office_left"
-                        placeholder="Position / Office" value="<?= htmlspecialchars($par_data['position_office_left']) ?>">
+                        placeholder="Position / Office"
+                        value="<?= htmlspecialchars($par_data['position_office_left']) ?>">
                 </div>
                 <div class="col-md-6 text-center mb-3">
                     <p class="fw-semibold">Issued by:</p>
                     <input type="text" class="form-control text-center" name="position_office_right"
-                        placeholder="Position / Office" value="<?= htmlspecialchars($par_data['position_office_right']) ?>">
+                        placeholder="Position / Office"
+                        value="<?= htmlspecialchars($par_data['position_office_right']) ?>">
                 </div>
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-send-check-fill"></i>Save</button>
+        <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-send-check-fill"></i> Save</button>
     </form>
 </div>

@@ -87,7 +87,7 @@ while ($row = $unit_query->fetch_assoc()) {
 
         <div class="mb-3 text-center">
             <?php if (!empty($par_data['header_image'])): ?>
-                <img src="../SYSTEM_ADMIN/img/<?= htmlspecialchars($par_data['header_image']) ?>"
+                <img src="../img/<?= htmlspecialchars($par_data['header_image']) ?>"
                     class="img-fluid mb-3"
                     style="max-width: 100%; height: auto; object-fit: contain;">
             <?php endif; ?>
