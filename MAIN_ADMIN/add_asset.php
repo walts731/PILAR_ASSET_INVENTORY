@@ -20,10 +20,10 @@ $type        = mysqli_real_escape_string($conn, $_POST['type']);
 $acquired    = date('Y-m-d');
 $red_tagged  = 0;
 
-// New optional fields
+// Optional fields
 $serial_no   = !empty($_POST['serial_no']) ? mysqli_real_escape_string($conn, $_POST['serial_no']) : null;
 $code        = !empty($_POST['code']) ? mysqli_real_escape_string($conn, $_POST['code']) : null;
-$stock_no    = !empty($_POST['stock_no']) ? mysqli_real_escape_string($conn, $_POST['stock_no']) : null; // will be used as property_no
+$stock_no    = !empty($_POST['stock_no']) ? mysqli_real_escape_string($conn, $_POST['stock_no']) : null; // property_no
 $model       = !empty($_POST['model']) ? mysqli_real_escape_string($conn, $_POST['model']) : null;
 $brand       = !empty($_POST['brand']) ? mysqli_real_escape_string($conn, $_POST['brand']) : null;
 
@@ -48,7 +48,7 @@ if (isset($_FILES['asset_image']) && $_FILES['asset_image']['error'] === UPLOAD_
 // Force property_no to take the same value as stock_no
 $propertyNoValue = $stock_no ? "'$stock_no'" : "NULL";
 
-// Insert asset into the database
+// Insert asset into the assets table
 $sql = "
   INSERT INTO assets 
     (category, description, quantity, unit, value, status, office_id, type, red_tagged, 
@@ -67,18 +67,43 @@ $sql = "
 if (mysqli_query($conn, $sql)) {
     $asset_id = mysqli_insert_id($conn);
 
-    // Generate QR code and save
-    $qr_filename = $asset_id . '.png';
-    $qr_path = '../img/' . $qr_filename;
-    QRcode::png((string)$asset_id, $qr_path, QR_ECLEVEL_L, 4);
+    // ✅ Insert into asset_items table per quantity
+    for ($i = 1; $i <= $quantity; $i++) {
+        // Generate unique QR & tag per item
+        $qr_text = 'A' . $asset_id . '-I' . $i;           // QR code content
+        $qr_filename = 'asset_' . $asset_id . '_item_' . $i . '.png';
+        $qr_path = '../img/qrcodes/' . $qr_filename;
 
-    // Update the asset with the QR code filename
-    $update = "UPDATE assets SET qr_code = '$qr_filename' WHERE id = $asset_id";
+        // Create directory for QR codes if it doesn’t exist
+        if (!is_dir('../img/qrcodes/')) {
+            mkdir('../img/qrcodes/', 0755, true);
+        }
+
+        // Generate QR code image
+        QRcode::png($qr_text, $qr_path, QR_ECLEVEL_L, 4);
+
+        // Inventory tag example: TAG[asset_id]-[i]
+        $inventory_tag = 'TAG' . $asset_id . '-' . $i;
+
+        // Insert item
+        $stmt = $conn->prepare("
+            INSERT INTO asset_items (asset_id, office_id, qr_code, inventory_tag, serial_no, status, date_acquired)
+            VALUES (?, ?, ?, ?, ?, 'available', ?)
+        ");
+        // Each item can have its own serial_no if needed; here we reuse same $serial_no
+        $stmt->bind_param("iissss", $asset_id, $office_id, $qr_filename, $inventory_tag, $serial_no, $acquired);
+        $stmt->execute();
+    }
+
+    // Optionally update assets table with main QR code (or remove this if not needed)
+    $main_qr_filename = 'asset_' . $asset_id . '_item_1.png'; // first item’s QR
+    $update = "UPDATE assets SET qr_code = '$main_qr_filename' WHERE id = $asset_id";
     mysqli_query($conn, $update);
 
-    header("Location: inventory.php?add=success&qr=" . urlencode($qr_filename) . "&office_id=" . $office_id);
+    header("Location: inventory.php?add=success&asset_id=" . $asset_id);
     exit();
 } else {
     echo "Error inserting asset: " . mysqli_error($conn);
     exit();
 }
+?>
