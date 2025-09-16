@@ -90,9 +90,10 @@ while ($row = $unit_query->fetch_assoc()) {
                 <img src="../img/<?= htmlspecialchars($par_data['header_image']) ?>"
                     class="img-fluid mb-3"
                     style="max-width: 100%; height: auto; object-fit: contain;">
+                <!-- ✅ Hidden input so header_image is included when saving -->
+                <input type="hidden" name="header_image" value="<?= htmlspecialchars($par_data['header_image']) ?>">
             <?php endif; ?>
         </div>
-
 
         <table class="table table-bordered align-middle text-start" style="table-layout: fixed;">
             <tbody>
@@ -105,6 +106,7 @@ while ($row = $unit_query->fetch_assoc()) {
                                 <label class="form-label fw-semibold mb-0">Office/Location</label>
                                 <select name="office_id" class="form-select text-center" required>
                                     <option value="">Select Office</option>
+                                    <option value="outside_lgu">Outside LGU</option>
                                     <?php foreach ($offices as $office): ?>
                                         <option value="<?= htmlspecialchars($office['id']) ?>"
                                             <?= ($office['id'] == $par_data['office_id']) ? 'selected' : '' ?>>
