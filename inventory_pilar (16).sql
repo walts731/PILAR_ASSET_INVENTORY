@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 16, 2025 at 03:11 PM
+-- Generation Time: Sep 18, 2025 at 05:34 PM
 -- Server version: 10.6.15-MariaDB
 -- PHP Version: 8.2.12
 
@@ -101,7 +101,7 @@ INSERT INTO `archives` (`id`, `user_id`, `action_type`, `filter_status`, `filter
 CREATE TABLE `assets` (
   `id` int(11) NOT NULL,
   `asset_name` varchar(100) NOT NULL,
-  `category` int(50) NOT NULL,
+  `category` int(50) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `quantity` int(11) NOT NULL DEFAULT 0,
   `added_stock` int(11) DEFAULT 0,
@@ -121,6 +121,7 @@ CREATE TABLE `assets` (
   `property_no` varchar(255) DEFAULT NULL,
   `model` varchar(255) DEFAULT NULL,
   `brand` varchar(255) DEFAULT NULL,
+  `ics_id` int(11) DEFAULT NULL,
   `inventory_tag` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -128,35 +129,51 @@ CREATE TABLE `assets` (
 -- Dumping data for table `assets`
 --
 
-INSERT INTO `assets` (`id`, `asset_name`, `category`, `description`, `quantity`, `added_stock`, `unit`, `status`, `acquisition_date`, `office_id`, `employee_id`, `red_tagged`, `last_updated`, `value`, `qr_code`, `type`, `image`, `serial_no`, `code`, `property_no`, `model`, `brand`, `inventory_tag`) VALUES
-(1, '', 6, 'Dell Latitude 5430 Laptop', 0, 0, 'pcs', 'available', '2025-08-31', 2, NULL, 0, '2025-09-15 14:59:28', 52000.00, '1.png', 'asset', 'asset_1756647926.jpg', 'DL5430-SN001', 'EQP-001', 'PROP-0001', 'Latitude 5430', 'Dell', NULL),
-(2, '', 6, 'Dell Latitude 5430 Laptop', 2, 0, 'pcs', 'available', '2025-08-31', 2, 1, 0, '2025-09-10 08:07:35', 48000.00, '2.png', 'asset', 'asset_1756647926.jpg', 'DL5430-SN001', 'EQP-001', 'PROP-0001', 'Latitude 5430', 'Dell', 'No. PS-5S-03-F02-01'),
-(3, '', 2, 'Ergonomic Office Chair', 7, 0, 'pcs', 'borrowed', '2025-09-01', 4, 1, 0, '2025-09-13 10:12:23', 6500.00, '3.png', 'asset', NULL, '', 'FUR-010', 'PROP-0003', 'Mesh Back', 'Fursys', 'No. PS-5S-03-F02-02'),
-(4, '', 2, 'Ergonomic Office Chair', 2, 0, 'pcs', 'available', '2025-09-01', 7, 3, 0, '2025-09-01 11:24:49', 6500.00, '4.png', 'asset', NULL, NULL, 'FUR-010', 'PROP-0003', 'Mesh Back', 'Fursys', 'No. PS-5S-03-F02-03'),
-(5, '', 6, 'Desktop Computer – Intel i5, 8GB RAM, 256GB SSD', 0, 0, 'pcs', 'available', '2025-09-06', 2, NULL, 0, '2025-09-06 00:41:33', 35000.00, '5.png', 'asset', 'asset_1757118621.jpg', 'SN-ABC123456', 'COMP-001', 'PROP-0005', 'OptiPlex 7090', 'Dell', NULL),
-(6, '', 6, 'Desktop Computer – Intel i5, 8GB RAM, 256GB SSD', 1, 0, 'pcs', 'available', '2025-09-06', 4, 1, 0, '2025-09-06 00:43:02', 35000.00, '6.png', 'asset', 'asset_1757118621.jpg', 'SN-ABC123456', 'COMP-001', 'PROP-0005', 'OptiPlex 7090', 'Dell', 'No. PS-5S-03-F02-07'),
-(7, '', 3, 'Bond paper', 10, 0, 'pcs', 'available', '2025-09-07', 4, NULL, 0, '2025-09-07 12:34:27', 250.00, '7.png', 'consumable', 'asset_1757248467.jpg', NULL, NULL, NULL, NULL, 'Paper One', NULL),
-(8, '', 3, 'Ballpen (Blue Ink)', 97, 0, 'pcs', 'available', '2025-09-07', 4, NULL, 0, '2025-09-13 07:37:10', 15.00, '8.png', 'consumable', 'asset_1757249350.jpg', NULL, NULL, 'STOCK-0002', NULL, 'Pilot G-Tech', NULL),
-(9, '', 3, 'Printer Ink Cartridge (Black)', 3, 0, 'pcs', 'available', '2025-09-07', 4, NULL, 0, '2025-09-14 13:27:45', 300.00, '9.png', 'consumable', NULL, NULL, 'CON-0003', 'STOCK-0003', 'HP 680', 'HP ', NULL),
-(10, '', 3, 'Alcohol 70% Solution (500ml)', 28, 0, 'bottle', 'available', '2025-09-07', 4, NULL, 0, '2025-09-14 13:23:30', 60.00, '10.png', 'consumable', NULL, NULL, NULL, 'STOCK-0004', NULL, 'Green Cross', NULL),
-(14, '', 3, 'Alcohol 70% Solution (500ml)', 1, 1, 'bottle', 'available', '2025-09-07', 3, NULL, 0, '2025-09-14 14:48:21', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', ''),
-(15, '', 3, 'Ballpen (Blue Ink)', 0, 0, 'pcs', 'available', '2025-09-07', 3, NULL, 0, '2025-09-15 01:50:41', 15.00, '8.png', 'consumable', 'asset_1757249350.jpg', '', '', 'STOCK-0002', '', 'Pilot G-Tech', ''),
-(16, '', 3, 'Alcohol 70% Solution (500ml)', 1, 0, 'bottle', 'available', '2025-09-07', 3, NULL, 0, '2025-09-11 14:35:45', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', ''),
-(17, '', 3, 'Alcohol 70% Solution (500ml)', 1, 0, 'bottle', 'available', '2025-09-07', 3, NULL, 0, '2025-09-11 14:49:23', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', ''),
-(18, '', 3, 'Printer Ink Cartridge (Black)', 0, 1, 'pcs', 'available', '2025-09-07', 3, NULL, 0, '2025-09-15 01:51:05', 300.00, '9.png', 'consumable', '', '', 'CON-0003', 'STOCK-0003', 'HP 680', 'HP ', ''),
-(20, '', 3, 'Printer Ink Cartridge (Black)', 1, 1, 'pcs', 'available', '2025-09-07', 29, NULL, 0, '2025-09-13 05:35:52', 300.00, '9.png', 'consumable', '', '', 'CON-0003', 'STOCK-0003', 'HP 680', 'HP ', ''),
-(21, '', 3, 'Alcohol 70% Solution (500ml)', 1, 1, 'bottle', 'available', '2025-09-07', 49, NULL, 0, '2025-09-13 07:12:12', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', ''),
-(22, '', 3, 'Alcohol 70% Solution (500ml)', 1, 1, 'bottle', 'available', '2025-09-07', 21, NULL, 0, '2025-09-13 07:36:03', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', ''),
-(23, '', 3, 'Ballpen (Blue Ink)', 1, 1, 'pcs', 'available', '2025-09-07', 48, NULL, 0, '2025-09-13 07:37:10', 15.00, '8.png', 'consumable', 'asset_1757249350.jpg', '', '', 'STOCK-0002', '', 'Pilot G-Tech', ''),
-(24, '', 3, 'Alcohol 70% Solution (500ml)', 6, 2, 'bottle', 'available', '2025-09-07', 14, NULL, 0, '2025-09-13 13:07:46', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', ''),
-(25, '', 3, 'Printer Ink Cartridge (Black)', 2, 2, 'pcs', 'available', '2025-09-07', 14, NULL, 0, '2025-09-13 13:05:03', 300.00, '9.png', 'consumable', '', '', 'CON-0003', 'STOCK-0003', 'HP 680', 'HP ', ''),
-(26, '', 3, 'Alcohol 70% Solution (500ml)', 1, 1, 'bottle', 'available', '2025-09-07', 48, NULL, 0, '2025-09-14 13:23:14', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', ''),
-(27, '', 1, 'Lenovo', 4, 0, 'unit', 'available', '2025-09-15', 4, NULL, 0, '2025-09-15 15:05:12', 52000.00, '27.png', 'asset', NULL, NULL, NULL, 'STOCK-0017', NULL, NULL, NULL),
-(29, 'Lenovo', 1, 'Lenovo', 2, 1, 'unit', 'available', '2025-09-15', 3, NULL, 0, '2025-09-16 09:51:55', 52000.00, '29.png', 'asset', NULL, NULL, NULL, 'STOCK-0017', NULL, NULL, NULL),
-(30, '', 6, 'Desktop Computer (Core i5)', 2, 0, 'unit', 'available', '2025-09-16', 4, NULL, 0, '2025-09-16 05:46:43', 55000.00, '30.png', 'asset', NULL, 'SN-DC-2025-0001', 'AST-001', 'STOCK-0017', 'OptiPlex 5090 SFF', 'Dell', NULL),
-(31, '', 6, 'Desktop Computer (Core i5)', 0, 0, 'unit', 'available', '2025-09-16', 3, NULL, 0, '2025-09-16 11:46:43', 55000.00, '31.png', 'asset', NULL, 'SN-DC-2025-0001', 'AST-001', 'STOCK-0017', 'OptiPlex 5090 SFF', 'Dell', NULL),
-(32, '', 2, 'Office Table – Wooden', 1, 0, 'pcs', 'available', '2025-09-16', 4, NULL, 0, '2025-09-16 10:27:00', 3500.00, '32.png', 'asset', NULL, NULL, NULL, 'STOCK-0017', NULL, 'Mandaue Foam', NULL),
-(33, '', 1, 'Air Conditioner 2HP Split', 0, 0, 'unit', 'available', '2025-09-16', 4, NULL, 0, '2025-09-16 10:36:33', 51000.00, '33.png', 'asset', NULL, NULL, NULL, 'STOCK-0017', NULL, NULL, NULL);
+INSERT INTO `assets` (`id`, `asset_name`, `category`, `description`, `quantity`, `added_stock`, `unit`, `status`, `acquisition_date`, `office_id`, `employee_id`, `red_tagged`, `last_updated`, `value`, `qr_code`, `type`, `image`, `serial_no`, `code`, `property_no`, `model`, `brand`, `ics_id`, `inventory_tag`) VALUES
+(1, '', 6, 'Dell Latitude 5430 Laptop', 0, 0, 'pcs', 'available', '2025-08-31', 2, NULL, 0, '2025-09-15 14:59:28', 52000.00, '1.png', 'asset', 'asset_1756647926.jpg', 'DL5430-SN001', 'EQP-001', 'PROP-0001', 'Latitude 5430', 'Dell', NULL, NULL),
+(2, '', 6, 'Dell Latitude 5430 Laptop', 2, 0, 'pcs', 'available', '2025-08-31', 2, 1, 0, '2025-09-10 08:07:35', 48000.00, '2.png', 'asset', 'asset_1756647926.jpg', 'DL5430-SN001', 'EQP-001', 'PROP-0001', 'Latitude 5430', 'Dell', NULL, 'No. PS-5S-03-F02-01'),
+(3, '', 2, 'Ergonomic Office Chair', 7, 0, 'pcs', 'borrowed', '2025-09-01', 4, 1, 0, '2025-09-13 10:12:23', 6500.00, '3.png', 'asset', NULL, '', 'FUR-010', 'PROP-0003', 'Mesh Back', 'Fursys', NULL, 'No. PS-5S-03-F02-02'),
+(4, '', 2, 'Ergonomic Office Chair', 2, 0, 'pcs', 'available', '2025-09-01', 7, 3, 0, '2025-09-01 11:24:49', 6500.00, '4.png', 'asset', NULL, NULL, 'FUR-010', 'PROP-0003', 'Mesh Back', 'Fursys', NULL, 'No. PS-5S-03-F02-03'),
+(5, '', 6, 'Desktop Computer – Intel i5, 8GB RAM, 256GB SSD', 0, 0, 'pcs', 'available', '2025-09-06', 2, NULL, 0, '2025-09-06 00:41:33', 35000.00, '5.png', 'asset', 'asset_1757118621.jpg', 'SN-ABC123456', 'COMP-001', 'PROP-0005', 'OptiPlex 7090', 'Dell', NULL, NULL),
+(6, '', 6, 'Desktop Computer – Intel i5, 8GB RAM, 256GB SSD', 1, 0, 'pcs', 'available', '2025-09-06', 4, 1, 0, '2025-09-06 00:43:02', 35000.00, '6.png', 'asset', 'asset_1757118621.jpg', 'SN-ABC123456', 'COMP-001', 'PROP-0005', 'OptiPlex 7090', 'Dell', NULL, 'No. PS-5S-03-F02-07'),
+(7, '', 3, 'Bond paper', 10, 0, 'pcs', 'available', '2025-09-07', 4, NULL, 0, '2025-09-07 12:34:27', 250.00, '7.png', 'consumable', 'asset_1757248467.jpg', NULL, NULL, NULL, NULL, 'Paper One', NULL, NULL),
+(8, '', 3, 'Ballpen (Blue Ink)', 97, 0, 'pcs', 'available', '2025-09-07', 4, NULL, 0, '2025-09-13 07:37:10', 15.00, '8.png', 'consumable', 'asset_1757249350.jpg', NULL, NULL, 'STOCK-0002', NULL, 'Pilot G-Tech', NULL, NULL),
+(9, '', 3, 'Printer Ink Cartridge (Black)', 3, 0, 'pcs', 'available', '2025-09-07', 4, NULL, 0, '2025-09-14 13:27:45', 300.00, '9.png', 'consumable', NULL, NULL, 'CON-0003', 'STOCK-0003', 'HP 680', 'HP ', NULL, NULL),
+(10, '', 3, 'Alcohol 70% Solution (500ml)', 28, 0, 'bottle', 'available', '2025-09-07', 4, NULL, 0, '2025-09-14 13:23:30', 60.00, '10.png', 'consumable', NULL, NULL, NULL, 'STOCK-0004', NULL, 'Green Cross', NULL, NULL),
+(14, '', 3, 'Alcohol 70% Solution (500ml)', 1, 1, 'bottle', 'available', '2025-09-07', 3, NULL, 0, '2025-09-14 14:48:21', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', NULL, ''),
+(15, '', 3, 'Ballpen (Blue Ink)', 0, 0, 'pcs', 'available', '2025-09-07', 3, NULL, 0, '2025-09-15 01:50:41', 15.00, '8.png', 'consumable', 'asset_1757249350.jpg', '', '', 'STOCK-0002', '', 'Pilot G-Tech', NULL, ''),
+(16, '', 3, 'Alcohol 70% Solution (500ml)', 1, 0, 'bottle', 'available', '2025-09-07', 3, NULL, 0, '2025-09-11 14:35:45', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', NULL, ''),
+(17, '', 3, 'Alcohol 70% Solution (500ml)', 1, 0, 'bottle', 'available', '2025-09-07', 3, NULL, 0, '2025-09-11 14:49:23', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', NULL, ''),
+(18, '', 3, 'Printer Ink Cartridge (Black)', 0, 1, 'pcs', 'available', '2025-09-07', 3, NULL, 0, '2025-09-15 01:51:05', 300.00, '9.png', 'consumable', '', '', 'CON-0003', 'STOCK-0003', 'HP 680', 'HP ', NULL, ''),
+(20, '', 3, 'Printer Ink Cartridge (Black)', 1, 1, 'pcs', 'available', '2025-09-07', 29, NULL, 0, '2025-09-13 05:35:52', 300.00, '9.png', 'consumable', '', '', 'CON-0003', 'STOCK-0003', 'HP 680', 'HP ', NULL, ''),
+(21, '', 3, 'Alcohol 70% Solution (500ml)', 1, 1, 'bottle', 'available', '2025-09-07', 49, NULL, 0, '2025-09-13 07:12:12', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', NULL, ''),
+(22, '', 3, 'Alcohol 70% Solution (500ml)', 1, 1, 'bottle', 'available', '2025-09-07', 21, NULL, 0, '2025-09-13 07:36:03', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', NULL, ''),
+(23, '', 3, 'Ballpen (Blue Ink)', 1, 1, 'pcs', 'available', '2025-09-07', 48, NULL, 0, '2025-09-13 07:37:10', 15.00, '8.png', 'consumable', 'asset_1757249350.jpg', '', '', 'STOCK-0002', '', 'Pilot G-Tech', NULL, ''),
+(24, '', 3, 'Alcohol 70% Solution (500ml)', 6, 2, 'bottle', 'available', '2025-09-07', 14, NULL, 0, '2025-09-13 13:07:46', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', NULL, ''),
+(25, '', 3, 'Printer Ink Cartridge (Black)', 2, 2, 'pcs', 'available', '2025-09-07', 14, NULL, 0, '2025-09-13 13:05:03', 300.00, '9.png', 'consumable', '', '', 'CON-0003', 'STOCK-0003', 'HP 680', 'HP ', NULL, ''),
+(26, '', 3, 'Alcohol 70% Solution (500ml)', 1, 1, 'bottle', 'available', '2025-09-07', 48, NULL, 0, '2025-09-14 13:23:14', 60.00, '10.png', 'consumable', '', '', '', 'STOCK-0004', '', 'Green Cross', NULL, ''),
+(27, '', 1, 'Lenovo', 4, 0, 'unit', 'available', '2025-09-15', 4, NULL, 0, '2025-09-15 15:05:12', 52000.00, '27.png', 'asset', NULL, NULL, NULL, 'STOCK-0017', NULL, NULL, NULL, NULL),
+(29, 'Lenovo', 1, 'Lenovo', 2, 1, 'unit', 'available', '2025-09-15', 3, NULL, 0, '2025-09-16 09:51:55', 52000.00, '29.png', 'asset', NULL, NULL, NULL, 'STOCK-0017', NULL, NULL, NULL, NULL),
+(30, '', 6, 'Desktop Computer (Core i5)', 2, 0, 'unit', 'available', '2025-09-16', 4, NULL, 0, '2025-09-16 05:46:43', 55000.00, '30.png', 'asset', NULL, 'SN-DC-2025-0001', 'AST-001', 'STOCK-0017', 'OptiPlex 5090 SFF', 'Dell', NULL, NULL),
+(31, '', 6, 'Desktop Computer (Core i5)', 0, 0, 'unit', 'available', '2025-09-16', 3, NULL, 0, '2025-09-16 11:46:43', 55000.00, '31.png', 'asset', NULL, 'SN-DC-2025-0001', 'AST-001', 'STOCK-0017', 'OptiPlex 5090 SFF', 'Dell', NULL, NULL),
+(32, '', 2, 'Office Table – Wooden', 0, 0, 'pcs', 'available', '2025-09-16', 4, NULL, 0, '2025-09-18 01:08:13', 3500.00, '32.png', 'asset', NULL, NULL, NULL, 'STOCK-0017', NULL, 'Mandaue Foam', NULL, NULL),
+(33, '', 1, 'Air Conditioner 2HP Split', 0, 0, 'unit', 'available', '2025-09-16', 4, NULL, 0, '2025-09-16 10:36:33', 51000.00, '33.png', 'asset', NULL, NULL, NULL, 'STOCK-0017', NULL, NULL, NULL, NULL),
+(34, '', 2, 'Inventory Cabinet', 5, 0, 'set', 'available', '2025-09-16', 4, NULL, 0, '2025-09-16 13:43:47', 35000.00, 'asset_34_item_1.png', 'asset', NULL, NULL, NULL, 'STOCK-0017', NULL, NULL, NULL, NULL),
+(35, '', 2, 'Office Table – Wooden', 1, 0, 'pcs', 'available', '2025-09-16', 3, NULL, 0, '2025-09-18 01:08:13', 3500.00, '35.png', 'asset', NULL, NULL, NULL, 'STOCK-0017', NULL, 'Mandaue Foam', NULL, NULL),
+(36, '', 1, 'laptop', 3, 0, 'unit', 'available', '2025-09-18', 4, NULL, 0, '2025-09-18 01:10:18', 40000.00, 'asset_36_item_1.png', 'asset', NULL, NULL, NULL, 'STOCK-0017', NULL, NULL, NULL, NULL),
+(40, 'Airpods', 1, 'Airpods', 0, 0, '', 'available', '2025-09-18', NULL, NULL, 0, '2025-09-18 13:48:24', 350.00, '', 'asset', '', '', '', '', '', '', NULL, NULL),
+(41, 'Airpods', 1, 'Airpods', 2, 0, '', 'available', '2025-09-18', 49, NULL, 0, '2025-09-18 13:48:24', 350.00, '41.png', 'asset', '', '', '', '', '', '', NULL, NULL),
+(42, 'Blue chair', 1, 'Blue chair', 0, 0, '', 'available', '2025-09-18', NULL, NULL, 0, '2025-09-18 13:49:32', 340.00, '', 'asset', '', '', '', '', '', '', NULL, NULL),
+(43, 'Blue chair', 1, 'Blue chair', 1, 0, '', 'available', '2025-09-18', 49, NULL, 0, '2025-09-18 13:49:32', 340.00, '43.png', 'asset', '', '', '', '', '', '', NULL, NULL),
+(47, 'Truck', NULL, 'Truck', 0, 0, 'unit', 'available', '2025-09-18', NULL, NULL, 0, '2025-09-18 13:53:40', 1020000.00, '', 'asset', '', '', '', '', '', '', NULL, NULL),
+(48, 'Truck', NULL, 'Truck', 1, 0, 'unit', 'available', '2025-09-18', 49, NULL, 0, '2025-09-18 13:53:40', 1020000.00, '48.png', 'asset', '', '', '', '', '', '', NULL, NULL),
+(49, 'Akari AVR 1000', NULL, 'Akari AVR 1000', 0, 0, 'unit', 'available', '2025-09-18', NULL, NULL, 0, '2025-09-18 13:59:30', 10000.00, '', 'asset', '', '', '', '', '', '', NULL, NULL),
+(50, 'Akari AVR 1000', NULL, 'Akari AVR 1000', 2, 0, 'unit', 'available', '2025-09-18', 49, NULL, 0, '2025-09-18 13:59:30', 10000.00, '50.png', 'asset', '', '', '', '', '', '', NULL, NULL),
+(51, 'Cellphone', NULL, 'Cellphone', 1, 0, 'pcs', 'available', '2025-09-18', 49, NULL, 0, '2025-09-18 14:04:58', 7000.00, '51.png', 'asset', '', '', '', '', '', '', NULL, NULL),
+(52, 'Printer Epson', 1, 'Printer Epson', 10, 0, 'unit', 'available', '2025-09-18', 49, 1, 0, '2025-09-18 15:26:13', 4500.00, '52.png', 'asset', '', '', 'EQP-001', 'ITM-55-1', '', '', NULL, 'No. PS-5S-03-F02-21'),
+(53, 'Watch', 1, 'Watch', 1, 0, 'pcs', 'available', '2025-09-18', 49, NULL, 0, '2025-09-18 14:37:42', 450.00, '53.png', 'asset', '', '', '', '', '', '', NULL, NULL),
+(54, 'Van', 1, 'Van', 1, 0, 'unit', 'available', '2025-09-18', 49, NULL, 0, '2025-09-18 14:47:31', 49999.99, '54.png', 'asset', '', '', '', '', '', '', NULL, NULL),
+(55, 'Laptop AMD Ryzen', NULL, 'Laptop AMD Ryzen', 1, 0, 'pcs', 'available', '2025-09-18', 49, NULL, 0, '2025-09-18 14:51:56', 40000.00, '55.png', 'asset', '', '', '', '', '', '', NULL, NULL);
 
 --
 -- Triggers `assets`
@@ -228,6 +245,7 @@ CREATE TABLE `asset_items` (
   `asset_id` int(11) NOT NULL,
   `office_id` int(11) NOT NULL,
   `qr_code` varchar(255) NOT NULL,
+  `property_no` varchar(255) NOT NULL,
   `inventory_tag` varchar(255) NOT NULL,
   `serial_no` varchar(255) DEFAULT NULL,
   `status` enum('available','borrowed','red_tagged','disposed') DEFAULT 'available',
@@ -235,6 +253,33 @@ CREATE TABLE `asset_items` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `asset_items`
+--
+
+INSERT INTO `asset_items` (`item_id`, `asset_id`, `office_id`, `qr_code`, `property_no`, `inventory_tag`, `serial_no`, `status`, `date_acquired`, `created_at`, `updated_at`) VALUES
+(1, 34, 4, 'asset_34_item_1.png', '', 'TAG34-1', NULL, 'available', '2025-09-16', '2025-09-16 13:43:47', '2025-09-16 13:43:47'),
+(2, 34, 4, 'asset_34_item_2.png', '', 'TAG34-2', NULL, 'available', '2025-09-16', '2025-09-16 13:43:47', '2025-09-16 13:43:47'),
+(3, 34, 4, 'asset_34_item_3.png', '', 'TAG34-3', NULL, 'available', '2025-09-16', '2025-09-16 13:43:47', '2025-09-16 13:43:47'),
+(4, 34, 4, 'asset_34_item_4.png', '', 'TAG34-4', NULL, 'available', '2025-09-16', '2025-09-16 13:43:47', '2025-09-16 13:43:47'),
+(5, 34, 4, 'asset_34_item_5.png', '', 'TAG34-5', NULL, 'available', '2025-09-16', '2025-09-16 13:43:47', '2025-09-16 13:43:47'),
+(6, 36, 4, 'asset_36_item_1.png', '', 'TAG36-1', NULL, 'available', '2025-09-18', '2025-09-18 01:10:18', '2025-09-18 01:10:18'),
+(7, 36, 4, 'asset_36_item_2.png', '', 'TAG36-2', NULL, 'available', '2025-09-18', '2025-09-18 01:10:18', '2025-09-18 01:10:18'),
+(8, 36, 4, 'asset_36_item_3.png', '', 'TAG36-3', NULL, 'available', '2025-09-18', '2025-09-18 01:10:18', '2025-09-18 01:10:18'),
+(9, 52, 49, 'asset_52_item_1.png', '', 'ITM-52-1', '', 'available', '2025-09-18', '2025-09-18 14:13:59', '2025-09-18 14:13:59'),
+(10, 52, 49, 'asset_52_item_2.png', '', 'ITM-52-2', '', 'available', '2025-09-18', '2025-09-18 14:13:59', '2025-09-18 14:13:59'),
+(11, 52, 49, 'asset_52_item_3.png', '', 'ITM-52-3', '', 'available', '2025-09-18', '2025-09-18 14:13:59', '2025-09-18 14:13:59'),
+(12, 52, 49, 'asset_52_item_4.png', '', 'ITM-52-4', '', 'available', '2025-09-18', '2025-09-18 14:13:59', '2025-09-18 14:13:59'),
+(13, 52, 49, 'asset_52_item_5.png', '', 'ITM-52-5', '', 'available', '2025-09-18', '2025-09-18 14:13:59', '2025-09-18 14:13:59'),
+(14, 52, 49, 'asset_52_item_6.png', '', 'ITM-52-6', '', 'available', '2025-09-18', '2025-09-18 14:13:59', '2025-09-18 14:13:59'),
+(15, 52, 49, 'asset_52_item_7.png', '', 'ITM-52-7', '', 'available', '2025-09-18', '2025-09-18 14:13:59', '2025-09-18 14:13:59'),
+(16, 52, 49, 'asset_52_item_8.png', '', 'ITM-52-8', '', 'available', '2025-09-18', '2025-09-18 14:13:59', '2025-09-18 14:13:59'),
+(17, 52, 49, 'asset_52_item_9.png', '', 'ITM-52-9', '', 'available', '2025-09-18', '2025-09-18 14:13:59', '2025-09-18 14:13:59'),
+(18, 52, 49, 'asset_52_item_10.png', '', 'ITM-52-10', '', 'available', '2025-09-18', '2025-09-18 14:13:59', '2025-09-18 14:13:59'),
+(19, 53, 49, 'asset_53_item_1.png', '', 'ITM-53-1', '', 'available', '2025-09-18', '2025-09-18 14:37:42', '2025-09-18 14:37:42'),
+(20, 54, 49, 'asset_54_item_1.png', '', 'ITM-54-1', '', 'available', '2025-09-18', '2025-09-18 14:47:31', '2025-09-18 14:47:31'),
+(21, 55, 49, 'asset_55_item_1.png', '', 'ITM-55-1', '', 'available', '2025-09-18', '2025-09-18 14:51:56', '2025-09-18 14:51:56');
 
 -- --------------------------------------------------------
 
@@ -587,7 +632,33 @@ INSERT INTO `ics_form` (`id`, `header_image`, `entity_name`, `fund_cluster`, `ic
 (73, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0008', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-16 10:22:19', 0),
 (74, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0008', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-16 10:22:35', 0),
 (75, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0009', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-16 10:23:46', 0),
-(76, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0010', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-16 10:27:00', 0);
+(76, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0010', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-16 10:27:00', 0),
+(77, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0011', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 01:08:13', 3),
+(78, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0012', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:27:09', 3),
+(79, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0013', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:27:55', 49),
+(80, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0014', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:33:47', 49),
+(81, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0015', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:37:40', 4),
+(82, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0016', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:38:34', 3),
+(83, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0017', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:39:06', 4),
+(84, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0018', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:43:40', 49),
+(85, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0018', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:44:58', 49),
+(86, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0018', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:46:48', 49),
+(87, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0018', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:47:33', 49),
+(88, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0018', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:48:24', 49),
+(89, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0019', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:49:32', 49),
+(90, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0020', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:52:51', 49),
+(91, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0020', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:53:18', 49),
+(92, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0020', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:53:20', 49),
+(93, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0020', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:53:39', 49),
+(94, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0021', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 13:59:30', 49),
+(95, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0022', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 14:03:20', 49),
+(96, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0022', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 14:03:38', 49),
+(97, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0022', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 14:03:44', 49),
+(98, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0022', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 14:04:58', 49),
+(99, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0023', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 14:13:59', 49),
+(100, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0024', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 14:37:42', 49),
+(101, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0025', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 14:47:31', 49),
+(102, '1755859912_Screenshot 2025-08-22 103403.png', 'INVENTORY', 'fc-001', 'ICS-2025-0026', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-18 14:51:56', 49);
 
 -- --------------------------------------------------------
 
@@ -622,7 +693,23 @@ INSERT INTO `ics_items` (`item_id`, `ics_id`, `asset_id`, `ics_no`, `quantity`, 
 (5, 70, NULL, 'ICS-2025-0005', 1, 'pcs', 6500.00, 6500.00, 'Ergonomic Office Chair (Supply Office) - PROP-0003', 'PROP-0003', '2 years', '2025-09-06 00:16:29'),
 (6, 71, NULL, 'ICS-2025-0006', 1, 'pcs', 35000.00, 35000.00, 'Desktop Computer – Intel i5, 8GB RAM, 256GB SSD (IT Office) - PROP-0005', 'PROP-0005', '2 years', '2025-09-06 00:31:11'),
 (7, 72, 6, 'ICS-2025-0007', 1, 'pcs', 35000.00, 35000.00, 'Desktop Computer – Intel i5, 8GB RAM, 256GB SSD', 'PROP-0005', '2 years', '2025-09-06 00:41:33'),
-(8, 76, 32, 'ICS-2025-0010', 1, 'pcs', 3500.00, 3500.00, 'Office Table – Wooden', 'STOCK-0017', '', '2025-09-16 10:27:00');
+(8, 76, 32, 'ICS-2025-0010', 1, 'pcs', 3500.00, 3500.00, 'Office Table – Wooden', 'STOCK-0017', '', '2025-09-16 10:27:00'),
+(9, 77, 35, 'ICS-2025-0011', 1, 'pcs', 3500.00, 3500.00, 'Office Table – Wooden', 'STOCK-0017', '', '2025-09-18 01:08:13'),
+(10, 78, NULL, 'ICS-2025-0012', 5, 'pcs', 80.00, 400.00, 'Mouse', '', '', '2025-09-18 13:27:09'),
+(11, 79, NULL, 'ICS-2025-0013', 3, 'pcs', 85.00, 255.00, 'Mouse', '', '', '2025-09-18 13:27:55'),
+(12, 80, NULL, 'ICS-2025-0014', 2, '', 150.00, 300.00, 'Mousepad', '', '', '2025-09-18 13:33:47'),
+(13, 81, NULL, 'ICS-2025-0015', 1, '', 5.00, 5.00, 'cp', '', '', '2025-09-18 13:37:40'),
+(14, 82, NULL, 'ICS-2025-0016', 2, '', 450.00, 900.00, 'Airpods', '', '', '2025-09-18 13:38:34'),
+(15, 83, NULL, 'ICS-2025-0017', 2, '', 340.00, 680.00, 'airpods', '', '', '2025-09-18 13:39:06'),
+(16, 88, 41, 'ICS-2025-0018', 2, '', 350.00, 700.00, 'Airpods', '', '', '2025-09-18 13:48:24'),
+(17, 89, 43, 'ICS-2025-0019', 1, '', 340.00, 340.00, 'Blue chair', '', '', '2025-09-18 13:49:32'),
+(18, 93, 48, 'ICS-2025-0020', 1, 'unit', 1020000.00, 1020000.00, 'Truck', '', '', '2025-09-18 13:53:40'),
+(19, 94, 50, 'ICS-2025-0021', 2, 'unit', 10000.00, 20000.00, 'Akari AVR 1000', '', '', '2025-09-18 13:59:30'),
+(20, 98, 51, 'ICS-2025-0022', 1, 'pcs', 7000.00, 7000.00, 'Cellphone', '', '', '2025-09-18 14:04:58'),
+(21, 99, 52, 'ICS-2025-0023', 10, 'unit', 4500.00, 45000.00, 'Printer Epson', '', '', '2025-09-18 14:13:59'),
+(22, 100, 53, 'ICS-2025-0024', 1, 'pcs', 450.00, 450.00, 'Watch', '', '', '2025-09-18 14:37:42'),
+(23, 101, 54, 'ICS-2025-0025', 1, 'unit', 49999.99, 49999.99, 'Van', '', '', '2025-09-18 14:47:31'),
+(24, 102, 55, 'ICS-2025-0026', 1, 'pcs', 40000.00, 40000.00, 'Laptop AMD Ryzen', '', '', '2025-09-18 14:51:56');
 
 -- --------------------------------------------------------
 
@@ -736,7 +823,8 @@ INSERT INTO `mr_details` (`mr_id`, `item_id`, `office_location`, `description`, 
 (1, 1, 'Supply Office', 'Dell Latitude 5430 Laptop', 'Latitude 5430', 'DL5430-SN001', 1, 0, 2.00, 'pcs', '2025-08-31', 48000.00, 'Juan A. Dela Cruz', '0000-00-00', '0000-00-00', '2025-08-31 14:26:34', 2, 'No. PS-5S-03-F02-01'),
 (2, 3, 'RHU', 'Ergonomic Office Chair', 'Mesh Back', '', 1, 0, 2.00, 'pcs', '2025-09-01', 6500.00, 'Pedro Reyes', '0000-00-00', '0000-00-00', '2025-09-01 11:24:49', 4, 'No. PS-5S-03-F02-03'),
 (3, 2, 'Supply Office', 'Ergonomic Office Chair', 'Mesh Back', '', 1, 0, 7.00, 'pcs', '2025-09-01', 6500.00, 'Juan A. Dela Cruz', '0000-00-00', '0000-00-00', '2025-09-06 00:13:28', 3, 'No. PS-5S-03-F02-02'),
-(4, 7, 'Supply Office', 'Desktop Computer – Intel i5, 8GB RAM, 256GB SSD', 'OptiPlex 7090', 'SN-ABC123456', 1, 0, 1.00, 'pcs', '2025-09-06', 35000.00, 'Juan A. Dela Cruz', '0000-00-00', '0000-00-00', '2025-09-06 00:43:02', 6, 'No. PS-5S-03-F02-07');
+(4, 7, 'Supply Office', 'Desktop Computer – Intel i5, 8GB RAM, 256GB SSD', 'OptiPlex 7090', 'SN-ABC123456', 1, 0, 1.00, 'pcs', '2025-09-06', 35000.00, 'Juan A. Dela Cruz', '0000-00-00', '0000-00-00', '2025-09-06 00:43:02', 6, 'No. PS-5S-03-F02-07'),
+(5, 21, '7K', 'Printer Epson', '', '', 1, 0, 10.00, 'unit', '2025-09-18', 4500.00, 'Juan A. Dela Cruz', '0000-00-00', '0000-00-00', '2025-09-18 15:20:37', 52, 'No. PS-5S-03-F02-21');
 
 -- --------------------------------------------------------
 
@@ -1401,7 +1489,8 @@ ALTER TABLE `assets`
   ADD KEY `category` (`category`),
   ADD KEY `fk_assets_employee` (`employee_id`),
   ADD KEY `idx_assets_office_status` (`office_id`,`status`),
-  ADD KEY `idx_assets_status` (`status`);
+  ADD KEY `idx_assets_status` (`status`),
+  ADD KEY `idx_assets_ics_id` (`ics_id`);
 
 --
 -- Indexes for table `assets_archive`
@@ -1648,7 +1737,7 @@ ALTER TABLE `archives`
 -- AUTO_INCREMENT for table `assets`
 --
 ALTER TABLE `assets`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
 -- AUTO_INCREMENT for table `assets_archive`
@@ -1660,7 +1749,7 @@ ALTER TABLE `assets_archive`
 -- AUTO_INCREMENT for table `asset_items`
 --
 ALTER TABLE `asset_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `asset_requests`
@@ -1714,13 +1803,13 @@ ALTER TABLE `generated_reports`
 -- AUTO_INCREMENT for table `ics_form`
 --
 ALTER TABLE `ics_form`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
 
 --
 -- AUTO_INCREMENT for table `ics_items`
 --
 ALTER TABLE `ics_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `iirup_form`
@@ -1744,7 +1833,7 @@ ALTER TABLE `inventory_actions`
 -- AUTO_INCREMENT for table `mr_details`
 --
 ALTER TABLE `mr_details`
-  MODIFY `mr_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `mr_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `offices`
@@ -1846,7 +1935,8 @@ ALTER TABLE `activity_log`
 ALTER TABLE `assets`
   ADD CONSTRAINT `assets_ibfk_1` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `assets_ibfk_2` FOREIGN KEY (`category`) REFERENCES `categories` (`id`),
-  ADD CONSTRAINT `fk_assets_employee` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_assets_employee` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_assets_ics` FOREIGN KEY (`ics_id`) REFERENCES `ics_form` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Constraints for table `asset_items`

@@ -89,6 +89,32 @@
             </div>
           </div>
 
+          <hr class="border-dark">
+
+          <!-- SECTION 6: PER-ITEM DETAILS -->
+          <div class="mt-3">
+            <h6 class="fw-bold text-decoration-underline">Items</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 80px;">Item ID</th>
+                    <th>Property No.</th>
+                    <th>Inventory Tag</th>
+                    <th>Serial No.</th>
+                    <th>Status</th>
+                    <th>QR Code</th>
+                    <th>Date Acquired</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="viewItemsBody">
+                  <!-- Filled by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

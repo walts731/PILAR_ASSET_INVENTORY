@@ -212,7 +212,7 @@ $new_ics_no = generateICSNo($conn);
         pointer-events: none;
         color: inherit;
         font-size: 1rem;">₱</span>
-                                <input type="number" class="form-control text-end" step="0.01" name="unit_cost[]" style="padding-left: 1.5rem;">
+                                <input type="number" class="form-control text-end" step="0.01" name="unit_cost[]" max="50000" style="padding-left: 1.5rem;">
                             </td>
                             <td style="position: relative;">
                                 <span style="
@@ -425,6 +425,17 @@ $new_ics_no = generateICSNo($conn);
             const quantityInput = row.querySelector('input[name="quantity[]"]');
             const unitCostInput = row.querySelector('input[name="unit_cost[]"]');
             const totalCostField = row.querySelector('input[name="total_cost[]"]');
+
+            if (target.name === "unit_cost[]") {
+                const val = parseFloat(target.value) || 0;
+                if (val > 50000) {
+                    target.value = 50000;
+                    target.setCustomValidity("Unit cost cannot exceed ₱50,000.");
+                    target.reportValidity();
+                } else {
+                    target.setCustomValidity("");
+                }
+            }
 
             if (target.name === "description[]") {
                 const selectedDesc = target.value;

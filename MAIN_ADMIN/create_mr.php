@@ -28,6 +28,13 @@ $asset_data = [];
 $office_name = '';
 $asset_details = [];
 
+// Fetch categories for dropdown
+$categories = [];
+$res_cats = $conn->query("SELECT id, category_name FROM categories ORDER BY category_name");
+if ($res_cats && $res_cats->num_rows > 0) {
+    while ($cr = $res_cats->fetch_assoc()) { $categories[] = $cr; }
+}
+
 // Check if MR for this item_id already exists in the mr_details table
 $existing_mr_check = false;
 if ($item_id) {
@@ -70,23 +77,36 @@ if ($asset_id) {
     $inventory_tag = "No. " . $prefix . "-" . $size . "-" . $department_code . "-" . $factory_code . "-" . $unique_id;
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Collect form data
     $item_id_form = $_POST['item_id'] ?? null;
     $office_location = $_POST['office_location'];
     $description = $_POST['description'];
     $model_no = $_POST['model_no'];
     $serial_no = $_POST['serial_no'];
+    $code = $_POST['code'] ?? '';
+    $property_no = $_POST['property_no'] ?? '';
+    $brand = $_POST['brand'] ?? '';
+    $category_id = isset($_POST['category_id']) && $_POST['category_id'] !== '' ? (int)$_POST['category_id'] : null;
+
     $serviceable = isset($_POST['serviceable']) ? 1 : 0;
     $unserviceable = isset($_POST['unserviceable']) ? 1 : 0;
     $unit_quantity = $_POST['unit_quantity'];
     $unit = $_POST['unit'];
     $acquisition_date = $_POST['acquisition_date'];
     $acquisition_cost = $_POST['acquisition_cost'];
+
     $person_accountable_name = $_POST['person_accountable_name']; 
     $employee_id = $_POST['employee_id']; 
     $acquired_date = $_POST['acquired_date'];
     $counted_date = $_POST['counted_date'];
+
+    // Server-side validation for required fields
+    if ($category_id === null || trim((string)$person_accountable_name) === '') {
+        $_SESSION['error_message'] = 'Please select a Category and specify the Person Accountable.';
+        header("Location: create_mr.php?item_id=" . urlencode((string)$item_id_form));
+        exit();
+    }
 
     // --- Update employee_id in assets table ---
     if ($employee_id) {
@@ -101,7 +121,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
         $stmt_update_employee->close();
     }
 
-    // --- ✅ NEW: Update inventory_tag in assets table ---
+    // --- NEW: Update inventory_tag in assets table ---
     if ($asset_id && $inventory_tag) {
         $stmt_update_tag = $conn->prepare("UPDATE assets SET inventory_tag = ? WHERE id = ?");
         $stmt_update_tag->bind_param("si", $inventory_tag, $asset_id);
@@ -109,39 +129,121 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$existing_mr_check) {
         $stmt_update_tag->close();
     }
 
-    // Insert into mr_details
-    $stmt_insert = $conn->prepare("INSERT INTO mr_details 
-        (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, acquired_date, counted_date, inventory_tag) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-    $stmt_insert->bind_param(
-        "iissssiiisssssss",
-        $item_id_form,
-        $asset_id,
-        $office_location,
-        $description,
-        $model_no,
-        $serial_no,
-        $serviceable,
-        $unserviceable,
-        $unit_quantity,
-        $unit,
-        $acquisition_date,
-        $acquisition_cost,
-        $person_accountable_name,
-        $acquired_date,
-        $counted_date,
-        $inventory_tag
-    );
-
-    if ($stmt_insert->execute()) {
-        $_SESSION['success_message'] = "MR Details successfully recorded!";
-        header("Location: create_mr.php?item_id=" . $item_id_form);
-        exit();
-    } else {
-        $_SESSION['error_message'] = "Error: " . $stmt_insert->error;
+    // --- NEW: Update other asset details to complete the asset record ---
+    if ($asset_id) {
+        if ($category_id === null) {
+            $stmt_update_asset = $conn->prepare("UPDATE assets 
+                SET description = ?, model = ?, serial_no = ?, code = ?, property_no = ?, brand = ?, unit = ?, value = ?, acquisition_date = ? 
+                WHERE id = ?");
+            $stmt_update_asset->bind_param(
+                "sssssssdsi",
+                $description,
+                $model_no,
+                $serial_no,
+                $code,
+                $property_no,
+                $brand,
+                $unit,
+                $acquisition_cost,
+                $acquisition_date,
+                $asset_id
+            );
+        } else {
+            $stmt_update_asset = $conn->prepare("UPDATE assets 
+                SET category = ?, description = ?, model = ?, serial_no = ?, code = ?, property_no = ?, brand = ?, unit = ?, value = ?, acquisition_date = ? 
+                WHERE id = ?");
+            $stmt_update_asset->bind_param(
+                "isssssssdsi",
+                $category_id,
+                $description,
+                $model_no,
+                $serial_no,
+                $code,
+                $property_no,
+                $brand,
+                $unit,
+                $acquisition_cost,
+                $acquisition_date,
+                $asset_id
+            );
+        }
+        if (!$stmt_update_asset->execute()) {
+            $_SESSION['error_message'] = "Error updating asset details: " . $stmt_update_asset->error;
+            $stmt_update_asset->close();
+            header("Location: create_mr.php?item_id=" . $item_id_form);
+            exit();
+        }
+        $stmt_update_asset->close();
     }
-    $stmt_insert->close();
+
+    // Insert or Update mr_details
+    if ($existing_mr_check) {
+        // UPDATE
+        $stmt_upd = $conn->prepare("UPDATE mr_details SET 
+            office_location = ?, description = ?, model_no = ?, serial_no = ?, serviceable = ?, unserviceable = ?, unit_quantity = ?, unit = ?, acquisition_date = ?, acquisition_cost = ?, person_accountable = ?, acquired_date = ?, counted_date = ?, inventory_tag = ?
+            WHERE item_id = ? AND asset_id = ?");
+        $stmt_upd->bind_param(
+            "ssssiiisssssssii",
+            $office_location,
+            $description,
+            $model_no,
+            $serial_no,
+            $serviceable,
+            $unserviceable,
+            $unit_quantity,
+            $unit,
+            $acquisition_date,
+            $acquisition_cost,
+            $person_accountable_name,
+            $acquired_date,
+            $counted_date,
+            $inventory_tag,
+            $item_id_form,
+            $asset_id
+        );
+        if ($stmt_upd->execute()) {
+            $_SESSION['success_message'] = "MR Details successfully updated!";
+            header("Location: create_mr.php?item_id=" . $item_id_form);
+            exit();
+        } else {
+            $_SESSION['error_message'] = "Error updating MR: " . $stmt_upd->error;
+        }
+        $stmt_upd->close();
+    } else {
+        // INSERT
+        $stmt_insert = $conn->prepare("INSERT INTO mr_details 
+            (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, acquired_date, counted_date, inventory_tag) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+        $stmt_insert->bind_param(
+            "iissssiiisssssss",
+            $item_id_form,
+            $asset_id,
+            $office_location,
+            $description,
+            $model_no,
+            $serial_no,
+            $serviceable,
+            $unserviceable,
+            $unit_quantity,
+            $unit,
+            $acquisition_date,
+            $acquisition_cost,
+            $person_accountable_name,
+            $acquired_date,
+            $counted_date,
+            $inventory_tag
+        );
+
+        if ($stmt_insert->execute()) {
+            $_SESSION['success_message'] = "MR Details successfully recorded!";
+            header("Location: create_mr.php?item_id=" . $item_id_form);
+            exit();
+        } else {
+            $_SESSION['error_message'] = "Error: " . $stmt_insert->error;
+        }
+        $stmt_insert->close();
+    }
 }
 
 
@@ -182,6 +284,17 @@ if ($item_id) {
         }
 
         $stmt_assets->close();
+
+        // Fetch asset_items entry for this item to derive an auto property number
+        $auto_property_no = '';
+        $stmt_ai = $conn->prepare("SELECT inventory_tag FROM asset_items WHERE item_id = ?");
+        $stmt_ai->bind_param("i", $item_id);
+        $stmt_ai->execute();
+        $res_ai = $stmt_ai->get_result();
+        if ($res_ai && $row_ai = $res_ai->fetch_assoc()) {
+            $auto_property_no = $row_ai['inventory_tag'] ?? '';
+        }
+        $stmt_ai->close();
     }
 
     $stmt->close();
@@ -260,7 +373,7 @@ $stmt_assets->close();
             }
 
             if ($existing_mr_check) {
-                echo '<div class="alert alert-warning">MR Details for this item already exist. You cannot fill the form again.</div>';
+                echo '<div class="alert alert-info">An MR record already exists for this item. You can review and edit the details below.</div>';
             }
             ?>
 
@@ -327,6 +440,44 @@ $stmt_assets->close();
                             </div>
                         </div>
 
+                        <!-- Code and Property No -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="code" class="form-label">Code</label>
+                                <input type="text" class="form-control" name="code"
+                                       value="<?= isset($asset_details['code']) ? htmlspecialchars($asset_details['code']) : '' ?>">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="property_no" class="form-label">Property No</label>
+                                <input type="text" class="form-control" name="property_no"
+                                       value="<?php 
+                                           $baseProp = isset($asset_details['property_no']) ? trim($asset_details['property_no']) : '';
+                                           $prefill = $baseProp !== '' ? $baseProp : ($auto_property_no ?? '');
+                                           echo htmlspecialchars($prefill);
+                                       ?>">
+                            </div>
+                        </div>
+
+                        <!-- Brand and Category -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="brand" class="form-label">Brand</label>
+                                <input type="text" class="form-control" name="brand"
+                                       value="<?= isset($asset_details['brand']) ? htmlspecialchars($asset_details['brand']) : '' ?>">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="category_id" class="form-label">Category <span class="text-danger">*</span></label>
+                                <select name="category_id" id="category_id" class="form-select" required>
+                                    <option value="">-- Select Category --</option>
+                                    <?php foreach ($categories as $cat): ?>
+                                        <option value="<?= (int)$cat['id'] ?>" <?= (isset($asset_details['category']) && (int)$asset_details['category'] === (int)$cat['id']) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($cat['category_name']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+
                         <!-- Serviceable and Unserviceable -->
                         <div class="row mb-3">
                             <div class="col-md-6">
@@ -353,9 +504,20 @@ $stmt_assets->close();
                                     <input type="number" class="form-control" name="unit_quantity"
                                         value="<?= isset($asset_details['quantity']) ? htmlspecialchars($asset_details['quantity']) : '' ?>" required>
                                     <select name="unit" class="form-select" required>
-                                        <option value="kg" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'kg') ? 'selected' : '' ?>>kg</option>
-                                        <option value="pcs" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'pcs') ? 'selected' : '' ?>>pcs</option>
-                                        <option value="liter" <?= (isset($asset_details['unit']) && $asset_details['unit'] == 'liter') ? 'selected' : '' ?>>liter</option>
+                                        <?php
+                                        // Populate units from unit table if available
+                                        $unit_rows = [];
+                                        $res_units = $conn->query("SELECT unit_name FROM unit");
+                                        if ($res_units && $res_units->num_rows > 0) {
+                                            while ($ur = $res_units->fetch_assoc()) { $unit_rows[] = $ur['unit_name']; }
+                                        } else {
+                                            $unit_rows = ['kg', 'pcs', 'liter'];
+                                        }
+                                        foreach ($unit_rows as $u) {
+                                            $sel = (isset($asset_details['unit']) && $asset_details['unit'] == $u) ? 'selected' : '';
+                                            echo '<option value="' . htmlspecialchars($u) . '" ' . $sel . '>' . htmlspecialchars($u) . '</option>';
+                                        }
+                                        ?>
                                     </select>
                                 </div>
                             </div>
@@ -374,8 +536,8 @@ $stmt_assets->close();
                         <!-- Person Accountable -->
                         <div class="row mb-3">
                             <div class="col-md-12">
-                                <label for="person_accountable" class="form-label">Person Accountable</label>
-                                <input type="text" class="form-control" name="person_accountable_name" id="person_accountable"
+                                <label for="person_accountable" class="form-label">Person Accountable <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="person_accountable_name" id="person_accountable" required
                                     list="employeeList" placeholder="Type to search employee" autocomplete="off"
                                     value="<?= htmlspecialchars($person_accountable_name) ?>">
                                 <input type="hidden" name="employee_id" id="employee_id"
@@ -402,8 +564,8 @@ $stmt_assets->close();
                         </div>
 
                         <!-- Submit Button -->
-                        <button type="submit" class="btn btn-primary" <?= $existing_mr_check ? 'disabled' : '' ?>>
-                            <?= $existing_mr_check ? 'Already Created' : 'Submit' ?>
+                        <button type="submit" class="btn btn-primary">
+                            <?= $existing_mr_check ? 'Edit' : 'Submit' ?>
                         </button>
 
                         <?php if ($existing_mr_check): ?>
