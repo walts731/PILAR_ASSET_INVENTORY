@@ -202,6 +202,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $asset_id
         );
         if ($stmt_upd->execute()) {
+            // Also update the asset_items table's property tag (stored in inventory_tag)
+            if (!empty($property_no)) {
+                $stmt_ai = $conn->prepare("UPDATE asset_items SET inventory_tag = ? WHERE item_id = ?");
+                $stmt_ai->bind_param("si", $property_no, $item_id_form);
+                $stmt_ai->execute();
+                $stmt_ai->close();
+            }
             $_SESSION['success_message'] = "MR Details successfully updated!";
             header("Location: create_mr.php?item_id=" . $item_id_form);
             exit();
@@ -236,6 +243,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         );
 
         if ($stmt_insert->execute()) {
+            // Also update the asset_items table's property tag (stored in inventory_tag)
+            if (!empty($property_no)) {
+                $stmt_ai = $conn->prepare("UPDATE asset_items SET inventory_tag = ? WHERE item_id = ?");
+                $stmt_ai->bind_param("si", $property_no, $item_id_form);
+                $stmt_ai->execute();
+                $stmt_ai->close();
+            }
             $_SESSION['success_message'] = "MR Details successfully recorded!";
             header("Location: create_mr.php?item_id=" . $item_id_form);
             exit();

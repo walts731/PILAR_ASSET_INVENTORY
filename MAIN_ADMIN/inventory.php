@@ -104,6 +104,16 @@ $stmt->close();
     </div>
 
 
+    <?php
+      // Count of assets without property number (not filtered by office)
+      $noPropCount = 0;
+      if ($stmtCnt = $conn->prepare("SELECT COUNT(*) AS cnt FROM assets WHERE type='asset' AND quantity > 0 AND (property_no IS NULL OR property_no = '')")) {
+        $stmtCnt->execute();
+        $resCnt = $stmtCnt->get_result();
+        if ($resCnt && ($rc = $resCnt->fetch_assoc())) { $noPropCount = (int)$rc['cnt']; }
+        $stmtCnt->close();
+      }
+    ?>
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
       <li class="nav-item" role="presentation">
@@ -113,7 +123,7 @@ $stmt->close();
         <button class="nav-link" id="consumables-tab" data-bs-toggle="tab" data-bs-target="#consumables" type="button" role="tab">Consumables</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="no-property-tab" data-bs-toggle="tab" data-bs-target="#no_property" type="button" role="tab">No Property Tag</button>
+        <button class="nav-link" id="no-property-tab" data-bs-toggle="tab" data-bs-target="#no_property" type="button" role="tab">No Property Tag <sub class="text-muted">(<?= $noPropCount ?>)</sub></button>
       </li>
     </ul>
 
@@ -738,7 +748,7 @@ $stmt->close();
                     <td>${it.date_acquired ? new Date(it.date_acquired).toLocaleDateString('en-US') : ''}</td>
                     <td class="text-nowrap">
                       <a class="btn btn-sm btn-outline-primary" href="create_mr.php?item_id=${it.item_id}" target="_blank">
-                        <i class="bi bi-tag"></i> Create Property Tag
+                        <i class="bi bi-tag"></i> ${ (data.property_no && data.property_no.trim()) ? 'Edit Property Tag' : 'Create Property Tag' }
                       </a>
                     </td>
                   `;
