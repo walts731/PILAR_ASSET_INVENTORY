@@ -26,22 +26,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $is_outside_lgu = ($office_input === 'outside_lgu');
     $office_id = $is_outside_lgu ? 0 : intval($office_input);
 
+    // Optional header image upload (overrides posted header_image when provided)
+    if (isset($_FILES['header_image_file']) && isset($_FILES['header_image_file']['tmp_name']) && $_FILES['header_image_file']['error'] === UPLOAD_ERR_OK) {
+        $tmp = $_FILES['header_image_file']['tmp_name'];
+        $origName = $_FILES['header_image_file']['name'];
+        $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+        $allowed = ['jpg','jpeg','png','gif','webp'];
+        if (in_array($ext, $allowed, true)) {
+            $newName = 'ics_header_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+            $destRel = '../img/' . $newName; // relative to this PHP file
+            if (@move_uploaded_file($tmp, $destRel)) {
+                $header_image = $newName;
+            }
+        }
+    }
+
     // UPDATE flow when editing existing ICS
     if ($existing_ics_id > 0) {
         $ics_id = $existing_ics_id;
-        // Update ICS form header fields
-        $stmt = $conn->prepare("UPDATE ics_form SET entity_name = ?, fund_cluster = ?, ics_no = ?, received_from_name = ?, received_from_position = ?, received_by_name = ?, received_by_position = ? WHERE id = ?");
-        $stmt->bind_param(
-            "sssssssi",
-            $entity_name,
-            $fund_cluster,
-            $ics_no,
-            $received_from_name,
-            $received_from_position,
-            $received_by_name,
-            $received_by_position,
-            $ics_id
-        );
+        // Update ICS form header fields (optionally update header_image if provided)
+        if (!empty($header_image)) {
+            $stmt = $conn->prepare("UPDATE ics_form SET header_image = ?, entity_name = ?, fund_cluster = ?, ics_no = ?, received_from_name = ?, received_from_position = ?, received_by_name = ?, received_by_position = ? WHERE id = ?");
+            $stmt->bind_param(
+                "ssssssssi",
+                $header_image,
+                $entity_name,
+                $fund_cluster,
+                $ics_no,
+                $received_from_name,
+                $received_from_position,
+                $received_by_name,
+                $received_by_position,
+                $ics_id
+            );
+        } else {
+            $stmt = $conn->prepare("UPDATE ics_form SET entity_name = ?, fund_cluster = ?, ics_no = ?, received_from_name = ?, received_from_position = ?, received_by_name = ?, received_by_position = ? WHERE id = ?");
+            $stmt->bind_param(
+                "sssssssi",
+                $entity_name,
+                $fund_cluster,
+                $ics_no,
+                $received_from_name,
+                $received_from_position,
+                $received_by_name,
+                $received_by_position,
+                $ics_id
+            );
+        }
         $stmt->execute();
         $stmt->close();
 

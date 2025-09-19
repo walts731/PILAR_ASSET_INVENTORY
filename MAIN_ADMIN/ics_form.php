@@ -139,17 +139,21 @@ $new_ics_no = generateICSNo($conn);
             <!-- ICS Form ID from database -->
             <input type="hidden" name="ics_id" value="<?= htmlspecialchars($ics_data['id'] ?? '') ?>">
             <div class="mb-3 text-center">
-                <?php if (!empty($ics_data['header_image'])): ?>
-                    <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
-                        class="img-fluid mb-2"
-                        style="max-width: 100%; height: auto; object-fit: contain;">
+              <?php if (!empty($ics_data['header_image'])): ?>
+                  <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
+                      class="img-fluid mb-2"
+                      style="max-width: 100%; height: auto; object-fit: contain;">
 
-                    <!-- Hidden input ensures it gets submitted -->
-                    <input type="hidden" name="header_image" value="<?= htmlspecialchars($ics_data['header_image']) ?>">
-                <?php else: ?>
-                    <p class="text-muted">No header image available</p>
-                <?php endif; ?>
-
+                  <!-- Hidden input ensures it gets submitted -->
+                  <input type="hidden" name="header_image" value="<?= htmlspecialchars($ics_data['header_image']) ?>">
+              <?php else: ?>
+                  <p class="text-muted">No header image available</p>
+              <?php endif; ?>
+              <div class="mt-3 text-start">
+                <label for="headerImageFile" class="form-label fw-semibold">Replace Header Image</label>
+                <input type="file" class="form-control" id="headerImageFile" name="header_image_file" accept="image/*">
+                <div class="form-text">Optional. Upload a new header image (JPG, PNG, or WEBP). This will replace the current image.</div>
+              </div>
             </div>
 
             <div class="row mb-3">
