@@ -11,6 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get ICS main info
     $form_id = intval($_POST['form_id'] ?? 0); 
+    $existing_ics_id = intval($_POST['existing_ics_id'] ?? 0);
     $header_image = $_POST['header_image'] ?? '';
     $entity_name = $_POST['entity_name'] ?? '';
     $fund_cluster = $_POST['fund_cluster'] ?? '';
@@ -24,6 +25,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $office_input = $_POST['office_id'] ?? 0;
     $is_outside_lgu = ($office_input === 'outside_lgu');
     $office_id = $is_outside_lgu ? 0 : intval($office_input);
+
+    // UPDATE flow when editing existing ICS
+    if ($existing_ics_id > 0) {
+        $ics_id = $existing_ics_id;
+        // Update ICS form header fields
+        $stmt = $conn->prepare("UPDATE ics_form SET entity_name = ?, fund_cluster = ?, ics_no = ?, received_from_name = ?, received_from_position = ?, received_by_name = ?, received_by_position = ? WHERE id = ?");
+        $stmt->bind_param(
+            "sssssssi",
+            $entity_name,
+            $fund_cluster,
+            $ics_no,
+            $received_from_name,
+            $received_from_position,
+            $received_by_name,
+            $received_by_position,
+            $ics_id
+        );
+        $stmt->execute();
+        $stmt->close();
+
+        // Update ICS items submitted as items[item_id][field]
+        if (!empty($_POST['items']) && is_array($_POST['items'])) {
+            $stmt_item_upd = $conn->prepare("UPDATE ics_items SET quantity = ?, unit = ?, unit_cost = ?, total_cost = ?, description = ?, item_no = ?, estimated_useful_life = ? WHERE item_id = ? AND ics_id = ?");
+            foreach ($_POST['items'] as $item_id => $fields) {
+                $qty = isset($fields['quantity']) ? floatval($fields['quantity']) : 0;
+                $unit = $fields['unit'] ?? '';
+                $unit_cost = isset($fields['unit_cost']) ? floatval($fields['unit_cost']) : 0;
+                $total_cost = isset($fields['total_cost']) ? floatval($fields['total_cost']) : ($qty * $unit_cost);
+                $description = $fields['description'] ?? '';
+                $item_no = $fields['item_no'] ?? '';
+                $eul = $fields['estimated_useful_life'] ?? '';
+                $iid = intval($item_id);
+                $stmt_item_upd->bind_param("isdssssii", $qty, $unit, $unit_cost, $total_cost, $description, $item_no, $eul, $iid, $ics_id);
+                $stmt_item_upd->execute();
+            }
+            $stmt_item_upd->close();
+        }
+
+        // Flash success and redirect back to the ICS view page
+        $_SESSION['flash'] = [
+            'type' => 'success',
+            'message' => 'ICS has been updated successfully.'
+        ];
+        header("Location: view_ics.php?id=" . $ics_id . "&form_id=" . $form_id . "&success=1");
+        exit();
+    }
 
     // Insert new ICS form
     $stmt = $conn->prepare("INSERT INTO ics_form 

@@ -53,44 +53,73 @@ $low_stock_count = count($low_stock_items);
   </div>
 
   <!-- Page Title & Breadcrumb -->
-<div class="order-3 order-sm-2 flex-grow-1">
-  <?php
-  // Page-specific breadcrumb navigation
-  if ($current_page === 'edit_template') {
-    echo '<h5 class="m-0 text-center text-sm-start">
-            <a href="templates.php" class="text-decoration-none text-primary">Templates</a>
-            <span class="mx-1 text-muted"> &gt; </span>
-            <span class="text-dark">Edit Template</span>
-          </h5>';
-  } elseif ($current_page === 'borrow_requests') {
-    echo '<h5 class="m-0 text-center text-sm-start">
-            <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
-            <span class="mx-1 text-muted"> &gt; </span>
-            <span class="text-dark">Borrow Request</span>
-          </h5>';
-  } elseif ($current_page === 'borrowed_assets') {
-    echo '<h5 class="m-0 text-center text-sm-start">
-            <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
-            <span class="mx-1 text-muted"> &gt; </span>
-            <span class="text-dark">Borrowed Assets</span>
-          </h5>';
-  } elseif ($current_page === 'incoming_borrow_requests') {
-    echo '<h5 class="m-0 text-center text-sm-start">
-            <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
-            <span class="mx-1 text-muted"> &gt; </span>
-            <span class="text-dark">Incoming Borrow Requests</span>
-          </h5>';
-  } elseif ($current_page === 'returned_assets') {
-    echo '<h5 class="m-0 text-center text-sm-start">
-            <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
-            <span class="mx-1 text-muted"> &gt; </span>
-            <span class="text-dark">Returned Assets</span>
-          </h5>';
-  } else {
-    echo '<h5 class="m-0 text-center text-sm-start">' . htmlspecialchars($page_title) . '</h5>';
-  }
-  ?>
-</div>
+  <div class="order-3 order-sm-2 flex-grow-1">
+    <?php
+    // Page-specific breadcrumb navigation
+    if ($current_page === 'edit_template') {
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="templates.php" class="text-decoration-none text-primary">Templates</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">Edit Template</span>
+            </h5>';
+    } elseif ($current_page === 'borrow_requests') {
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">Borrow Request</span>
+            </h5>';
+    } elseif ($current_page === 'borrowed_assets') {
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">Borrowed Assets</span>
+            </h5>';
+    } elseif ($current_page === 'incoming_borrow_requests') {
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">Incoming Borrow Requests</span>
+            </h5>';
+    } elseif ($current_page === 'returned_assets') {
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">Returned Assets</span>
+            </h5>';
+    } elseif ($current_page === 'saved_ics') {
+      $formId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">Saved ICS</span>
+            </h5>';
+    } elseif ($current_page === 'view_ics') {
+      $icsId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+      $formId = isset($_GET['form_id']) ? intval($_GET['form_id']) : 0;
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <a href="saved_ics.php?id=' . $formId . '" class="text-decoration-none text-primary">Saved ICS</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">View ICS</span>
+            </h5>';
+    } elseif ($current_page === 'create_mr') {
+      $icsId = isset($_GET['ics_id']) ? intval($_GET['ics_id']) : 0;
+      $formId = isset($_GET['form_id']) ? intval($_GET['form_id']) : 0;
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <a href="saved_ics.php?id=' . $formId . '" class="text-decoration-none text-primary">Saved ICS</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <a href="view_ics.php?id=' . $icsId . '&form_id=' . $formId . '" class="text-decoration-none text-primary">View ICS</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">Create Property Tag</span>
+            </h5>';
+    } else {
+      echo '<h5 class="m-0 text-center text-sm-start">' . htmlspecialchars($page_title) . '</h5>';
+    }
+    ?>
+  </div>
 
   <!-- Right Side Controls -->
   <div class="order-2 order-sm-3 d-flex align-items-center gap-3 ms-auto flex-wrap justify-content-end">

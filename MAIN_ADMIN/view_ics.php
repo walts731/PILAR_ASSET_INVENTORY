@@ -66,119 +66,161 @@ $stmt->close();
     <?php include 'includes/topbar.php' ?>
 
     <div class="container py-4">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="saved_ics.php?id=<?php echo $ics_form_id ?>" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Saved ICS</a>
-      </div>
+      <?php if (isset($_SESSION['flash'])): ?>
+        <div class="alert alert-<?= htmlspecialchars($_SESSION['flash']['type'] ?? 'info') ?> alert-dismissible fade show" role="alert">
+          <?= htmlspecialchars($_SESSION['flash']['message'] ?? '') ?>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['flash']); ?>
+      <?php elseif (isset($_GET['success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          Changes saved successfully.
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      <?php endif; ?>
+      
 
-      <div class="card mb-5 shadow-sm">
-        <div class="card-body">
+      <form action="save_ics_items.php" method="POST">
+        <input type="hidden" name="existing_ics_id" value="<?= (int)$ics['ics_id'] ?>" />
+        <input type="hidden" name="form_id" value="<?= htmlspecialchars($ics_form_id) ?>" />
+        <div class="card mb-5 shadow-sm">
+          <div class="card-body">
 
-          <div class="mb-3 text-center">
-            <?php if (!empty($ics['header_image'])): ?>
-              <img src="../img/<?= htmlspecialchars($ics['header_image']) ?>"
-                class="img-fluid mb-2 w-100"
-                style="max-height:300px; object-fit:cover;">
-            <?php else: ?>
-              <p class="text-muted">No header image</p>
-            <?php endif; ?>
-          </div>
-
-          <div class="row mb-2">
-            <div class="col-md-6">
-              <p class="mb-1 fw-semibold">Entity Name:</p>
-              <p class="border-bottom pb-1"><?= htmlspecialchars($ics['entity_name']) ?></p>
+            <div class="mb-3 text-center">
+              <?php if (!empty($ics['header_image'])): ?>
+                <img src="../img/<?= htmlspecialchars($ics['header_image']) ?>"
+                  class="img-fluid mb-2 w-100"
+                  style="max-height:300px; object-fit:cover;">
+              <?php else: ?>
+                <p class="text-muted">No header image</p>
+              <?php endif; ?>
             </div>
 
-          </div>
-
-          <div class="row mb-2">
-            <div class="col-md-6">
-              <p class="mb-1 fw-semibold">Fund Cluster:</p>
-              <p class="border-bottom pb-1"><?= htmlspecialchars($ics['fund_cluster']) ?></p>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Entity Name</label>
+                <input type="text" class="form-control" name="entity_name" value="<?= htmlspecialchars($ics['entity_name']) ?>" required />
+              </div>
             </div>
-            <div class="col-md-6">
-              <p class="mb-1 fw-semibold">ICS No.:</p>
-              <p class="border-bottom pb-1"><?= htmlspecialchars($ics['ics_no']) ?></p>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Fund Cluster</label>
+                <input type="text" class="form-control" name="fund_cluster" value="<?= htmlspecialchars($ics['fund_cluster']) ?>" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">ICS No.</label>
+                <input type="text" class="form-control" name="ics_no" value="<?= htmlspecialchars($ics['ics_no']) ?>" required />
+              </div>
             </div>
-          </div>
 
+            <hr>
 
-          <hr>
-
-          <!-- Items Table -->
-          <div class="table-responsive">
-            <table class="table table-bordered text-center align-middle">
-              <thead class="table-secondary">
-                <tr>
-                  <th>Quantity</th>
-                  <th>Unit</th>
-                  <th>Unit Cost</th>
-                  <th>Total Cost</th>
-                  <th>Description</th>
-                  <th>Item No</th>
-                  <th>Estimated Useful Life</th>
-                  <th>Action</th> <!-- New column for actions -->
-                </tr>
-              </thead>
-              <tbody>
-                <?php if (!empty($ics['items'])): ?>
-                  <?php foreach ($ics['items'] as $item): ?>
-                    <tr>
-                      <td><?= htmlspecialchars($item['quantity']) ?></td>
-                      <td><?= htmlspecialchars($item['unit']) ?></td>
-                      <td>₱<?= number_format($item['unit_cost'], 2) ?></td>
-                      <td>₱<?= number_format($item['total_cost'], 2) ?></td>
-                      <td><?= htmlspecialchars($item['description']) ?></td>
-                      <td><?= htmlspecialchars($item['item_no']) ?></td>
-                      <td><?= htmlspecialchars($item['estimated_useful_life']) ?></td>
-                      <td>
-                        <a href="create_mr.php?asset_id=<?= htmlspecialchars($item['asset_id']) ?>&ics_id=<?= htmlspecialchars($ics['ics_id']) ?>&form_id=<?php echo $ics_form_id ?>" class="btn btn-primary btn-sm">
-                          Create Property Tag
-                        </a>
-
-                      </td> <!-- Create MR button -->
-                    </tr>
-                  <?php endforeach; ?>
-                <?php else: ?>
+            <!-- Items Table -->
+            <div class="table-responsive">
+              <table class="table table-bordered text-center align-middle">
+                <thead class="table-secondary">
                   <tr>
-                    <td colspan="8" class="text-muted">No items found.</td>
+                    <th>Quantity</th>
+                    <th>Unit</th>
+                    <th>Unit Cost</th>
+                    <th>Total Cost</th>
+                    <th>Description</th>
+                    <th>Item No</th>
+                    <th>Estimated Useful Life</th>
+                    <th>Action</th>
                   </tr>
-                <?php endif; ?>
-              </tbody>
-            </table>
-          </div>
-
-
-          <!-- Signatories -->
-          <div class="row mt-4">
-            <div class="col-md-6 text-center">
-              <p class="mb-0 fw-bold">Received from:</p>
-              <p>
-                <?= htmlspecialchars($ics['received_from_name']) ?><br>
-                <small><?= htmlspecialchars($ics['received_from_position']) ?></small>
-              </p>
+                </thead>
+                <tbody>
+                  <?php if (!empty($ics['items'])): ?>
+                    <?php foreach ($ics['items'] as $item): ?>
+                      <tr>
+                        <td>
+                          <input type="number" step="1" min="0" class="form-control form-control-sm text-center item-qty" name="items[<?= (int)$item['item_id'] ?>][quantity]" value="<?= htmlspecialchars($item['quantity']) ?>">
+                        </td>
+                        <td>
+                          <input type="text" class="form-control form-control-sm text-center" name="items[<?= (int)$item['item_id'] ?>][unit]" value="<?= htmlspecialchars($item['unit']) ?>">
+                        </td>
+                        <td>
+                          <div class="input-group input-group-sm">
+                            <span class="input-group-text">₱</span>
+                            <input type="number" step="0.01" min="0" class="form-control text-end item-unit-cost" name="items[<?= (int)$item['item_id'] ?>][unit_cost]" value="<?= htmlspecialchars($item['unit_cost']) ?>">
+                          </div>
+                        </td>
+                        <td>
+                          <div class="input-group input-group-sm">
+                            <span class="input-group-text">₱</span>
+                            <input type="number" step="0.01" min="0" class="form-control text-end item-total-cost" name="items[<?= (int)$item['item_id'] ?>][total_cost]" value="<?= htmlspecialchars($item['total_cost']) ?>" readonly>
+                          </div>
+                        </td>
+                        <td>
+                          <input type="text" class="form-control form-control-sm" name="items[<?= (int)$item['item_id'] ?>][description]" value="<?= htmlspecialchars($item['description']) ?>">
+                        </td>
+                        <td>
+                          <input type="number" step="1" min="0" class="form-control form-control-sm text-center" name="items[<?= (int)$item['item_id'] ?>][item_no]" value="<?= htmlspecialchars($item['item_no']) ?>">
+                        </td>
+                        <td>
+                          <input type="text" class="form-control form-control-sm text-center" name="items[<?= (int)$item['item_id'] ?>][estimated_useful_life]" value="<?= htmlspecialchars($item['estimated_useful_life']) ?>">
+                        </td>
+                        <td class="text-nowrap">
+                          <a href="create_mr.php?asset_id=<?= htmlspecialchars($item['asset_id']) ?>&ics_id=<?= htmlspecialchars($ics['ics_id']) ?>&form_id=<?php echo $ics_form_id ?>" class="btn btn-primary btn-sm">
+                            Create Property Tag
+                          </a>
+                        </td>
+                      </tr>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <tr>
+                      <td colspan="8" class="text-muted">No items found.</td>
+                    </tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
             </div>
-            <div class="col-md-6 text-center">
-              <p class="mb-0 fw-bold">Received by:</p>
-              <p>
-                <?= htmlspecialchars($ics['received_by_name']) ?><br>
-                <small><?= htmlspecialchars($ics['received_by_position']) ?></small>
-              </p>
+
+            <!-- Signatories -->
+            <div class="row mt-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Received from - Name</label>
+                <input type="text" class="form-control" name="received_from_name" value="<?= htmlspecialchars($ics['received_from_name']) ?>">
+                <label class="form-label mt-2">Position</label>
+                <input type="text" class="form-control" name="received_from_position" value="<?= htmlspecialchars($ics['received_from_position']) ?>">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Received by - Name</label>
+                <input type="text" class="form-control" name="received_by_name" value="<?= htmlspecialchars($ics['received_by_name']) ?>">
+                <label class="form-label mt-2">Position</label>
+                <input type="text" class="form-control" name="received_by_position" value="<?= htmlspecialchars($ics['received_by_position']) ?>">
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Export / Print -->
-      <div class="mb-5">
-        <a href="generate_ics_pdf.php?id=<?= $ics['ics_id'] ?>" class="btn btn-success">
-          <i class="bi bi-printer"></i> Print / Export PDF
-        </a>
-      </div>
+        <div class="d-flex gap-2 mb-5">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> Save Changes
+          </button>
+          <a href="generate_ics_pdf.php?id=<?= $ics['ics_id'] ?>" class="btn btn-success">
+            <i class="bi bi-printer"></i> Print / Export PDF
+          </a>
+        </div>
+      </form>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Auto-recalculate total cost when quantity or unit cost changes
+    document.querySelectorAll('.item-qty, .item-unit-cost').forEach(el => {
+      el.addEventListener('input', function() {
+        const row = this.closest('tr');
+        const qty = parseFloat(row.querySelector('.item-qty')?.value || '0');
+        const unit = parseFloat(row.querySelector('.item-unit-cost')?.value || '0');
+        const totalEl = row.querySelector('.item-total-cost');
+        if (totalEl) totalEl.value = (qty * unit).toFixed(2);
+      });
+    });
+  </script>
 </body>
 
 </html>
