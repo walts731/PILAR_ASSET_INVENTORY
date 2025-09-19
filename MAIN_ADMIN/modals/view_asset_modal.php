@@ -20,20 +20,19 @@
             <p class="mb-1"><span id="viewDescription"></span></p>
           </div>
 
-          <!-- SECTION 2: IMAGE + BASIC DETAILS -->
-          <div class="row mb-3">
-            <div class="col-5 text-center">
-              <img id="viewAssetImage" src="" alt="Asset Image"
-                   class="img-fluid border border-dark rounded"
-                   style="max-height: 150px; object-fit: contain;">
-            </div>
-            <div class="col-7">
-              <h6 class="fw-bold text-decoration-underline">Basic Information</h6>
-              <p class="mb-1"><strong>Office:</strong> <span id="viewOfficeName"></span></p>
-              <p class="mb-1"><strong>Category:</strong> <span id="viewCategoryName"></span></p>
-              <p class="mb-1"><strong>Type:</strong> <span id="viewType"></span></p>
-              <p class="mb-1"><strong>Quantity:</strong> <span id="viewQuantity"></span></p>
-              <p class="mb-1"><strong>Unit:</strong> <span id="viewUnit"></span></p>
+          <!-- SECTION 2: BASIC DETAILS (organized) -->
+          <div class="mb-3">
+            <h6 class="fw-bold text-decoration-underline">Basic Information</h6>
+            <div class="row">
+              <div class="col-md-6">
+                <p class="mb-1"><strong>Office:</strong> <span id="viewOfficeName"></span></p>
+                <p class="mb-1"><strong>Category:</strong> <span id="viewCategoryName"></span></p>
+                <p class="mb-1"><strong>Type:</strong> <span id="viewType"></span></p>
+              </div>
+              <div class="col-md-6">
+                <p class="mb-1"><strong>Quantity:</strong> <span id="viewQuantity"></span></p>
+                <p class="mb-1"><strong>Unit:</strong> <span id="viewUnit"></span></p>
+              </div>
             </div>
           </div>
 

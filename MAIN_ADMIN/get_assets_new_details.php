@@ -34,6 +34,24 @@ if (!$head) {
   exit;
 }
 
+// Determine a representative category from linked assets (first by id)
+$cat_name = 'Uncategorized';
+$cat_type = '';
+$stmtCat = $conn->prepare("SELECT c.category_name, c.type
+                           FROM assets a
+                           LEFT JOIN categories c ON a.category = c.id
+                           WHERE a.asset_new_id = ?
+                           ORDER BY a.id ASC
+                           LIMIT 1");
+$stmtCat->bind_param('i', $id);
+$stmtCat->execute();
+$resCat = $stmtCat->get_result();
+if ($resCat && ($cr = $resCat->fetch_assoc())) {
+  $cat_name = $cr['category_name'] ?? 'Uncategorized';
+  $cat_type = $cr['type'] ?? '';
+}
+$stmtCat->close();
+
 // Fetch item-level assets linked to this assets_new id
 $items = [];
 $sqlItems = "
@@ -52,8 +70,8 @@ $stmt2->close();
 $out = [
   'system_logo'   => $system_logo,
   'office_name'   => $head['office_name'] ?? '',
-  'category_name' => '-',
-  'category_type' => '-',
+  'category_name' => $cat_name,
+  'category_type' => $cat_type,
   'type'          => 'asset',
   'status'        => '',
   'quantity'      => (int)$head['quantity'],

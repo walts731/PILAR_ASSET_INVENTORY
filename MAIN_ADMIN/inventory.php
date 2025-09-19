@@ -598,16 +598,9 @@ $stmt->close();
                         <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal">
                           <i class="bi bi-eye"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill updateAssetBtn" data-id="<?= $row['id'] ?>" data-category="<?= $row['category'] ?>" data-description="<?= htmlspecialchars($row['description']) ?>" data-qty="<?= $row['quantity'] ?>" data-unit="<?= $row['unit'] ?>" data-status="<?= $row['status'] ?>" data-office="<?= $row['office_id'] ?>" data-image="<?= $row['image'] ?>" data-serial="<?= htmlspecialchars($row['serial_no']) ?>" data-code="<?= htmlspecialchars($row['code']) ?>" data-property="<?= htmlspecialchars($row['property_no']) ?>" data-model="<?= htmlspecialchars($row['model']) ?>" data-brand="<?= htmlspecialchars($row['brand']) ?>" data-bs-toggle="modal" data-bs-target="#updateAssetModal">
-                          <i class="bi bi-pencil-square"></i>
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" onclick="forceDeleteAsset(<?= (int)$row['id'] ?>)" title="Delete Asset">
+                          <i class="bi bi-trash"></i>
                         </button>
-                        <?php if ($row['status'] !== 'borrowed'): ?>
-                          <button type="button" class="btn btn-sm btn-outline-danger rounded-pill deleteAssetBtn" data-id="<?= $row['id'] ?>" data-name="<?= htmlspecialchars($row['asset_name']) ?>" data-bs-toggle="modal" data-bs-target="#deleteAssetModal">
-                            <i class="bi bi-trash"></i>
-                          </button>
-                        <?php else: ?>
-                          <span class="text-muted small d-inline-flex align-items-center ms-2"><i class="bi bi-lock"></i></span>
-                        <?php endif; ?>
                       </div>
                     </td>
                   </tr>
@@ -679,9 +672,11 @@ $stmt->close();
             const totalValue = parseFloat(data.value) * parseInt(data.quantity);
             document.getElementById('viewTotalValue').textContent = totalValue.toFixed(2);
 
-            // Images
-            document.getElementById('municipalLogoImg').src = '../img/' + data.system_logo;
-            document.getElementById('viewAssetImage').src = '../img/assets/' + data.image;
+            // Images (guard elements in case some are removed from modal)
+            const logoEl = document.getElementById('municipalLogoImg');
+            if (logoEl) logoEl.src = '../img/' + (data.system_logo ?? '');
+            const imgEl = document.getElementById('viewAssetImage');
+            if (imgEl) imgEl.src = '../img/assets/' + (data.image ?? '');
 
             // Items table (from asset_items)
             const itemsBody = document.getElementById('viewItemsBody');
@@ -710,7 +705,7 @@ $stmt->close();
                       <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="View Property Tag">
                         <i class="bi bi-tag"></i> View Property Tag
                       </a>
-                      <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Asset" data-bs-toggle="modal" data-bs-target="#deleteAssetModal" onclick="openAssetAction('delete', ${it.item_id})"><i class="bi bi-trash"></i></button>
+                      <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Asset" onclick="forceDeleteAsset(${it.item_id})"><i class="bi bi-trash"></i></button>
                     </td>
                   `;
                   itemsBody.appendChild(tr);
@@ -805,6 +800,29 @@ $stmt->close();
           }
         })
         .catch(err => console.error('Asset action error:', err));
+    }
+    
+    // Force delete asset (No Property Tab) and update parent quantity
+    window.forceDeleteAsset = function(assetId) {
+      if (!assetId) return;
+      if (!confirm('This will permanently delete the asset and update quantities. Continue?')) return;
+      fetch('force_delete_asset.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'id=' + encodeURIComponent(assetId)
+      })
+      .then(r => r.json())
+      .then(resp => {
+        if (resp && resp.success) {
+          // Remove the row from the No Property table
+          const row = document.querySelector(`#noPropertyTable tbody tr td:first-child`);
+          // Simpler: reload the page to reflect counts and lists
+          location.reload();
+        } else {
+          alert(resp.message || 'Failed to delete asset');
+        }
+      })
+      .catch(err => alert('Error deleting: ' + err));
     }
   </script>
 
