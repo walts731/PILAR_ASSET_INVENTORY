@@ -23,7 +23,7 @@ if ($result_logo->num_rows > 0) {
 
 $stmt_logo->close();
 
-$item_id = isset($_GET['item_id']) ? $_GET['item_id'] : null;
+$item_id = isset($_GET['item_id']) ? $_GET['item_id'] : null; // asset_items.item_id from inventory modal
 $asset_data = [];
 $office_name = '';
 $asset_details = [];
@@ -35,33 +35,54 @@ if ($res_cats && $res_cats->num_rows > 0) {
     while ($cr = $res_cats->fetch_assoc()) { $categories[] = $cr; }
 }
 
-// Check if MR for this item_id already exists in the mr_details table
+// We'll resolve the FK requirement by mapping to an ics_items.item_id for this asset
 $existing_mr_check = false;
-if ($item_id) {
-    $stmt_check = $conn->prepare("SELECT * FROM mr_details WHERE item_id = ?");
-    $stmt_check->bind_param("i", $item_id);
-    $stmt_check->execute();
-    $result_check = $stmt_check->get_result();
+$mr_item_id = null; // this will hold a valid ics_items.item_id for FK
 
-    if ($result_check->num_rows > 0) {
-        $existing_mr_check = true;
-    }
-
-    $stmt_check->close();
-}
-
-// Fetch asset_id from ics_items table based on item_id
+// Fetch asset_id from asset_items table based on item_id (correct source for inventory modal)
 $asset_id = null;
 if ($item_id) {
-    $stmt = $conn->prepare("SELECT asset_id FROM ics_items WHERE item_id = ?");
+    $stmt = $conn->prepare("SELECT asset_id, office_id, inventory_tag, serial_no, date_acquired FROM asset_items WHERE item_id = ?");
     $stmt->bind_param("i", $item_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    if ($result->num_rows > 0) {
-        $asset_data = $result->fetch_assoc();
-        $asset_id = $asset_data['asset_id']; // Fetch asset_id from ics_items
+    if ($result && $row = $result->fetch_assoc()) {
+        $asset_id = (int)$row['asset_id'];
+        // Seed defaults using asset_items when available
+        $auto_property_no = $row['inventory_tag'] ?? '';
+        // Preserve serial from item level if asset has none
+        if (!isset($asset_details['serial_no']) || $asset_details['serial_no'] === '') {
+            $asset_details['serial_no'] = $row['serial_no'] ?? '';
+        }
+        if (!isset($asset_details['acquisition_date']) || $asset_details['acquisition_date'] === '') {
+            $asset_details['acquisition_date'] = $row['date_acquired'] ?? '';
+        }
     }
     $stmt->close();
+}
+
+// Derive a valid ics_items.item_id for this asset to satisfy mr_details FK
+if ($asset_id) {
+    $stmt_mrmap = $conn->prepare("SELECT item_id FROM ics_items WHERE asset_id = ? ORDER BY item_id ASC LIMIT 1");
+    $stmt_mrmap->bind_param("i", $asset_id);
+    $stmt_mrmap->execute();
+    $res_mrmap = $stmt_mrmap->get_result();
+    if ($res_mrmap && $rm = $res_mrmap->fetch_assoc()) {
+        $mr_item_id = (int)$rm['item_id'];
+    }
+    $stmt_mrmap->close();
+}
+
+// Check if MR exists for this mapped ics_items.item_id
+if ($mr_item_id) {
+    $stmt_check = $conn->prepare("SELECT 1 FROM mr_details WHERE item_id = ? LIMIT 1");
+    $stmt_check->bind_param("i", $mr_item_id);
+    $stmt_check->execute();
+    $result_check = $stmt_check->get_result();
+    if ($result_check && $result_check->num_rows > 0) {
+        $existing_mr_check = true;
+    }
+    $stmt_check->close();
 }
 // Generate Inventory Tag
 $inventory_tag = '';
@@ -121,27 +142,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt_update_employee->close();
     }
 
-    // --- NEW: Update inventory_tag in assets table ---
-    if ($asset_id && $inventory_tag) {
-        $stmt_update_tag = $conn->prepare("UPDATE assets SET inventory_tag = ? WHERE id = ?");
-        $stmt_update_tag->bind_param("si", $inventory_tag, $asset_id);
-        $stmt_update_tag->execute();
-        $stmt_update_tag->close();
+    // Do not update assets.inventory_tag here; property tags are stored per-item in asset_items only
+
+    // If property_no wasn't posted for some reason, compute a fallback
+    if (trim((string)$property_no) === '') {
+        $basePropPost = isset($asset_details['property_no']) ? trim((string)$asset_details['property_no']) : '';
+        if ($basePropPost !== '') {
+            $property_no = $basePropPost;
+        } elseif (!empty($auto_property_no)) {
+            $property_no = $auto_property_no;
+        } else {
+            $yr = date('Y');
+            $property_no = 'MR-' . $yr . '-' . str_pad((string)($item_id_form ?? 0), 5, '0', STR_PAD_LEFT);
+        }
     }
 
     // --- NEW: Update other asset details to complete the asset record ---
     if ($asset_id) {
         if ($category_id === null) {
             $stmt_update_asset = $conn->prepare("UPDATE assets 
-                SET description = ?, model = ?, serial_no = ?, code = ?, property_no = ?, brand = ?, unit = ?, value = ?, acquisition_date = ? 
+                SET description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ? 
                 WHERE id = ?");
             $stmt_update_asset->bind_param(
-                "sssssssdsi",
+                "ssssssdsi",
                 $description,
                 $model_no,
                 $serial_no,
                 $code,
-                $property_no,
                 $brand,
                 $unit,
                 $acquisition_cost,
@@ -150,16 +177,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             );
         } else {
             $stmt_update_asset = $conn->prepare("UPDATE assets 
-                SET category = ?, description = ?, model = ?, serial_no = ?, code = ?, property_no = ?, brand = ?, unit = ?, value = ?, acquisition_date = ? 
+                SET category = ?, description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ? 
                 WHERE id = ?");
             $stmt_update_asset->bind_param(
-                "isssssssdsi",
+                "issssssdsi",
                 $category_id,
                 $description,
                 $model_no,
                 $serial_no,
                 $code,
-                $property_no,
                 $brand,
                 $unit,
                 $acquisition_cost,
@@ -177,6 +203,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Insert or Update mr_details
+    if (!$mr_item_id) {
+        $_SESSION['error_message'] = "No ICS item mapping found for this asset. Cannot create MR due to foreign key constraint.";
+        header("Location: create_mr.php?item_id=" . urlencode((string)$item_id_form));
+        exit();
+    }
+
     if ($existing_mr_check) {
         // UPDATE
         $stmt_upd = $conn->prepare("UPDATE mr_details SET 
@@ -198,17 +230,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $acquired_date,
             $counted_date,
             $inventory_tag,
-            $item_id_form,
+            $mr_item_id,
             $asset_id
         );
         if ($stmt_upd->execute()) {
-            // Also update the asset_items table's property tag (stored in inventory_tag)
-            if (!empty($property_no)) {
-                $stmt_ai = $conn->prepare("UPDATE asset_items SET inventory_tag = ? WHERE item_id = ?");
-                $stmt_ai->bind_param("si", $property_no, $item_id_form);
-                $stmt_ai->execute();
-                $stmt_ai->close();
+            // Always update the asset_items table's property tag (stored in inventory_tag)
+            $stmt_ai = $conn->prepare("UPDATE asset_items SET inventory_tag = ? WHERE item_id = ?");
+            $stmt_ai->bind_param("si", $property_no, $item_id_form);
+            if (!$stmt_ai->execute()) {
+                $_SESSION['error_message'] = "Failed to update asset_items tag: " . $stmt_ai->error;
             }
+            $stmt_ai->close();
             $_SESSION['success_message'] = "MR Details successfully updated!";
             header("Location: create_mr.php?item_id=" . $item_id_form);
             exit();
@@ -224,7 +256,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $stmt_insert->bind_param(
             "iissssiiisssssss",
-            $item_id_form,
+            $mr_item_id,
             $asset_id,
             $office_location,
             $description,
@@ -243,13 +275,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         );
 
         if ($stmt_insert->execute()) {
-            // Also update the asset_items table's property tag (stored in inventory_tag)
-            if (!empty($property_no)) {
-                $stmt_ai = $conn->prepare("UPDATE asset_items SET inventory_tag = ? WHERE item_id = ?");
-                $stmt_ai->bind_param("si", $property_no, $item_id_form);
-                $stmt_ai->execute();
-                $stmt_ai->close();
+            // Always update the asset_items table's property tag (stored in inventory_tag)
+            $stmt_ai = $conn->prepare("UPDATE asset_items SET inventory_tag = ? WHERE item_id = ?");
+            $stmt_ai->bind_param("si", $property_no, $item_id_form);
+            if (!$stmt_ai->execute()) {
+                $_SESSION['error_message'] = "Failed to update asset_items tag: " . $stmt_ai->error;
             }
+            $stmt_ai->close();
             $_SESSION['success_message'] = "MR Details successfully recorded!";
             header("Location: create_mr.php?item_id=" . $item_id_form);
             exit();
@@ -263,43 +295,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 // --- End of PHP code for form submission and insertion ---
 
-// Fetch data from the `ics_items` table using the item_id (This part remains the same as your original code)
-if ($item_id) {
-    $stmt = $conn->prepare("SELECT item_id, ics_id, asset_id, ics_no, quantity, unit, unit_cost, total_cost, description, item_no, estimated_useful_life, created_at FROM ics_items WHERE item_id = ?");
-    $stmt->bind_param("i", $item_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+// Prefill using asset_items -> assets relationship
+if ($asset_id) {
+    // Fetch office name from assets.office_id
+    $stmt_offices = $conn->prepare("SELECT o.office_name FROM assets a LEFT JOIN offices o ON a.office_id = o.id WHERE a.id = ?");
+    $stmt_offices->bind_param("i", $asset_id);
+    $stmt_offices->execute();
+    $result_offices = $stmt_offices->get_result();
+    if ($result_offices && $od = $result_offices->fetch_assoc()) {
+        $office_name = $od['office_name'] ?? '';
+    }
+    $stmt_offices->close();
 
-    if ($result->num_rows > 0) {
-        $asset_data = $result->fetch_assoc();
-        $asset_id = $asset_data['asset_id'];
+    // Fetch detailed asset record
+    $stmt_assets = $conn->prepare("SELECT id, asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand FROM assets WHERE id = ?");
+    $stmt_assets->bind_param("i", $asset_id);
+    $stmt_assets->execute();
+    $result_assets = $stmt_assets->get_result();
+    if ($result_assets && $result_assets->num_rows > 0) {
+        $asset_details = $result_assets->fetch_assoc();
+    }
+    $stmt_assets->close();
 
-        // Fetch the office_name from the `offices` table based on office_id in the assets table
-        $stmt_offices = $conn->prepare("SELECT office_name FROM offices WHERE id = (SELECT office_id FROM assets WHERE id = ?)");
-        $stmt_offices->bind_param("i", $asset_id);
-        $stmt_offices->execute();
-        $result_offices = $stmt_offices->get_result();
-
-        if ($result_offices->num_rows > 0) {
-            $office_data = $result_offices->fetch_assoc();
-            $office_name = $office_data['office_name']; // Store the office_name
-        }
-
-        $stmt_offices->close();
-
-        // Fetch data from the `assets` table based on the asset_id
-        $stmt_assets = $conn->prepare("SELECT id, asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand FROM assets WHERE id = ?");
-        $stmt_assets->bind_param("i", $asset_id);
-        $stmt_assets->execute();
-        $result_assets = $stmt_assets->get_result();
-
-        if ($result_assets->num_rows > 0) {
-            $asset_details = $result_assets->fetch_assoc();
-        }
-
-        $stmt_assets->close();
-
-        // Fetch asset_items entry for this item to derive an auto property number
+    // Ensure auto_property_no has a value from asset_items if not already set
+    if (!isset($auto_property_no)) {
         $auto_property_no = '';
         $stmt_ai = $conn->prepare("SELECT inventory_tag FROM asset_items WHERE item_id = ?");
         $stmt_ai->bind_param("i", $item_id);
@@ -310,8 +329,6 @@ if ($item_id) {
         }
         $stmt_ai->close();
     }
-
-    $stmt->close();
 }
 
 // Fetch the employee's name based on the employee_id
@@ -348,6 +365,17 @@ $stmt_assets = $conn->prepare("UPDATE assets SET employee_id = ? WHERE id = ?");
 $stmt_assets->bind_param("ii", $employee_id, $asset_id);  // Update with employee_id
 $stmt_assets->execute();
 $stmt_assets->close();
+
+// Compute system-generated Property No for the form
+$baseProp = isset($asset_details['property_no']) ? trim((string)$asset_details['property_no']) : '';
+if ($baseProp !== '') {
+    $generated_property_no = $baseProp;
+} elseif (!empty($auto_property_no)) {
+    $generated_property_no = $auto_property_no;
+} else {
+    $yr = date('Y');
+    $generated_property_no = 'MR-' . $yr . '-' . str_pad((string)($item_id ?? 0), 5, '0', STR_PAD_LEFT);
+}
 
 ?>
 
@@ -463,12 +491,8 @@ $stmt_assets->close();
                             </div>
                             <div class="col-md-6">
                                 <label for="property_no" class="form-label">Property No</label>
-                                <input type="text" class="form-control" name="property_no"
-                                       value="<?php 
-                                           $baseProp = isset($asset_details['property_no']) ? trim($asset_details['property_no']) : '';
-                                           $prefill = $baseProp !== '' ? $baseProp : ($auto_property_no ?? '');
-                                           echo htmlspecialchars($prefill);
-                                       ?>">
+                                <input type="text" class="form-control" name="property_no" readonly
+                                       value="<?= htmlspecialchars($generated_property_no) ?>">
                             </div>
                         </div>
 
@@ -516,7 +540,7 @@ $stmt_assets->close();
                                 <label for="unit_quantity" class="form-label">Unit Quantity</label>
                                 <div class="d-flex">
                                     <input type="number" class="form-control" name="unit_quantity"
-                                        value="<?= isset($asset_details['quantity']) ? htmlspecialchars($asset_details['quantity']) : '' ?>" required>
+                                        value="1" min="1" required>
                                     <select name="unit" class="form-select" required>
                                         <?php
                                         // Populate units from unit table if available

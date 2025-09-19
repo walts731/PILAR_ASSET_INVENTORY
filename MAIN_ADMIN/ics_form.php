@@ -1,6 +1,11 @@
 <?php
 require_once '../connect.php';
 
+// Start session to access flash messages
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
 // Get form_id from URL, default to null if not provided
 $form_id = isset($_GET['id']) ? intval($_GET['id']) : null;
 
@@ -105,6 +110,20 @@ $new_ics_no = generateICSNo($conn);
 
 
 ?>
+<?php if (!empty($_SESSION['flash'])): ?>
+    <?php
+        $flash = $_SESSION['flash'];
+        // Normalize type to Bootstrap alert classes
+        $type = isset($flash['type']) ? strtolower($flash['type']) : 'info';
+        $allowed = ['primary','secondary','success','danger','warning','info','light','dark'];
+        if (!in_array($type, $allowed, true)) { $type = 'info'; }
+    ?>
+    <div class="alert alert-<?= htmlspecialchars($type) ?> alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($flash['message'] ?? 'Action completed.') ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <?php unset($_SESSION['flash']); ?>
+<?php endif; ?>
 <!-- Top-right button -->
 <div class="d-flex justify-content-end mb-3">
     <a href="saved_ics.php?id=<?= htmlspecialchars($form_id) ?>" class="btn btn-info">

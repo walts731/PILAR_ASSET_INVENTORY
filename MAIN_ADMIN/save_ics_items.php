@@ -59,8 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         (ics_id, asset_id, ics_no, quantity, unit, unit_cost, total_cost, description, item_no, estimated_useful_life, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
 
-    // Prepare stock update (only deduct from main stock where office_id IS NULL)
-    $stmt_update_assets = $conn->prepare("UPDATE assets SET quantity = quantity - ? WHERE description = ? AND office_id IS NULL");
+    // Prepare insert into the new minimal assets table (assets_new) per ICS line
+    $stmt_assets_new = $conn->prepare("INSERT INTO assets_new (description, quantity, unit_cost, unit, date_created) VALUES (?, ?, ?, ?, NOW())");
+    // We no longer create/update aggregate assets or deduct stock here; only per-item assets are created.
 
     for ($i = 0; $i < count($descriptions); $i++) {
         $quantity = isset($quantities[$i]) ? floatval($quantities[$i]) : 0;
@@ -73,34 +74,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($description) || $quantity <= 0) continue;
 
-        // Determine if main-stock asset exists
-        $main_asset_id = getMainStockAssetId($conn, $description);
+        // Record this line into assets_new
+        $stmt_assets_new->bind_param("sdds", $description, $quantity, $unit_cost, $unit);
+        $stmt_assets_new->execute();
+        $asset_new_id = $conn->insert_id;
 
-        if ($is_outside_lgu) {
-            // Outside LGU: ensure main-stock exists, then deduct and record
-            if (!$main_asset_id) {
-                $main_asset_id = ensureAssetExists($conn, $description, $unit, $unit_cost, $quantity, $item_no);
-            }
-            // Deduct from main stock
-            $stmt_update_assets->bind_param("ds", $quantity, $description);
-            $stmt_update_assets->execute();
-            $latest_asset_id = $main_asset_id;
-        } elseif ($office_id > 0) {
-            // Transfer to office: if main-stock exists, deduct and transfer; otherwise create directly in office without creating main-stock
-            if ($main_asset_id) {
-                $stmt_update_assets->bind_param("ds", $quantity, $description);
-                $stmt_update_assets->execute();
-            }
-            $latest_asset_id = transferAssetToOffice($conn, $description, $unit_cost, $quantity, $office_id, $unit, $item_no, $ics_id);
-        } else {
-            // No specific office: ensure main-stock exists, deduct and use main-stock
-            if (!$main_asset_id) {
-                $main_asset_id = ensureAssetExists($conn, $description, $unit, $unit_cost, $quantity, $item_no);
-            }
-            $stmt_update_assets->bind_param("ds", $quantity, $description);
-            $stmt_update_assets->execute();
-            $latest_asset_id = $main_asset_id;
-        }
+        // Create only per-item assets directly (quantity = 1 each), linked to assets_new and ICS.
+        $target_office_id = $is_outside_lgu ? null : ($office_id > 0 ? (int)$office_id : null);
+        $first_item_id = createItemAssetsDirect(
+            $conn,
+            $description,
+            $unit,
+            (float)$unit_cost,
+            (int)$quantity,
+            $target_office_id,
+            $item_no,
+            date('Y-m-d'),
+            (int)$ics_id,
+            (int)$asset_new_id
+        );
+        $latest_asset_id = $first_item_id; // Link ICS item to the first created item-level asset
 
         // Insert ICS item with the latest asset_id
         $stmt_items->bind_param(
@@ -120,14 +113,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $stmt_items->close();
-    $stmt_update_assets->close();
+    if (isset($stmt_assets_new) && $stmt_assets_new) { $stmt_assets_new->close(); }
+
+    // Set flash message for success and redirect back to ICS form
+    $_SESSION['flash'] = [
+        'type' => 'success',
+        'message' => 'ICS has been saved successfully.'
+    ];
 
     header("Location: forms.php?id=" . $form_id);
     exit();
 }
 
 // Ensure a main-stock asset exists for a description. If not, create it and return its id.
-function ensureAssetExists($conn, $description, $unit, $unit_cost, $quantity, $item_no) {
+// Template assets are created with quantity 1 to serve as templates for individual items
+function ensureAssetExists($conn, $description, $unit, $unit_cost, $item_no) {
     // Check if exists
     $stmt = $conn->prepare("SELECT id FROM assets WHERE description = ? LIMIT 1");
     $stmt->bind_param("s", $description);
@@ -139,7 +139,8 @@ function ensureAssetExists($conn, $description, $unit, $unit_cost, $quantity, $i
         return (int)$row['id'];
     }
 
-    // Create a minimal main-stock asset using provided info
+    // Create a minimal main-stock asset template using provided info
+    // Template assets have quantity 1 and serve as templates for individual items
     $created_at = date('Y-m-d H:i:s');
     $acq_date = date('Y-m-d');
     $qr_code = '';
@@ -159,6 +160,7 @@ function ensureAssetExists($conn, $description, $unit, $unit_cost, $quantity, $i
     $code = '';
     $model = '';
     $brand = '';
+    $template_quantity = 1; // Always create template with quantity 1
 
     $stmt = $conn->prepare("INSERT INTO assets 
         (asset_name, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand)
@@ -168,7 +170,7 @@ function ensureAssetExists($conn, $description, $unit, $unit_cost, $quantity, $i
         "ssisssiiisdssssssss",
         $asset_name,
         $description,
-        $quantity,
+        $template_quantity,
         $unit,
         $status,
         $acq_date,
@@ -224,7 +226,7 @@ function getDefaultCategoryId($conn) {
 }
 
 // Transfer asset to office with QR code generation, returns inserted asset_id
-function transferAssetToOffice($conn, $description, $unit_cost, $quantity, $office_id, $unit, $item_no, $ics_id)
+function transferAssetToOffice($conn, $description, $unit_cost, $quantity, $office_id, $unit, $item_no, $ics_id, $asset_new_id)
 {
     $created_at = date('Y-m-d H:i:s');
 
@@ -258,7 +260,9 @@ function transferAssetToOffice($conn, $description, $unit_cost, $quantity, $offi
             isset($asset['property_no']) ? $asset['property_no'] : $item_no,
             (int)$quantity,
             isset($asset['serial_no']) ? $asset['serial_no'] : '',
-            isset($asset['acquisition_date']) ? $asset['acquisition_date'] : date('Y-m-d')
+            isset($asset['acquisition_date']) ? $asset['acquisition_date'] : date('Y-m-d'),
+            (int)$ics_id,
+            (int)$asset_new_id
         );
         return $row['id'];
     } else {
@@ -325,7 +329,9 @@ function transferAssetToOffice($conn, $description, $unit_cost, $quantity, $offi
             $p_property_no,
             (int)$p_quantity,
             $p_serial_no,
-            $p_acquisition_date
+            $p_acquisition_date,
+            (int)$ics_id,
+            (int)$asset_new_id
         );
 
         // Generate QR code
@@ -343,37 +349,157 @@ function transferAssetToOffice($conn, $description, $unit_cost, $quantity, $offi
     }
 }
 
-// Create item-level rows in asset_items for an asset. Generates unique qr_code filenames and inventory tags.
-function createAssetItems($conn, $asset_id, $office_id, $base_property_no, $count, $serial_no, $date_acquired) {
+// Create per-item rows directly in assets (quantity=1 each), linked to parent asset/template and ICS.
+function createAssetItems($conn, $asset_id, $office_id, $base_property_no, $count, $serial_no, $date_acquired, $ics_id, $asset_new_id) {
     if ($count <= 0) return;
-    // Ensure QR code directory
-    $qrDir = realpath(__DIR__ . '/../img/qrcodes');
-    if (!$qrDir) {
-        // fallback to ../img/
-        $qrDir = realpath(__DIR__ . '/../img');
-    }
 
-    $stmt = $conn->prepare("INSERT INTO asset_items (asset_id, office_id, qr_code, inventory_tag, serial_no, status, date_acquired, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 'available', ?, NOW(), NOW())");
+    // Fetch parent/template asset to copy details
+    $stmtFetch = $conn->prepare("SELECT * FROM assets WHERE id = ? LIMIT 1");
+    $stmtFetch->bind_param("i", $asset_id);
+    $stmtFetch->execute();
+    $res = $stmtFetch->get_result();
+    $tmpl = $res ? $res->fetch_assoc() : null;
+    $stmtFetch->close();
+    if (!$tmpl) return;
 
+    // Directory for QR code images
+    $qrDir = realpath(__DIR__ . '/../img');
+    if (!$qrDir) { $qrDir = __DIR__; }
+
+    // Prepare insert for new item-level asset
+    $stmtIns = $conn->prepare("INSERT INTO assets 
+        (asset_name, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, ics_id, asset_new_id)
+        VALUES (?, ?, 1, ?, 'available', ?, ?, ?, ?, NOW(), ?, '', ?, ?, ?, ?, NULL, ?, ?, ?, ?)");
+
+    $first_inserted_id = null;
     for ($i = 1; $i <= $count; $i++) {
-        $inventory_tag = $base_property_no ? ($base_property_no . '-' . $i) : ('ITM-' . $asset_id . '-' . $i);
-        $qr_filename = 'asset_' . $asset_id . '_item_' . $i . '.png';
-        $qr_path = $qrDir . DIRECTORY_SEPARATOR . $qr_filename;
-        // Generate QR code content and image
-        $qr_text = 'asset:' . $asset_id . '|item:' . $i;
-        QRcode::png($qr_text, $qr_path, QR_ECLEVEL_L, 4);
+        // Copy values from template where available
+        $p_asset_name = $tmpl['asset_name'] ?? $tmpl['description'] ?? 'Asset Item';
+        $p_description = $tmpl['description'] ?? '';
+        $p_unit = $tmpl['unit'] ?? '';
+        $p_acq = $tmpl['acquisition_date'] ?? $date_acquired ?? date('Y-m-d');
+        $p_office = isset($office_id) ? (int)$office_id : null; // allow NULL for main stock/outside LGU
+        $p_emp = isset($tmpl['employee_id']) ? (int)$tmpl['employee_id'] : null;
+        $p_red = isset($tmpl['red_tagged']) ? (int)$tmpl['red_tagged'] : 0;
+        $p_value = isset($tmpl['value']) ? (float)$tmpl['value'] : 0.0;
+        $p_type = $tmpl['type'] ?? 'asset';
+        $p_image = $tmpl['image'] ?? '';
+        $p_serial = $serial_no !== '' ? $serial_no : ($tmpl['serial_no'] ?? '');
+        $p_code = $tmpl['code'] ?? '';
+        $p_model = $tmpl['model'] ?? '';
+        $p_brand = $tmpl['brand'] ?? '';
+        $p_ics = (int)$ics_id;
+        $p_asset_new_id = (int)$asset_new_id;
 
-        $stmt->bind_param(
-            'iissss',
-            $asset_id,
-            $office_id,
-            $qr_filename,
-            $inventory_tag,
-            $serial_no,
-            $date_acquired
+        $stmtIns->bind_param(
+            'ssssiiidssssssii',
+            $p_asset_name,      // s
+            $p_description,     // s
+            $p_unit,            // s
+            $p_acq,             // s (date string)
+            $p_office,          // i
+            $p_emp,             // i (nullable)
+            $p_red,             // i
+            $p_value,           // d
+            $p_type,            // s
+            $p_image,           // s
+            $p_serial,          // s
+            $p_code,            // s
+            $p_model,           // s
+            $p_brand,           // s
+            $p_ics,             // i (nullable)
+            $p_asset_new_id     // i
         );
-        $stmt->execute();
+
+        // Execute insert
+        if ($stmtIns->execute()) {
+            // Generate QR code for the newly created asset row
+            $new_item_id = $conn->insert_id;
+            if ($first_inserted_id === null) { $first_inserted_id = $new_item_id; }
+            $qr_filename = $new_item_id . '.png';
+            $qr_path = $qrDir . DIRECTORY_SEPARATOR . $qr_filename;
+            QRcode::png((string)$new_item_id, $qr_path, QR_ECLEVEL_L, 4);
+
+            // Update the asset with its qr_code filename
+            $stmtUpd = $conn->prepare("UPDATE assets SET qr_code = ? WHERE id = ?");
+            $stmtUpd->bind_param("si", $qr_filename, $new_item_id);
+            $stmtUpd->execute();
+            $stmtUpd->close();
+        }
     }
-    $stmt->close();
+    $stmtIns->close();
+    return $first_inserted_id;
+}
+
+// Create item-level assets directly without creating/updating any aggregate asset row.
+function createItemAssetsDirect($conn, $description, $unit, $unit_cost, $count, $office_id, $item_no, $date_acquired, $ics_id, $asset_new_id) {
+    if ($count <= 0) return null;
+
+    // Directory for QR code images
+    $qrDir = realpath(__DIR__ . '/../img');
+    if (!$qrDir) { $qrDir = __DIR__; }
+
+    // Prepare insert for new item-level asset (quantity = 1)
+    $stmtIns = $conn->prepare("INSERT INTO assets 
+        (asset_name, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, ics_id, asset_new_id)
+        VALUES (?, ?, 1, ?, 'available', ?, ?, ?, ?, NOW(), ?, '', ?, ?, ?, ?, NULL, ?, ?, ?, ?)");
+
+    $first_inserted_id = null;
+    for ($i = 1; $i <= $count; $i++) {
+        $p_asset_name = $description; // use description as name for item-level assets
+        $p_description = $description;
+        $p_unit = $unit;
+        $p_acq = $date_acquired ?: date('Y-m-d');
+        $p_office = isset($office_id) ? (int)$office_id : null; // allow NULL for main stock/outside LGU
+        $p_emp = null; // no employee assignment on creation
+        $p_red = 0;
+        $p_value = (float)$unit_cost;
+        $p_type = 'asset';
+        $p_image = '';
+        $p_serial = '';
+        $p_code = '';
+        // property_no intentionally left NULL to match existing per-item schema behavior
+        $p_model = '';
+        $p_brand = '';
+        $p_ics = (int)$ics_id;
+        $p_asset_new_id = (int)$asset_new_id;
+
+        $stmtIns->bind_param(
+            'ssssiiidssssssii',
+            $p_asset_name,
+            $p_description,
+            $p_unit,
+            $p_acq,
+            $p_office,
+            $p_emp,
+            $p_red,
+            $p_value,
+            $p_type,
+            $p_image,
+            $p_serial,
+            $p_code,
+            $p_model,
+            $p_brand,
+            $p_ics,
+            $p_asset_new_id
+        );
+
+        if ($stmtIns->execute()) {
+            // Generate QR code for the newly created asset row
+            $new_item_id = $conn->insert_id;
+            if ($first_inserted_id === null) { $first_inserted_id = $new_item_id; }
+            $qr_filename = $new_item_id . '.png';
+            $qr_path = $qrDir . DIRECTORY_SEPARATOR . $qr_filename;
+            QRcode::png((string)$new_item_id, $qr_path, QR_ECLEVEL_L, 4);
+
+            // Update the asset with its qr_code filename
+            $stmtUpd = $conn->prepare("UPDATE assets SET qr_code = ? WHERE id = ?");
+            $stmtUpd->bind_param("si", $qr_filename, $new_item_id);
+            $stmtUpd->execute();
+            $stmtUpd->close();
+        }
+    }
+    $stmtIns->close();
+    return $first_inserted_id;
 }
 ?>

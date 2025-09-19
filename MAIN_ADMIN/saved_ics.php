@@ -55,45 +55,65 @@ if ($result && $result->num_rows > 0) {
       </div>
 
       <?php if (!empty($ics_forms)): ?>
-        <div class="table-responsive">
-          <table id="icsTable" class="table">
-            <thead class="text-center">
-              <tr>
-                <th>ICS No</th>
-                <th>Entity</th>
-                <th>Office</th>
-                <th>Fund Cluster</th>
-                <th>Date Created</th>
-                <th>Received From</th>
-                <th>Received By</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php foreach ($ics_forms as $ics): ?>
-                <tr>
-                  <td class="text-center"><?= htmlspecialchars($ics['ics_no']) ?></td>
-                  <td><?= htmlspecialchars($ics['entity_name']) ?></td>
-                  <td><?= htmlspecialchars($ics['office_name'] ?? 'N/A') ?></td>
-                  <td class="text-center"><?= htmlspecialchars($ics['fund_cluster']) ?></td>
-                  <td class="text-center"><?= date('F d, Y', strtotime($ics['created_at'])) ?></td>
-                  <td>
-                    <?= htmlspecialchars($ics['received_from_name']) ?><br>
-                    <small class="text-muted"><?= htmlspecialchars($ics['received_from_position']) ?></small>
-                  </td>
-                  <td>
-                    <?= htmlspecialchars($ics['received_by_name']) ?><br>
-                    <small class="text-muted"><?= htmlspecialchars($ics['received_by_position']) ?></small>
-                  </td>
-                  <td class="text-center">
-                    <a href="view_ics.php?id=<?= $ics['ics_id'] ?>&form_id=<?php echo $form_id ?>" class="btn btn-sm btn-primary">
-                      <i class="bi bi-eye"></i> View
-                    </a>
-                  </td>
-                </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
+        <div class="card">
+          <div class="card-header">
+            <i class="bi bi-list-check"></i> All Saved ICS
+          </div>
+          <div class="card-body">
+            <?php if (!empty($_SESSION['flash'])): ?>
+              <?php
+                $flash = $_SESSION['flash'];
+                $type = isset($flash['type']) ? strtolower($flash['type']) : 'info';
+                $allowed = ['primary','secondary','success','danger','warning','info','light','dark'];
+                if (!in_array($type, $allowed, true)) { $type = 'info'; }
+              ?>
+              <div class="alert alert-<?= htmlspecialchars($type) ?> alert-dismissible fade show" role="alert">
+                <?= htmlspecialchars($flash['message'] ?? 'Action completed.') ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+              <?php unset($_SESSION['flash']); ?>
+            <?php endif; ?>
+            <div class="table-responsive">
+              <table id="icsTable" class="table">
+                <thead class="text-center">
+                  <tr>
+                    <th>ICS No</th>
+                    <th>Entity</th>
+                    <th>Office</th>
+                    <th>Fund Cluster</th>
+                    <th>Date Created</th>
+                    <th>Received From</th>
+                    <th>Received By</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($ics_forms as $ics): ?>
+                    <tr>
+                      <td class="text-center"><?= htmlspecialchars($ics['ics_no']) ?></td>
+                      <td><?= htmlspecialchars($ics['entity_name']) ?></td>
+                      <td><?= htmlspecialchars($ics['office_name'] ?? 'N/A') ?></td>
+                      <td class="text-center"><?= htmlspecialchars($ics['fund_cluster']) ?></td>
+                      <td class="text-center"><?= date('F d, Y', strtotime($ics['created_at'])) ?></td>
+                      <td>
+                        <?= htmlspecialchars($ics['received_from_name']) ?><br>
+                        <small class="text-muted"><?= htmlspecialchars($ics['received_from_position']) ?></small>
+                      </td>
+                      <td>
+                        <?= htmlspecialchars($ics['received_by_name']) ?><br>
+                        <small class="text-muted"><?= htmlspecialchars($ics['received_by_position']) ?></small>
+                      </td>
+                      <td class="text-center">
+                        <a href="view_ics.php?id=<?= $ics['ics_id'] ?>&form_id=<?php echo $form_id ?>" class="btn btn-sm btn-primary">
+                          <i class="bi bi-eye"></i> View
+                        </a>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       <?php else: ?>
         <div class="alert alert-info">No ICS records found.</div>
