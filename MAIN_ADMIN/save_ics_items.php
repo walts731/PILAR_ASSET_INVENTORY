@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
 
     // Prepare insert into the new minimal assets table (assets_new) per ICS line
-    $stmt_assets_new = $conn->prepare("INSERT INTO assets_new (description, quantity, unit_cost, unit, date_created) VALUES (?, ?, ?, ?, NOW())");
+    $stmt_assets_new = $conn->prepare("INSERT INTO assets_new (description, quantity, unit_cost, unit, office_id, date_created) VALUES (?, ?, ?, ?, ?, NOW())");
     // We no longer create/update aggregate assets or deduct stock here; only per-item assets are created.
 
     for ($i = 0; $i < count($descriptions); $i++) {
@@ -74,8 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($description) || $quantity <= 0) continue;
 
-        // Record this line into assets_new
-        $stmt_assets_new->bind_param("sdds", $description, $quantity, $unit_cost, $unit);
+        // Record this line into assets_new, include destination office
+        $stmt_assets_new->bind_param("sddsi", $description, $quantity, $unit_cost, $unit, $office_id);
         $stmt_assets_new->execute();
         $asset_new_id = $conn->insert_id;
 

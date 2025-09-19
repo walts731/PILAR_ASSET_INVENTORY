@@ -5,16 +5,39 @@ require_once '../connect.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-$item_id = isset($_GET['item_id']) ? $_GET['item_id'] : null;
+$asset_id_param = isset($_GET['asset_id']) ? (int)$_GET['asset_id'] : null;
+$item_id = isset($_GET['item_id']) ? (int)$_GET['item_id'] : null;
 
-if ($item_id) {
-    // Fetch MR details along with the serviceable and unserviceable fields
-    $stmt = $conn->prepare("SELECT * FROM mr_details WHERE item_id = ?");
-    $stmt->bind_param("i", $item_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $mr_details = $result->fetch_assoc();
-    $stmt->close();
+// Resolve MR details by asset_id (preferred) or by item_id
+if ($asset_id_param || $item_id) {
+    $mr_details = null;
+    if ($asset_id_param) {
+        $stmt = $conn->prepare("SELECT * FROM mr_details WHERE asset_id = ? LIMIT 1");
+        $stmt->bind_param("i", $asset_id_param);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $mr_details = $result->fetch_assoc();
+        $stmt->close();
+        // If still not found and we have an asset_id, try to resolve item_id via ics_items mapping
+        if (!$mr_details) {
+            $stmt = $conn->prepare("SELECT item_id FROM ics_items WHERE asset_id = ? ORDER BY item_id ASC LIMIT 1");
+            $stmt->bind_param("i", $asset_id_param);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            if ($res && ($row = $res->fetch_assoc())) {
+                $item_id = (int)$row['item_id'];
+            }
+            $stmt->close();
+        }
+    }
+    if (!$mr_details && $item_id) {
+        $stmt = $conn->prepare("SELECT * FROM mr_details WHERE item_id = ? LIMIT 1");
+        $stmt->bind_param("i", $item_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $mr_details = $result->fetch_assoc();
+        $stmt->close();
+    }
 
     if (!$mr_details) {
         die("MR record not found.");
@@ -37,18 +60,18 @@ if ($item_id) {
         }
     }
 
-    // Fetch QR code
+    // Fetch QR code and also get property_no, inventory_tag fallback from assets
     $asset_id = $mr_details['asset_id'];
-    $stmt_qr = $conn->prepare("SELECT qr_code FROM assets WHERE id = ?");
+    $stmt_qr = $conn->prepare("SELECT qr_code, property_no, inventory_tag FROM assets WHERE id = ?");
     $stmt_qr->bind_param("i", $asset_id);
     $stmt_qr->execute();
     $result_qr = $stmt_qr->get_result();
-    $asset_qr_code = $result_qr->fetch_assoc();
+    $asset_row = $result_qr->fetch_assoc();
     $stmt_qr->close();
 
     $qrData = "";
-    if ($asset_qr_code && !empty($asset_qr_code['qr_code'])) {
-        $qrPath = $asset_qr_code['qr_code'];
+    if ($asset_row && !empty($asset_row['qr_code'])) {
+        $qrPath = $asset_row['qr_code'];
         $imagePath = realpath(__DIR__ . '/../img/' . $qrPath);
         if ($imagePath && file_exists($imagePath)) {
             $imageData = base64_encode(file_get_contents($imagePath));
@@ -57,7 +80,7 @@ if ($item_id) {
     }
 
     // Fetch inventory tag
-    $inventory_tag = $mr_details['inventory_tag'] ?: "No Inventory Tag";
+    $inventory_tag = !empty($mr_details['inventory_tag']) ? $mr_details['inventory_tag'] : ($asset_row['inventory_tag'] ?? "No Inventory Tag");
 
     // Prepare checked status for checkboxes
     $serviceableChecked = ($mr_details['serviceable'] == 1) ? 'checked' : '';

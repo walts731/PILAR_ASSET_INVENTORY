@@ -34,8 +34,8 @@ if (!$ics) {
   die("ICS record not found.");
 }
 
-// Fetch ICS items
-$sql_items = "SELECT item_id, item_no, description, quantity, unit, unit_cost, total_cost, estimated_useful_life
+// Fetch ICS items (include asset_id for MR auto-fill)
+$sql_items = "SELECT item_id, asset_id, item_no, description, quantity, unit, unit_cost, total_cost, estimated_useful_life
               FROM ics_items
               WHERE ics_id = ?
               ORDER BY item_no ASC";
@@ -132,7 +132,7 @@ $stmt->close();
                       <td><?= htmlspecialchars($item['item_no']) ?></td>
                       <td><?= htmlspecialchars($item['estimated_useful_life']) ?></td>
                       <td>
-                        <a href="create_mr.php?item_id=<?= htmlspecialchars($item['item_id']) ?>&ics_id=<?= htmlspecialchars($ics['ics_id']) ?>&form_id=<?php echo $ics_form_id ?>" class="btn btn-primary btn-sm">
+                        <a href="create_mr.php?asset_id=<?= htmlspecialchars($item['asset_id']) ?>&ics_id=<?= htmlspecialchars($ics['ics_id']) ?>&form_id=<?php echo $ics_form_id ?>" class="btn btn-primary btn-sm">
                           Create Property Tag
                         </a>
 

@@ -232,20 +232,6 @@ $stmt->close();
               while ($m = $resMissing->fetch_assoc()) { $missingAssets[] = $m; }
               $stmtMissing->close();
             }
-            // Also find affected item records from asset_items where parent asset has no property_no
-            if ($selected_office === "all") {
-              $stmtMissingItems = $conn->prepare("SELECT ai.item_id, ai.asset_id, ai.inventory_tag FROM asset_items ai JOIN assets a ON ai.asset_id = a.id WHERE a.type='asset' AND (a.property_no IS NULL OR a.property_no = '') ORDER BY ai.item_id DESC LIMIT 20");
-            } else {
-              $stmtMissingItems = $conn->prepare("SELECT ai.item_id, ai.asset_id, ai.inventory_tag FROM asset_items ai JOIN assets a ON ai.asset_id = a.id WHERE a.type='asset' AND ai.office_id = ? AND (a.property_no IS NULL OR a.property_no = '') ORDER BY ai.item_id DESC LIMIT 20");
-              $stmtMissingItems->bind_param("i", $selected_office);
-            }
-            $missingItems = [];
-            if ($stmtMissingItems) {
-              $stmtMissingItems->execute();
-              $resMI = $stmtMissingItems->get_result();
-              while ($mi = $resMI->fetch_assoc()) { $missingItems[] = $mi; }
-              $stmtMissingItems->close();
-            }
             if (count($missingAssets) > 0): ?>
               <div class="alert alert-warning d-flex align-items-start" role="alert">
                 <div>
@@ -260,18 +246,6 @@ $stmt->close();
                       </li>
                     <?php endforeach; ?>
                   </ul>
-                  <?php if (count($missingItems) > 0): ?>
-                    <div class="small mt-2">Affected items (asset_items):</div>
-                    <ul class="mb-0 small">
-                      <?php foreach ($missingItems as $it): ?>
-                        <li>
-                          <a href="#" class="text-decoration-underline viewAssetBtn" data-id="<?= $it['asset_id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal">
-                            <?= htmlspecialchars($it['inventory_tag'] ?? ('Item #' . $it['item_id'])) ?> (Asset ID: <?= $it['asset_id'] ?>)
-                          </a>
-                        </li>
-                      <?php endforeach; ?>
-                    </ul>
-                  <?php endif; ?>
                 </div>
               </div>
             <?php endif; ?>
@@ -281,7 +255,6 @@ $stmt->close();
                 <thead class="table-light">
                   <tr>
                     <th><input type="checkbox" id="selectAllAssets" /></th>
-                    <th>Property no</th>
                     <th>Description</th>
                     <th>Category</th>
                     <th>Qty</th>
@@ -289,25 +262,58 @@ $stmt->close();
                     <th>Unit Cost</th>
                     <th>Total Value</th>
                     <th>Actions</th>
+                    <th>Date Acquired</th>
                   </tr>
                 </thead>
                 </thead>
                 <tbody>
                   <?php
+                  // Fetch rows from assets_new, joined with assets (which stores asset_new_id) and ics_form to respect office filter
                   if ($selected_office === "all") {
                     $stmt = $conn->prepare("
-    SELECT a.*, COALESCE(c.category_name, 'Uncategorized') AS category_name 
-    FROM assets a 
-    LEFT JOIN categories c ON a.category = c.id 
-    WHERE a.type = 'asset' AND a.quantity > 0
-  ");
+                      SELECT 
+                        an.id AS an_id, 
+                        an.description, 
+                        an.quantity, 
+                        an.unit, 
+                        an.unit_cost, 
+                        an.date_created,
+                        COALESCE(
+                          (
+                            SELECT c.category_name 
+                            FROM assets a 
+                            LEFT JOIN categories c ON a.category = c.id 
+                            WHERE a.asset_new_id = an.id 
+                            ORDER BY a.id ASC 
+                            LIMIT 1
+                          ), 'Uncategorized'
+                        ) AS category_name
+                      FROM assets_new an
+                      ORDER BY an.date_created DESC
+                    ");
                   } else {
                     $stmt = $conn->prepare("
-    SELECT a.*, COALESCE(c.category_name, 'Uncategorized') AS category_name 
-    FROM assets a 
-    LEFT JOIN categories c ON a.category = c.id 
-    WHERE a.type = 'asset' AND a.office_id = ? AND a.quantity > 0
-  ");
+                      SELECT 
+                        an.id AS an_id, 
+                        an.description, 
+                        an.quantity, 
+                        an.unit, 
+                        an.unit_cost, 
+                        an.date_created,
+                        COALESCE(
+                          (
+                            SELECT c.category_name 
+                            FROM assets a 
+                            LEFT JOIN categories c ON a.category = c.id 
+                            WHERE a.asset_new_id = an.id 
+                            ORDER BY a.id ASC 
+                            LIMIT 1
+                          ), 'Uncategorized'
+                        ) AS category_name
+                      FROM assets_new an
+                      WHERE an.office_id = ?
+                      ORDER BY an.date_created DESC
+                    ");
                     $stmt->bind_param("i", $selected_office);
                   }
 
@@ -317,63 +323,24 @@ $stmt->close();
 
                   ?>
                     <tr>
-                      <td><input type="checkbox" class="asset-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
-                      <td><?= htmlspecialchars($row['property_no']) ?></td>
+                      <td><input type="checkbox" class="asset-checkbox" name="selected_assets_new[]" value="<?= $row['an_id'] ?>"></td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td><?= htmlspecialchars($row['category_name']) ?></td>
-                      <td><?= $row['quantity'] ?></td>
-                      <td><?= $row['unit'] ?></td>
-                      <td>&#8369; <?= number_format($row['value'], 2) ?></td> <!-- Unit Cost -->
-                      <td>&#8369; <?= number_format($row['value'] * $row['quantity'], 2) ?></td> <!-- Total Value -->
+                      <td><?= (int)$row['quantity'] ?></td>
+                      <td><?= htmlspecialchars($row['unit']) ?></td>
+                      <td>&#8369; <?= number_format((float)$row['unit_cost'], 2) ?></td>
+                      <td>&#8369; <?= number_format(((float)$row['unit_cost']) * (int)$row['quantity'], 2) ?></td>
                       <td class="text-nowrap">
-                        <div class="btn-group" role="group">
-                          <!-- View Button -->
-                          <button type="button"
-                            class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn"
-                            data-id="<?= $row['id'] ?>"
-                            data-bs-toggle="modal"
-                            data-bs-target="#viewAssetModal">
-                            <i class="bi bi-eye"></i>
-                          </button>
-
-                          <!-- Edit Button -->
-                          <button type="button"
-                            class="btn btn-sm btn-outline-primary rounded-pill updateAssetBtn"
-                            data-id="<?= $row['id'] ?>"
-                            data-category="<?= $row['category'] ?>"
-                            data-description="<?= htmlspecialchars($row['description']) ?>"
-                            data-qty="<?= $row['quantity'] ?>"
-                            data-unit="<?= $row['unit'] ?>"
-                            data-status="<?= $row['status'] ?>"
-                            data-office="<?= $row['office_id'] ?>"
-                            data-image="<?= $row['image'] ?>"
-                            data-serial="<?= htmlspecialchars($row['serial_no']) ?>"
-                            data-code="<?= htmlspecialchars($row['code']) ?>"
-                            data-property="<?= htmlspecialchars($row['property_no']) ?>"
-                            data-model="<?= htmlspecialchars($row['model']) ?>"
-                            data-brand="<?= htmlspecialchars($row['brand']) ?>"
-                            data-bs-toggle="modal"
-                            data-bs-target="#updateAssetModal">
-                            <i class="bi bi-pencil-square"></i>
-                          </button>
-
-                          <!-- Delete Button or Lock -->
-                          <?php if ($row['status'] !== 'borrowed'): ?>
-                            <button type="button"
-                              class="btn btn-sm btn-outline-danger rounded-pill deleteAssetBtn"
-                              data-id="<?= $row['id'] ?>"
-                              data-name="<?= htmlspecialchars($row['asset_name']) ?>"
-                              data-bs-toggle="modal"
-                              data-bs-target="#deleteAssetModal">
-                              <i class="bi bi-trash"></i>
-                            </button>
-                          <?php else: ?>
-                            <span class="text-muted small d-inline-flex align-items-center ms-2">
-                              <i class="bi bi-lock"></i>
-                            </span>
-                          <?php endif; ?>
-                        </div>
+                        <button type="button"
+                          class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn"
+                          data-source="assets_new"
+                          data-id="<?= (int)$row['an_id'] ?>"
+                          data-bs-toggle="modal"
+                          data-bs-target="#viewAssetModal">
+                          <i class="bi bi-eye"></i>
+                        </button>
                       </td>
+                      <td><?= !empty($row['date_created']) ? date('M d, Y', strtotime($row['date_created'])) : '' ?></td>
                     </tr>
                   <?php endwhile; ?>
                 </tbody>
@@ -681,8 +648,13 @@ $stmt->close();
     document.querySelectorAll('.viewAssetBtn').forEach(button => {
       button.addEventListener('click', function() {
         const assetId = this.getAttribute('data-id');
+        const source = this.getAttribute('data-source') || 'assets';
 
-        fetch(`get_asset_details.php?id=${assetId}`)
+        const url = source === 'assets_new'
+          ? `get_assets_new_details.php?id=${assetId}`
+          : `get_asset_details.php?id=${assetId}`;
+
+        fetch(url)
           .then(response => response.json())
           .then(data => {
             if (data.error) {
@@ -694,7 +666,6 @@ $stmt->close();
             document.getElementById('viewOfficeName').textContent = data.office_name;
             document.getElementById('viewCategoryName').textContent = `${data.category_name} (${data.category_type})`;
             document.getElementById('viewType').textContent = data.type;
-            document.getElementById('viewStatus').textContent = data.status;
             document.getElementById('viewQuantity').textContent = data.quantity;
             document.getElementById('viewUnit').textContent = data.unit;
             document.getElementById('viewDescription').textContent = data.description;
@@ -702,23 +673,13 @@ $stmt->close();
             document.getElementById('viewLastUpdated').textContent = formatDateFormal(data.last_updated);
             document.getElementById('viewValue').textContent = parseFloat(data.value).toFixed(2);
 
-            // Optional fields
-            document.getElementById('viewSerialNo').textContent = data.serial_no ?? '';
-            document.getElementById('viewCode').textContent = data.code ?? '';
-            document.getElementById('viewPropertyNo').textContent = data.property_no ?? '';
-            document.getElementById('viewModel').textContent = data.model ?? '';
-            document.getElementById('viewBrand').textContent = data.brand ?? '';
-
-            // 🔹 New fields
-            document.getElementById('viewInventoryTag').textContent = data.inventory_tag ?? '';
-            document.getElementById('viewEmployeeName').textContent = data.employee_name ?? '';
+            // Sections Identification / Specifications & Assignment / Status removed from modal
 
             // Compute total value
             const totalValue = parseFloat(data.value) * parseInt(data.quantity);
             document.getElementById('viewTotalValue').textContent = totalValue.toFixed(2);
 
             // Images
-            document.getElementById('viewQrCode').src = '../img/' + data.qr_code;
             document.getElementById('municipalLogoImg').src = '../img/' + data.system_logo;
             document.getElementById('viewAssetImage').src = '../img/assets/' + data.image;
 
@@ -730,7 +691,7 @@ $stmt->close();
               if (items.length === 0) {
                 const tr = document.createElement('tr');
                 const td = document.createElement('td');
-                td.colSpan = 6;
+                td.colSpan = 7;
                 td.className = 'text-center text-muted';
                 td.textContent = 'No item records available';
                 tr.appendChild(td);
@@ -740,16 +701,16 @@ $stmt->close();
                   const tr = document.createElement('tr');
                   tr.innerHTML = `
                     <td>${it.item_id}</td>
-                    <td>${data.property_no ?? ''}</td>
+                    <td>${it.property_no ?? ''}</td>
                     <td>${it.inventory_tag ?? ''}</td>
                     <td>${it.serial_no ?? ''}</td>
                     <td>${it.status ?? ''}</td>
-                    <td><img src="../img/qrcodes/${it.qr_code}" alt="QR" style="height:32px"></td>
                     <td>${it.date_acquired ? new Date(it.date_acquired).toLocaleDateString('en-US') : ''}</td>
-                    <td class="text-nowrap">
-                      <a class="btn btn-sm btn-outline-primary" href="create_mr.php?item_id=${it.item_id}" target="_blank">
-                        <i class="bi bi-tag"></i> ${ (data.property_no && data.property_no.trim()) ? 'Edit Property Tag' : 'Create Property Tag' }
+                    <td class="text-nowrap d-flex gap-1">
+                      <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="View Property Tag">
+                        <i class="bi bi-tag"></i> View Property Tag
                       </a>
+                      <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Asset" data-bs-toggle="modal" data-bs-target="#deleteAssetModal" onclick="openAssetAction('delete', ${it.item_id})"><i class="bi bi-trash"></i></button>
                     </td>
                   `;
                   itemsBody.appendChild(tr);
@@ -762,6 +723,89 @@ $stmt->close();
           });
       });
     });
+
+    // Global helper to handle per-item actions inside the View Asset modal
+    window.openAssetAction = function(action, assetId) {
+      if (!assetId) return;
+      fetch(`get_asset_details.php?id=${assetId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) { alert(data.error); return; }
+          if (action === 'view') {
+            // Re-populate the same modal with the selected asset's details
+            document.querySelector(`#viewAssetModal .viewAssetBtn[data-id="${assetId}"]`);
+            // Reuse existing population logic by manually setting fields
+            document.getElementById('viewOfficeName').textContent = data.office_name ?? '';
+            document.getElementById('viewCategoryName').textContent = `${data.category_name ?? ''} (${data.category_type ?? ''})`;
+            document.getElementById('viewType').textContent = data.type ?? '';
+            document.getElementById('viewQuantity').textContent = data.quantity ?? '';
+            document.getElementById('viewUnit').textContent = data.unit ?? '';
+            document.getElementById('viewDescription').textContent = data.description ?? '';
+            document.getElementById('viewAcquisitionDate').textContent = data.acquisition_date ? formatDateFormal(data.acquisition_date) : '';
+            document.getElementById('viewLastUpdated').textContent = data.last_updated ? formatDateFormal(data.last_updated) : '';
+            document.getElementById('viewValue').textContent = data.value ? parseFloat(data.value).toFixed(2) : '0.00';
+            const totalValue = (parseFloat(data.value || 0) * parseInt(data.quantity || 1));
+            document.getElementById('viewTotalValue').textContent = isFinite(totalValue) ? totalValue.toFixed(2) : '0.00';
+
+            // Rebuild items table for this specific asset (single row)
+            const itemsBody = document.getElementById('viewItemsBody');
+            if (itemsBody) {
+              itemsBody.innerHTML = '';
+              const it = {
+                item_id: data.id,
+                property_no: data.property_no,
+                inventory_tag: data.inventory_tag,
+                serial_no: data.serial_no,
+                status: data.status,
+                date_acquired: data.acquisition_date
+              };
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td>${it.item_id}</td>
+                <td>${it.property_no ?? ''}</td>
+                <td>${it.inventory_tag ?? ''}</td>
+                <td>${it.serial_no ?? ''}</td>
+                <td>${it.status ?? ''}</td>
+                <td>${it.date_acquired ? new Date(it.date_acquired).toLocaleDateString('en-US') : ''}</td>
+                <td class="text-nowrap d-flex gap-1">
+                  <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="Create/Edit Property Tag">
+                    <i class="bi bi-tag"></i> ${ (it.property_no && it.property_no.trim()) ? 'Edit Property Tag' : 'Create Property Tag' }
+                  </a>
+                  <button type="button" class="btn btn-sm btn-outline-primary" title="Edit Asset" data-bs-toggle="modal" data-bs-target="#updateAssetModal" onclick="openAssetAction('edit', ${it.item_id})"><i class="bi bi-pencil"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Asset" data-bs-toggle="modal" data-bs-target="#deleteAssetModal" onclick="openAssetAction('delete', ${it.item_id})"><i class="bi bi-trash"></i></button>
+                </td>
+              `;
+              itemsBody.appendChild(tr);
+            }
+          } else if (action === 'edit') {
+            // Populate Update Asset modal fields
+            const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+            setVal('asset_id', data.id);
+            setVal('edit_asset_description', data.description);
+            setVal('edit_asset_unit', data.unit);
+            setVal('edit_asset_quantity', data.quantity);
+            setVal('edit_asset_status', data.status);
+            setVal('edit_asset_serial', data.serial_no);
+            setVal('edit_asset_code', data.code);
+            setVal('edit_asset_property', data.property_no);
+            setVal('edit_asset_model', data.model);
+            setVal('edit_asset_brand', data.brand);
+            const imgPrev = document.getElementById('edit_asset_preview');
+            if (imgPrev && data.image) imgPrev.src = '../img/assets/' + data.image;
+            const updateModalEl = document.getElementById('updateAssetModal');
+            if (updateModalEl) new bootstrap.Modal(updateModalEl).show();
+          } else if (action === 'delete') {
+            // Populate Delete Asset modal
+            const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+            setVal('delete_asset_id', data.id);
+            const nameEl = document.getElementById('delete_asset_name');
+            if (nameEl) nameEl.textContent = data.description ?? '';
+            const delModalEl = document.getElementById('deleteAssetModal');
+            if (delModalEl) new bootstrap.Modal(delModalEl).show();
+          }
+        })
+        .catch(err => console.error('Asset action error:', err));
+    }
   </script>
 
 

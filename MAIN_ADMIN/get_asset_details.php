@@ -45,17 +45,17 @@ if (isset($_GET['id'])) {
   $result = $stmt->get_result();
 
   if ($row = $result->fetch_assoc()) {
-    // Fetch item-level rows for this asset
-    $items = [];
-    $sqlItems = "SELECT item_id, asset_id, office_id, qr_code, inventory_tag, serial_no, status, date_acquired, created_at, updated_at FROM asset_items WHERE asset_id = ? ORDER BY item_id ASC";
-    if ($stmt2 = $conn->prepare($sqlItems)) {
-      $stmt2->bind_param("i", $id);
-      $stmt2->execute();
-      $res2 = $stmt2->get_result();
-      while ($it = $res2->fetch_assoc()) { $items[] = $it; }
-      $stmt2->close();
-    }
-    $row['items'] = $items;
+    // Return the asset itself as the only item entry so the modal lists assets instead of asset_items
+    $row['items'] = [[
+      'item_id' => $row['id'],
+      'asset_id' => $row['id'],
+      'qr_code' => $row['qr_code'],
+      'inventory_tag' => $row['inventory_tag'],
+      'serial_no' => $row['serial_no'],
+      'property_no' => $row['property_no'],
+      'status' => $row['status'],
+      'date_acquired' => $row['acquisition_date']
+    ]];
     echo json_encode($row);
   } else {
     echo json_encode(['error' => 'Asset not found']);

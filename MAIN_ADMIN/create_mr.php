@@ -23,7 +23,7 @@ if ($result_logo->num_rows > 0) {
 
 $stmt_logo->close();
 
-$item_id = isset($_GET['item_id']) ? $_GET['item_id'] : null; // asset_items.item_id from inventory modal
+$asset_id = isset($_GET['asset_id']) ? (int)$_GET['asset_id'] : null; // item-level asset id from assets table
 $asset_data = [];
 $office_name = '';
 $asset_details = [];
@@ -39,23 +39,19 @@ if ($res_cats && $res_cats->num_rows > 0) {
 $existing_mr_check = false;
 $mr_item_id = null; // this will hold a valid ics_items.item_id for FK
 
-// Fetch asset_id from asset_items table based on item_id (correct source for inventory modal)
-$asset_id = null;
-if ($item_id) {
-    $stmt = $conn->prepare("SELECT asset_id, office_id, inventory_tag, serial_no, date_acquired FROM asset_items WHERE item_id = ?");
-    $stmt->bind_param("i", $item_id);
+// Seed defaults directly from the item-level assets table
+if ($asset_id) {
+    $stmt = $conn->prepare("SELECT office_id, inventory_tag, serial_no, acquisition_date FROM assets WHERE id = ?");
+    $stmt->bind_param("i", $asset_id);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($result && $row = $result->fetch_assoc()) {
-        $asset_id = (int)$row['asset_id'];
-        // Seed defaults using asset_items when available
         $auto_property_no = $row['inventory_tag'] ?? '';
-        // Preserve serial from item level if asset has none
         if (!isset($asset_details['serial_no']) || $asset_details['serial_no'] === '') {
             $asset_details['serial_no'] = $row['serial_no'] ?? '';
         }
         if (!isset($asset_details['acquisition_date']) || $asset_details['acquisition_date'] === '') {
-            $asset_details['acquisition_date'] = $row['date_acquired'] ?? '';
+            $asset_details['acquisition_date'] = $row['acquisition_date'] ?? '';
         }
     }
     $stmt->close();
@@ -92,7 +88,7 @@ if ($asset_id) {
     $size = "5S"; // Size or category, you can modify this based on your asset's size
     $department_code = "03"; // Department or office number
     $factory_code = "F02"; // Factory or location code
-    $unique_id = str_pad($item_id, 2, "0", STR_PAD_LEFT); // Use item_id or another unique field for the last part of the tag
+    $unique_id = str_pad((string)$asset_id, 2, "0", STR_PAD_LEFT); // Use asset_id for the last part of the tag
 
     // Concatenate to form the full inventory tag
     $inventory_tag = "No. " . $prefix . "-" . $size . "-" . $department_code . "-" . $factory_code . "-" . $unique_id;
@@ -100,7 +96,7 @@ if ($asset_id) {
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Collect form data
-    $item_id_form = $_POST['item_id'] ?? null;
+    $asset_id_form = isset($_POST['asset_id']) ? (int)$_POST['asset_id'] : null;
     $office_location = $_POST['office_location'];
     $description = $_POST['description'];
     $model_no = $_POST['model_no'];
@@ -117,6 +113,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $acquisition_date = $_POST['acquisition_date'];
     $acquisition_cost = $_POST['acquisition_cost'];
 
+    // Generate inventory_tag for this POST scope as well (based on asset_id)
+    $inventory_tag_gen = '';
+    if (!empty($asset_id_form)) {
+        $prefix = "PS"; // Asset type prefix
+        $size = "5S";   // Category/size code
+        $department_code = "03";
+        $factory_code = "F02";
+        $unique_id = str_pad((string)$asset_id_form, 2, "0", STR_PAD_LEFT);
+        $inventory_tag_gen = "No. " . $prefix . "-" . $size . "-" . $department_code . "-" . $factory_code . "-" . $unique_id;
+    }
+
     $person_accountable_name = $_POST['person_accountable_name']; 
     $employee_id = $_POST['employee_id']; 
     $acquired_date = $_POST['acquired_date'];
@@ -125,8 +132,59 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Server-side validation for required fields
     if ($category_id === null || trim((string)$person_accountable_name) === '') {
         $_SESSION['error_message'] = 'Please select a Category and specify the Person Accountable.';
-        header("Location: create_mr.php?item_id=" . urlencode((string)$item_id_form));
+        header("Location: create_mr.php?asset_id=" . urlencode((string)$asset_id_form));
         exit();
+    }
+
+    // Handle optional asset image upload
+    if (!empty($asset_id_form) && isset($_FILES['asset_image']) && $_FILES['asset_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $file = $_FILES['asset_image'];
+        if ($file['error'] === UPLOAD_ERR_OK) {
+            $maxSize = 5 * 1024 * 1024; // 5MB
+            if ($file['size'] > $maxSize) {
+                $_SESSION['error_message'] = 'Image too large. Maximum size is 5MB.';
+                header("Location: create_mr.php?asset_id=" . urlencode((string)$asset_id_form));
+                exit();
+            }
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+            $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif'];
+            if (!isset($allowed[$mime])) {
+                $_SESSION['error_message'] = 'Invalid image type. Allowed: JPG, PNG, GIF.';
+                header("Location: create_mr.php?asset_id=" . urlencode((string)$asset_id_form));
+                exit();
+            }
+            $ext = $allowed[$mime];
+            $safeBase = 'asset_' . $asset_id_form . '_' . time();
+            $filename = $safeBase . '.' . $ext;
+            $targetDir = realpath(__DIR__ . '/../img/assets');
+            if ($targetDir === false) {
+                $_SESSION['error_message'] = 'Upload directory not found.';
+                header("Location: create_mr.php?asset_id=" . urlencode((string)$asset_id_form));
+                exit();
+            }
+            $targetPath = $targetDir . DIRECTORY_SEPARATOR . $filename;
+            if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+                $_SESSION['error_message'] = 'Failed to move uploaded image.';
+                header("Location: create_mr.php?asset_id=" . urlencode((string)$asset_id_form));
+                exit();
+            }
+            // Save filename (not full path) to assets.image
+            $stmt_img = $conn->prepare("UPDATE assets SET image = ? WHERE id = ?");
+            $stmt_img->bind_param("si", $filename, $asset_id_form);
+            if (!$stmt_img->execute()) {
+                $_SESSION['error_message'] = 'Failed to save image to database: ' . $stmt_img->error;
+                $stmt_img->close();
+                header("Location: create_mr.php?asset_id=" . urlencode((string)$asset_id_form));
+                exit();
+            }
+            $stmt_img->close();
+        } else {
+            $_SESSION['error_message'] = 'Image upload error (code ' . (int)$file['error'] . ').';
+            header("Location: create_mr.php?asset_id=" . urlencode((string)$asset_id_form));
+            exit();
+        }
     }
 
     // --- Update employee_id in assets table ---
@@ -136,13 +194,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (!$stmt_update_employee->execute()) {
             $_SESSION['error_message'] = "Error updating employee_id in assets: " . $stmt_update_employee->error;
             $stmt_update_employee->close();
-            header("Location: create_mr.php?item_id=" . $item_id_form);
+            header("Location: create_mr.php?asset_id=" . $asset_id_form);
             exit();
         }
         $stmt_update_employee->close();
     }
 
-    // Do not update assets.inventory_tag here; property tags are stored per-item in asset_items only
+    // Property tags are stored on the item-level assets table now
 
     // If property_no wasn't posted for some reason, compute a fallback
     if (trim((string)$property_no) === '') {
@@ -153,7 +211,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $property_no = $auto_property_no;
         } else {
             $yr = date('Y');
-            $property_no = 'MR-' . $yr . '-' . str_pad((string)($item_id_form ?? 0), 5, '0', STR_PAD_LEFT);
+            $property_no = 'MR-' . $yr . '-' . str_pad((string)($asset_id_form ?? 0), 5, '0', STR_PAD_LEFT);
         }
     }
 
@@ -196,16 +254,70 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (!$stmt_update_asset->execute()) {
             $_SESSION['error_message'] = "Error updating asset details: " . $stmt_update_asset->error;
             $stmt_update_asset->close();
-            header("Location: create_mr.php?item_id=" . $item_id_form);
+            header("Location: create_mr.php?asset_id=" . $asset_id_form);
             exit();
         }
         $stmt_update_asset->close();
     }
 
+    // Ensure we have an ics_items mapping for this asset (required by mr_details FK)
+    // Re-check mapping for the posted asset_id, in case GET and POST differ
+    $mr_item_id = null;
+    if (!empty($asset_id_form)) {
+        $stmt_mrmap2 = $conn->prepare("SELECT item_id FROM ics_items WHERE asset_id = ? ORDER BY item_id ASC LIMIT 1");
+        $stmt_mrmap2->bind_param("i", $asset_id_form);
+        $stmt_mrmap2->execute();
+        $res_mrmap2 = $stmt_mrmap2->get_result();
+        if ($res_mrmap2 && ($rm2 = $res_mrmap2->fetch_assoc())) {
+            $mr_item_id = (int)$rm2['item_id'];
+        }
+        $stmt_mrmap2->close();
+    }
+
+    if (!$mr_item_id && !empty($asset_id_form)) {
+        // Try to auto-create a minimal ics_items mapping using the asset's ICS info
+        $stmt_asset = $conn->prepare("SELECT a.description, a.unit, a.value, a.property_no, a.ics_id, f.ics_no FROM assets a LEFT JOIN ics_form f ON f.id = a.ics_id WHERE a.id = ?");
+        $stmt_asset->bind_param("i", $asset_id_form);
+        $stmt_asset->execute();
+        $res_asset = $stmt_asset->get_result();
+        $asset_row = $res_asset ? $res_asset->fetch_assoc() : null;
+        $stmt_asset->close();
+
+        if ($asset_row && !empty($asset_row['ics_id'])) {
+            $ics_no_ins = $asset_row['ics_no'] ?? '';
+            $qty_ins = 1; // item-level
+            $unit_ins = $asset_row['unit'] ?? '';
+            $unit_cost_ins = (float)($asset_row['value'] ?? 0);
+            $total_cost_ins = $unit_cost_ins * $qty_ins;
+            $desc_ins = $asset_row['description'] ?? '';
+            $item_no_ins = $asset_row['property_no'] ?? '';
+            $est_life_ins = '';
+
+            $stmt_items_ins = $conn->prepare("INSERT INTO ics_items (ics_id, asset_id, ics_no, quantity, unit, unit_cost, total_cost, description, item_no, estimated_useful_life, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+            $stmt_items_ins->bind_param(
+                "iisisddsss",
+                $asset_row['ics_id'],   // i
+                $asset_id_form,         // i
+                $ics_no_ins,            // s
+                $qty_ins,               // i
+                $unit_ins,              // s
+                $unit_cost_ins,         // d
+                $total_cost_ins,        // d
+                $desc_ins,              // s
+                $item_no_ins,           // s
+                $est_life_ins           // s
+            );
+            if ($stmt_items_ins->execute()) {
+                $mr_item_id = $conn->insert_id;
+            }
+            $stmt_items_ins->close();
+        }
+    }
+
     // Insert or Update mr_details
     if (!$mr_item_id) {
         $_SESSION['error_message'] = "No ICS item mapping found for this asset. Cannot create MR due to foreign key constraint.";
-        header("Location: create_mr.php?item_id=" . urlencode((string)$item_id_form));
+        header("Location: create_mr.php?asset_id=" . urlencode((string)$asset_id_form));
         exit();
     }
 
@@ -234,15 +346,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $asset_id
         );
         if ($stmt_upd->execute()) {
-            // Always update the asset_items table's property tag (stored in inventory_tag)
-            $stmt_ai = $conn->prepare("UPDATE asset_items SET inventory_tag = ? WHERE item_id = ?");
-            $stmt_ai->bind_param("si", $property_no, $item_id_form);
+            // Persist Property No. and Inventory Tag to the item-level asset record
+            $stmt_ai = $conn->prepare("UPDATE assets SET property_no = ?, inventory_tag = ? WHERE id = ?");
+            $stmt_ai->bind_param("ssi", $property_no, $inventory_tag_gen, $asset_id_form);
             if (!$stmt_ai->execute()) {
-                $_SESSION['error_message'] = "Failed to update asset_items tag: " . $stmt_ai->error;
+                $_SESSION['error_message'] = "Failed to update asset Property No./Inventory Tag: " . $stmt_ai->error;
             }
             $stmt_ai->close();
             $_SESSION['success_message'] = "MR Details successfully updated!";
-            header("Location: create_mr.php?item_id=" . $item_id_form);
+            header("Location: create_mr.php?asset_id=" . $asset_id_form);
             exit();
         } else {
             $_SESSION['error_message'] = "Error updating MR: " . $stmt_upd->error;
@@ -275,15 +387,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         );
 
         if ($stmt_insert->execute()) {
-            // Always update the asset_items table's property tag (stored in inventory_tag)
-            $stmt_ai = $conn->prepare("UPDATE asset_items SET inventory_tag = ? WHERE item_id = ?");
-            $stmt_ai->bind_param("si", $property_no, $item_id_form);
+            // Persist Property No. and Inventory Tag to the item-level asset record
+            $stmt_ai = $conn->prepare("UPDATE assets SET property_no = ?, inventory_tag = ? WHERE id = ?");
+            $stmt_ai->bind_param("ssi", $property_no, $inventory_tag_gen, $asset_id_form);
             if (!$stmt_ai->execute()) {
-                $_SESSION['error_message'] = "Failed to update asset_items tag: " . $stmt_ai->error;
+                $_SESSION['error_message'] = "Failed to update asset Property No./Inventory Tag: " . $stmt_ai->error;
             }
             $stmt_ai->close();
             $_SESSION['success_message'] = "MR Details successfully recorded!";
-            header("Location: create_mr.php?item_id=" . $item_id_form);
+            header("Location: create_mr.php?asset_id=" . $asset_id_form);
             exit();
         } else {
             $_SESSION['error_message'] = "Error: " . $stmt_insert->error;
@@ -295,7 +407,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 // --- End of PHP code for form submission and insertion ---
 
-// Prefill using asset_items -> assets relationship
+// Prefill using item-level assets relationship
 if ($asset_id) {
     // Fetch office name from assets.office_id
     $stmt_offices = $conn->prepare("SELECT o.office_name FROM assets a LEFT JOIN offices o ON a.office_id = o.id WHERE a.id = ?");
@@ -317,11 +429,11 @@ if ($asset_id) {
     }
     $stmt_assets->close();
 
-    // Ensure auto_property_no has a value from asset_items if not already set
+    // Ensure auto_property_no has a value from assets if not already set
     if (!isset($auto_property_no)) {
         $auto_property_no = '';
-        $stmt_ai = $conn->prepare("SELECT inventory_tag FROM asset_items WHERE item_id = ?");
-        $stmt_ai->bind_param("i", $item_id);
+        $stmt_ai = $conn->prepare("SELECT inventory_tag FROM assets WHERE id = ?");
+        $stmt_ai->bind_param("i", $asset_id);
         $stmt_ai->execute();
         $res_ai = $stmt_ai->get_result();
         if ($res_ai && $row_ai = $res_ai->fetch_assoc()) {
@@ -360,11 +472,13 @@ if ($result_employees && $result_employees->num_rows > 0) {
     }
 }
 
-// Assuming you are inserting or updating assets table somewhere
-$stmt_assets = $conn->prepare("UPDATE assets SET employee_id = ? WHERE id = ?");
-$stmt_assets->bind_param("ii", $employee_id, $asset_id);  // Update with employee_id
-$stmt_assets->execute();
-$stmt_assets->close();
+// Ensure employee assignment persisted (if provided)
+if (!empty($asset_id) && !empty($employee_id)) {
+    $stmt_assets = $conn->prepare("UPDATE assets SET employee_id = ? WHERE id = ?");
+    $stmt_assets->bind_param("ii", $employee_id, $asset_id);
+    $stmt_assets->execute();
+    $stmt_assets->close();
+}
 
 // Compute system-generated Property No for the form
 $baseProp = isset($asset_details['property_no']) ? trim((string)$asset_details['property_no']) : '';
@@ -374,7 +488,7 @@ if ($baseProp !== '') {
     $generated_property_no = $auto_property_no;
 } else {
     $yr = date('Y');
-    $generated_property_no = 'MR-' . $yr . '-' . str_pad((string)($item_id ?? 0), 5, '0', STR_PAD_LEFT);
+    $generated_property_no = 'MR-' . $yr . '-' . str_pad((string)($asset_id ?? 0), 5, '0', STR_PAD_LEFT);
 }
 
 ?>
@@ -447,8 +561,8 @@ if ($baseProp !== '') {
                     <img id="viewQrCode" src="../img/<?= isset($asset_details['qr_code']) ? $asset_details['qr_code'] : '' ?>" alt="QR Code" style="height: 70px;">
                 </div>
                 <div class="card-body">
-                    <form method="post" action="">
-                        <input type="hidden" name="item_id" value="<?= htmlspecialchars($item_id) ?>">
+                    <form method="post" action="" enctype="multipart/form-data">
+                        <input type="hidden" name="asset_id" value="<?= htmlspecialchars($asset_id) ?>">
 
                         <!-- Office Location -->
                         <div class="row mb-3">
@@ -513,6 +627,19 @@ if ($baseProp !== '') {
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
+                            </div>
+                        </div>
+
+                        <!-- Upload Asset Photo -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="asset_image" class="form-label">Upload Asset Photo</label>
+                                <input type="file" class="form-control" name="asset_image" id="asset_image" accept="image/*">
+                                <div class="form-text">Accepted: JPG, JPEG, PNG, GIF. Max 5MB.</div>
+                            </div>
+                            <div class="col-md-6 text-center">
+                                <label class="form-label d-block">Preview</label>
+                                <img id="asset_image_preview" src="<?= !empty($asset_details['image']) ? '../img/assets/' . htmlspecialchars($asset_details['image']) : '' ?>" alt="Asset Image Preview" class="img-fluid border rounded" style="max-height: 180px; object-fit: contain;">
                             </div>
                         </div>
 
@@ -607,7 +734,7 @@ if ($baseProp !== '') {
                         </button>
 
                         <?php if ($existing_mr_check): ?>
-                            <a href="print_mr.php?item_id=<?= htmlspecialchars($item_id) ?>" class="btn btn-info ms-2">Print</a>
+                            <a href="print_mr.php?asset_id=<?= htmlspecialchars($asset_id) ?>" class="btn btn-info ms-2">Print</a>
                         <?php endif; ?>
                     </form>
                 </div>
@@ -635,6 +762,21 @@ if ($baseProp !== '') {
 
             document.getElementById('employee_id').value = selectedId;
         });
+
+        // Preview uploaded asset image
+        const imageInput = document.getElementById('asset_image');
+        const imagePreview = document.getElementById('asset_image_preview');
+        if (imageInput && imagePreview) {
+            imageInput.addEventListener('change', function() {
+                const file = this.files && this.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
     </script>
 
 </body>
