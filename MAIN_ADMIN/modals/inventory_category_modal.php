@@ -68,6 +68,15 @@
             </div>
           </div>
 
+          <hr class="border-dark">
+
+          <!-- Actions -->
+          <div class="d-flex justify-content-end gap-2">
+            <a id="propertyTagBtn" href="#" target="_blank" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-tag"></i> Create Property Tag
+            </a>
+          </div>
+
         </div>
       </div>
     </div>
