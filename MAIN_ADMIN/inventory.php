@@ -261,6 +261,7 @@ $stmt->close();
                     <th>Unit</th>
                     <th>Unit Cost</th>
                     <th>Total Value</th>
+                    <th>ICS No</th>
                     <th>Actions</th>
                     <th>Date Acquired</th>
                   </tr>
@@ -287,10 +288,12 @@ $stmt->close();
                             ORDER BY a.id ASC 
                             LIMIT 1
                           ), 'Uncategorized'
-                        ) AS category_name
+                        ) AS category_name,
+                        f.ics_no AS ics_no
                       FROM assets_new an
-                      ORDER BY an.date_created DESC
-                    ");
+                      LEFT JOIN ics_form f ON f.id = an.ics_id
+                       ORDER BY an.date_created DESC
+                     ");
                   } else {
                     $stmt = $conn->prepare("
                       SELECT 
@@ -309,11 +312,13 @@ $stmt->close();
                             ORDER BY a.id ASC 
                             LIMIT 1
                           ), 'Uncategorized'
-                        ) AS category_name
+                        ) AS category_name,
+                        f.ics_no AS ics_no
                       FROM assets_new an
-                      WHERE an.office_id = ?
-                      ORDER BY an.date_created DESC
-                    ");
+                      LEFT JOIN ics_form f ON f.id = an.ics_id
+                       WHERE an.office_id = ?
+                       ORDER BY an.date_created DESC
+                     ");
                     $stmt->bind_param("i", $selected_office);
                   }
 
@@ -330,6 +335,7 @@ $stmt->close();
                       <td><?= htmlspecialchars($row['unit']) ?></td>
                       <td>&#8369; <?= number_format((float)$row['unit_cost'], 2) ?></td>
                       <td>&#8369; <?= number_format(((float)$row['unit_cost']) * (int)$row['quantity'], 2) ?></td>
+                      <td><?= htmlspecialchars($row['ics_no'] ?? '') ?></td>
                       <td class="text-nowrap">
                         <button type="button"
                           class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn"
@@ -702,8 +708,8 @@ $stmt->close();
                     <td>${it.status ?? ''}</td>
                     <td>${it.date_acquired ? new Date(it.date_acquired).toLocaleDateString('en-US') : ''}</td>
                     <td class="text-nowrap d-flex gap-1">
-                      <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="View Property Tag">
-                        <i class="bi bi-tag"></i> View Property Tag
+                      <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="${(it.property_no && it.property_no.trim()) ? 'View Property Tag' : 'Create Property Tag'}">
+                        <i class="bi bi-tag"></i> ${ (it.property_no && it.property_no.trim()) ? 'View Property Tag' : 'Create Property Tag' }
                       </a>
                       <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Asset" onclick="forceDeleteAsset(${it.item_id})"><i class="bi bi-trash"></i></button>
                     </td>
