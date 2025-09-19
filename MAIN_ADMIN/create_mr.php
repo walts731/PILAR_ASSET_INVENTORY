@@ -511,9 +511,6 @@ if ($baseProp !== '') {
 
     <div class="main">
         <?php include 'includes/topbar.php'; ?>
-        <a href="view_ics.php?id=<?= htmlspecialchars($ics_id) ?>&form_id=<?php echo $ics_form_id ?>" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Back to View ICS
-        </a>
 
         <!-- Form for MR Asset -->
         <div class="container mt-4">

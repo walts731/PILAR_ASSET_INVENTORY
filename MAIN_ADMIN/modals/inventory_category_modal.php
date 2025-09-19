@@ -10,9 +10,7 @@
             <img id="municipalLogoImg" src="" alt="Municipal Logo" style="height: 70px;">
             <div class="text-center flex-grow-1">
               <h6 class="m-0 text-uppercase fw-bold">Government Property</h6>
-              <p class="m-0 small"><strong>Inventory Tag:</strong> <span id="viewInventoryTag"></span></p>
             </div>
-            <img id="viewQrCode" src="" alt="QR Code" style="height: 70px;">
           </div>
 
           <hr class="border-dark">
@@ -24,12 +22,6 @@
 
           <!-- Asset Info -->
           <div class="row">
-            <!-- Image -->
-            <div class="col-md-4 text-center">
-              <img id="viewAssetImage" src="" alt="Asset Image"
-                   class="img-fluid border border-dark rounded"
-                   style="max-height: 180px; object-fit: contain;">
-            </div>
 
             <!-- Details -->
             <div class="col-md-8">
@@ -38,17 +30,8 @@
                   <p class="mb-1"><strong>Office:</strong> <span id="viewOfficeName"></span></p>
                   <p class="mb-1"><strong>Category:</strong> <span id="viewCategoryName"></span></p>
                   <p class="mb-1"><strong>Type:</strong> <span id="viewType"></span></p>
-                  <p class="mb-1"><strong>Status:</strong> <span id="viewStatus"></span></p>
                   <p class="mb-1"><strong>Quantity:</strong> <span id="viewQuantity"></span></p>
                   <p class="mb-1"><strong>Unit:</strong> <span id="viewUnit"></span></p>
-                </div>
-                <div class="col-sm-6">
-                  <p class="mb-1"><strong>Serial No:</strong> <span id="viewSerialNo"></span></p>
-                  <p class="mb-1"><strong>Property No:</strong> <span id="viewPropertyNo"></span></p>
-                  <p class="mb-1"><strong>Code:</strong> <span id="viewCode"></span></p>
-                  <p class="mb-1"><strong>Brand:</strong> <span id="viewBrand"></span></p>
-                  <p class="mb-1"><strong>Model:</strong> <span id="viewModel"></span></p>
-                  <p class="mb-1"><strong>Person Accountable:</strong> <span id="viewEmployeeName"></span></p>
                 </div>
               </div>
             </div>
@@ -70,11 +53,27 @@
 
           <hr class="border-dark">
 
-          <!-- Actions -->
-          <div class="d-flex justify-content-end gap-2">
-            <a id="propertyTagBtn" href="#" target="_blank" class="btn btn-sm btn-outline-primary">
-              <i class="bi bi-tag"></i> Create Property Tag
-            </a>
+          <!-- SECTION: PER-ITEM DETAILS -->
+          <div class="mt-3">
+            <h6 class="fw-bold text-decoration-underline">Items</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 80px;">Item ID</th>
+                    <th>Property No.</th>
+                    <th>Inventory Tag</th>
+                    <th>Serial No.</th>
+                    <th>Status</th>
+                    <th>Date Acquired</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="viewItemsBody">
+                  <!-- Filled by JS -->
+                </tbody>
+              </table>
+            </div>
           </div>
 
         </div>

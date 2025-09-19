@@ -156,7 +156,6 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
                         </tr>
                       <?php endforeach; ?>
                     </tbody>
-                    <?php include 'modals/view_asset_modal.php'; ?>
                   </table>
                 </div>
               <?php else: ?>
@@ -177,6 +176,8 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
       <?php endif; ?>
     </div>
   </div>
+
+  <?php include 'modals/inventory_category_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
