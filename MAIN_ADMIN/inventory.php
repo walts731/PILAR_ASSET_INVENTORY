@@ -58,6 +58,7 @@ $stmt->close();
     <?php include 'includes/topbar.php' ?>
 
     <?php include 'alerts/inventory_alerts.php'; ?>
+    <div id="pageAlerts" class="container mt-2"></div>
 
     <?php
     // Get list of offices for dropdown
@@ -289,6 +290,7 @@ $stmt->close();
                         f.ics_no AS ics_no
                       FROM assets_new an
                       LEFT JOIN ics_form f ON f.id = an.ics_id
+                       WHERE an.quantity > 0
                        ORDER BY an.date_created DESC
                      ");
                   } else {
@@ -313,7 +315,7 @@ $stmt->close();
                         f.ics_no AS ics_no
                       FROM assets_new an
                       LEFT JOIN ics_form f ON f.id = an.ics_id
-                       WHERE an.office_id = ?
+                       WHERE an.office_id = ? AND an.quantity > 0
                        ORDER BY an.date_created DESC
                      ");
                     $stmt->bind_param("i", $selected_office);
@@ -705,7 +707,6 @@ $stmt->close();
                       <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="${(it.property_no && it.property_no.trim()) ? 'View Property Tag' : 'Create Property Tag'}">
                         <i class="bi bi-tag"></i> ${ (it.property_no && it.property_no.trim()) ? 'View Property Tag' : 'Create Property Tag' }
                       </a>
-                      <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Asset" onclick="forceDeleteAsset(${it.item_id})"><i class="bi bi-trash"></i></button>
                     </td>
                   `;
                   itemsBody.appendChild(tr);
@@ -860,18 +861,58 @@ $stmt->close();
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'id=' + encodeURIComponent(assetId)
       })
-      .then(r => r.json())
+      .then(async (r) => {
+        const txt = await r.text();
+        let data;
+        try {
+          data = JSON.parse(txt);
+        } catch(e) {
+          throw new Error('Invalid server response');
+        }
+        if (!r.ok) {
+          const msg = (data && data.message) ? data.message : 'Failed to delete asset';
+          throw new Error(msg);
+        }
+        return data;
+      })
       .then(resp => {
         if (resp && resp.success) {
-          // Remove the row from the No Property table
-          const row = document.querySelector(`#noPropertyTable tbody tr td:first-child`);
-          // Simpler: reload the page to reflect counts and lists
-          location.reload();
+          const alerts = document.getElementById('pageAlerts');
+          if (alerts) {
+            alerts.innerHTML = `
+              <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle"></i> Asset deleted successfully.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>`;
+          }
+          // Reload to refresh counts/lists
+          setTimeout(() => location.reload(), 600);
         } else {
-          alert(resp.message || 'Failed to delete asset');
+          const msg = (resp && resp.message) ? resp.message : 'Failed to delete asset';
+          const alerts = document.getElementById('pageAlerts');
+          if (alerts) {
+            alerts.innerHTML = `
+              <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle"></i> ${msg}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>`;
+          } else {
+            alert(msg);
+          }
         }
       })
-      .catch(err => alert('Error deleting: ' + err));
+      .catch(err => {
+        const alerts = document.getElementById('pageAlerts');
+        if (alerts) {
+          alerts.innerHTML = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class="bi bi-x-circle"></i> ${err.message || 'Unexpected error while deleting asset.'}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>`;
+        } else {
+          alert(err.message || 'Unexpected error while deleting asset.');
+        }
+      });
     }
   </script>
 

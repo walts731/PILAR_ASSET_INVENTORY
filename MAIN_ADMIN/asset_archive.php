@@ -73,16 +73,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['delete_id'])) {
         $delete_id = (int) $_POST['delete_id'];
-        $conn->query("DELETE FROM assets_archive WHERE archive_id = $delete_id");
-        header("Location: asset_archive.php?delete=success");
-        exit();
+        // Start transaction to ensure insert-then-delete consistency
+        $conn->begin_transaction();
+        try {
+            $res = $conn->query("SELECT * FROM assets_archive WHERE archive_id = $delete_id");
+            if ($res && $asset = $res->fetch_assoc()) {
+                if (isset($asset['type']) && $asset['type'] === 'asset') {
+                    // Insert a copy into asset_new
+                    $insertNew = sprintf(
+                        "INSERT INTO asset_new (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, red_tagged, last_updated, value, qr_code, type) VALUES ('%s', %d, '%s', %d, '%s', '%s', '%s', %d, %d, '%s', %f, '%s', '%s')",
+                        $conn->real_escape_string($asset['asset_name']),
+                        (int)$asset['category'],
+                        $conn->real_escape_string($asset['description']),
+                        (int)$asset['quantity'],
+                        $conn->real_escape_string($asset['unit']),
+                        $conn->real_escape_string($asset['status']),
+                        $conn->real_escape_string($asset['acquisition_date']),
+                        (int)$asset['office_id'],
+                        (int)$asset['red_tagged'],
+                        $conn->real_escape_string($asset['last_updated']),
+                        (float)$asset['value'],
+                        $conn->real_escape_string($asset['qr_code']),
+                        $conn->real_escape_string($asset['type'])
+                    );
+                    $conn->query($insertNew);
+                }
+            }
+            // Now delete from archive
+            $conn->query("DELETE FROM assets_archive WHERE archive_id = $delete_id");
+            $conn->commit();
+            header("Location: asset_archive.php?delete=success");
+            exit();
+        } catch (Exception $e) {
+            $conn->rollback();
+            header("Location: asset_archive.php?delete=failed");
+            exit();
+        }
     }
 
     if (isset($_POST['delete_all']) && isset($_POST['type'])) {
         $type = $conn->real_escape_string($_POST['type']);
-        $conn->query("DELETE FROM assets_archive WHERE type = '$type'");
-        header("Location: asset_archive.php?delete_all=success");
-        exit();
+        $conn->begin_transaction();
+        try {
+            // For type='asset', copy all to asset_new first
+            if ($type === 'asset') {
+                $result = $conn->query("SELECT * FROM assets_archive WHERE type = 'asset'");
+                while ($asset = $result->fetch_assoc()) {
+                    $insertNew = sprintf(
+                        "INSERT INTO asset_new (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, red_tagged, last_updated, value, qr_code, type) VALUES ('%s', %d, '%s', %d, '%s', '%s', '%s', %d, %d, '%s', %f, '%s', '%s')",
+                        $conn->real_escape_string($asset['asset_name']),
+                        (int)$asset['category'],
+                        $conn->real_escape_string($asset['description']),
+                        (int)$asset['quantity'],
+                        $conn->real_escape_string($asset['unit']),
+                        $conn->real_escape_string($asset['status']),
+                        $conn->real_escape_string($asset['acquisition_date']),
+                        (int)$asset['office_id'],
+                        (int)$asset['red_tagged'],
+                        $conn->real_escape_string($asset['last_updated']),
+                        (float)$asset['value'],
+                        $conn->real_escape_string($asset['qr_code']),
+                        $conn->real_escape_string($asset['type'])
+                    );
+                    $conn->query($insertNew);
+                }
+            }
+            // Delete all archived rows of the given type
+            $conn->query("DELETE FROM assets_archive WHERE type = '$type'");
+            $conn->commit();
+            header("Location: asset_archive.php?delete_all=success");
+            exit();
+        } catch (Exception $e) {
+            $conn->rollback();
+            header("Location: asset_archive.php?delete_all=failed");
+            exit();
+        }
     }
 }
 ?>
