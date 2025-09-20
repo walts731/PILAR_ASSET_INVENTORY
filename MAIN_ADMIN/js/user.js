@@ -15,13 +15,16 @@ $(document).ready(function() {
     });
 
     $(document).ready(function () {
-    // Delete button opens modal
+    // Delete button opens modal (soft delete)
     $('.deleteUserBtn').on('click', function () {
-      const userId = $(this).data('id');
-      const userName = $(this).data('name');
+      const btn = $(this);
+      const userId = btn.data('id');
+      const userName = btn.data('fullname');
+      const office = btn.data('office');
 
       $('#deleteUserId').val(userId);
       $('#deleteUserName').text(userName);
+      $('#deleteUserOffice').val(office);
       const modal = new bootstrap.Modal(document.getElementById('confirmDeleteUserModal'));
       modal.show();
     });

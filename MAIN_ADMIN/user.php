@@ -7,6 +7,25 @@ if (!isset($_SESSION['user_id'])) {
   exit();
 }
 
+// Soft-delete handler: mark user as deleted instead of removing
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user_id'])) {
+  $deleteUserId = (int)$_POST['delete_user_id'];
+  $officeBack = isset($_POST['office']) ? (int)$_POST['office'] : 0;
+  if ($deleteUserId > 0) {
+    $upd = $conn->prepare("UPDATE users SET status = 'deleted' WHERE id = ?");
+    $upd->bind_param('i', $deleteUserId);
+    $upd->execute();
+    $upd->close();
+  }
+  $redirect = 'user.php';
+  $qs = [];
+  if ($officeBack > 0) { $qs[] = 'office=' . $officeBack; }
+  $qs[] = 'soft_deleted=1';
+  if (!empty($qs)) { $redirect .= '?' . implode('&', $qs); }
+  header('Location: ' . $redirect);
+  exit();
+}
+
 // Fetch list of offices for dropdown
 $officeQuery = $conn->query("SELECT id, office_name FROM offices");
 
@@ -18,8 +37,9 @@ $userStmt = $conn->prepare("
   SELECT u.id, u.username, u.fullname, u.email, u.role, u.status, u.created_at, o.office_name
   FROM users u
   JOIN offices o ON u.office_id = o.id
-  WHERE u.office_id = ?
+  WHERE u.office_id = ? AND u.status <> 'deleted'
 ");
+
 $userStmt->bind_param("i", $selected_office);
 $userStmt->execute();
 $userResult = $userStmt->get_result();
@@ -70,6 +90,14 @@ $stmt->close();
 
     <!-- User Alerts -->
     <?php include 'alerts/user_alerts.php' ?>
+    <?php if (isset($_GET['soft_deleted'])): ?>
+      <div class="container mt-3">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="bi bi-check-circle"></i> User has been deleted successfully.
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </div>
+    <?php endif; ?>
 
     <!-- User Management Card with Office Filter -->
     <div class="card shadow-sm mb-4 mt-4">
@@ -192,7 +220,7 @@ $stmt->close();
                       data-fullname="<?= htmlspecialchars($user['fullname']) ?>"
                       data-office="<?= $selected_office ?>"
                       data-bs-toggle="modal"
-                      data-bs-target="#deleteUserModal"
+                      data-bs-target="#confirmDeleteUserModal"
                       title="Delete User">
                       <i class="bi bi-trash"></i>
                     </button>

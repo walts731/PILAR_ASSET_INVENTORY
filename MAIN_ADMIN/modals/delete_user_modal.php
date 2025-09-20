@@ -1,6 +1,6 @@
 <div class="modal fade" id="confirmDeleteUserModal" tabindex="-1" aria-labelledby="confirmDeleteUserLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <form id="deleteUserForm" method="GET" action="delete_user.php" class="modal-content">
+      <form id="deleteUserForm" method="POST" action="user.php" class="modal-content">
         <div class="modal-header bg-danger text-white">
           <h5 class="modal-title" id="confirmDeleteUserLabel">
             <i class="bi bi-exclamation-triangle me-2"></i> Confirm Deletion
@@ -8,8 +8,9 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          Are you sure you want to delete <strong id="deleteUserName"></strong>? This action cannot be undone.
-          <input type="hidden" name="id" id="deleteUserId">
+          Are you sure you want to delete <strong id="deleteUserName"></strong>? The account will be marked as deleted and hidden from the list.
+          <input type="hidden" name="delete_user_id" id="deleteUserId">
+          <input type="hidden" name="office" id="deleteUserOffice">
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-danger">Yes, Delete</button>
