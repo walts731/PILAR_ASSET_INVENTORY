@@ -67,10 +67,11 @@ $stmt->close();
       $asset_id = $_GET['asset_id'];
 
       $stmt = $conn->prepare("
-        SELECT a.*, c.category_name, o.office_name 
+        SELECT a.*, c.category_name, o.office_name, e.name AS employee_name
         FROM assets a
         LEFT JOIN categories c ON a.category = c.id
         LEFT JOIN offices o ON a.office_id = o.id
+        LEFT JOIN employees e ON a.employee_id = e.employee_id
         WHERE a.id = ?
       ");
       $stmt->bind_param("i", $asset_id);
@@ -79,39 +80,97 @@ $stmt->close();
 
       if ($row = $result->fetch_assoc()):
     ?>
-      <div class="card mt-4 shadow-sm mx-auto" style="max-width: 500px;">
+      <div class="card mt-4 shadow-sm mx-auto" style="max-width: 700px;">
         <div class="card-header">
           <h5 class="mb-0"><i class="bi bi-box-seam"></i> Asset Details</h5>
         </div>
         <div class="card-body">
-          <p><strong>Name:</strong> <?= htmlspecialchars($row['asset_name']) ?></p>
-          <p><strong>Category:</strong> <?= htmlspecialchars($row['category_name']) ?></p>
-          <p><strong>Description:</strong> <?= htmlspecialchars($row['description']) ?></p>
-          <p><strong>Quantity:</strong> <?= $row['quantity'] ?> <?= htmlspecialchars($row['unit']) ?></p>
-          <p><strong>Status:</strong>
-            <span class="badge bg-<?= $row['status'] === 'available' ? 'success' : ($row['status'] === 'borrowed' ? 'warning' : 'secondary') ?>">
-              <?= $row['red_tagged'] ? 'Red-Tagged' : ucfirst($row['status']) ?>
-            </span>
-          </p>
-          <p><strong>Value:</strong> &#8369;<?= number_format($row['value'], 2) ?></p>
-          <p><strong>Acquired On:</strong> <?= date('F j, Y', strtotime($row['acquisition_date'])) ?></p>
-          <p><strong>Last Updated:</strong> <?= date('F j, Y', strtotime($row['last_updated'])) ?></p>
-          <p><strong>Office:</strong> <?= htmlspecialchars($row['office_name']) ?></p>
+          <div class="row g-3">
+            <div class="col-md-8">
+              <p class="mb-1"><strong>Asset ID:</strong> <?= (int)$row['id'] ?></p>
+              <p class="mb-1"><strong>Name:</strong> <?= htmlspecialchars($row['asset_name'] ?? $row['description']) ?></p>
+              <p class="mb-1"><strong>Description:</strong> <?= htmlspecialchars($row['description']) ?></p>
+              <p class="mb-1"><strong>Category:</strong> <?= htmlspecialchars($row['category_name'] ?? 'Uncategorized') ?></p>
+              <p class="mb-1"><strong>Type:</strong> <?= htmlspecialchars($row['type']) ?></p>
+              <p class="mb-1"><strong>Quantity / Unit:</strong> <?= (int)$row['quantity'] ?> <?= htmlspecialchars($row['unit']) ?></p>
+              <p class="mb-1"><strong>Status:</strong>
+                <span class="badge bg-<?= $row['status'] === 'available' ? 'success' : ($row['status'] === 'borrowed' ? 'warning' : 'secondary') ?>">
+                  <?= $row['red_tagged'] ? 'Red-Tagged' : ucfirst($row['status']) ?>
+                </span>
+              </p>
+              <p class="mb-1"><strong>Value:</strong> &#8369;<?= number_format((float)$row['value'], 2) ?></p>
+              <p class="mb-1"><strong>Office:</strong> <?= htmlspecialchars($row['office_name'] ?? '—') ?></p>
+              <p class="mb-1"><strong>Person Accountable:</strong> <?= htmlspecialchars($row['employee_name'] ?? '—') ?></p>
+              <p class="mb-1"><strong>Property No.:</strong> <?= htmlspecialchars($row['property_no'] ?? '') ?></p>
+              <p class="mb-1"><strong>Serial No.:</strong> <?= htmlspecialchars($row['serial_no'] ?? '') ?></p>
+              <p class="mb-1"><strong>Model:</strong> <?= htmlspecialchars($row['model'] ?? '') ?></p>
+              <p class="mb-1"><strong>Brand:</strong> <?= htmlspecialchars($row['brand'] ?? '') ?></p>
+              <p class="mb-1"><strong>Code:</strong> <?= htmlspecialchars($row['code'] ?? '') ?></p>
+              <p class="mb-1"><strong>ICS ID:</strong> <?= htmlspecialchars($row['ics_id'] ?? '') ?></p>
+              <p class="mb-1"><strong>Acquired On:</strong> <?= $row['acquisition_date'] ? date('F j, Y', strtotime($row['acquisition_date'])) : '—' ?></p>
+              <p class="mb-1"><strong>Last Updated:</strong> <?= $row['last_updated'] ? date('F j, Y', strtotime($row['last_updated'])) : '—' ?></p>
+            </div>
+            <div class="col-md-4 text-center">
+              <?php if (!empty($row['image'])): ?>
+                <img src="../img/<?= htmlspecialchars($row['image']) ?>" alt="Asset Image" class="img-fluid border rounded mb-2" style="max-height: 160px; object-fit: contain;">
+              <?php endif; ?>
+              <?php if (!empty($row['qr_code'])): ?>
+                <img src="../img/<?= htmlspecialchars($row['qr_code']) ?>" alt="QR Code" class="img-fluid border rounded" style="max-height: 160px; object-fit: contain;">
+              <?php endif; ?>
+            </div>
+          </div>
 
           <hr>
           <div class="d-flex justify-content-between flex-wrap gap-2 mt-3">
-            <a href="transfer_asset.php?id=<?= $row['id'] ?>" class="btn btn-outline-primary btn-sm rounded-pill">
+            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#transferAssetModal">
               <i class="bi bi-arrow-left-right"></i> Transfer
-            </a>
+            </button>
             <a href="borrow_asset.php?id=<?= $row['id'] ?>" class="btn btn-outline-warning btn-sm rounded-pill">
               <i class="bi bi-box-arrow-in-right"></i> Borrow
-            </a>
-            <a href="release_asset.php?id=<?= $row['id'] ?>" class="btn btn-outline-info btn-sm rounded-pill">
-              <i class="bi bi-box-arrow-up"></i> Release
             </a>
             <a href="return_asset.php?id=<?= $row['id'] ?>" class="btn btn-outline-secondary btn-sm rounded-pill">
               <i class="bi bi-box-arrow-in-left"></i> Return
             </a>
+          </div>
+        </div>
+      </div>
+
+      <?php
+        // Preload employees for modal selection
+        $emp_res = $conn->query("SELECT employee_id, name FROM employees ORDER BY name ASC");
+        $employees = $emp_res ? $emp_res->fetch_all(MYSQLI_ASSOC) : [];
+        $inventory_tag_value = $row['inventory_tag'] ?? ($row['property_no'] ?? '');
+      ?>
+
+      <!-- Transfer Asset Modal -->
+      <div class="modal fade" id="transferAssetModal" tabindex="-1" aria-labelledby="transferAssetModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="transferAssetModalLabel">Transfer Asset to New Person Accountable</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="transfer_asset.php">
+              <div class="modal-body">
+                <input type="hidden" name="asset_id" value="<?= (int)$row['id'] ?>">
+                <input type="hidden" name="inventory_tag" value="<?= htmlspecialchars($inventory_tag_value) ?>">
+
+                <div class="mb-3">
+                  <label for="newEmployee" class="form-label">Select New Person Accountable</label>
+                  <input list="employeeList" class="form-control" id="newEmployee" name="new_employee" placeholder="Type to search... (e.g., 12 - Juan Dela Cruz)" required>
+                  <datalist id="employeeList">
+                    <?php foreach ($employees as $emp): ?>
+                      <option value="<?= (int)$emp['employee_id'] . ' - ' . htmlspecialchars($emp['name']) ?>"></option>
+                    <?php endforeach; ?>
+                  </datalist>
+                  <div class="form-text">Format required: "employee_id - employee name"</div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Confirm Transfer</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
