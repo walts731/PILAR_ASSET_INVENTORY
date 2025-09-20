@@ -21,8 +21,11 @@ $result = $stmt->get_result();
 $ris_data = $result->fetch_assoc() ?? [];
 $stmt->close();
 
-// Fetch RIS items
-$item_stmt = $conn->prepare("SELECT * FROM ris_items WHERE ris_form_id = ?");
+// Fetch RIS items with resolved unit name
+$item_stmt = $conn->prepare("SELECT ri.*, COALESCE(u.unit_name, ri.unit) AS unit_name
+                             FROM ris_items ri
+                             LEFT JOIN unit u ON (u.id = ri.unit OR u.unit_name = ri.unit)
+                             WHERE ri.ris_form_id = ?");
 $item_stmt->bind_param("i", $form_id);
 $item_stmt->execute();
 $item_result = $item_stmt->get_result();
@@ -32,6 +35,10 @@ $item_stmt->close();
 // Fetch offices for dropdown
 $offices_result = $conn->query("SELECT id, office_name FROM offices ORDER BY office_name ASC");
 $offices = $offices_result->fetch_all(MYSQLI_ASSOC);
+
+// Fetch units for dropdown
+$units_result = $conn->query("SELECT id, unit_name FROM unit ORDER BY unit_name ASC");
+$units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
 ?>
 
 <!DOCTYPE html>
@@ -131,7 +138,17 @@ $offices = $offices_result->fetch_all(MYSQLI_ASSOC);
                         <?php foreach ($ris_items as $item): ?>
                             <tr>
                                 <td><input type="text" class="form-control" value="<?= htmlspecialchars($item['stock_no']) ?>" readonly></td>
-                                <td><input type="text" class="form-control" value="<?= htmlspecialchars($item['unit']) ?>" readonly></td>
+                                <td>
+                                  <input type="hidden" name="ris_item_id[]" value="<?= (int)$item['id'] ?>">
+                                  <select name="unit[]" class="form-select">
+                                    <?php foreach ($units as $u): ?>
+                                      <?php $selected = (strcasecmp($item['unit_name'], $u['unit_name']) === 0) ? 'selected' : ''; ?>
+                                      <option value="<?= htmlspecialchars($u['unit_name']) ?>" <?= $selected ?>>
+                                        <?= htmlspecialchars($u['unit_name']) ?>
+                                      </option>
+                                    <?php endforeach; ?>
+                                  </select>
+                                </td>
                                 <td><input type="text" class="form-control" value="<?= htmlspecialchars($item['description']) ?>" readonly></td>
                                 <td><input type="number" class="form-control" value="<?= htmlspecialchars($item['quantity']) ?>" readonly></td>
                                 <td><input type="number" step="0.01" class="form-control" value="<?= htmlspecialchars($item['price']) ?>" readonly></td>

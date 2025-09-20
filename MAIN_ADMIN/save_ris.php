@@ -105,10 +105,7 @@ $stmt = $conn->prepare("
             $totals      = $_POST['total'] ?? [];
             $asset_ids = $_POST['asset_id'] ?? [];
 
-            $item_stmt = $conn->prepare("
-                INSERT INTO ris_items (ris_form_id, stock_no, unit, description, quantity, price, total)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ");
+            $item_stmt = $conn->prepare("\n                INSERT INTO ris_items (ris_form_id, stock_no, unit, description, quantity, price, total)\n                VALUES (?, ?, ?, ?, ?, ?, ?)\n            ");
 
             foreach ($descriptions as $i => $desc) {
                 if (trim($desc) === '') continue; // skip empty rows
@@ -124,7 +121,7 @@ $stmt = $conn->prepare("
                 $item_stmt->bind_param("isssidd", $ris_form_id, $stock, $unit, $desc, $qty, $price, $total);
                 $item_stmt->execute();
 
-                // ✅ Deduct and duplicate into assets if valid
+                // Case 1: Source asset provided -> deduct and move to office as consumable
                 if ($asset_id > 0 && $qty > 0) {
                     // 1. Fetch original asset details
                     $fetch_stmt = $conn->prepare("SELECT * FROM assets WHERE id = ?");
@@ -150,17 +147,15 @@ $stmt = $conn->prepare("
                         $check_stmt->close();
 
                         if ($existing_asset) {
-                            // ✅ Restock existing office asset
-                            $updated_qty = $existing_asset['quantity'] + $qty;
-
-                            $restock_stmt = $conn->prepare("UPDATE assets SET quantity = ?, added_stock = ?, last_updated = NOW() WHERE id = ?");
+                            // Restock existing office asset and ensure type is 'consumable'
+                            $updated_qty = ((int)$existing_asset['quantity']) + $qty;
+                            $restock_stmt = $conn->prepare("UPDATE assets SET quantity = ?, added_stock = ?, type = 'consumable', last_updated = NOW() WHERE id = ?");
                             $restock_stmt->bind_param("iii", $updated_qty, $qty, $existing_asset['id']);
                             $restock_stmt->execute();
                             $restock_stmt->close();
                         } else {
-                            // ❌ Not found → Insert as new asset for this office
-                            $new_quantity = $qty; // moved quantity
-
+                            // Insert as new asset for this office (force type consumable)
+                            $new_quantity = $qty;
                             $sql = "
     INSERT INTO assets (
         asset_name, category, description, quantity, added_stock, unit, status,
@@ -171,17 +166,17 @@ $stmt = $conn->prepare("
         '" . $conn->real_escape_string($asset['asset_name']) . "',
         '" . $conn->real_escape_string($asset['category']) . "',
         '" . $conn->real_escape_string($asset['description']) . "',
-        '$new_quantity',
-        '$qty',
+        '" . (int)$new_quantity . "',
+        '" . (int)$qty . "',
         '" . $conn->real_escape_string($asset['unit']) . "',
         '" . $conn->real_escape_string($asset['status']) . "',
         '" . $conn->real_escape_string($asset['acquisition_date']) . "',
-        '$office_id',
-        NULL, -- ✅ employee_id is forced NULL here
+        '" . (int)$office_id . "',
+        NULL,
         '" . $conn->real_escape_string($asset['red_tagged']) . "',
         '" . $conn->real_escape_string($asset['value']) . "',
         '" . $conn->real_escape_string($asset['qr_code']) . "',
-        '" . $conn->real_escape_string($asset['type']) . "',
+        'consumable',
         '" . $conn->real_escape_string($asset['image']) . "',
         '" . $conn->real_escape_string($asset['serial_no']) . "',
         '" . $conn->real_escape_string($asset['code']) . "',
@@ -190,16 +185,44 @@ $stmt = $conn->prepare("
         '" . $conn->real_escape_string($asset['brand']) . "',
         '" . $conn->real_escape_string($asset['inventory_tag']) . "',
         NOW()
-    )
-";
-
-
-                            if ($conn->query($sql)) {
-                                // success
-                            } else {
-                                echo "Error: " . $conn->error;
+    )";
+                            if (!$conn->query($sql)) {
+                                error_log('RIS asset insert error: ' . $conn->error);
                             }
                         }
+                    }
+                } else {
+                    // Case 2: No source asset provided -> insert minimal consumable asset into target office
+                    if ($qty > 0) {
+                        // Resolve unit name if unit contains an ID
+                        $unit_value = $unit;
+                        if (ctype_digit((string)$unit_value)) {
+                            $unit_stmt = $conn->prepare("SELECT unit_name FROM unit WHERE id = ? LIMIT 1");
+                            $unit_id_int = (int)$unit_value;
+                            $unit_stmt->bind_param("i", $unit_id_int);
+                            $unit_stmt->execute();
+                            $unit_res = $unit_stmt->get_result();
+                            if ($u = $unit_res->fetch_assoc()) { $unit_value = $u['unit_name']; }
+                            $unit_stmt->close();
+                        }
+
+                        $ins_stmt = $conn->prepare("INSERT INTO assets (asset_name, category, description, quantity, added_stock, unit, status, acquisition_date, office_id, employee_id, red_tagged, value, qr_code, type, image, serial_no, code, property_no, model, brand, inventory_tag, last_updated) VALUES (?, NULL, ?, ?, ?, ?, 'available', NOW(), ?, NULL, 0, ?, '', 'consumable', '', '', '', ?, '', '', '', NOW())");
+                        $asset_name_val = $desc;
+                        $added_stock_val = $qty;
+                        $property_no_val = $stock;
+                        $ins_stmt->bind_param(
+                            "ssiisids",
+                            $asset_name_val,   // s asset_name
+                            $desc,            // s description
+                            $qty,             // i quantity
+                            $added_stock_val, // i added_stock
+                            $unit_value,      // s unit
+                            $office_id,       // i office_id
+                            $price,           // d value
+                            $property_no_val  // s property_no
+                        );
+                        $ins_stmt->execute();
+                        $ins_stmt->close();
                     }
                 }
             }

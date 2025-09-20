@@ -118,13 +118,12 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
     <thead>
       <tr class="table-secondary">
         <th colspan="4">REQUISITION</th>
-        <th colspan="4">ISSUANCE</th>
+        <th colspan="3">ISSUANCE</th>
       </tr>
       <tr class="table-light">
         <th>Stock No</th>
         <th>Unit</th>
         <th style="width: 30%;">DESCRIPTION</th>
-        <th>Quantity</th>
         <th>Quantity</th>
         <th>Signature</th>
         <th>Price</th>
@@ -154,7 +153,6 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
             </div>
           </td>
           <td><input type="number" class="form-control" name="req_quantity[]" min="1"></td>
-          <td><input type="number" class="form-control" name="iss_quantity[]" min="1"></td>
           <td><input type="text" class="form-control" name="signature[]"></td>
           <td><input type="number" step="0.01" class="form-control" name="price[]"></td>
           <td><input type="text" class="form-control total" name="total[]" readonly></td>
@@ -319,7 +317,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
             assetIdInput.value = option ? option.dataset.id : "";
           }
 
-          // ✅ Autofill stock_no (property_no)
+          // Autofill stock_no (property_no)
           if (stockNoInput && option.dataset.property) {
             stockNoInput.value = option.dataset.property;
           }
@@ -354,7 +352,6 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         </div>
       </td>
       <td><input type="number" class="form-control" name="req_quantity[]" min="1"></td>
-      <td><input type="number" class="form-control" name="iss_quantity[]" min="1"></td>
       <td><input type="text" class="form-control" name="signature[]"></td>
       <td><input type="number" step="0.01" class="form-control" name="price[]"></td>
       <td><input type="text" class="form-control total" readonly></td>

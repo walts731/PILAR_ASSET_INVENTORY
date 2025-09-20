@@ -513,10 +513,10 @@ $stmt->close();
                       <td>
                         <!-- View Button -->
                         <button type="button"
-                          class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn"
+                          class="btn btn-sm btn-outline-info rounded-pill viewConsumableBtn"
                           data-id="<?= $row['id'] ?>"
                           data-bs-toggle="modal"
-                          data-bs-target="#viewAssetModal">
+                          data-bs-target="#viewConsumableModal">
                           <i class="bi bi-eye"></i>
                         </button>
 
@@ -625,6 +625,7 @@ $stmt->close();
   <?php include 'modals/add_asset_modal.php'; ?>
   <?php include 'modals/manage_categories_modal.php'; ?>
   <?php include 'modals/view_asset_modal.php'; ?>
+  <?php include 'modals/view_consumable_modal.php'; ?>
   <?php include 'modals/import_csv_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -722,6 +723,55 @@ $stmt->close();
           .catch(error => {
             console.error('Error:', error);
           });
+      });
+    });
+
+    // View Consumable Modal logic
+    function setBadge(el, status) {
+      if (!el) return;
+      const s = (status || '').toLowerCase();
+      el.className = 'badge ' + (s === 'available' ? 'bg-success' : 'bg-secondary');
+      el.textContent = status ? (status.charAt(0).toUpperCase() + status.slice(1)) : '—';
+    }
+
+    function fmtDate(dateStr) {
+      if (!dateStr) return '—';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    document.querySelectorAll('.viewConsumableBtn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        fetch(`get_asset_details.php?id=${id}`)
+          .then(r => r.json())
+          .then(data => {
+            if (data.error) { alert(data.error); return; }
+
+            // Populate basic fields
+            document.getElementById('consDescription').textContent = data.description ?? '—';
+            document.getElementById('consOffice').textContent = data.office_name ?? '—';
+            document.getElementById('consPropertyNo').textContent = data.property_no ?? '—';
+            document.getElementById('consQuantity').textContent = parseInt(data.quantity ?? 0);
+            document.getElementById('consAddedStock').textContent = parseInt(data.added_stock ?? 0);
+            document.getElementById('consUnit').textContent = data.unit ?? '—';
+            setBadge(document.getElementById('consStatus'), data.status ?? '');
+
+            const value = parseFloat(data.value ?? 0) || 0;
+            const qty = parseInt(data.quantity ?? 0) || 0;
+            document.getElementById('consValue').textContent = value.toFixed(2);
+            document.getElementById('consTotalValue').textContent = (value * qty).toFixed(2);
+            document.getElementById('consLastUpdated').textContent = fmtDate(data.last_updated);
+
+            // Image
+            const imgEl = document.getElementById('consImage');
+            if (imgEl) {
+              const img = data.image ? `../img/assets/${data.image}` : '';
+              imgEl.style.display = img ? 'block' : 'none';
+              imgEl.src = img;
+            }
+          })
+          .catch(err => console.error('Fetch consumable error', err));
       });
     });
 
