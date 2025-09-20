@@ -338,7 +338,7 @@ $stmt->close();
                           data-id="<?= (int)$row['an_id'] ?>"
                           data-bs-toggle="modal"
                           data-bs-target="#viewAssetModal">
-                          <i class="bi bi-eye"></i>
+                          <i class="bi bi-eye"></i>View
                         </button>
                       </td>
                     </tr>

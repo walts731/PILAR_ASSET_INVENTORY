@@ -120,28 +120,23 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
                     <thead class="table-light">
                       <tr>
                         <th><input type="checkbox" id="selectAllAssetsCat" /></th>
+                        <th>ICS No</th>
                         <th>Description</th>
                         <th>Category</th>
                         <th>Qty</th>
                         <th>Unit</th>
-                        <th>Unit Cost</th>
-                        <th>Total Value</th>
-                        <th>ICS No</th>
                         <th>Actions</th>
-                        <th>Date Acquired</th>
                       </tr>
                     </thead>
                     <tbody>
                       <?php foreach ($an_rows as $row): ?>
                         <tr>
                           <td><input type="checkbox" class="asset-checkbox-cat" value="<?= (int)$row['an_id'] ?>" /></td>
+                          <td><?= htmlspecialchars($row['ics_no'] ?? '') ?></td>
                           <td><?= htmlspecialchars($row['description']) ?></td>
                           <td><?= htmlspecialchars($row['category_name']) ?></td>
                           <td><?= (int)$row['quantity'] ?></td>
                           <td><?= htmlspecialchars($row['unit']) ?></td>
-                          <td>&#8369; <?= number_format((float)$row['unit_cost'], 2) ?></td>
-                          <td>&#8369; <?= number_format(((float)$row['unit_cost']) * (int)$row['quantity'], 2) ?></td>
-                          <td><?= htmlspecialchars($row['ics_no'] ?? '') ?></td>
                           <td class="text-nowrap">
                             <button type="button"
                               class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn"
@@ -149,10 +144,9 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
                               data-id="<?= (int)$row['an_id'] ?>"
                               data-bs-toggle="modal"
                               data-bs-target="#viewAssetModal">
-                              <i class="bi bi-eye"></i>
+                              <i class="bi bi-eye"></i>View
                             </button>
                           </td>
-                          <td><?= !empty($row['date_created']) ? date('M d, Y', strtotime($row['date_created'])) : '' ?></td>
                         </tr>
                       <?php endforeach; ?>
                     </tbody>
@@ -233,7 +227,7 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
               if (items.length === 0) {
                 const tr = document.createElement('tr');
                 const td = document.createElement('td');
-                td.colSpan = 7;
+                td.colSpan = 6;
                 td.className = 'text-center text-muted';
                 td.textContent = 'No item records available';
                 tr.appendChild(td);
@@ -242,7 +236,6 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
                 items.forEach(it => {
                   const tr = document.createElement('tr');
                   tr.innerHTML = `
-                    <td>${it.item_id}</td>
                     <td>${it.property_no ?? ''}</td>
                     <td>${it.inventory_tag ?? ''}</td>
                     <td>${it.serial_no ?? ''}</td>
