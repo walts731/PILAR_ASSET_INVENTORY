@@ -7,6 +7,50 @@ if (!isset($_SESSION['user_id'])) {
   exit();
 }
 
+// Handle delete selected employees (must run before any HTML output)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_selected'])) {
+  $ids = isset($_POST['selected_employees']) && is_array($_POST['selected_employees']) ? $_POST['selected_employees'] : [];
+  // sanitize ids to integers
+  $ids = array_values(array_filter(array_map('intval', $ids), function($v){ return $v > 0; }));
+
+  if (!empty($ids)) {
+    // Build placeholders
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $types = str_repeat('i', count($ids));
+
+    // Determine which employees have MR assets (cannot delete)
+    $sql = $conn->prepare("SELECT e.employee_id, e.name, EXISTS(SELECT 1 FROM mr_details m WHERE m.person_accountable = e.name) AS has_mr FROM employees e WHERE e.employee_id IN ($placeholders)");
+    $sql->bind_param($types, ...$ids);
+    $sql->execute();
+    $res = $sql->get_result();
+    $deletable = [];
+    $blocked = [];
+    while ($row = $res->fetch_assoc()) {
+      if ((int)$row['has_mr'] === 0) $deletable[] = (int)$row['employee_id'];
+      else $blocked[] = (int)$row['employee_id'];
+    }
+    $sql->close();
+
+    $deletedCount = 0;
+    if (!empty($deletable)) {
+      $ph = implode(',', array_fill(0, count($deletable), '?'));
+      $t = str_repeat('i', count($deletable));
+      $del = $conn->prepare("DELETE FROM employees WHERE employee_id IN ($ph)");
+      $del->bind_param($t, ...$deletable);
+      $del->execute();
+      $deletedCount = $del->affected_rows;
+      $del->close();
+    }
+
+    $blockedCount = count($blocked);
+    header("Location: employees.php?deleted=$deletedCount&blocked=$blockedCount");
+    exit();
+  } else {
+    header("Location: employees.php?deleted=0&blocked=0");
+    exit();
+  }
+}
+
 // Set office_id if not set
 if (!isset($_SESSION['office_id'])) {
   $user_id = $_SESSION['user_id'];
@@ -129,25 +173,35 @@ while ($row = $result->fetch_assoc()) {
     <?php include 'includes/topbar.php' ?>
 
     <div class="container mt-4">
+      <div id="pageAlerts" class="mb-3"></div>
       <div class="card shadow">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-          <h5 class="mb-0"><i class="bi bi-people-fill"></i> Employees</h5>
-
-          <div class="d-flex gap-2">
-            <button id="generateMrReportBtn" class="btn btn-sm btn-primary rounded-pill">
-              <i class="bi bi-filetype-pdf"></i> Generate MR Report
-            </button>
-
-            <button class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
-              <i class="bi bi-plus-circle"></i> Add Employee
-            </button>
-
-            <button class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#importEmployeeModal">
-              <i class="bi bi-file-earmark-arrow-up"></i> Import CSV
-            </button>
-            <a class="btn btn-sm btn-outline-success rounded-pill" href="employees.php?export_employees=1">
-              <i class="bi bi-download"></i> Export CSV
-            </a>
+        <div class="card-header bg-light">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <h5 class="mb-0 d-flex align-items-center gap-2">
+              <i class="bi bi-people-fill"></i>
+              Employees
+            </h5>
+            <div class="d-flex flex-wrap gap-2">
+              <div class="btn-group" role="group" aria-label="Employee Actions">
+                <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#addEmployeeModal" title="Add Employee">
+                  <i class="bi bi-plus-circle"></i> Add
+                </button>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importEmployeeModal" title="Import CSV">
+                  <i class="bi bi-file-earmark-arrow-up"></i> Import
+                </button>
+                <a class="btn btn-sm btn-outline-success" href="employees.php?export_employees=1" title="Export CSV">
+                  <i class="bi bi-download"></i> Export
+                </a>
+              </div>
+              <div class="btn-group" role="group" aria-label="Report & Delete">
+                <button id="generateMrReportBtn" class="btn btn-sm btn-primary" title="Generate MR Report">
+                  <i class="bi bi-filetype-pdf"></i> MR Report
+                </button>
+                <button id="deleteEmployeesBtn" class="btn btn-sm btn-danger" title="Delete Selected" disabled>
+                  <i class="bi bi-trash"></i> Delete Selected
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -171,7 +225,7 @@ while ($row = $result->fetch_assoc()) {
                 <?php foreach ($employees as $emp): ?>
                   <tr>
                     <td>
-                      <input type="checkbox" class="emp-checkbox" name="selected_employees[]" value="<?= (int)$emp['employee_id'] ?>" />
+                      <input type="checkbox" class="emp-checkbox" name="selected_employees[]" value="<?= (int)$emp['employee_id'] ?>" data-clearance="<?= htmlspecialchars($emp['clearance_status']) ?>" />
                     </td>
                     <td><?= htmlspecialchars($emp['employee_no']) ?></td>
                     <td><?= htmlspecialchars($emp['name']) ?></td>
@@ -317,6 +371,31 @@ while ($row = $result->fetch_assoc()) {
     </div>
   </div>
 
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle text-danger"></i>
+            Confirm Deletion
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2" id="deleteConfirmMessage">Are you sure you want to delete the selected employee(s)?</p>
+          <p class="text-muted small mb-0">Selected: <strong id="deleteConfirmCount">0</strong></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+            <i class="bi bi-trash"></i> Confirm Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -329,17 +408,53 @@ while ($row = $result->fetch_assoc()) {
     $(document).ready(function() {
       const table = $('#employeeTable').DataTable();
 
+      // Deletion feedback from query params (render Bootstrap alert)
+      (function(){
+        const params = new URLSearchParams(window.location.search);
+        const deleted = params.get('deleted');
+        const blocked = params.get('blocked');
+        if (deleted !== null || blocked !== null) {
+          const d = parseInt(deleted || '0', 10);
+          const b = parseInt(blocked || '0', 10);
+          let html = '';
+          if (d > 0) {
+            html += `<div class="alert alert-success alert-dismissible fade show" role="alert">
+                       <i class=\"bi bi-check-circle\"></i> ${d} employee(s) deleted successfully.
+                       <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"alert\" aria-label=\"Close\"></button>
+                     </div>`;
+          }
+          if (b > 0) {
+            html += `<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                       <i class=\"bi bi-exclamation-triangle\"></i> ${b} employee(s) could not be deleted because they have MR assets.
+                       <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"alert\" aria-label=\"Close\"></button>
+                     </div>`;
+          }
+          if (!html) {
+            html = `<div class="alert alert-info alert-dismissible fade show" role="alert">
+                      <i class=\"bi bi-info-circle\"></i> No employees were selected for deletion.
+                      <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"alert\" aria-label=\"Close\"></button>
+                    </div>`;
+          }
+          $('#pageAlerts').html(html);
+          // Clean the URL so alert won't repeat on refresh
+          const url = new URL(window.location.href);
+          url.searchParams.delete('deleted');
+          url.searchParams.delete('blocked');
+          window.history.replaceState({}, document.title, url.toString());
+        }
+      })();
+
       // Select All handling
       $('#selectAllEmployees').on('change', function() {
         const checked = $(this).is(':checked');
-        $('.emp-checkbox').prop('checked', checked);
+        $('.emp-checkbox:not(:disabled)').prop('checked', checked);
       });
 
       // Keep Select All in sync
       $(document).on('change', '.emp-checkbox', function() {
-        const total = $('.emp-checkbox').length;
+        const total = $('.emp-checkbox:not(:disabled)').length;
         const selected = $('.emp-checkbox:checked').length;
-        $('#selectAllEmployees').prop('checked', selected === total);
+        $('#selectAllEmployees').prop('checked', selected > 0 && selected === total);
       });
 
       // Handle Generate MR Report
@@ -347,10 +462,60 @@ while ($row = $result->fetch_assoc()) {
         e.preventDefault();
         const hasSelection = $('.emp-checkbox:checked').length > 0;
         if (!hasSelection) {
-          alert('Please select at least one employee. Only employees with MR assets will be included in the report.');
+          // Show info in the delete modal style but as info only
+          $('#deleteConfirmCount').text('0');
+          $('#deleteConfirmMessage').text('Please select at least one employee to generate MR report.');
+          $('#confirmDeleteBtn').prop('disabled', true).hide();
+          $('#deleteConfirmModal').modal('show');
           return;
         }
         $('#employeeReportForm')[0].submit();
+      });
+
+      // Enable/disable Delete button based on selection
+      function refreshDeleteBtnState() {
+        const selected = $('.emp-checkbox:checked').length;
+        $('#deleteEmployeesBtn').prop('disabled', selected === 0);
+      }
+      refreshDeleteBtnState();
+      $(document).on('change', '.emp-checkbox', refreshDeleteBtnState);
+
+      // Handle Delete Selected with confirmation modal
+      let pendingDeleteForm = null;
+      $('#deleteEmployeesBtn').on('click', function(e) {
+        e.preventDefault();
+        const checked = $('.emp-checkbox:checked');
+        const count = checked.length;
+        // Determine how many are blocked by MR assets
+        let blockedCount = 0;
+        checked.each(function(){ if ($(this).data('clearance') !== 'cleared') blockedCount++; });
+        const deletableCount = count - blockedCount;
+
+        $('#deleteConfirmCount').text(count);
+        if (blockedCount > 0) {
+          $('#deleteConfirmMessage').html(`You selected <strong>${count}</strong> employee(s). <strong>${deletableCount}</strong> will be deleted. <strong>${blockedCount}</strong> cannot be deleted because they have MR assets.`);
+        } else {
+          $('#deleteConfirmMessage').text('Are you sure you want to delete the selected employee(s)? This action cannot be undone.');
+        }
+        $('#confirmDeleteBtn').prop('disabled', false).show();
+        $('#deleteConfirmModal').modal('show');
+
+        // Prepare form but submit only after confirm
+        const form = $('<form>', { method: 'POST', action: 'employees.php' });
+        form.append($('<input>', { type: 'hidden', name: 'delete_selected', value: '1' }));
+        checked.each(function() {
+          form.append($('<input>', { type: 'hidden', name: 'selected_employees[]', value: $(this).val() }));
+        });
+        pendingDeleteForm = form;
+      });
+
+      $('#confirmDeleteBtn').on('click', function() {
+        if (pendingDeleteForm) {
+          $('body').append(pendingDeleteForm);
+          pendingDeleteForm.trigger('submit');
+          pendingDeleteForm = null;
+          $('#deleteConfirmModal').modal('hide');
+        }
       });
 
       // Load assets for employee
@@ -383,11 +548,11 @@ while ($row = $result->fetch_assoc()) {
         else clearanceBadge.addClass('bg-danger');
         clearanceBadge.text(empClearance ? empClearance.charAt(0).toUpperCase() + empClearance.slice(1) : '—');
 
-        // Employee image
+        // Employee image (fallback to profile icon if empty)
         if (empImage) {
           $('#empInfoImage').attr('src', '../img/' + empImage).show();
         } else {
-          $('#empInfoImage').attr('src', 'https://via.placeholder.com/70?text=No+Image');
+          $('#empInfoImage').attr('src', 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/person-circle.svg');
         }
 
         // Date Joined

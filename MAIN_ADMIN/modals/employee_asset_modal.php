@@ -14,7 +14,12 @@
         <div class="border rounded p-3 mb-3 bg-light">
           <div class="row g-3 align-items-center">
             <div class="col-auto">
-              <img id="empInfoImage" src="" alt="Employee Image" class="rounded-circle border" style="width: 70px; height: 70px; object-fit: cover;" />
+              <img id="empInfoImage"
+                   src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/person-circle.svg"
+                   alt="Employee Image"
+                   class="rounded-circle border"
+                   style="width: 70px; height: 70px; object-fit: cover;"
+                   onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/person-circle.svg';" />
             </div>
             <div class="col">
               <div class="fw-bold fs-5" id="empInfoName">—</div>
