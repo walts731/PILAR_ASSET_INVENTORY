@@ -15,9 +15,18 @@ if ($result && $result->num_rows > 0) {
 // Get current page
 $page = basename($_SERVER['PHP_SELF'], ".php");
 
-// Fetch inventory categories
+// Fetch inventory categories that have at least one asset record (type='asset', quantity > 0)
 $categories = [];
-$categoryResult = $conn->query("SELECT id, category_name FROM categories");
+$categorySql = "
+    SELECT c.id, c.category_name
+    FROM categories c
+    WHERE EXISTS (
+        SELECT 1 FROM assets a
+        WHERE a.category = c.id AND a.type = 'asset' AND a.quantity > 0
+    )
+    ORDER BY c.category_name ASC
+";
+$categoryResult = $conn->query($categorySql);
 if ($categoryResult && $categoryResult->num_rows > 0) {
     while ($row = $categoryResult->fetch_assoc()) {
         $categories[] = $row;
