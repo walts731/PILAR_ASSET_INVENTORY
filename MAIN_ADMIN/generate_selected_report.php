@@ -5,16 +5,75 @@ require_once '../vendor/autoload.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets'])) {
-    $ids = array_map('intval', $_POST['selected_assets']);
-    $id_list = implode(',', $ids);
+// Collect selected IDs from both sources
+$selectedAssets = isset($_POST['selected_assets']) ? array_map('intval', (array)$_POST['selected_assets']) : [];
+$selectedAssetsNew = isset($_POST['selected_assets_new']) ? array_map('intval', (array)$_POST['selected_assets_new']) : [];
 
-    $stmt = $conn->query("
-        SELECT a.*, c.category_name
-        FROM assets a
-        JOIN categories c ON a.category = c.id
-        WHERE a.id IN ($id_list)
-    ");
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!empty($selectedAssets) || !empty($selectedAssetsNew))) {
+    // Build a unified rows array with normalized columns
+    $rows = [];
+
+    // Pull from assets
+    if (!empty($selectedAssets)) {
+        $id_list = implode(',', $selectedAssets);
+        $q = $conn->query("
+            SELECT a.*, c.category_name
+            FROM assets a
+            LEFT JOIN categories c ON a.category = c.id
+            WHERE a.id IN ($id_list)
+        ");
+        while ($r = $q->fetch_assoc()) {
+            $qty = (int)($r['quantity'] ?? 0);
+            $val = (float)($r['value'] ?? 0);
+            $rows[] = [
+                'description' => $r['description'] ?? '',
+                'category_name' => $r['category_name'] ?? 'Uncategorized',
+                'quantity' => $qty,
+                'unit' => $r['unit'] ?? '',
+                'status' => $r['status'] ?? '',
+                'unit_cost' => $val,
+                'total_value' => $val * $qty,
+                'acquired' => $r['acquisition_date'] ?? '',
+                'updated' => $r['last_updated'] ?? ''
+            ];
+        }
+    }
+
+    // Pull from assets_new
+    if (!empty($selectedAssetsNew)) {
+        $id_list_new = implode(',', $selectedAssetsNew);
+        $q2 = $conn->query("
+            SELECT 
+              an.*,
+              COALESCE(
+                (
+                  SELECT c.category_name 
+                  FROM assets a 
+                  LEFT JOIN categories c ON a.category = c.id 
+                  WHERE a.asset_new_id = an.id 
+                  ORDER BY a.id ASC 
+                  LIMIT 1
+                ), 'Uncategorized'
+              ) AS category_name
+            FROM assets_new an
+            WHERE an.id IN ($id_list_new)
+        ");
+        while ($r2 = $q2->fetch_assoc()) {
+            $qty = (int)($r2['quantity'] ?? 0);
+            $val = (float)($r2['unit_cost'] ?? 0);
+            $rows[] = [
+                'description' => $r2['description'] ?? '',
+                'category_name' => $r2['category_name'] ?? 'Uncategorized',
+                'quantity' => $qty,
+                'unit' => $r2['unit'] ?? '',
+                'status' => 'available', // assets_new has no status column
+                'unit_cost' => $val,
+                'total_value' => $val * $qty,
+                'acquired' => $r2['date_created'] ?? '',
+                'updated' => $r2['date_created'] ?? ''
+            ];
+        }
+    }
 
     $reportDate = date('F Y');
     $reportFilename = 'Inventory_Report_' . date('Ymd_His') . '.pdf';
@@ -106,18 +165,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['selected_assets'])) 
         </thead>
         <tbody>';
 
-    while ($row = $stmt->fetch_assoc()) {
+    foreach ($rows as $row) {
+        $acq = !empty($row['acquired']) ? date('M d, Y', strtotime($row['acquired'])) : '';
+        $upd = !empty($row['updated']) ? date('M d, Y', strtotime($row['updated'])) : '';
         $html .= '<tr>
-        <td>' . htmlspecialchars($row['description']) . '</td>
-        <td>' . htmlspecialchars($row['category_name']) . '</td>
-        <td>' . $row['quantity'] . '</td>
-        <td>' . htmlspecialchars($row['unit']) . '</td>
-        <td>' . ucfirst(htmlspecialchars($row['status'])) . '</td>
-        <td>&#8369; ' . number_format($row['value'], 2) . '</td>
-        <td>&#8369; ' . number_format($row['value'] * $row['quantity'], 2) . '</td>
-        <td>' . date('M d, Y', strtotime($row['acquisition_date'])) . '</td>
-        <td>' . date('M d, Y', strtotime($row['last_updated'])) . '</td>
-    </tr>';
+            <td>' . htmlspecialchars($row['description']) . '</td>
+            <td>' . htmlspecialchars($row['category_name']) . '</td>
+            <td>' . (int)$row['quantity'] . '</td>
+            <td>' . htmlspecialchars($row['unit']) . '</td>
+            <td>' . htmlspecialchars(ucfirst($row['status'])) . '</td>
+            <td>&#8369; ' . number_format((float)$row['unit_cost'], 2) . '</td>
+            <td>&#8369; ' . number_format((float)$row['total_value'], 2) . '</td>
+            <td>' . $acq . '</td>
+            <td>' . $upd . '</td>
+        </tr>';
     }
 
     $html .= '</tbody></table>';
