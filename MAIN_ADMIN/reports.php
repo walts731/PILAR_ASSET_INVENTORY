@@ -105,7 +105,7 @@ if ($role === 'admin') {
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="reportsTable" class="table table-striped table-bordered">
+                        <table id="reportsTable" class="table">
                             <thead>
                                 <tr>
                                     <th>Filename</th>

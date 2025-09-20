@@ -83,6 +83,10 @@ while ($row = $result->fetch_assoc()) {
           <h5 class="mb-0"><i class="bi bi-people-fill"></i> Employees</h5>
 
           <div class="d-flex gap-2">
+            <button id="generateMrReportBtn" class="btn btn-sm btn-primary rounded-pill">
+              <i class="bi bi-filetype-pdf"></i> Generate MR Report
+            </button>
+
             <button class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
               <i class="bi bi-plus-circle"></i> Add Employee
             </button>
@@ -94,70 +98,78 @@ while ($row = $result->fetch_assoc()) {
         </div>
 
         <div class="card-body">
-          <table id="employeeTable" class="table">
-            <thead class="table-light">
-              <tr>
-                <th>Employee No</th>
-                <th>Name</th>
-                <th>Office</th>
-                <th>Employment Status</th>
-                <th>Clearance Status</th>
-                <th>Date Added</th>
-                <th>Image</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php foreach ($employees as $emp): ?>
+          <form id="employeeReportForm" method="POST" action="generate_employee_mr_report.php" target="_blank">
+            <table id="employeeTable" class="table">
+              <thead class="table-light">
                 <tr>
-                  <td><?= htmlspecialchars($emp['employee_no']) ?></td>
-                  <td><?= htmlspecialchars($emp['name']) ?></td>
-                  <td><?= htmlspecialchars($emp['office_name'] ?? 'N/A') ?></td>
-                  <td>
-                    <span class="badge 
-                      <?= $emp['status'] == 'permanent' ? 'bg-success' : ($emp['status'] == 'contractual' ? 'bg-warning text-dark' : ($emp['status'] == 'resigned' ? 'bg-secondary' : 'bg-info')) ?>">
-                      <?= htmlspecialchars(ucfirst($emp['status'])) ?>
-                    </span>
-                  </td>
-                  <td>
-                    <span class="badge <?= $emp['clearance_status'] == 'cleared' ? 'bg-success' : 'bg-danger' ?>">
-                      <?= ucfirst($emp['clearance_status']) ?>
-                    </span>
-                  </td>
-                  <td><?= date("F d, Y", strtotime($emp['date_added'])) ?></td>
-                  <td>
-                    <?php if (!empty($emp['image'])): ?>
-                      <img src="../img/<?= htmlspecialchars($emp['image']) ?>"
-                        alt="Employee Image"
-                        width="50" height="50"
-                        class="rounded-circle">
-                    <?php else: ?>
-                      <span class="text-muted">No image</span>
-                    <?php endif; ?>
-                  </td>
-
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary view-assets"
-                      data-id="<?= $emp['employee_id'] ?>"
-                      data-name="<?= htmlspecialchars($emp['name']) ?>">
-                      <i class="bi bi-eye"></i> View
-                    </button>
-
-                    <button class="btn btn-sm btn-outline-info edit-employee "
-                      data-id="<?= $emp['employee_id'] ?>"
-                      data-no="<?= htmlspecialchars($emp['employee_no']) ?>"
-                      data-name="<?= htmlspecialchars($emp['name']) ?>"
-                      data-office="<?= $emp['office_id'] ?>"
-                      data-status="<?= $emp['status'] ?>"
-                      data-image="<?= htmlspecialchars($emp['image']) ?>">
-                      <i class="bi bi-pencil"></i> Edit
-                    </button>
-                  </td>
-
+                  <th style="width:34px;">
+                    <input type="checkbox" id="selectAllEmployees" title="Select All" />
+                  </th>
+                  <th>Employee No</th>
+                  <th>Name</th>
+                  <th>Office</th>
+                  <th>Employment Status</th>
+                  <th>Clearance Status</th>
+                  <th>Date Added</th>
+                  <th>Image</th>
+                  <th>Action</th>
                 </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                <?php foreach ($employees as $emp): ?>
+                  <tr>
+                    <td>
+                      <input type="checkbox" class="emp-checkbox" name="selected_employees[]" value="<?= (int)$emp['employee_id'] ?>" />
+                    </td>
+                    <td><?= htmlspecialchars($emp['employee_no']) ?></td>
+                    <td><?= htmlspecialchars($emp['name']) ?></td>
+                    <td><?= htmlspecialchars($emp['office_name'] ?? 'N/A') ?></td>
+                    <td>
+                      <span class="badge 
+                        <?= $emp['status'] == 'permanent' ? 'bg-success' : ($emp['status'] == 'contractual' ? 'bg-warning text-dark' : ($emp['status'] == 'resigned' ? 'bg-secondary' : 'bg-info')) ?>">
+                        <?= htmlspecialchars(ucfirst($emp['status'])) ?>
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge <?= $emp['clearance_status'] == 'cleared' ? 'bg-success' : 'bg-danger' ?>">
+                        <?= ucfirst($emp['clearance_status']) ?>
+                      </span>
+                    </td>
+                    <td><?= date("F d, Y", strtotime($emp['date_added'])) ?></td>
+                    <td>
+                      <?php if (!empty($emp['image'])): ?>
+                        <img src="../img/<?= htmlspecialchars($emp['image']) ?>"
+                          alt="Employee Image"
+                          width="50" height="50"
+                          class="rounded-circle">
+                      <?php else: ?>
+                        <span class="text-muted">No image</span>
+                      <?php endif; ?>
+                    </td>
+
+                    <td>
+                      <button type="button" class="btn btn-sm btn-outline-primary view-assets"
+                        data-id="<?= $emp['employee_id'] ?>"
+                        data-name="<?= htmlspecialchars($emp['name']) ?>">
+                        <i class="bi bi-eye"></i> View
+                      </button>
+
+                      <button type="button" class="btn btn-sm btn-outline-info edit-employee "
+                        data-id="<?= $emp['employee_id'] ?>"
+                        data-no="<?= htmlspecialchars($emp['employee_no']) ?>"
+                        data-name="<?= htmlspecialchars($emp['name']) ?>"
+                        data-office="<?= $emp['office_id'] ?>"
+                        data-status="<?= $emp['status'] ?>"
+                        data-image="<?= htmlspecialchars($emp['image']) ?>">
+                        <i class="bi bi-pencil"></i> Edit
+                      </button>
+                    </td>
+
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </form>
         </div>
       </div>
     </div>
@@ -238,7 +250,31 @@ while ($row = $result->fetch_assoc()) {
     const systemLogo = "<?= $systemLogo ?>";
 
     $(document).ready(function() {
-      $('#employeeTable').DataTable();
+      const table = $('#employeeTable').DataTable();
+
+      // Select All handling
+      $('#selectAllEmployees').on('change', function() {
+        const checked = $(this).is(':checked');
+        $('.emp-checkbox').prop('checked', checked);
+      });
+
+      // Keep Select All in sync
+      $(document).on('change', '.emp-checkbox', function() {
+        const total = $('.emp-checkbox').length;
+        const selected = $('.emp-checkbox:checked').length;
+        $('#selectAllEmployees').prop('checked', selected === total);
+      });
+
+      // Handle Generate MR Report
+      $('#generateMrReportBtn').on('click', function(e){
+        e.preventDefault();
+        const hasSelection = $('.emp-checkbox:checked').length > 0;
+        if (!hasSelection) {
+          alert('Please select at least one employee. Only employees with MR assets will be included in the report.');
+          return;
+        }
+        $('#employeeReportForm')[0].submit();
+      });
 
       // Load assets for employee
       $('.view-assets').click(function() {
