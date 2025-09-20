@@ -115,6 +115,23 @@ $low_stock_count = count($low_stock_items);
               <span class="mx-1 text-muted"> &gt; </span>
               <span class="text-dark">Create Property Tag</span>
             </h5>';
+    } elseif ($current_page === 'saved_ris') {
+      $formId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">Saved RIS</span>
+            </h5>';
+    } elseif ($current_page === 'view_ris') {
+      $risId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+      $formId = isset($_GET['form_id']) ? intval($_GET['form_id']) : 0;
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <a href="saved_ris.php?id=' . $formId . '" class="text-decoration-none text-primary">Saved RIS</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">View RIS</span>
+            </h5>';
     } else {
       echo '<h5 class="m-0 text-center text-sm-start">' . htmlspecialchars($page_title) . '</h5>';
     }

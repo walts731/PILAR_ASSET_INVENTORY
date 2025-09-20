@@ -59,10 +59,6 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
     <div class="main">
         <?php include 'includes/topbar.php'; ?>
 
-        <a href="saved_ris.php?id=<?php echo $ris_form_id ?>" class="btn btn-secondary mb-3">
-            <i class="bi bi-arrow-left"></i> Back to Saved RIS
-        </a>
-
         <div class="mb-3 text-center">
             <?php if (!empty($ris_data['header_image'])): ?>
                 <img src="../img/<?= htmlspecialchars($ris_data['header_image']) ?>" class="img-fluid mb-3" style="max-width: 100%; height: auto; object-fit: contain;">
