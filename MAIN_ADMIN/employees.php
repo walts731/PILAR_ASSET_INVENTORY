@@ -37,6 +37,57 @@ $systemResult = $conn->query($systemSql);
 $system = $systemResult->fetch_assoc();
 $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
 
+// Export all employees to CSV (must run before any HTML output)
+if (isset($_GET['export_employees']) && $_GET['export_employees'] === '1') {
+  // Build filename with timestamp
+  $timestamp = date('Ymd_His');
+  $filename = "employees_{$timestamp}.csv";
+
+  // Query: match the view table to include office and clearance status
+  $exportSql = $conn->query("
+    SELECT e.employee_no, e.name, o.office_name,
+           e.status,
+           CASE 
+             WHEN EXISTS (SELECT 1 FROM mr_details m WHERE m.person_accountable = e.name) 
+             THEN 'uncleared'
+             ELSE 'cleared'
+           END AS clearance_status,
+           e.date_added
+    FROM employees e
+    LEFT JOIN offices o ON e.office_id = o.id
+    ORDER BY e.date_added DESC
+  ");
+
+  // Send headers
+  header('Content-Type: text/csv; charset=utf-8');
+  header('Content-Disposition: attachment; filename=' . $filename);
+  header('Pragma: no-cache');
+  header('Expires: 0');
+
+  $output = fopen('php://output', 'w');
+  // CSV header row
+  fputcsv($output, ['Employee No', 'Name', 'Office', 'Employment Status', 'Clearance Status', 'Date Added']);
+
+  while ($row = $exportSql->fetch_assoc()) {
+    $dateFormatted = '';
+    if (!empty($row['date_added'])) {
+      $ts = strtotime($row['date_added']);
+      $dateFormatted = $ts ? date('Y-m-d', $ts) : $row['date_added'];
+    }
+    fputcsv($output, [
+      $row['employee_no'],
+      $row['name'],
+      $row['office_name'] ?? 'N/A',
+      $row['status'],
+      ucfirst($row['clearance_status']),
+      $dateFormatted,
+    ]);
+  }
+
+  fclose($output);
+  exit();
+}
+
 // Fetch employees
 $employees = [];
 $result = $conn->query("
@@ -94,6 +145,9 @@ while ($row = $result->fetch_assoc()) {
             <button class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#importEmployeeModal">
               <i class="bi bi-file-earmark-arrow-up"></i> Import CSV
             </button>
+            <a class="btn btn-sm btn-outline-success rounded-pill" href="employees.php?export_employees=1">
+              <i class="bi bi-download"></i> Export CSV
+            </a>
           </div>
         </div>
 
@@ -110,8 +164,6 @@ while ($row = $result->fetch_assoc()) {
                   <th>Office</th>
                   <th>Employment Status</th>
                   <th>Clearance Status</th>
-                  <th>Date Added</th>
-                  <th>Image</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -135,22 +187,16 @@ while ($row = $result->fetch_assoc()) {
                         <?= ucfirst($emp['clearance_status']) ?>
                       </span>
                     </td>
-                    <td><?= date("F d, Y", strtotime($emp['date_added'])) ?></td>
-                    <td>
-                      <?php if (!empty($emp['image'])): ?>
-                        <img src="../img/<?= htmlspecialchars($emp['image']) ?>"
-                          alt="Employee Image"
-                          width="50" height="50"
-                          class="rounded-circle">
-                      <?php else: ?>
-                        <span class="text-muted">No image</span>
-                      <?php endif; ?>
-                    </td>
-
                     <td>
                       <button type="button" class="btn btn-sm btn-outline-primary view-assets"
                         data-id="<?= $emp['employee_id'] ?>"
-                        data-name="<?= htmlspecialchars($emp['name']) ?>">
+                        data-name="<?= htmlspecialchars($emp['name']) ?>"
+                        data-no="<?= htmlspecialchars($emp['employee_no']) ?>"
+                        data-office="<?= htmlspecialchars($emp['office_name'] ?? 'N/A') ?>"
+                        data-status="<?= htmlspecialchars($emp['status']) ?>"
+                        data-clearance="<?= htmlspecialchars($emp['clearance_status']) ?>"
+                        data-image="<?= htmlspecialchars($emp['image']) ?>"
+                        data-joined="<?= htmlspecialchars(date('F j, Y', strtotime($emp['date_added']))) ?>">
                         <i class="bi bi-eye"></i> View
                       </button>
 
@@ -180,61 +226,92 @@ while ($row = $result->fetch_assoc()) {
 
   <!-- Asset Details Modal -->
   <div class="modal fade" id="assetDetailsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-md">
-      <div class="modal-content shadow border border-dark">
-        <div class="modal-body p-4" style="font-family: 'Courier New', Courier, monospace;">
-          <div class="border border-2 border-dark rounded p-3">
-
-            <!-- Header: Logo, QR, GOV LABEL -->
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <img id="municipalLogoImg" src="<?= htmlspecialchars($systemLogo) ?>" alt="Municipal Logo" style="height: 70px;">
-              <div class="text-center flex-grow-1">
-                <h6 class="m-0 text-uppercase fw-bold">Government Property</h6>
-                <p class="m-0 small"><strong>Inventory Tag:</strong> <span id="viewInventoryTag"></span></p>
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title d-flex align-items-center gap-2">
+            <i class="bi bi-box-seam"></i>
+            Asset Details
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <!-- Header: Logo, Gov Label, Inventory Tag, QR -->
+          <div class="border rounded p-3 mb-3 bg-light">
+            <div class="row align-items-center g-3">
+              <div class="col-auto">
+                <img id="municipalLogoImg" src="<?= htmlspecialchars($systemLogo) ?>" alt="Municipal Logo" style="height: 64px;">
               </div>
-              <img id="viewQrCode" src="" alt="QR Code" style="height: 70px;">
-            </div>
-
-            <hr class="border-dark">
-
-            <!-- Description -->
-            <div class="mb-3">
-              <p class="mb-1"><strong>Description:</strong> <span id="viewDescription"></span></p>
-            </div>
-
-            <!-- Asset Image + Info -->
-            <div class="row">
-              <div class="col-5 text-center">
-                <label class="form-label fw-bold">Asset Image</label>
-                <img id="viewAssetImage" src="" alt="Asset Image"
-                  class="img-fluid border border-dark rounded"
-                  style="max-height: 150px; object-fit: contain;">
+              <div class="col text-center">
+                <div class="text-uppercase fw-bold">Government Property</div>
+                <div class="small text-muted">Inventory Tag: <span id="viewInventoryTag"></span></div>
               </div>
-              <div class="col-7">
-                <p class="mb-1"><strong>Office:</strong> <span id="viewOfficeName"></span></p>
-                <p class="mb-1"><strong>Category:</strong> <span id="viewCategoryName"></span></p>
-                <p class="mb-1"><strong>Type:</strong> <span id="viewType"></span></p>
-                <p class="mb-1"><strong>Status:</strong> <span id="viewStatus"></span></p>
-                <p class="mb-1"><strong>Quantity:</strong> <span id="viewQuantity"></span></p>
-                <p class="mb-1"><strong>Unit:</strong> <span id="viewUnit"></span></p>
-                <p class="mb-1"><strong>Serial No:</strong> <span id="viewSerialNo"></span></p>
-                <p class="mb-1"><strong>Property No:</strong> <span id="viewPropertyNo"></span></p>
-                <p class="mb-1"><strong>Code:</strong> <span id="viewCode"></span></p>
-                <p class="mb-1"><strong>Brand:</strong> <span id="viewBrand"></span></p>
+              <div class="col-auto">
+                <img id="viewQrCode" src="" alt="QR Code" style="height: 64px;">
               </div>
             </div>
-
-            <hr class="border-dark">
-
-            <!-- Dates + Value -->
-            <div class="mt-3">
-              <p class="mb-1"><strong>Acquisition Date:</strong> <span id="viewAcquisitionDate"></span></p>
-              <p class="mb-1"><strong>Last Updated:</strong> <span id="viewLastUpdated"></span></p>
-              <p class="mb-1"><strong>Unit Cost:</strong> ₱ <span id="viewValue"></span></p>
-              <p class="mb-1"><strong>Total Value:</strong> ₱ <span id="viewTotalValue"></span></p>
-            </div>
-
           </div>
+
+          <!-- Description -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold mb-1">Description</label>
+            <div class="p-2 border rounded bg-white"><span id="viewDescription"></span></div>
+          </div>
+
+          <!-- Summary Row: Image + Key Facts -->
+          <div class="row g-3">
+            <div class="col-md-5">
+              <div class="text-center">
+                <div class="fw-semibold mb-2">Asset Image</div>
+                <img id="viewAssetImage" src="" alt="Asset Image" class="img-fluid border rounded" style="max-height: 220px; object-fit: contain; background:#f8f9fa;">
+              </div>
+            </div>
+            <div class="col-md-7">
+              <div class="row g-2">
+                <div class="col-sm-6"><div class="small text-muted">Office</div><div class="fw-semibold" id="viewOfficeName"></div></div>
+                <div class="col-sm-6"><div class="small text-muted">Category</div><div class="fw-semibold" id="viewCategoryName"></div></div>
+                <div class="col-sm-6"><div class="small text-muted">Type</div><div class="fw-semibold" id="viewType"></div></div>
+                <div class="col-sm-6"><div class="small text-muted">Status</div><div class="fw-semibold" id="viewStatus"></div></div>
+                <div class="col-sm-6"><div class="small text-muted">Quantity</div><div class="fw-semibold" id="viewQuantity"></div></div>
+                <div class="col-sm-6"><div class="small text-muted">Unit</div><div class="fw-semibold" id="viewUnit"></div></div>
+                <div class="col-sm-6"><div class="small text-muted">Serial No</div><div class="fw-semibold" id="viewSerialNo"></div></div>
+                <div class="col-sm-6"><div class="small text-muted">Property No</div><div class="fw-semibold" id="viewPropertyNo"></div></div>
+                <div class="col-sm-6"><div class="small text-muted">Code</div><div class="fw-semibold" id="viewCode"></div></div>
+                <div class="col-sm-6"><div class="small text-muted">Brand</div><div class="fw-semibold" id="viewBrand"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dates and Values -->
+          <div class="row g-3 mt-2">
+            <div class="col-md-6">
+              <div class="border rounded p-3 h-100">
+                <div class="small text-muted">Acquisition Date</div>
+                <div class="fw-semibold" id="viewAcquisitionDate"></div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="border rounded p-3 h-100">
+                <div class="small text-muted">Last Updated</div>
+                <div class="fw-semibold" id="viewLastUpdated"></div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="border rounded p-3 h-100">
+                <div class="small text-muted">Unit Cost</div>
+                <div class="fw-bold text-success">₱ <span id="viewValue"></span></div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="border rounded p-3 h-100">
+                <div class="small text-muted">Total Value</div>
+                <div class="fw-bold text-primary">₱ <span id="viewTotalValue"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
@@ -280,8 +357,43 @@ while ($row = $result->fetch_assoc()) {
       $('.view-assets').click(function() {
         let empId = $(this).data('id');
         let empName = $(this).data('name');
+        let empNo = $(this).data('no');
+        let empOffice = $(this).data('office');
+        let empStatus = $(this).data('status');
+        let empClearance = $(this).data('clearance');
+        let empImage = $(this).data('image');
 
-        $('#employeeName').text(empName);
+        // Populate employee info section
+        $('#empInfoName').text(empName || '—');
+        $('#empInfoNo').text(empNo || '—');
+        $('#empInfoOffice').text(empOffice || '—');
+        // Status badge styling
+        const statusBadge = $('#empInfoStatusBadge');
+        statusBadge.removeClass('bg-success bg-warning text-dark bg-secondary bg-info');
+        if (empStatus === 'permanent') statusBadge.addClass('bg-success');
+        else if (empStatus === 'contractual') statusBadge.addClass('bg-warning text-dark');
+        else if (empStatus === 'resigned') statusBadge.addClass('bg-secondary');
+        else statusBadge.addClass('bg-info');
+        statusBadge.text(empStatus ? empStatus.charAt(0).toUpperCase() + empStatus.slice(1) : '—');
+
+        // Clearance badge styling
+        const clearanceBadge = $('#empInfoClearanceBadge');
+        clearanceBadge.removeClass('bg-success bg-danger');
+        if (empClearance === 'cleared') clearanceBadge.addClass('bg-success');
+        else clearanceBadge.addClass('bg-danger');
+        clearanceBadge.text(empClearance ? empClearance.charAt(0).toUpperCase() + empClearance.slice(1) : '—');
+
+        // Employee image
+        if (empImage) {
+          $('#empInfoImage').attr('src', '../img/' + empImage).show();
+        } else {
+          $('#empInfoImage').attr('src', 'https://via.placeholder.com/70?text=No+Image');
+        }
+
+        // Date Joined
+        const empJoined = $(this).data('joined');
+        $('#empInfoDateJoined').text(empJoined || '—');
+
         $('#assetsTableBody').html('<tr><td colspan="6" class="text-center">Loading...</td></tr>');
         $('#assetsModal').modal('show');
 
@@ -343,6 +455,14 @@ while ($row = $result->fetch_assoc()) {
             alert("Failed to load asset details.");
           });
       });
+
+      // Bind datalist selection to hidden employee_id for transfer modal
+      $(document).on('input', '#new_employee', function() {
+        const val = $(this).val();
+        const match = $('#employeesList option').filter(function() { return $(this).val() === val; }).first();
+        const empId = match.data('emp-id') || '';
+        $('#new_employee_id').val(empId);
+      });
     });
 
     // Open Edit Employee Modal and populate fields
@@ -378,8 +498,10 @@ while ($row = $result->fetch_assoc()) {
 
   // reset datalist (reload from PHP, avoid duplicates)
   let currentEmpId = $(this).data('current-employee-id');
+  $('#new_employee').val('');
+  $('#new_employee_id').val('');
   $('#employeesList option').each(function () {
-    if ($(this).val().startsWith(currentEmpId + " -")) {
+    if ($(this).data('emp-id') == currentEmpId) {
       $(this).remove();
     }
   });
@@ -413,6 +535,7 @@ while ($row = $result->fetch_assoc()) {
           <input type="hidden" name="asset_id" id="transfer_asset_id">
           <input type="hidden" name="inventory_tag" id="transfer_inventory_tag">
           <input type="hidden" name="current_employee_id" id="transfer_current_employee_id">
+          <input type="hidden" name="new_employee_id" id="new_employee_id">
 
           <label for="new_employee" class="form-label">Select New Employee</label>
           <input class="form-control" list="employeesList" name="new_employee" id="new_employee"
@@ -420,10 +543,12 @@ while ($row = $result->fetch_assoc()) {
 
           <datalist id="employeesList">
             <?php
-              // load all employees (exclude later in JS)
-              $empRes = $conn->query("SELECT employee_id, name FROM employees");
+              // load all employees (exclude current in JS); show only name and employee_no
+              $empRes = $conn->query("SELECT employee_id, employee_no, name FROM employees");
               while ($emp = $empRes->fetch_assoc()) {
-                echo "<option value='{$emp['employee_id']} - {$emp['name']}'>";
+                $display = htmlspecialchars($emp['name'] . ' - ' . $emp['employee_no']);
+                $empId = (int)$emp['employee_id'];
+                echo "<option value=\"{$display}\" data-emp-id=\"{$empId}\"></option>";
               }
             ?>
           </datalist>

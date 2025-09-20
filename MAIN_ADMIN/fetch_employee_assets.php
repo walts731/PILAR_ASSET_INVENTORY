@@ -21,6 +21,7 @@ if (isset($_GET['employee_id'])) {
               <td>" . htmlspecialchars($row['status']) . "</td>
               <td>" . htmlspecialchars($row['serial_no']) . "</td>
               <td>" . htmlspecialchars($row['property_no']) . "</td>
+              <td>" . htmlspecialchars($row['inventory_tag']) . "</td>
               <td>
                 <button class='btn btn-sm btn-primary view-asset-details' data-id='". (int)$row['id'] ."'>
                   <i class='bi bi-eye'></i> View
