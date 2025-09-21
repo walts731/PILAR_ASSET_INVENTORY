@@ -35,6 +35,13 @@ if ($res_cats && $res_cats->num_rows > 0) {
     while ($cr = $res_cats->fetch_assoc()) { $categories[] = $cr; }
 }
 
+// Dedicated query: fetch ALL categories independently for the Category dropdown
+$all_categories = [];
+$res_all_categories = $conn->query("SELECT id, category_name FROM categories ORDER BY category_name");
+if ($res_all_categories && $res_all_categories->num_rows > 0) {
+    while ($rowc = $res_all_categories->fetch_assoc()) { $all_categories[] = $rowc; }
+}
+
 // Determine document origin (ICS or PAR) and map to a source item id (ics_items.item_id or par_items.item_id)
 $existing_mr_check = false;
 $mr_item_id = null; // will hold item_id from ics_items or par_items when available
@@ -436,7 +443,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['error_message'] = "Failed to update asset Property No./Inventory Tag: " . $stmt_ai->error;
             }
             $stmt_ai->close();
-            $_SESSION['success_message'] = "MR Details successfully recorded!";
+            $_SESSION['success_message'] = "MR has been successfully created!";
             header("Location: create_mr.php?asset_id=" . $asset_id_form);
             exit();
         } else {
@@ -559,11 +566,17 @@ if ($baseProp !== '') {
             <?php
             // Display success or error messages
             if (isset($_SESSION['success_message'])) {
-                echo '<div class="alert alert-success">' . $_SESSION['success_message'] . '</div>';
+                echo '<div class="alert alert-success alert-dismissible fade show" role="alert">'
+                    . htmlspecialchars($_SESSION['success_message']) .
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' .
+                    '</div>';
                 unset($_SESSION['success_message']);
             }
             if (isset($_SESSION['error_message'])) {
-                echo '<div class="alert alert-danger">' . $_SESSION['error_message'] . '</div>';
+                echo '<div class="alert alert-danger alert-dismissible fade show" role="alert">'
+                    . htmlspecialchars($_SESSION['error_message']) .
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' .
+                    '</div>';
                 unset($_SESSION['error_message']);
             }
 
@@ -659,8 +672,8 @@ if ($baseProp !== '') {
                             <div class="col-md-6">
                                 <label for="category_id" class="form-label">Category <span class="text-danger">*</span></label>
                                 <select name="category_id" id="category_id" class="form-select" required>
-                                    <option value="">-- Select Category --</option>
-                                    <?php foreach ($categories as $cat): ?>
+                                    <option value="">Select Category</option>
+                                    <?php foreach ($all_categories as $cat): ?>
                                         <option value="<?= (int)$cat['id'] ?>" <?= (isset($asset_details['category']) && (int)$asset_details['category'] === (int)$cat['id']) ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($cat['category_name']) ?>
                                         </option>
@@ -686,8 +699,7 @@ if ($baseProp !== '') {
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="serviceable" value="1"
-                                        <?= (isset($asset_data['quantity']) && $asset_data['quantity'] > 0) ? 'checked' : '' ?>>
+                                    <input class="form-check-input" type="checkbox" name="serviceable" value="1" checked>
                                     <label class="form-check-label">Serviceable</label>
                                 </div>
                             </div>
@@ -766,7 +778,6 @@ if ($baseProp !== '') {
                                 <input type="date" class="form-control" name="counted_date">
                             </div>
                         </div>
-
                         <!-- Submit Button -->
                         <button type="submit" class="btn btn-primary">
                             <?= $existing_mr_check ? 'Edit' : 'Submit' ?>
@@ -779,8 +790,6 @@ if ($baseProp !== '') {
                 </div>
             </div>
         </div>
-
-    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
