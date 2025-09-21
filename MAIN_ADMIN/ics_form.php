@@ -220,9 +220,9 @@ $new_ics_no = generateICSNo($conn);
                             <td><input type="number" class="form-control quantity-field" name="quantity[]" min="1"></td>
                             <td>
                                 <select class="form-select" name="unit[]">
-                                    <option value="" disabled selected>Select unit</option>
+                                    <option value="" disabled>Select unit</option>
                                     <?php foreach ($unit_options as $unit): ?>
-                                        <option value="<?= htmlspecialchars($unit) ?>"><?= htmlspecialchars($unit) ?></option>
+                                        <option value="<?= htmlspecialchars($unit) ?>" <?= (strtolower($unit) === 'unit') ? 'selected' : '' ?>><?= htmlspecialchars($unit) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </td>
@@ -252,8 +252,7 @@ $new_ics_no = generateICSNo($conn);
                             <td style="position: relative;">
                                 <input type="text" class="form-control description-field"
                                     name="description[]"
-                                    list="descriptionList"
-                                    placeholder="Type or search..."
+                                    placeholder="Type description..."
                                     style="padding-right: 2rem;"> <!-- add right padding so X doesn't overlap -->
                                 <button type="button"
                                     class="clear-description"
@@ -270,11 +269,6 @@ $new_ics_no = generateICSNo($conn);
             color: #888;
             cursor: pointer;
         ">&times;</button>
-                                <datalist id="descriptionList">
-                                    <?php foreach ($description_details as $desc => $detail): ?>
-                                        <option value="<?= htmlspecialchars($desc) ?>"></option>
-                                    <?php endforeach; ?>
-                                </datalist>
                             </td>
 
                             <td><input type="text" class="form-control" name="item_no[]"></td>
@@ -389,30 +383,7 @@ $new_ics_no = generateICSNo($conn);
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const descriptions = <?= json_encode(array_keys($description_details)) ?>;
-
-        document.querySelectorAll('.description-field').forEach(input => {
-            input.addEventListener('input', function() {
-                const val = this.value.toLowerCase();
-                const list = descriptions.filter(d => d.toLowerCase().includes(val));
-
-                // Remove existing suggestions
-                let datalist = this.nextElementSibling;
-                if (!datalist || datalist.tagName.toLowerCase() !== 'datalist') {
-                    datalist = document.createElement('datalist');
-                    this.setAttribute('list', datalist.id = 'tempList' + Math.random().toString(36).substr(2, 5));
-                    this.after(datalist);
-                }
-                datalist.innerHTML = '';
-                list.forEach(d => {
-                    const option = document.createElement('option');
-                    option.value = d;
-                    datalist.appendChild(option);
-                });
-            });
-        });
-    });
+    // Datalist suggestions removed per requirement; plain text input only
     document.addEventListener('DOMContentLoaded', function() {
         const tableBody = document.getElementById('ics-items-body');
         const addRowBtn = document.getElementById('addRowBtn');
@@ -448,6 +419,7 @@ $new_ics_no = generateICSNo($conn);
             const quantityInput = row.querySelector('input[name="quantity[]"]');
             const unitCostInput = row.querySelector('input[name="unit_cost[]"]');
             const totalCostField = row.querySelector('input[name="total_cost[]"]');
+            const descriptionInput = row.querySelector('input[name="description[]"]');
 
             if (target.name === "unit_cost[]") {
                 const val = parseFloat(target.value) || 0;
@@ -495,7 +467,18 @@ $new_ics_no = generateICSNo($conn);
                                 break;
                             }
                         }
-                        if (!found) unitSelect.selectedIndex = 0; // fallback
+                        if (!found) {
+                            // fallback to default 'unit'
+                            let set = false;
+                            for (let i = 0; i < unitSelect.options.length; i++) {
+                                if (unitSelect.options[i].value.toLowerCase() === 'unit') {
+                                    unitSelect.selectedIndex = i;
+                                    set = true;
+                                    break;
+                                }
+                            }
+                            if (!set) unitSelect.selectedIndex = 0;
+                        }
                     }
 
                     // ✅ Auto-insert property_no into item_no field
@@ -510,7 +493,17 @@ $new_ics_no = generateICSNo($conn);
                         quantityInput.placeholder = '';
                     }
                     const unitSelect = row.querySelector('select[name="unit[]"]');
-                    if (unitSelect) unitSelect.selectedIndex = 0;
+                    if (unitSelect) {
+                        let set = false;
+                        for (let i = 0; i < unitSelect.options.length; i++) {
+                            if (unitSelect.options[i].value.toLowerCase() === 'unit') {
+                                unitSelect.selectedIndex = i;
+                                set = true;
+                                break;
+                            }
+                        }
+                        if (!set) unitSelect.selectedIndex = 0;
+                    }
 
                     // clear item_no if not matched
                     const itemNoInput = row.querySelector('input[name="item_no[]"]');
@@ -574,7 +567,16 @@ $new_ics_no = generateICSNo($conn);
             newRow.querySelectorAll('input, select').forEach(el => {
                 // keep attributes but reset values
                 if (el.tagName.toLowerCase() === 'select') {
-                    el.selectedIndex = 0;
+                    // default to 'unit' if available, else first option
+                    let set = false;
+                    for (let i = 0; i < el.options.length; i++) {
+                        if (el.options[i].value.toLowerCase() === 'unit') {
+                            el.selectedIndex = i;
+                            set = true;
+                            break;
+                        }
+                    }
+                    if (!set) el.selectedIndex = 0;
                 } else {
                     el.value = '';
                 }

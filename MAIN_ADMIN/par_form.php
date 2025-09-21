@@ -190,13 +190,15 @@ while ($row = $unit_query->fetch_assoc()) {
                             <select name="items[<?= $i ?>][unit]" class="form-select text-center">
                                 <option value="">Select Unit</option>
                                 <?php foreach ($units as $unit): ?>
-                                    <option value="<?= htmlspecialchars($unit['unit_name']) ?>"><?= htmlspecialchars($unit['unit_name']) ?></option>
+                                    <option value="<?= htmlspecialchars($unit['unit_name']) ?>" <?= (strtolower($unit['unit_name']) === 'unit') ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($unit['unit_name']) ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
                         </td>
                         <td class="position-relative" style="width: 30%;">
                             <div class="input-group">
-                                <input type="text" name="items[<?= $i ?>][description]" class="form-control form-control-lg" list="descriptionList" id="descInput<?= $i ?>">
+                                <input type="text" name="items[<?= $i ?>][description]" class="form-control form-control-lg" id="descInput<?= $i ?>" placeholder="Type description...">
                                 <input type="hidden" name="items[<?= $i ?>][asset_id]" id="assetId<?= $i ?>">
                                 <button type="button"
                                     class="btn p-0 m-0 border-0 bg-transparent"
@@ -248,20 +250,7 @@ while ($row = $unit_query->fetch_assoc()) {
                                 style="padding-left: 1.5rem;">
                         </td>
 
-                        <datalist id="descriptionList">
-                            <?php foreach ($description_details as $desc => $details): ?>
-                                <option
-                                    value="<?= htmlspecialchars($desc) ?>"
-                                    label="<?= htmlspecialchars($details['office_name']) ?>"
-                                    data-asset-id="<?= htmlspecialchars($details['id']) ?>"
-                                    data-unit-cost="<?= htmlspecialchars($details['unit_cost']) ?>"
-                                    data-quantity="<?= htmlspecialchars($details['quantity']) ?>"
-                                    data-date="<?= htmlspecialchars($details['acquisition_date']) ?>"
-                                    data-unit="<?= htmlspecialchars($details['unit']) ?>"
-                                    data-property-no="<?= htmlspecialchars($details['property_no']) ?>">
-                                </option>
-                            <?php endforeach; ?>
-                        </datalist>
+                        
                     </tr>
                 <?php endfor; ?>
             <tfoot>
@@ -350,13 +339,15 @@ while ($row = $unit_query->fetch_assoc()) {
             <select name="items[${rowIndex}][unit]" class="form-select text-center" required>
                 <option value="">Select Unit</option>
                 <?php foreach ($units as $unit): ?>
-                    <option value="<?= htmlspecialchars($unit['unit_name']) ?>"><?= htmlspecialchars($unit['unit_name']) ?></option>
+                    <option value="<?= htmlspecialchars($unit['unit_name']) ?>" <?= (strtolower($unit['unit_name']) === 'unit') ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($unit['unit_name']) ?>
+                    </option>
                 <?php endforeach; ?>
             </select>
         </td>
         <td class="position-relative">
     <div class="input-group">
-        <input type="text" name="items[${rowIndex}][description]" class="form-control form-control-lg" list="descriptionList" id="descInput${rowIndex}">
+        <input type="text" name="items[${rowIndex}][description]" class="form-control form-control-lg" id="descInput${rowIndex}" placeholder="Type description...">
         <input type="hidden" name="items[${rowIndex}][asset_id]" id="assetId${rowIndex}">
         <button type="button"
                 class="btn p-0 m-0 border-0 bg-transparent"
@@ -421,7 +412,6 @@ while ($row = $unit_query->fetch_assoc()) {
         const qtyInput = document.getElementById('qtyInput' + i);
         const acqDateInput = document.getElementById('acqDate' + i);
         const amountInput = document.getElementById('amount' + i);
-        const dataList = document.getElementById('descriptionList');
         const assetIdInput = document.getElementById('assetId' + i);
         const propertyNoInput = document.querySelector(`[name="items[${i}][property_no]"]`);
 
@@ -441,61 +431,21 @@ while ($row = $unit_query->fetch_assoc()) {
             const val = descInput.value.trim();
             assetIdInput.value = ""; // reset first
 
-            // Check all other description inputs for duplicates
-            const descInputs = document.querySelectorAll('input[list="descriptionList"]');
+            // Check all other description inputs for duplicates (by id prefix)
+            const descInputs = document.querySelectorAll('[id^="descInput"]');
             let duplicateFound = false;
-
-            descInputs.forEach((input, idx) => {
-                if (input !== descInput && input.value.trim() === val) {
+            descInputs.forEach((input) => {
+                if (input !== descInput && input.value.trim() === val && val !== '') {
                     duplicateFound = true;
                 }
             });
-
             if (duplicateFound) {
                 showDuplicateModal();
                 descInput.value = '';
                 return;
             }
 
-            const options = dataList.options;
-            for (let j = 0; j < options.length; j++) {
-                if (options[j].value === val) {
-                    const assetId = options[j].getAttribute('data-asset-id');
-                    const unitCost = options[j].getAttribute('data-unit-cost');
-                    const maxQty = options[j].getAttribute('data-quantity');
-                    const acqDate = options[j].getAttribute('data-date');
-                    const unit = options[j].getAttribute('data-unit');
-                    const propertyNo = options[j].getAttribute('data-property-no');
-
-                    assetIdInput.value = assetId;
-                    unitCostInput.value = unitCost;
-                    qtyInput.max = maxQty;
-                    acqDateInput.value = acqDate;
-
-                    if (propertyNoInput) {
-                        propertyNoInput.value = propertyNo; // ✅ autofill property no
-                    }
-
-                    const unitSelect = document.querySelector(`[name="items[${i}][unit]"]`);
-                    if (unitSelect && unit) {
-                        for (let opt of unitSelect.options) {
-                            if (opt.value === unit) {
-                                unitSelect.value = unit;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (parseInt(qtyInput.value) > parseInt(maxQty)) {
-                        qtyInput.value = '';
-                        alert("Quantity exceeds available stock: " + maxQty);
-                    }
-
-                    calculateAmount();
-                    break;
-                }
-            }
-
+            // No autofill when suggestions are disabled; keep manual entry behavior
             updateTotalAmount();
         });
     }
@@ -520,7 +470,7 @@ while ($row = $unit_query->fetch_assoc()) {
 
     // Optional: Final duplicate check on form submission
     function checkDuplicates() {
-        const descInputs = document.querySelectorAll('input[list="descriptionList"]');
+        const descInputs = document.querySelectorAll('[id^="descInput"]');
         const seen = new Set();
 
         for (let input of descInputs) {
