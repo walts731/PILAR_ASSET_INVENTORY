@@ -51,13 +51,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         (form_id, asset_id, quantity, unit, description, property_no, date_acquired, unit_price, amount)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    // --- Prepare stock update ---
-    $stmt_update_assets = $conn->prepare("UPDATE assets SET quantity = quantity - ? WHERE id = ?");
-
     $items = $_POST['items'] ?? [];
 
+    // --- Skipped items collector ---
+    $skipped = [];
+
+    // --- Prepare insert into assets_new (aggregate per PAR line) with explicit par linkage ---
+    $stmt_assets_new = $conn->prepare("INSERT INTO assets_new (description, quantity, unit_cost, unit, office_id, par_id, date_created) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+
     foreach ($items as $item) {
-        $asset_id = intval($item['asset_id'] ?? 0);
         $quantity = floatval($item['quantity'] ?? 0);
         $unit = $item['unit'] ?? '';
         $description = trim($item['description'] ?? '');
@@ -66,21 +68,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $unit_price = floatval($item['unit_price'] ?? 0);
         $amount = floatval($item['amount'] ?? 0);
 
-        if (!$asset_id || $quantity <= 0 || empty($description)) continue;
-
-        // --- Deduct stock from main asset ---
-        $stmt_update_assets->bind_param("ii", $quantity, $asset_id);
-        $stmt_update_assets->execute();
-
-        // --- Determine asset for PAR item ---
-        if ($is_outside_lgu) {
-            $latest_asset_id = $asset_id; // just deduct, no transfer
-        } elseif ($office_id > 0) {
-            // transfer asset to office
-            $latest_asset_id = transferAssetToOffice($conn, $asset_id, $quantity, $unit_price, $office_id);
-        } else {
-            $latest_asset_id = $asset_id;
+        if ($quantity <= 0 || empty($description)) continue;
+        // Server-side enforcement for PAR rule: unit price must be > 50,000
+        if ($unit_price <= 50000) {
+            $skipped[] = "Item '" . $description . "' skipped (unit price must be > 50,000).";
+            continue;
         }
+
+        // --- Insert aggregate record into assets_new (like ICS flow) ---
+        $target_office = $is_outside_lgu ? 0 : (int)$office_id; // align with ICS approach
+        $stmt_assets_new->bind_param("sddsii", $description, $quantity, $unit_price, $unit, $target_office, $par_id);
+        $stmt_assets_new->execute();
+        $asset_new_id = $conn->insert_id;
+
+        // --- Create item-level assets (quantity=1 each), linked to assets_new ---
+        $first_item_id = createItemAssetsDirect(
+            $conn,
+            $description,
+            $unit,
+            (float)$unit_price,
+            (int)$quantity,
+            $is_outside_lgu ? null : ($office_id > 0 ? (int)$office_id : null),
+            $property_no,
+            $date_acquired ?: date('Y-m-d'),
+            null, // keep assets.ics_id = NULL for PAR-created rows to satisfy FK to ics_form(id)
+            (int)$asset_new_id,
+            (int)$par_id // set assets.par_id for linkage to PAR
+        );
+        $latest_asset_id = $first_item_id;
 
         // --- Insert into PAR items ---
         $stmt_items->bind_param(
@@ -101,84 +116,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $stmt_items->close();
-    $stmt_update_assets->close();
+    if (isset($stmt_assets_new)) { $stmt_assets_new->close(); }
 
-    header("Location: forms.php?id=" . $form_id . "&success=1");
+    // Flash messages consistent with ICS flow
+    $_SESSION['flash'] = [
+        'type' => empty($skipped) ? 'success' : 'warning',
+        'message' => empty($skipped)
+            ? 'PAR has been saved successfully.'
+            : ('PAR saved with some items skipped: ' . implode(' ', $skipped))
+    ];
+
+    header("Location: forms.php?id=" . $form_id);
     exit();
 }
 
-// --- Function: transfer asset to office ---
-function transferAssetToOffice($conn, $asset_id, $quantity, $unit_cost, $office_id)
-{
-    $created_at = date('Y-m-d H:i:s');
+// Create item-level assets directly (quantity=1) and link to assets_new
+function createItemAssetsDirect($conn, $description, $unit, $unit_cost, $count, $office_id, $item_no, $date_acquired, $ics_id, $asset_new_id, $par_id) {
+    if ($count <= 0) return null;
 
-    // Fetch main asset
-    $stmt = $conn->prepare("SELECT * FROM assets WHERE id = ?");
-    $stmt->bind_param("i", $asset_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $asset = $result->fetch_assoc();
-    $stmt->close();
-    if (!$asset) return null;
+    $qrDir = realpath(__DIR__ . '/../img');
+    if (!$qrDir) { $qrDir = __DIR__; }
 
-    // Check if asset already exists in the office
-    $stmt = $conn->prepare("SELECT id, quantity FROM assets WHERE description = ? AND office_id = ?");
-    $stmt->bind_param("si", $asset['description'], $office_id);
-    $stmt->execute();
-    $result_check = $stmt->get_result();
-    $stmt->close();
+    $stmtIns = $conn->prepare("INSERT INTO assets 
+        (asset_name, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, ics_id, asset_new_id, par_id)
+        VALUES (?, ?, 1, ?, 'available', ?, ?, ?, ?, NOW(), ?, '', ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)");
 
-    if ($result_check && $row = $result_check->fetch_assoc()) {
-        $new_quantity = $row['quantity'] + $quantity;
-        $stmt = $conn->prepare("UPDATE assets SET quantity = ?, value = ?, last_updated = ? WHERE id = ?");
-        $stmt->bind_param("ddsi", $new_quantity, $unit_cost, $created_at, $row['id']);
-        $stmt->execute();
-        $stmt->close();
-        return $row['id'];
-    } else {
-        // Insert new asset for office
-        $qr_code = '';
-        $stmt = $conn->prepare("INSERT INTO assets 
-            (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param(
-            "sisisssiiisdssssssss",
-            $asset['asset_name'],
-            $asset['category'],
-            $asset['description'],
-            $quantity,
-            $asset['unit'],
-            $asset['status'],
-            $asset['acquisition_date'],
-            $office_id,
-            $asset['employee_id'],
-            $asset['red_tagged'],
-            $created_at,
-            $unit_cost,
-            $qr_code,
-            $asset['type'],
-            $asset['image'],
-            $asset['serial_no'],
-            $asset['code'],
-            $asset['property_no'],
-            $asset['model'],
-            $asset['brand']
+    $first_inserted_id = null;
+    for ($i = 1; $i <= $count; $i++) {
+        $p_asset_name = $description;
+        $p_description = $description;
+        $p_unit = $unit;
+        $p_acq = $date_acquired ?: date('Y-m-d');
+        $p_office = isset($office_id) ? (int)$office_id : null;
+        $p_emp = null;
+        $p_red = 0;
+        $p_value = (float)$unit_cost;
+        $p_type = 'asset';
+        $p_image = '';
+        $p_serial = '';
+        $p_code = '';
+        $p_model = '';
+        $p_brand = '';
+        $p_ics = isset($ics_id) ? (int)$ics_id : null;
+        $p_asset_new = (int)$asset_new_id;
+        $p_par = isset($par_id) ? (int)$par_id : null;
+
+        $stmtIns->bind_param(
+            'ssssiiidssssssiii',
+            $p_asset_name,
+            $p_description,
+            $p_unit,
+            $p_acq,
+            $p_office,
+            $p_emp,
+            $p_red,
+            $p_value,
+            $p_type,
+            $p_image,
+            $p_serial,
+            $p_code,
+            $p_model,
+            $p_brand,
+            $p_ics,
+            $p_asset_new,
+            $p_par
         );
-        $stmt->execute();
-        $new_asset_id = $conn->insert_id;
-        $stmt->close();
 
-        // Generate QR code
-        $qr_filename = $new_asset_id . '.png';
-        $qr_path = '../img/' . $qr_filename;
-        QRcode::png((string)$new_asset_id, $qr_path, QR_ECLEVEL_L, 4);
+        if ($stmtIns->execute()) {
+            $new_item_id = $conn->insert_id;
+            if ($first_inserted_id === null) { $first_inserted_id = $new_item_id; }
+            $qr_filename = $new_item_id . '.png';
+            $qr_path = $qrDir . DIRECTORY_SEPARATOR . $qr_filename;
+            QRcode::png((string)$new_item_id, $qr_path, QR_ECLEVEL_L, 4);
 
-        // Update asset with QR code
-        $stmt = $conn->prepare("UPDATE assets SET qr_code = ? WHERE id = ?");
-        $stmt->bind_param("si", $qr_filename, $new_asset_id);
-        $stmt->execute();
-        $stmt->close();
-
-        return $new_asset_id;
+            $stmtUpd = $conn->prepare("UPDATE assets SET qr_code = ? WHERE id = ?");
+            $stmtUpd->bind_param("si", $qr_filename, $new_item_id);
+            $stmtUpd->execute();
+            $stmtUpd->close();
+        }
     }
+    $stmtIns->close();
+    return $first_inserted_id;
 }

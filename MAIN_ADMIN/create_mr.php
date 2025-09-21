@@ -35,9 +35,10 @@ if ($res_cats && $res_cats->num_rows > 0) {
     while ($cr = $res_cats->fetch_assoc()) { $categories[] = $cr; }
 }
 
-// We'll resolve the FK requirement by mapping to an ics_items.item_id for this asset
+// Determine document origin (ICS or PAR) and map to a source item id (ics_items.item_id or par_items.item_id)
 $existing_mr_check = false;
-$mr_item_id = null; // this will hold a valid ics_items.item_id for FK
+$mr_item_id = null; // will hold item_id from ics_items or par_items when available
+$origin = null;     // 'ICS' | 'PAR' | null
 
 // Seed defaults directly from the item-level assets table
 if ($asset_id) {
@@ -59,14 +60,29 @@ if ($asset_id) {
 
 // Derive a valid ics_items.item_id for this asset to satisfy mr_details FK
 if ($asset_id) {
-    $stmt_mrmap = $conn->prepare("SELECT item_id FROM ics_items WHERE asset_id = ? ORDER BY item_id ASC LIMIT 1");
-    $stmt_mrmap->bind_param("i", $asset_id);
-    $stmt_mrmap->execute();
-    $res_mrmap = $stmt_mrmap->get_result();
-    if ($res_mrmap && $rm = $res_mrmap->fetch_assoc()) {
-        $mr_item_id = (int)$rm['item_id'];
+    // Detect origin by checking assets.ics_id vs assets.par_id
+    $stmt_origin = $conn->prepare("SELECT ics_id, par_id FROM assets WHERE id = ?");
+    $stmt_origin->bind_param("i", $asset_id);
+    $stmt_origin->execute();
+    $res_origin = $stmt_origin->get_result();
+    $row_origin = $res_origin ? $res_origin->fetch_assoc() : null;
+    $stmt_origin->close();
+
+    if ($row_origin && !empty($row_origin['ics_id'])) {
+        $origin = 'ICS';
+        $stmt_mrmap = $conn->prepare("SELECT item_id FROM ics_items WHERE asset_id = ? ORDER BY item_id ASC LIMIT 1");
+        $stmt_mrmap->bind_param("i", $asset_id);
+        $stmt_mrmap->execute();
+        $res_mrmap = $stmt_mrmap->get_result();
+        if ($res_mrmap && $rm = $res_mrmap->fetch_assoc()) {
+            $mr_item_id = (int)$rm['item_id'];
+        }
+        $stmt_mrmap->close();
+    } elseif ($row_origin && !empty($row_origin['par_id'])) {
+        $origin = 'PAR';
+        // Do not set item_id from par_items to avoid violating FK to ics_items
+        // We'll proceed with item_id = NULL and identify MR rows by asset_id
     }
-    $stmt_mrmap->close();
 }
 
 // Check if MR exists for this mapped ics_items.item_id
@@ -79,6 +95,16 @@ if ($mr_item_id) {
         $existing_mr_check = true;
     }
     $stmt_check->close();
+} elseif (!empty($asset_id)) {
+    // Fallback: check by asset_id to prevent duplicates when item mapping is unavailable (e.g., PAR items beyond first)
+    $stmt_check2 = $conn->prepare("SELECT 1 FROM mr_details WHERE asset_id = ? LIMIT 1");
+    $stmt_check2->bind_param("i", $asset_id);
+    $stmt_check2->execute();
+    $res_check2 = $stmt_check2->get_result();
+    if ($res_check2 && $res_check2->num_rows > 0) {
+        $existing_mr_check = true;
+    }
+    $stmt_check2->close();
 }
 // Generate Inventory Tag
 $inventory_tag = '';
@@ -260,62 +286,77 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt_update_asset->close();
     }
 
-    // Ensure we have an ics_items mapping for this asset (required by mr_details FK)
+    // Ensure we have a source item mapping for this asset when available
     // Re-check mapping for the posted asset_id, in case GET and POST differ
     $mr_item_id = null;
+    $doc_origin = null;
     if (!empty($asset_id_form)) {
-        $stmt_mrmap2 = $conn->prepare("SELECT item_id FROM ics_items WHERE asset_id = ? ORDER BY item_id ASC LIMIT 1");
-        $stmt_mrmap2->bind_param("i", $asset_id_form);
-        $stmt_mrmap2->execute();
-        $res_mrmap2 = $stmt_mrmap2->get_result();
-        if ($res_mrmap2 && ($rm2 = $res_mrmap2->fetch_assoc())) {
-            $mr_item_id = (int)$rm2['item_id'];
-        }
-        $stmt_mrmap2->close();
-    }
+        // Determine origin again for POST context
+        $stmt_origin2 = $conn->prepare("SELECT ics_id, par_id FROM assets WHERE id = ?");
+        $stmt_origin2->bind_param("i", $asset_id_form);
+        $stmt_origin2->execute();
+        $res_origin2 = $stmt_origin2->get_result();
+        $row_origin2 = $res_origin2 ? $res_origin2->fetch_assoc() : null;
+        $stmt_origin2->close();
 
-    if (!$mr_item_id && !empty($asset_id_form)) {
-        // Try to auto-create a minimal ics_items mapping using the asset's ICS info
-        $stmt_asset = $conn->prepare("SELECT a.description, a.unit, a.value, a.property_no, a.ics_id, f.ics_no FROM assets a LEFT JOIN ics_form f ON f.id = a.ics_id WHERE a.id = ?");
-        $stmt_asset->bind_param("i", $asset_id_form);
-        $stmt_asset->execute();
-        $res_asset = $stmt_asset->get_result();
-        $asset_row = $res_asset ? $res_asset->fetch_assoc() : null;
-        $stmt_asset->close();
+        if ($row_origin2 && !empty($row_origin2['ics_id'])) {
+            $doc_origin = 'ICS';
+            $stmt_mrmap2 = $conn->prepare("SELECT item_id FROM ics_items WHERE asset_id = ? ORDER BY item_id ASC LIMIT 1");
+            $stmt_mrmap2->bind_param("i", $asset_id_form);
+            $stmt_mrmap2->execute();
+            $res_mrmap2 = $stmt_mrmap2->get_result();
+            if ($res_mrmap2 && ($rm2 = $res_mrmap2->fetch_assoc())) {
+                $mr_item_id = (int)$rm2['item_id'];
+            } else {
+                // Optionally auto-create minimal ics_items mapping
+                $stmt_asset = $conn->prepare("SELECT a.description, a.unit, a.value, a.property_no, a.ics_id, f.ics_no FROM assets a LEFT JOIN ics_form f ON f.id = a.ics_id WHERE a.id = ?");
+                $stmt_asset->bind_param("i", $asset_id_form);
+                $stmt_asset->execute();
+                $res_asset = $stmt_asset->get_result();
+                $asset_row = $res_asset ? $res_asset->fetch_assoc() : null;
+                $stmt_asset->close();
 
-        if ($asset_row && !empty($asset_row['ics_id'])) {
-            $ics_no_ins = $asset_row['ics_no'] ?? '';
-            $qty_ins = 1; // item-level
-            $unit_ins = $asset_row['unit'] ?? '';
-            $unit_cost_ins = (float)($asset_row['value'] ?? 0);
-            $total_cost_ins = $unit_cost_ins * $qty_ins;
-            $desc_ins = $asset_row['description'] ?? '';
-            $item_no_ins = $asset_row['property_no'] ?? '';
-            $est_life_ins = '';
+                if ($asset_row && !empty($asset_row['ics_id'])) {
+                    $ics_no_ins = $asset_row['ics_no'] ?? '';
+                    $qty_ins = 1; // item-level
+                    $unit_ins = $asset_row['unit'] ?? '';
+                    $unit_cost_ins = (float)($asset_row['value'] ?? 0);
+                    $total_cost_ins = $unit_cost_ins * $qty_ins;
+                    $desc_ins = $asset_row['description'] ?? '';
+                    $item_no_ins = $asset_row['property_no'] ?? '';
+                    $est_life_ins = '';
 
-            $stmt_items_ins = $conn->prepare("INSERT INTO ics_items (ics_id, asset_id, ics_no, quantity, unit, unit_cost, total_cost, description, item_no, estimated_useful_life, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-            $stmt_items_ins->bind_param(
-                "iisisddsss",
-                $asset_row['ics_id'],   // i
-                $asset_id_form,         // i
-                $ics_no_ins,            // s
-                $qty_ins,               // i
-                $unit_ins,              // s
-                $unit_cost_ins,         // d
-                $total_cost_ins,        // d
-                $desc_ins,              // s
-                $item_no_ins,           // s
-                $est_life_ins           // s
-            );
-            if ($stmt_items_ins->execute()) {
-                $mr_item_id = $conn->insert_id;
+                    $stmt_items_ins = $conn->prepare("INSERT INTO ics_items (ics_id, asset_id, ics_no, quantity, unit, unit_cost, total_cost, description, item_no, estimated_useful_life, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                    $stmt_items_ins->bind_param(
+                        "iisisddsss",
+                        $asset_row['ics_id'],   // i
+                        $asset_id_form,         // i
+                        $ics_no_ins,            // s
+                        $qty_ins,               // i
+                        $unit_ins,              // s
+                        $unit_cost_ins,         // d
+                        $total_cost_ins,        // d
+                        $desc_ins,              // s
+                        $item_no_ins,           // s
+                        $est_life_ins           // s
+                    );
+                    if ($stmt_items_ins->execute()) {
+                        $mr_item_id = $conn->insert_id;
+                    }
+                    $stmt_items_ins->close();
+                }
             }
-            $stmt_items_ins->close();
+            if (isset($stmt_mrmap2)) { $stmt_mrmap2->close(); }
+        } elseif ($row_origin2 && !empty($row_origin2['par_id'])) {
+            $doc_origin = 'PAR';
+            // Do not derive item_id from par_items due to FK to ics_items; keep NULL
+            $mr_item_id = null;
         }
     }
 
     // Insert or Update mr_details
-    if (!$mr_item_id) {
+    // For ICS-origin, mr_item_id is expected. For PAR-origin, allow item_id to be NULL if mapping is unavailable.
+    if (!$mr_item_id && $doc_origin === 'ICS') {
         $_SESSION['error_message'] = "No ICS item mapping found for this asset. Cannot create MR due to foreign key constraint.";
         header("Location: create_mr.php?asset_id=" . urlencode((string)$asset_id_form));
         exit();
@@ -325,9 +366,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // UPDATE
         $stmt_upd = $conn->prepare("UPDATE mr_details SET 
             office_location = ?, description = ?, model_no = ?, serial_no = ?, serviceable = ?, unserviceable = ?, unit_quantity = ?, unit = ?, acquisition_date = ?, acquisition_cost = ?, person_accountable = ?, acquired_date = ?, counted_date = ?, inventory_tag = ?
-            WHERE item_id = ? AND asset_id = ?");
+            WHERE (item_id = ? OR (? IS NULL AND item_id IS NULL)) AND asset_id = ?");
         $stmt_upd->bind_param(
-            "ssssiiisssssssii",
+            "ssssiiisssssssiii",
             $office_location,
             $description,
             $model_no,
@@ -342,6 +383,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $acquired_date,
             $counted_date,
             $inventory_tag,
+            $mr_item_id,
             $mr_item_id,
             $asset_id
         );

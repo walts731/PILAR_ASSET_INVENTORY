@@ -1,6 +1,14 @@
 <?php
 require_once '../connect.php';
 
+// Start session similar to ICS form (for flash messages, etc.)
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+// Get form_id from URL (for consistency with ICS form)
+$form_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
 // Default data
 $par_data = [
     'header_image' => '',
@@ -39,14 +47,14 @@ while ($row = $office_query->fetch_assoc()) {
 }
 
 // Fetch description + unit cost + quantity from assets 
-// (only type = 'asset', quantity > 0, and value >= 50,000)
+// PAR rule: allow inserting assets with VALUE > 50,000 (strictly greater) and available quantity
 $description_details = [];
 $result = $conn->query("
     SELECT a.id, a.description, a.value AS unit_cost, a.quantity, a.acquisition_date, 
            a.unit, a.property_no, o.office_name
     FROM assets a
     LEFT JOIN offices o ON a.office_id = o.id
-    WHERE a.type = 'asset' AND a.quantity > 0 AND a.value >= 50000
+    WHERE a.type = 'asset' AND a.quantity > 0 AND a.value > 50000
 ");
 
 if ($result && $result->num_rows > 0) {
@@ -73,16 +81,27 @@ while ($row = $unit_query->fetch_assoc()) {
 ?>
 
 
+<div class="d-flex justify-content-end mb-3">
+    <a href="saved_par.php?id=<?= htmlspecialchars($form_id) ?>" class="btn btn-info">
+        <i class="bi bi-folder-check"></i> View Saved PAR
+    </a>
+</div>
 <div class="container mt-3">
-    <?php
-    if (isset($_GET['success']) && $_GET['success'] == 1): ?>
-        <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
-            PAR Form has been successfully saved!
+    <?php if (!empty($_SESSION['flash'])): ?>
+        <?php
+            $flash = $_SESSION['flash'];
+            $type = isset($flash['type']) ? strtolower($flash['type']) : 'info';
+            $allowed = ['primary','secondary','success','danger','warning','info','light','dark'];
+            if (!in_array($type, $allowed, true)) { $type = 'info'; }
+        ?>
+        <div class="alert alert-<?= htmlspecialchars($type) ?> alert-dismissible fade show" role="alert">
+            <?= htmlspecialchars($flash['message'] ?? 'Action completed.') ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
+        <?php unset($_SESSION['flash']); ?>
     <?php endif; ?>
 
-    <form method="post" action="save_par_form.php" enctype="multipart/form-data">
+    <form method="post" action="save_par_form.php" enctype="multipart/form-data" onsubmit="return checkDuplicates()">
         <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
 
         <div class="mb-3 text-center">
@@ -319,14 +338,14 @@ while ($row = $unit_query->fetch_assoc()) {
 <?php include 'modals/par_duplicate_modal.php' ?>
 <script>
     let rowIndex = 5; // Start after the initial 5 rows
-    let selectedDescriptions = new Set(); // 🔁 Track selected asset descriptions
+    let selectedDescriptions = new Set(); // Track selected asset descriptions
 
     function addRow() {
         const tbody = document.getElementById('itemTableBody');
         const newRow = document.createElement('tr');
 
         newRow.innerHTML = `
-        <td><input type="number" name="items[${rowIndex}][quantity]" class="form-control text-end" id="qtyInput${rowIndex}"></td>
+        <td><input type="number" name="items[${rowIndex}][quantity]" class="form-control text-end" id="qtyInput${rowIndex}" min="1"></td>
         <td>
             <select name="items[${rowIndex}][unit]" class="form-select text-center" required>
                 <option value="">Select Unit</option>
@@ -338,7 +357,7 @@ while ($row = $unit_query->fetch_assoc()) {
         <td class="position-relative">
     <div class="input-group">
         <input type="text" name="items[${rowIndex}][description]" class="form-control form-control-lg" list="descriptionList" id="descInput${rowIndex}">
-        <input type="hidden" name="items[<?= $i ?>][asset_id]" id="assetId<?= $i ?>">
+        <input type="hidden" name="items[${rowIndex}][asset_id]" id="assetId${rowIndex}">
         <button type="button"
                 class="btn p-0 m-0 border-0 bg-transparent"
                 onclick="clearDescription(${rowIndex})"
