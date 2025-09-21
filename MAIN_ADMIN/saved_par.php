@@ -81,6 +81,7 @@ if ($result && $result->num_rows > 0) {
                     <th>Date Created</th>
                     <th>Received By (Left)</th>
                     <th>Issued By (Right)</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -98,6 +99,11 @@ if ($result && $result->num_rows > 0) {
                       <td class="text-center">
                         <small class="text-muted">Position:</small> <?= htmlspecialchars($par['position_office_right'] ?? '') ?><br>
                         <small class="text-muted">Date:</small> <?= htmlspecialchars($par['date_received_right'] ?? '') ?>
+                      </td>
+                      <td class="text-center">
+                        <a href="view_par.php?id=<?= $par['par_id'] ?>&form_id=<?= htmlspecialchars($form_id) ?>" class="btn btn-sm btn-primary">
+                          <i class="bi bi-eye"></i> View
+                        </a>
                       </td>
                     </tr>
                   <?php endforeach; ?>

@@ -93,6 +93,13 @@ $low_stock_count = count($low_stock_items);
               <span class="mx-1 text-muted"> &gt; </span>
               <span class="text-dark">Saved ICS</span>
             </h5>';
+    } elseif ($current_page === 'saved_par') {
+      $formId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">Saved PAR</span>
+            </h5>';
     } elseif ($current_page === 'view_ics') {
       $icsId = isset($_GET['id']) ? intval($_GET['id']) : 0;
       $formId = isset($_GET['form_id']) ? intval($_GET['form_id']) : 0;
@@ -103,18 +110,44 @@ $low_stock_count = count($low_stock_items);
               <span class="mx-1 text-muted"> &gt; </span>
               <span class="text-dark">View ICS</span>
             </h5>';
-    } elseif ($current_page === 'create_mr') {
-      $icsId = isset($_GET['ics_id']) ? intval($_GET['ics_id']) : 0;
+    } elseif ($current_page === 'view_par') {
+      $parId = isset($_GET['id']) ? intval($_GET['id']) : 0;
       $formId = isset($_GET['form_id']) ? intval($_GET['form_id']) : 0;
       echo '<h5 class="m-0 text-center text-sm-start">
               <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
               <span class="mx-1 text-muted"> &gt; </span>
-              <a href="saved_ics.php?id=' . $formId . '" class="text-decoration-none text-primary">Saved ICS</a>
+              <a href="saved_par.php?id=' . $formId . '" class="text-decoration-none text-primary">Saved PAR</a>
               <span class="mx-1 text-muted"> &gt; </span>
-              <a href="view_ics.php?id=' . $icsId . '&form_id=' . $formId . '" class="text-decoration-none text-primary">View ICS</a>
-              <span class="mx-1 text-muted"> &gt; </span>
-              <span class="text-dark">Create Property Tag</span>
+              <span class="text-dark">View PAR</span>
             </h5>';
+    } elseif ($current_page === 'create_mr') {
+      // Show PAR breadcrumb if par_id present; otherwise default to ICS breadcrumb
+      $formId = isset($_GET['form_id']) ? intval($_GET['form_id']) : 0;
+      $parId = isset($_GET['par_id']) ? intval($_GET['par_id']) : 0;
+      $assetId = isset($_GET['asset_id']) ? intval($_GET['asset_id']) : 0;
+      if ($parId > 0) {
+        $cmrLink = 'create_mr.php?asset_id=' . $assetId . '&par_id=' . $parId . '&form_id=' . $formId;
+        echo '<h5 class="m-0 text-center text-sm-start">
+                <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
+                <span class="mx-1 text-muted"> &gt; </span>
+                <a href="saved_par.php?id=' . $formId . '" class="text-decoration-none text-primary">Saved PAR</a>
+                <span class="mx-1 text-muted"> &gt; </span>
+                <a href="view_par.php?id=' . $parId . '&form_id=' . $formId . '" class="text-decoration-none text-primary">View PAR</a>
+                <span class="mx-1 text-muted"> &gt; </span>
+                <span class="text-dark">Create Property Tag</span>
+              </h5>';
+      } else {
+        $icsId = isset($_GET['ics_id']) ? intval($_GET['ics_id']) : 0;
+        echo '<h5 class="m-0 text-center text-sm-start">
+                <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
+                <span class="mx-1 text-muted"> &gt; </span>
+                <a href="saved_ics.php?id=' . $formId . '" class="text-decoration-none text-primary">Saved ICS</a>
+                <span class="mx-1 text-muted"> &gt; </span>
+                <a href="view_ics.php?id=' . $icsId . '&form_id=' . $formId . '" class="text-decoration-none text-primary">View ICS</a>
+                <span class="mx-1 text-muted"> &gt; </span>
+                <span class="text-dark">Create Property Tag</span>
+              </h5>';
+      }
     } elseif ($current_page === 'saved_ris') {
       $formId = isset($_GET['id']) ? intval($_GET['id']) : 0;
       echo '<h5 class="m-0 text-center text-sm-start">
