@@ -43,32 +43,7 @@ if ($result && $result->num_rows > 0) {
     }
 }
 
-// Fetch description + unit cost + quantity + unit + office + property_no
-$description_details = [];
-$sql = "SELECT a.description, a.property_no, a.value AS unit_cost, a.quantity, a.unit, o.office_name
-        FROM assets a
-        LEFT JOIN offices o ON a.office_id = o.id
-        WHERE a.type = 'asset' 
-          AND a.quantity > 0 
-          AND a.value < 50000";
-
-$result = $conn->query($sql);
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        // build preview text for dropdown
-        $displayText = $row['description'] . " (" . $row['office_name'] . ") - " . $row['property_no'];
-
-        // use plain description as key
-        $description_details[$row['description']] = [
-            'preview'     => $displayText,   // ✅ what will show in dropdown
-            'unit_cost'   => $row['unit_cost'],
-            'quantity'    => $row['quantity'],
-            'unit'        => $row['unit'],
-            'office'      => $row['office_name'],
-            'property_no' => $row['property_no']
-        ];
-    }
-}
+// Autofill description data removed to enforce manual entry for all item fields
 
 
 
@@ -160,8 +135,7 @@ $new_ics_no = generateICSNo($conn);
                 <!-- ENTITY NAME -->
                 <div class="col-6">
                     <label class="form-label fw-semibold">ENTITY NAME</label>
-                    <input type="text" class="form-control" name="entity_name"
-                        value="<?= htmlspecialchars($ics_data['entity_name']) ?>">
+                    <input type="text" class="form-control" name="entity_name" value="">
                 </div>
 
                 <!-- OFFICE -->
@@ -186,7 +160,7 @@ $new_ics_no = generateICSNo($conn);
                 <!-- FUND CLUSTER -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">FUND CLUSTER</label>
-                    <input type="text" class="form-control" name="fund_cluster" value="<?= htmlspecialchars($ics_data['fund_cluster']) ?>">
+                    <input type="text" class="form-control" name="fund_cluster" value="">
                 </div>
 
                 <!-- ICS NO -->
@@ -308,14 +282,14 @@ $new_ics_no = generateICSNo($conn);
                     <td style="text-align:center;">
                         <input type="text" name="received_from_name"
                             class="form-control text-center fw-bold"
-                            value="<?= htmlspecialchars($ics_data['received_from_name']) ?>"
+                            value=""
                             placeholder="Enter name"
                             style="text-decoration:underline;">
                     </td>
                     <td style="text-align:center;">
                         <input type="text" name="received_by_name"
                             class="form-control text-center fw-bold"
-                            value="<?= htmlspecialchars($ics_data['received_by_name']) ?>"
+                            value=""
                             placeholder="Enter name"
                             style="text-decoration:underline;">
                     </td>
@@ -324,13 +298,13 @@ $new_ics_no = generateICSNo($conn);
                     <td style="text-align:center;">
                         <input type="text" name="received_from_position"
                             class="form-control text-center"
-                            value="<?= htmlspecialchars($ics_data['received_from_position']) ?>"
+                            value=""
                             placeholder="Enter position">
                     </td>
                     <td style="text-align:center;">
                         <input type="text" name="received_by_position"
                             class="form-control text-center"
-                            value="<?= htmlspecialchars($ics_data['received_by_position']) ?>"
+                            value=""
                             placeholder="Enter position">
                     </td>
                 </tr>
@@ -342,12 +316,12 @@ $new_ics_no = generateICSNo($conn);
                     <td style="text-align:center;">
                         <input type="date" name="received_from_date"
                             class="form-control text-center"
-                            value="<?= !empty($ics_data['created_at']) ? htmlspecialchars(date('Y-m-d', strtotime($ics_data['created_at']))) : date('Y-m-d') ?>">
+                            value="">
                     </td>
                     <td style="text-align:center;">
                         <input type="date" name="received_by_date"
                             class="form-control text-center"
-                            value="<?= !empty($ics_data['created_at']) ? htmlspecialchars(date('Y-m-d', strtotime($ics_data['created_at']))) : date('Y-m-d') ?>">
+                            value="">
                     </td>
                 </tr>
             </table>
@@ -361,36 +335,15 @@ $new_ics_no = generateICSNo($conn);
             </a>
         </div>
 
-        <!-- Duplicate Asset Modal -->
-        <div class="modal fade" id="duplicateModal" tabindex="-1" aria-labelledby="duplicateModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title" id="duplicateModalLabel">Duplicate Asset</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        This asset has already been selected in another row. Please choose a different asset.
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">OK</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>
 
 <script>
-    // Datalist suggestions removed per requirement; plain text input only
     document.addEventListener('DOMContentLoaded', function() {
         const tableBody = document.getElementById('ics-items-body');
         const addRowBtn = document.getElementById('addRowBtn');
         const grandTotalField = document.getElementById('grandTotal');
-        const duplicateModal = new bootstrap.Modal(document.getElementById('duplicateModal'));
-
-        const descriptionMap = <?= json_encode($description_details) ?>;
+        // Duplicate prevention and autofill removed; inputs are manual entry only
 
         function updateGrandTotal() {
             let sum = 0;
@@ -400,15 +353,7 @@ $new_ics_no = generateICSNo($conn);
             grandTotalField.value = sum.toFixed(2);
         }
 
-        function isDuplicate(value, currentInput) {
-            let isDup = false;
-            document.querySelectorAll('input[name="description[]"]').forEach(input => {
-                if (input !== currentInput && input.value.trim() === value.trim() && value.trim() !== "") {
-                    isDup = true;
-                }
-            });
-            return isDup;
-        }
+        // No duplicate checking; users may enter any values manually
 
         // Input handler (quantities, description selection, unit cost -> total)
         tableBody.addEventListener('input', function(event) {
@@ -432,84 +377,7 @@ $new_ics_no = generateICSNo($conn);
                 }
             }
 
-            if (target.name === "description[]") {
-                const selectedDesc = target.value;
-
-                // Check for duplicate before proceeding
-                if (isDuplicate(selectedDesc, target)) {
-                    target.value = ''; // Clear the field
-                    duplicateModal.show(); // Show warning modal
-                    return;
-                }
-
-                if (descriptionMap[selectedDesc]) {
-                    const {
-                        unit_cost,
-                        quantity,
-                        unit,
-                        property_no
-                    } = descriptionMap[selectedDesc];
-
-                    if (unitCostInput) unitCostInput.value = unit_cost;
-                    if (quantityInput) {
-                        quantityInput.max = quantity;
-                        quantityInput.placeholder = `Max: ${quantity}`;
-                    }
-
-                    // Auto-fill unit
-                    const unitSelect = row.querySelector('select[name="unit[]"]');
-                    if (unitSelect) {
-                        let found = false;
-                        for (let i = 0; i < unitSelect.options.length; i++) {
-                            if (unitSelect.options[i].value === unit) {
-                                unitSelect.selectedIndex = i;
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            // fallback to default 'unit'
-                            let set = false;
-                            for (let i = 0; i < unitSelect.options.length; i++) {
-                                if (unitSelect.options[i].value.toLowerCase() === 'unit') {
-                                    unitSelect.selectedIndex = i;
-                                    set = true;
-                                    break;
-                                }
-                            }
-                            if (!set) unitSelect.selectedIndex = 0;
-                        }
-                    }
-
-                    // ✅ Auto-insert property_no into item_no field
-                    const itemNoInput = row.querySelector('input[name="item_no[]"]');
-                    if (itemNoInput) {
-                        itemNoInput.value = property_no;
-                    }
-                } else {
-                    // If user typed something not in map, clear any limits
-                    if (quantityInput) {
-                        quantityInput.removeAttribute('max');
-                        quantityInput.placeholder = '';
-                    }
-                    const unitSelect = row.querySelector('select[name="unit[]"]');
-                    if (unitSelect) {
-                        let set = false;
-                        for (let i = 0; i < unitSelect.options.length; i++) {
-                            if (unitSelect.options[i].value.toLowerCase() === 'unit') {
-                                unitSelect.selectedIndex = i;
-                                set = true;
-                                break;
-                            }
-                        }
-                        if (!set) unitSelect.selectedIndex = 0;
-                    }
-
-                    // clear item_no if not matched
-                    const itemNoInput = row.querySelector('input[name="item_no[]"]');
-                    if (itemNoInput) itemNoInput.value = '';
-                }
-            }
+            // No description-driven autofill; users will manually enter all values
 
             const quantity = parseFloat(quantityInput?.value) || 0;
             const unitCost = parseFloat(unitCostInput?.value) || 0;
