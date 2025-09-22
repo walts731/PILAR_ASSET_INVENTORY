@@ -3,11 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 21, 2025 at 03:35 PM
--- Server version: 10.6.15-MariaDB
--- PHP Version: 8.2.12
-
-SET FOREIGN_KEY_CHECKS=0;
+-- Generation Time: Sep 22, 2025 at 03:25 PM
+-- Server version: 10.4.28-MariaDB
+-- PHP Version: 8.2.4
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -140,7 +138,7 @@ INSERT INTO `assets` (`id`, `asset_name`, `category`, `description`, `quantity`,
 (6, 'Printer Epson', 1, 'Printer Epson', 1, 0, 'pcs', 'available', '2025-09-19', 4, 1, 0, '2025-09-19 15:24:55', 4593.00, '6.png', 'asset', '', '', '', 'MR-2025-00006', '', '', 19, NULL, 3, 'No. PS-5S-03-F02-06'),
 (15, 'Blue Chair', 2, 'Uratex', 3, 0, 'pcs', 'available', '2025-04-04', 4, NULL, 0, '2025-06-13 08:39:23', 30000.00, 'QR.png', 'asset', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (16, 'eagle', 1, 'eagle', 1, 0, 'box', 'available', '2025-09-19', 49, NULL, 0, '2025-09-19 14:08:11', 345.00, '21.png', 'asset', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(17, 'Van', 1, 'Van', 6, 0, 'unit', 'available', '2025-09-18', 49, NULL, 0, '2025-09-19 03:04:12', 49999.99, '54.png', 'asset', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(17, 'Van', 4, 'Van', 6, 0, 'unit', 'available', '2025-09-18', 49, NULL, 0, '2025-09-22 13:11:02', 49999.99, '54.png', 'asset', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (19, 'Cellphone', 1, 'Cellphone', 1, 0, 'pcs', 'available', '2025-09-21', 4, 1, 0, '2025-09-21 08:12:19', 5678.00, '19.png', 'asset', '', '', '', 'MR-2025-00019', '', '', 25, NULL, 8, 'No. PS-5S-03-F02-19'),
 (20, 'Cellphone', 1, 'Cellphone', 1, 0, 'pcs', 'available', '2025-09-21', 4, 2, 0, '2025-09-21 13:16:38', 5678.00, '20.png', 'asset', '', '', '', 'MR-2025-00020', '', '', 25, NULL, 8, 'No. PS-5S-03-F02-20'),
 (21, 'Ballpen', NULL, 'Ballpen', 2, 2, 'box', 'available', '2025-09-21', 3, NULL, 0, '2025-09-21 09:03:46', 345.00, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, ''),
@@ -240,6 +238,20 @@ INSERT INTO `assets_new` (`id`, `description`, `quantity`, `unit_cost`, `unit`, 
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `asset_items`
+--
+
+CREATE TABLE `asset_items` (
+  `item_id` int(11) NOT NULL,
+  `asset_id` int(11) NOT NULL,
+  `status` enum('available','borrowed','maintenance','lost') NOT NULL DEFAULT 'available',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `asset_requests`
 --
 
@@ -279,67 +291,33 @@ CREATE TABLE `borrow_requests` (
   `user_id` int(11) NOT NULL,
   `asset_id` int(11) NOT NULL,
   `office_id` int(11) NOT NULL,
-  `status` enum('pending','approved','rejected','borrowed','returned') NOT NULL DEFAULT 'pending',
-  `requested_at` datetime DEFAULT NULL,
+  `quantity` int(11) NOT NULL,
+  `status` enum('pending','approved','rejected','borrowed','returned','cancelled') NOT NULL DEFAULT 'pending',
+  `requested_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `approved_at` datetime DEFAULT NULL,
-  `return_remarks` text DEFAULT NULL,
+  `rejected_at` datetime DEFAULT NULL,
   `returned_at` datetime DEFAULT NULL,
-  `quantity` int(11) NOT NULL DEFAULT 1,
+  `purpose` text DEFAULT NULL,
+  `due_date` date DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `borrow_requests`
---
-
-INSERT INTO `borrow_requests` (`id`, `user_id`, `asset_id`, `office_id`, `status`, `requested_at`, `approved_at`, `return_remarks`, `returned_at`, `quantity`, `created_at`, `updated_at`) VALUES
-(2, 19, 13, 4, 'returned', '2025-07-12 15:40:35', '2025-07-14 21:13:26', 'NEVER BEEN USED', '2025-07-14 21:13:47', 1, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
-(3, 19, 14, 4, 'pending', '2025-07-12 15:40:35', NULL, NULL, NULL, 1, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
-(4, 19, 2, 9, 'returned', '2025-07-12 15:42:36', '2025-07-14 09:54:28', 'slightly used', '2025-07-14 19:55:48', 0, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
-(5, 17, 2, 9, 'pending', '2025-07-13 15:15:18', NULL, NULL, NULL, 1, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
-(6, 17, 2, 9, 'returned', '2025-07-13 15:24:25', '2025-07-13 20:45:54', 'All goods', '2025-07-13 20:58:56', 1, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
-(7, 17, 2, 9, 'returned', '2025-07-14 04:23:59', '2025-07-14 21:00:24', 'Good condition', '2025-07-14 21:02:14', 0, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
-(8, 17, 13, 4, 'returned', '2025-07-14 14:49:24', '2025-07-14 19:50:05', 'Neve used', '2025-07-14 21:05:50', 0, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
-(9, 17, 3, 2, 'pending', '2025-08-20 08:09:14', NULL, NULL, NULL, 5, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
-(10, 17, 64, 9, 'pending', '2025-08-20 08:17:57', NULL, NULL, NULL, 3, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
-(11, 12, 64, 9, 'pending', '2025-08-20 08:24:23', NULL, NULL, NULL, 3, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
-(12, 17, 64, 9, 'pending', '2025-08-29 15:24:45', NULL, NULL, NULL, 1, '2025-08-30 03:09:31', '2025-08-30 03:09:31');
+-- --------------------------------------------------------
 
 --
--- Triggers `borrow_requests`
+-- Table structure for table `borrow_request_items`
 --
-DELIMITER $$
-CREATE TRIGGER `tr_borrow_requests_update_validation` BEFORE UPDATE ON `borrow_requests` FOR EACH ROW BEGIN
-    -- Validate quantity is positive
-    IF NEW.quantity <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Quantity must be greater than 0';
-    END IF;
-    
-    -- Validate status values
-    IF NEW.status NOT IN ('pending', 'borrowed', 'returned', 'rejected') THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid status value';
-    END IF;
-    
-    -- Update the updated_at timestamp
-    SET NEW.updated_at = CURRENT_TIMESTAMP;
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_borrow_requests_validation` BEFORE INSERT ON `borrow_requests` FOR EACH ROW BEGIN
-    -- Validate quantity is positive
-    IF NEW.quantity <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Quantity must be greater than 0';
-    END IF;
-    
-    -- Validate status values
-    IF NEW.status NOT IN ('pending', 'borrowed', 'returned', 'rejected') THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid status value';
-    END IF;
-END
-$$
-DELIMITER ;
+
+CREATE TABLE `borrow_request_items` (
+  `id` int(11) NOT NULL,
+  `borrow_request_id` int(11) NOT NULL,
+  `asset_item_id` int(11) NOT NULL,
+  `status` enum('assigned','returned') NOT NULL DEFAULT 'assigned',
+  `returned_at` datetime DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -366,6 +344,32 @@ INSERT INTO `categories` (`id`, `category_name`, `type`) VALUES
 (6, 'IT Equipment', 'asset'),
 (7, 'Security Equipment', 'asset'),
 (15, 'Categories', 'asset');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `category`
+--
+
+CREATE TABLE `category` (
+  `id` int(11) NOT NULL,
+  `category` varchar(100) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `category`
+--
+
+INSERT INTO `category` (`id`, `category`, `created_at`, `updated_at`) VALUES
+(1, 'Electronics', '2025-09-22 13:09:39', '2025-09-22 13:09:39'),
+(2, 'Furniture', '2025-09-22 13:09:39', '2025-09-22 13:09:39'),
+(3, 'Office Equipment', '2025-09-22 13:09:39', '2025-09-22 13:09:39'),
+(4, 'IT Equipment', '2025-09-22 13:09:39', '2025-09-22 13:09:39'),
+(5, 'Tools', '2025-09-22 13:09:39', '2025-09-22 13:09:39'),
+(6, 'Vehicles', '2025-09-22 13:09:39', '2025-09-22 13:09:39'),
+(7, 'Other', '2025-09-22 13:09:39', '2025-09-22 13:09:39');
 
 -- --------------------------------------------------------
 
@@ -1455,8 +1459,6 @@ ALTER TABLE `assets`
   ADD PRIMARY KEY (`id`),
   ADD KEY `category` (`category`),
   ADD KEY `fk_assets_employee` (`employee_id`),
-  ADD KEY `idx_assets_office_status` (`office_id`,`status`),
-  ADD KEY `idx_assets_status` (`status`),
   ADD KEY `idx_assets_ics_id` (`ics_id`),
   ADD KEY `idx_assets_asset_new_id` (`asset_new_id`),
   ADD KEY `idx_assets_par_id` (`par_id`);
@@ -1475,6 +1477,13 @@ ALTER TABLE `assets_new`
   ADD KEY `idx_description` (`description`),
   ADD KEY `idx_assets_new_office_id` (`office_id`),
   ADD KEY `idx_assets_new_par_id` (`par_id`);
+
+--
+-- Indexes for table `asset_items`
+--
+ALTER TABLE `asset_items`
+  ADD PRIMARY KEY (`item_id`),
+  ADD KEY `idx_asset_id` (`asset_id`);
 
 --
 -- Indexes for table `asset_requests`
@@ -1497,10 +1506,25 @@ ALTER TABLE `borrow_requests`
   ADD KEY `idx_borrow_requests_requested_at` (`requested_at`);
 
 --
+-- Indexes for table `borrow_request_items`
+--
+ALTER TABLE `borrow_request_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_borrow_request_id` (`borrow_request_id`),
+  ADD KEY `idx_asset_item_id` (`asset_item_id`);
+
+--
 -- Indexes for table `categories`
 --
 ALTER TABLE `categories`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `category`
+--
+ALTER TABLE `category`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_category` (`category`);
 
 --
 -- Indexes for table `consumption_log`
@@ -1551,7 +1575,8 @@ ALTER TABLE `ics_form`
 --
 ALTER TABLE `ics_items`
   ADD PRIMARY KEY (`item_id`),
-  ADD KEY `ics_id` (`ics_id`);
+  ADD KEY `ics_id` (`ics_id`),
+  ADD KEY `fk_ics_items_asset` (`asset_id`);
 
 --
 -- Indexes for table `iirup_form`
@@ -1591,7 +1616,8 @@ ALTER TABLE `offices`
 -- Indexes for table `par_form`
 --
 ALTER TABLE `par_form`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `par_form_ibfk_2` (`office_id`);
 
 --
 -- Indexes for table `par_items`
@@ -1722,6 +1748,12 @@ ALTER TABLE `assets_new`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
+-- AUTO_INCREMENT for table `asset_items`
+--
+ALTER TABLE `asset_items`
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `asset_requests`
 --
 ALTER TABLE `asset_requests`
@@ -1731,13 +1763,25 @@ ALTER TABLE `asset_requests`
 -- AUTO_INCREMENT for table `borrow_requests`
 --
 ALTER TABLE `borrow_requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `borrow_request_items`
+--
+ALTER TABLE `borrow_request_items`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+
+--
+-- AUTO_INCREMENT for table `category`
+--
+ALTER TABLE `category`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `consumption_log`
@@ -1903,7 +1947,6 @@ ALTER TABLE `activity_log`
 -- Constraints for table `assets`
 --
 ALTER TABLE `assets`
-  ADD CONSTRAINT `assets_ibfk_1` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `assets_ibfk_2` FOREIGN KEY (`category`) REFERENCES `categories` (`id`),
   ADD CONSTRAINT `fk_assets_employee` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_assets_ics` FOREIGN KEY (`ics_id`) REFERENCES `ics_form` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
@@ -1916,15 +1959,25 @@ ALTER TABLE `assets_new`
   ADD CONSTRAINT `fk_assets_new_par` FOREIGN KEY (`par_id`) REFERENCES `par_form` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
+-- Constraints for table `asset_items`
+--
+ALTER TABLE `asset_items`
+  ADD CONSTRAINT `asset_items_ibfk_1` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `borrow_requests`
 --
 ALTER TABLE `borrow_requests`
-  ADD CONSTRAINT `borrow_requests_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `borrow_requests_ibfk_2` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`),
-  ADD CONSTRAINT `borrow_requests_ibfk_3` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`),
   ADD CONSTRAINT `fk_borrow_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_borrow_office` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_borrow_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `borrow_request_items`
+--
+ALTER TABLE `borrow_request_items`
+  ADD CONSTRAINT `borrow_request_items_ibfk_1` FOREIGN KEY (`borrow_request_id`) REFERENCES `borrow_requests` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `borrow_request_items_ibfk_2` FOREIGN KEY (`asset_item_id`) REFERENCES `asset_items` (`item_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `consumption_log`
@@ -2006,9 +2059,6 @@ ALTER TABLE `system_logs`
 ALTER TABLE `users`
   ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`) ON DELETE SET NULL;
 COMMIT;
-
-SET FOREIGN_KEY_CHECKS=1;
-
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
