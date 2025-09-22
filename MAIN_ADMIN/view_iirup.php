@@ -180,13 +180,17 @@ if ($res_off && $res_off->num_rows) {
                   <td><input type="text" value="<?= htmlspecialchars($it['red_tag']) ?>" disabled></td>
                   <td><input type="date" value="<?= htmlspecialchars($it['date_received']) ?>" disabled></td>
                   <td class="text-center">
-                    <?php if (!empty($it['asset_id'])): ?>
+                    <?php if (!empty($it['asset_id']) && strtolower($it['remarks']) !== 'serviceable'): ?>
                       <button type="button" class="btn btn-sm btn-danger create-red-tag" 
                               data-asset-id="<?= (int)$it['asset_id'] ?>"
                               data-property-no="<?= htmlspecialchars($it['property_no']) ?>"
                               data-particulars="<?= htmlspecialchars($it['particulars']) ?>">
                         <i class="bi bi-tag"></i> Red Tag
                       </button>
+                    <?php elseif (!empty($it['asset_id']) && strtolower($it['remarks']) === 'serviceable'): ?>
+                      <span class="text-muted small">
+                        <i class="bi bi-check-circle"></i> Serviceable
+                      </span>
                     <?php endif; ?>
                   </td>
                 </tr>

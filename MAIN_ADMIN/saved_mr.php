@@ -42,6 +42,14 @@ if ($result && $result->num_rows > 0) {
     <div class="card shadow-sm">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0 fw-bold"><i class="bi bi-list-check"></i> Saved Property Tags Records</h5>
+        <div class="d-flex gap-2">
+          <button type="button" id="selectAllBtn" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-check-square"></i> Select All
+          </button>
+          <button type="button" id="printSelectedBtn" class="btn btn-sm btn-primary" disabled>
+            <i class="bi bi-printer"></i> Print Selected (<span id="selectedCount">0</span>)
+          </button>
+        </div>
       </div>
       <div class="card-body">
         <?php if (!empty($mr_records)): ?>
@@ -49,6 +57,9 @@ if ($result && $result->num_rows > 0) {
             <table id="mrTable" class="table align-middle">
               <thead class="text-center">
                 <tr>
+                  <th width="40">
+                    <input type="checkbox" id="selectAll" class="form-check-input">
+                  </th>
                   <th>Inventory Tag</th>
                   <th>Description</th>
                   <th>Office</th>
@@ -60,6 +71,11 @@ if ($result && $result->num_rows > 0) {
               <tbody>
                 <?php foreach ($mr_records as $mr): ?>
                   <tr>
+                    <td class="text-center">
+                      <input type="checkbox" class="form-check-input mr-checkbox" 
+                             value="<?= $mr['mr_id'] ?>" 
+                             data-inventory-tag="<?= htmlspecialchars($mr['inventory_tag']) ?>">
+                    </td>
                     <td><?= htmlspecialchars($mr['inventory_tag']) ?></td>
                     <td><?= htmlspecialchars($mr['description']) ?></td>
                     <td><?= htmlspecialchars($mr['office_location']) ?></td>
@@ -90,10 +106,66 @@ if ($result && $result->num_rows > 0) {
   <script src="js/dashboard.js"></script>
 <script>
   $(document).ready(function () {
-    $('#mrTable').DataTable({
-      order: [[4, 'desc']], // Sort by Date Created
-      pageLength: 10
+    const table = $('#mrTable').DataTable({
+      order: [[5, 'desc']], // Sort by Date Created (adjusted for checkbox column)
+      pageLength: 10,
+      columnDefs: [
+        { orderable: false, targets: [0, 6] } // Disable sorting on checkbox and Action columns
+      ]
     });
+
+    // Bulk selection functionality
+    function updateSelectedCount() {
+      const selectedCount = $('.mr-checkbox:checked').length;
+      $('#selectedCount').text(selectedCount);
+      $('#printSelectedBtn').prop('disabled', selectedCount === 0);
+      
+      // Update select all button text
+      const totalCheckboxes = $('.mr-checkbox').length;
+      if (selectedCount === 0) {
+        $('#selectAllBtn').html('<i class="bi bi-check-square"></i> Select All');
+      } else if (selectedCount === totalCheckboxes) {
+        $('#selectAllBtn').html('<i class="bi bi-square"></i> Deselect All');
+      } else {
+        $('#selectAllBtn').html('<i class="bi bi-check-square"></i> Select All (' + selectedCount + ')');
+      }
+    }
+
+    // Select/Deselect all functionality
+    $('#selectAll, #selectAllBtn').on('click', function() {
+      const isChecked = $('#selectAll').prop('checked') || $('.mr-checkbox:checked').length === 0;
+      $('.mr-checkbox').prop('checked', isChecked);
+      $('#selectAll').prop('checked', isChecked);
+      updateSelectedCount();
+    });
+
+    // Individual checkbox change
+    $(document).on('change', '.mr-checkbox', function() {
+      const totalCheckboxes = $('.mr-checkbox').length;
+      const checkedCheckboxes = $('.mr-checkbox:checked').length;
+      
+      $('#selectAll').prop('checked', checkedCheckboxes === totalCheckboxes);
+      updateSelectedCount();
+    });
+
+    // Print selected functionality
+    $('#printSelectedBtn').on('click', function() {
+      const selectedIds = [];
+      $('.mr-checkbox:checked').each(function() {
+        selectedIds.push($(this).val());
+      });
+      
+      if (selectedIds.length > 0) {
+        // Open bulk print page in new window
+        const url = 'bulk_print_mr.php?ids=' + selectedIds.join(',');
+        window.open(url, '_blank');
+      } else {
+        alert('Please select at least one MR record to print.');
+      }
+    });
+
+    // Initialize count
+    updateSelectedCount();
   });
 </script>
 </body>

@@ -84,8 +84,19 @@ if ($existing_red_tag_check && $existing_red_tag_data) {
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $item_location = $conn->real_escape_string($_POST['item_location']);
+    
+    // Handle custom removal reason
     $removal_reason = $conn->real_escape_string($_POST['removal_reason']);
+    if ($removal_reason === 'Other' && !empty($_POST['custom_removal_reason'])) {
+        $removal_reason = $conn->real_escape_string($_POST['custom_removal_reason']);
+    }
+    
+    // Handle custom action
     $action = $conn->real_escape_string($_POST['action']);
+    if ($action === 'Other' && !empty($_POST['custom_action'])) {
+        $action = $conn->real_escape_string($_POST['custom_action']);
+    }
+    
     $tagged_by = $user_id;
     
     $description = $asset['description'] . ' (' . $asset['property_no'] . ')';
@@ -285,8 +296,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="Broken" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['removal_reason'] == 'Broken') ? 'selected' : '' ?>>Broken</option>
                         <option value="Obsolete" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['removal_reason'] == 'Obsolete') ? 'selected' : '' ?>>Obsolete</option>
                         <option value="Not in use" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['removal_reason'] == 'Not in use') ? 'selected' : '' ?>>Not in use</option>
-                        <option value="Other" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['removal_reason'] == 'Other') ? 'selected' : '' ?>>Other (specify in Action)</option>
+                        <?php 
+                            $is_custom_removal = $existing_red_tag_check && $existing_red_tag_data && 
+                                                !in_array($existing_red_tag_data['removal_reason'], ['Unnecessary', 'Broken', 'Obsolete', 'Not in use']);
+                        ?>
+                        <option value="Other" <?= $is_custom_removal ? 'selected' : '' ?>>Other (specify below)</option>
                     </select>
+                    <div id="custom_removal_reason_div" class="mt-2" style="<?= $is_custom_removal ? 'display: block;' : 'display: none;' ?>">
+                        <label for="custom_removal_reason" class="form-label">Specify Removal Reason:</label>
+                        <input type="text" class="form-control" id="custom_removal_reason" name="custom_removal_reason" 
+                               placeholder="Enter custom removal reason..." 
+                               value="<?= $is_custom_removal ? htmlspecialchars($existing_red_tag_data['removal_reason']) : '' ?>">
+                    </div>
                 </div>
 
                 <div class="mb-4">
@@ -297,8 +318,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="For Repair" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['action'] == 'For Repair') ? 'selected' : '' ?>>For Repair</option>
                         <option value="For Relocation" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['action'] == 'For Relocation') ? 'selected' : '' ?>>For Relocation</option>
                         <option value="For Donation" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['action'] == 'For Donation') ? 'selected' : '' ?>>For Donation</option>
-                        <option value="Other" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['action'] == 'Other') ? 'selected' : '' ?>>Other (specify)</option>
+                        <?php 
+                            $is_custom_action = $existing_red_tag_check && $existing_red_tag_data && 
+                                              !in_array($existing_red_tag_data['action'], ['For Disposal', 'For Repair', 'For Relocation', 'For Donation']);
+                        ?>
+                        <option value="Other" <?= $is_custom_action ? 'selected' : '' ?>>Other (specify below)</option>
                     </select>
+                    <div id="custom_action_div" class="mt-2" style="<?= $is_custom_action ? 'display: block;' : 'display: none;' ?>">
+                        <label for="custom_action" class="form-label">Specify Action:</label>
+                        <input type="text" class="form-control" id="custom_action" name="custom_action" 
+                               placeholder="Enter custom action..." 
+                               value="<?= $is_custom_action ? htmlspecialchars($existing_red_tag_data['action']) : '' ?>">
+                    </div>
                 </div>
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
@@ -333,8 +364,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <script src="js/dashboard.js"></script>
     <script>
-        // Auto-select the first option in select elements if they're required and have options
         document.addEventListener('DOMContentLoaded', function() {
+            const removalReasonSelect = document.getElementById('removal_reason');
+            const customRemovalReasonDiv = document.getElementById('custom_removal_reason_div');
+            const customRemovalReasonInput = document.getElementById('custom_removal_reason');
+            
+            const actionSelect = document.getElementById('action');
+            const customActionDiv = document.getElementById('custom_action_div');
+            const customActionInput = document.getElementById('custom_action');
+            
+            // Function to toggle custom removal reason input
+            function toggleCustomRemovalReason() {
+                if (removalReasonSelect.value === 'Other') {
+                    customRemovalReasonDiv.style.display = 'block';
+                    customRemovalReasonInput.required = true;
+                } else {
+                    customRemovalReasonDiv.style.display = 'none';
+                    customRemovalReasonInput.required = false;
+                    customRemovalReasonInput.value = '';
+                }
+            }
+            
+            // Function to toggle custom action input
+            function toggleCustomAction() {
+                if (actionSelect.value === 'Other') {
+                    customActionDiv.style.display = 'block';
+                    customActionInput.required = true;
+                } else {
+                    customActionDiv.style.display = 'none';
+                    customActionInput.required = false;
+                    customActionInput.value = '';
+                }
+            }
+            
+            // Add event listeners
+            removalReasonSelect.addEventListener('change', toggleCustomRemovalReason);
+            actionSelect.addEventListener('change', toggleCustomAction);
+            
+            // Initialize on page load (for existing red tags)
+            toggleCustomRemovalReason();
+            toggleCustomAction();
+            
+            // Auto-select the first option in select elements if they're required and have options
             const selectElements = document.querySelectorAll('select[required]');
             selectElements.forEach(select => {
                 if (select.value === '' && select.options.length > 0) {

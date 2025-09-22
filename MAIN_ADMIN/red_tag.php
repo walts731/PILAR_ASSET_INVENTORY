@@ -47,6 +47,14 @@ if ($result && $result->num_rows > 0) {
     <div class="card shadow-sm">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0 fw-bold"><i class="bi bi-tag-fill text-danger"></i> Red Tag Records</h5>
+        <div class="d-flex gap-2">
+          <button type="button" id="selectAllBtn" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-check-square"></i> Select All
+          </button>
+          <button type="button" id="printSelectedBtn" class="btn btn-sm btn-primary" disabled>
+            <i class="bi bi-printer"></i> Print Selected (<span id="selectedCount">0</span>)
+          </button>
+        </div>
       </div>
       <div class="card-body">
         <?php if (!empty($red_tag_records)): ?>
@@ -54,6 +62,9 @@ if ($result && $result->num_rows > 0) {
             <table id="redTagTable" class="table align-middle">
               <thead class="text-center">
                 <tr>
+                  <th width="40">
+                    <input type="checkbox" id="selectAll" class="form-check-input">
+                  </th>
                   <th>Red Tag Number</th>
                   <th>Property Number</th>
                   <th>Description</th>
@@ -68,6 +79,11 @@ if ($result && $result->num_rows > 0) {
               <tbody>
                 <?php foreach ($red_tag_records as $red_tag): ?>
                   <tr>
+                    <td class="text-center">
+                      <input type="checkbox" class="form-check-input red-tag-checkbox" 
+                             value="<?= $red_tag['id'] ?>" 
+                             data-red-tag-number="<?= htmlspecialchars($red_tag['red_tag_number']) ?>">
+                    </td>
                     <td class="fw-bold text-danger"><?= htmlspecialchars($red_tag['red_tag_number']) ?></td>
                     <td><?= htmlspecialchars($red_tag['property_no'] ?? 'N/A') ?></td>
                     <td><?= htmlspecialchars($red_tag['description']) ?></td>
@@ -107,13 +123,66 @@ if ($result && $result->num_rows > 0) {
 <script src="js/dashboard.js"></script>
 <script>
   $(document).ready(function () {
-    $('#redTagTable').DataTable({
-      order: [[6, 'desc']], // Sort by Date Created
+    const table = $('#redTagTable').DataTable({
+      order: [[7, 'desc']], // Sort by Date Created (adjusted for checkbox column)
       pageLength: 10,
       columnDefs: [
-        { orderable: false, targets: [7] } // Disable sorting on Action column
+        { orderable: false, targets: [0, 8] } // Disable sorting on checkbox and Action columns
       ]
     });
+
+    // Bulk selection functionality
+    function updateSelectedCount() {
+      const selectedCount = $('.red-tag-checkbox:checked').length;
+      $('#selectedCount').text(selectedCount);
+      $('#printSelectedBtn').prop('disabled', selectedCount === 0);
+      
+      // Update select all button text
+      const totalCheckboxes = $('.red-tag-checkbox').length;
+      if (selectedCount === 0) {
+        $('#selectAllBtn').html('<i class="bi bi-check-square"></i> Select All');
+      } else if (selectedCount === totalCheckboxes) {
+        $('#selectAllBtn').html('<i class="bi bi-square"></i> Deselect All');
+      } else {
+        $('#selectAllBtn').html('<i class="bi bi-check-square"></i> Select All (' + selectedCount + ')');
+      }
+    }
+
+    // Select/Deselect all functionality
+    $('#selectAll, #selectAllBtn').on('click', function() {
+      const isChecked = $('#selectAll').prop('checked') || $('.red-tag-checkbox:checked').length === 0;
+      $('.red-tag-checkbox').prop('checked', isChecked);
+      $('#selectAll').prop('checked', isChecked);
+      updateSelectedCount();
+    });
+
+    // Individual checkbox change
+    $(document).on('change', '.red-tag-checkbox', function() {
+      const totalCheckboxes = $('.red-tag-checkbox').length;
+      const checkedCheckboxes = $('.red-tag-checkbox:checked').length;
+      
+      $('#selectAll').prop('checked', checkedCheckboxes === totalCheckboxes);
+      updateSelectedCount();
+    });
+
+    // Print selected functionality
+    $('#printSelectedBtn').on('click', function() {
+      const selectedIds = [];
+      $('.red-tag-checkbox:checked').each(function() {
+        selectedIds.push($(this).val());
+      });
+      
+      if (selectedIds.length > 0) {
+        // Open bulk print page in new window
+        const url = 'bulk_print_red_tags.php?ids=' + selectedIds.join(',');
+        window.open(url, '_blank');
+      } else {
+        alert('Please select at least one red tag to print.');
+      }
+    });
+
+    // Initialize count
+    updateSelectedCount();
   });
 </script>
 </body>

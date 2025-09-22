@@ -131,6 +131,9 @@ $stmt->close();
             <a href="return_asset.php?id=<?= $row['id'] ?>" class="btn btn-outline-secondary btn-sm rounded-pill">
               <i class="bi bi-box-arrow-in-left"></i> Return
             </a>
+            <a href="iirup_form.php?asset_id=<?= $row['id'] ?>&asset_description=<?= urlencode($row['description']) ?>&inventory_tag=<?= urlencode($row['inventory_tag'] ?? $row['property_no'] ?? '') ?>" class="btn btn-danger btn-sm rounded-pill">
+              <i class="bi bi-tag"></i> Red Tag
+            </a>
           </div>
         </div>
       </div>
