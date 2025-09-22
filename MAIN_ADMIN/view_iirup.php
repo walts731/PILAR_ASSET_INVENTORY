@@ -234,7 +234,7 @@ if ($res_off && $res_off->num_rows) {
 
         <div class="d-flex gap-2 my-3">
           <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save</button>
-          <button type="button" class="btn btn-success" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+          <a href="generate_iirup_pdf.php?id=<?= (int)$iirup_id ?>" target="_blank" class="btn btn-success"><i class="bi bi-printer"></i> Print</a>
           <a href="saved_iirup.php" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
         </div>
       </form>
