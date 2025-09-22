@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/audit_helper.php';
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
@@ -108,11 +109,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
       $stmt->close();
     }
 
+    // Log asset deletion
+    $office_name = 'No Office';
+    if ($asset['office_id']) {
+        $office_stmt = $conn->prepare("SELECT office_name FROM offices WHERE id = ?");
+        $office_stmt->bind_param("i", $asset['office_id']);
+        $office_stmt->execute();
+        $office_result = $office_stmt->get_result();
+        if ($office_data = $office_result->fetch_assoc()) {
+            $office_name = $office_data['office_name'];
+        }
+        $office_stmt->close();
+    }
+    
+    $category_name = 'No Category';
+    if ($asset['category']) {
+        $category_stmt = $conn->prepare("SELECT category_name FROM categories WHERE id = ?");
+        $category_stmt->bind_param("i", $asset['category']);
+        $category_stmt->execute();
+        $category_result = $category_stmt->get_result();
+        if ($category_data = $category_result->fetch_assoc()) {
+            $category_name = $category_data['category_name'];
+        }
+        $category_stmt->close();
+    }
+    
+    $deletion_context = "Qty: {$asset['quantity']}, Value: ₱" . number_format($asset['value'], 2) . ", Office: {$office_name}, Category: {$category_name}";
+    logAssetActivity('DELETE', $asset['description'], $asset_id, $deletion_context);
+
     $conn->commit();
     header('Location: inventory.php?delete=success');
     exit();
   } catch (Exception $e) {
     $conn->rollback();
+    
+    // Log deletion failure
+    $asset_description = $asset['description'] ?? 'Unknown Asset';
+    logErrorActivity('Assets', "Failed to delete asset: {$asset_description} (ID: {$asset_id}) - " . $e->getMessage());
+    
     header('Location: inventory.php?delete=failed&msg=' . urlencode($e->getMessage()));
     exit();
   }

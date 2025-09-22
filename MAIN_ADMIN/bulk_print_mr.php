@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/audit_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -33,6 +34,10 @@ $stmt->close();
 if (empty($mr_records)) {
     die('No MR records found.');
 }
+
+// Log bulk MR printing
+$mr_count = count($mr_records);
+logBulkActivity('PRINT', $mr_count, 'MR Records');
 
 // Fetch system logo
 $stmt_logo = $conn->prepare("SELECT logo FROM system WHERE id = 1");

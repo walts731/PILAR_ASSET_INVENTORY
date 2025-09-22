@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/audit_helper.php';
 session_start();
 
 // Check if user is logged in
@@ -250,17 +251,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         
         if ($insert_query->execute()) {
+            $red_tag_id = $conn->insert_id;
+            
             // Update asset to set red_tagged = 1
             $update_asset_query = $conn->prepare("UPDATE assets SET red_tagged = 1 WHERE id = ?");
             $update_asset_query->bind_param('i', $asset_id);
             $update_asset_query->execute();
             $update_asset_query->close();
             
+            // Get asset description for logging
+            $asset_stmt = $conn->prepare("SELECT description FROM assets WHERE id = ?");
+            $asset_stmt->bind_param("i", $asset_id);
+            $asset_stmt->execute();
+            $asset_result = $asset_stmt->get_result();
+            $asset_data = $asset_result->fetch_assoc();
+            $asset_stmt->close();
+            
+            $asset_description = $asset_data['description'] ?? 'Unknown Asset';
+            
+            // Log red tag creation
+            $red_tag_details = "Created Red Tag: {$red_tag_number} for asset: {$asset_description} (Reason: {$removal_reason}, Action: {$action})";
+            logUserActivity('CREATE', 'Red Tags', $red_tag_details, 'red_tags', $red_tag_id);
+            
             $_SESSION['success_message'] = 'Red Tag has been successfully created!';
             $form_id = isset($_GET['form_id']) ? intval($_GET['form_id']) : 7;
             header("Location: create_red_tag.php?asset_id=" . $asset_id . "&iirup_id=" . $iirup_id . "&form_id=" . $form_id);
             exit();
         } else {
+            // Log red tag creation failure
+            logErrorActivity('Red Tags', "Failed to create Red Tag: {$red_tag_number} - " . $conn->error);
+            
             $_SESSION['error_message'] = "Error creating Red Tag: " . $conn->error;
         }
         $insert_query->close();

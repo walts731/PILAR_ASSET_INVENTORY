@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/audit_helper.php';
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -22,9 +23,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $conn->prepare("INSERT INTO offices (office_name) VALUES (?)");
     $stmt->bind_param("s", $name);
     if ($stmt->execute()) {
+      $office_id = $conn->insert_id;
+      
+      // Log office creation
+      logConfigActivity('Office', $name, 'CREATE', $office_id);
+      
       header("Location: user.php?office_add=success");
       exit();
     } else {
+      // Log office creation failure
+      logErrorActivity('Offices', "Failed to create office: {$name}");
+      
       header("Location: user.php?office_add=error");
       exit();
     }

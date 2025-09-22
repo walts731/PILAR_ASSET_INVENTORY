@@ -1,6 +1,7 @@
 <?php
 require_once '../connect.php';
 require_once '../phpqrcode/qrlib.php';
+require_once '../includes/audit_helper.php';
 require '../vendor/autoload.php'; // PhpSpreadsheet
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -98,6 +99,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
             echo "Insert failed: " . mysqli_error($conn) . "<br>";
         }
     }
+
+    // Log CSV import operation
+    $success_count = count($dataRows);
+    logBulkActivity('IMPORT', $success_count, "CSV Assets from file: {$fileName}");
 
     header("Location: inventory.php?import=success");
     exit();

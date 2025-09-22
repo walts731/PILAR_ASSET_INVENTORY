@@ -1,6 +1,8 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/audit_helper.php';
 require_once '../vendor/autoload.php';
+session_start();
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -191,4 +193,10 @@ $html .= '
 $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
+
+// Log ICS PDF generation
+$ics_number = $ics['ics_no'] ?? 'Unknown';
+$entity_name = $ics['entity_name'] ?? 'Unknown Entity';
+logReportActivity('ICS PDF', "ICS: {$ics_number}, Entity: {$entity_name}");
+
 $dompdf->stream("ICS_" . $ics['ics_no'] . ".pdf", ["Attachment" => false]);

@@ -1,6 +1,7 @@
 <?php
 require_once '../connect.php';
 require_once '../phpqrcode/qrlib.php';
+require_once '../includes/audit_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -99,6 +100,22 @@ if (mysqli_query($conn, $sql)) {
     $main_qr_filename = 'asset_' . $asset_id . '_item_1.png'; // first item’s QR
     $update = "UPDATE assets SET qr_code = '$main_qr_filename' WHERE id = $asset_id";
     mysqli_query($conn, $update);
+
+    // Log asset creation
+    $office_name = 'Unknown Office';
+    if ($office_id > 0) {
+        $office_stmt = $conn->prepare("SELECT office_name FROM offices WHERE id = ?");
+        $office_stmt->bind_param("i", $office_id);
+        $office_stmt->execute();
+        $office_result = $office_stmt->get_result();
+        if ($office_data = $office_result->fetch_assoc()) {
+            $office_name = $office_data['office_name'];
+        }
+        $office_stmt->close();
+    }
+    
+    $asset_details = "Created asset: {$description} (ID: {$asset_id}, Qty: {$quantity}, Value: ₱" . number_format($value, 2) . ", Office: {$office_name})";
+    logAssetActivity('CREATE', $description, $asset_id, "Qty: {$quantity}, Value: ₱" . number_format($value, 2) . ", Office: {$office_name}");
 
     header("Location: inventory.php?add=success&asset_id=" . $asset_id);
     exit();

@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../includes/audit_helper.php';
+
 $login_error = ""; // Initialize error message
 
 // Check if form is submitted
@@ -34,6 +36,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION["role"] = $user["role"];
                 $_SESSION["office_id"] = $user["office_id"];
 
+                // Log successful login
+                logAuthActivity('LOGIN', "User '{$username}' logged in successfully (Role: {$user['role']})", $user["id"], $username);
+
                 // Redirect based on role
                 switch ($user["role"]) {
                     case "super_admin":
@@ -54,12 +59,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
                 exit;
             } else {
+                // Log failed login attempt (wrong password)
+                logAuthActivity('LOGIN_FAILED', "Failed login attempt for username '{$username}' - incorrect password", null, $username);
+                
                 $login_error = '<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
                     Invalid Credentials.
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>';
             }
         } else {
+            // Log failed login attempt (user not found)
+            logAuthActivity('LOGIN_FAILED', "Failed login attempt for username '{$username}' - user not found", null, $username);
+            
             $login_error = '<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
                 Invalid Credentials.
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>

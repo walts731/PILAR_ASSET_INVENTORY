@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/audit_helper.php';
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -43,9 +44,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $stmt->bind_param("ssssssi", $fullname, $username, $email, $hashed_password, $role, $status, $office_id);
 
   if ($stmt->execute()) {
+    $new_user_id = $conn->insert_id;
+    
+    // Get office name for logging
+    $office_name = 'No Office';
+    if ($office_id > 0) {
+        $office_stmt = $conn->prepare("SELECT office_name FROM offices WHERE id = ?");
+        $office_stmt->bind_param("i", $office_id);
+        $office_stmt->execute();
+        $office_result = $office_stmt->get_result();
+        if ($office_data = $office_result->fetch_assoc()) {
+            $office_name = $office_data['office_name'];
+        }
+        $office_stmt->close();
+    }
+    
+    // Log user creation
+    $user_context = "Role: {$role}, Office: {$office_name}, Email: {$email}, Status: {$status}";
+    logUserManagementActivity('CREATE', $username, $new_user_id, $user_context);
+    
     header("Location: user.php?user_add=success");
     exit();
   } else {
+    // Log user creation failure
+    logErrorActivity('User Management', "Failed to create user: {$username}");
+    
     header("Location: user.php?user_add=error");
     exit();
   }

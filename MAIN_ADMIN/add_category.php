@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/audit_helper.php';
 
 session_start();
 
@@ -23,9 +24,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $stmt = $conn->prepare("INSERT INTO categories (category_name) VALUES (?)");
     $stmt->bind_param("s", $category_name);
     if ($stmt->execute()) {
+        $category_id = $conn->insert_id;
+        
+        // Log category creation
+        logConfigActivity('Category', $category_name, 'CREATE', $category_id);
+        
         header("Location: inventory.php?category_added=success");
         exit();
     } else {
+        // Log category creation failure
+        logErrorActivity('Categories', "Failed to create category: {$category_name}");
+        
         header("Location: inventory.php?category_added=fail");
         exit();
     }

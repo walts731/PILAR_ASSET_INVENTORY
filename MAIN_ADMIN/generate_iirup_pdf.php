@@ -1,6 +1,8 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/audit_helper.php';
 require_once '../vendor/autoload.php';
+session_start();
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -228,4 +230,9 @@ $html .= '</tbody>
 $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'landscape');
 $dompdf->render();
+
+// Log IIRUP PDF generation
+$office_name = $form['office'] ?? 'Unknown Office';
+logReportActivity('IIRUP PDF', "IIRUP ID: {$iirup_id}, Office: {$office_name}");
+
 $dompdf->stream('IIRUP_' . $iirup_id . '.pdf', ['Attachment' => false]);

@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/audit_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -43,6 +44,10 @@ $stmt->close();
 if (empty($red_tags)) {
     die('No red tag records found.');
 }
+
+// Log bulk red tag printing
+$red_tag_count = count($red_tags);
+logBulkActivity('PRINT', $red_tag_count, 'Red Tags');
 
 // Fetch system logo
 $stmt_logo = $conn->prepare("SELECT logo FROM system WHERE id = 1");
