@@ -2,121 +2,91 @@
 require_once '../connect.php';
 session_start();
 
-if (!isset($_SESSION['user_id'])) {
+// Ensure user is logged in and is an admin
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'], ['super_admin', 'admin', 'office_admin'])) {
     header("Location: ../index.php");
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['return_ids'])) {
-    $user_id = $_SESSION['user_id'];
-    $return_ids = $_POST['return_ids'];
-    $remarks = $_POST['remarks'] ?? [];
-    $return_qty = $_POST['return_qty'] ?? [];
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['item_id'])) {
+    header("Location: borrowed_assets.php");
+    exit();
+}
 
-    // Start transaction for data consistency
-    $conn->begin_transaction();
+$item_id = intval($_POST['item_id']);
+$condition = $_POST['condition']; // good, damaged, needs_repair
+$remarks = trim($_POST['remarks'] ?? '');
 
-    try {
-        $processed_count = 0;
+// Determine the new status for the asset item based on its returned condition
+$new_item_status = 'available'; // Default status
+if ($condition === 'damaged') {
+    $new_item_status = 'damaged';
+} elseif ($condition === 'needs_repair') {
+    $new_item_status = 'under_repair';
+}
 
-        foreach ($return_ids as $request_id) {
-            $request_id = intval($request_id);
-            $remark = $remarks[$request_id] ?? '';
-            $qty_to_return = intval($return_qty[$request_id] ?? 0);
+$conn->begin_transaction();
 
-            // Fetch asset ID, borrowed quantity, and current status
-            $stmt = $conn->prepare("
-                SELECT br.asset_id, br.quantity, br.status, a.asset_name 
-                FROM borrow_requests br
-                JOIN assets a ON br.asset_id = a.id
-                WHERE br.id = ? AND br.user_id = ?
-            ");
-            $stmt->bind_param("ii", $request_id, $user_id);
-            $stmt->execute();
-            $stmt->bind_result($asset_id, $borrowed_qty, $current_status, $asset_name);
-            
-            if (!$stmt->fetch()) {
-                $stmt->close();
-                throw new Exception("Borrow request not found or unauthorized.");
-            }
-            $stmt->close();
+try {
+    // 1. Get asset_id and borrow_request_id for the item being returned
+    $stmt = $conn->prepare("
+        SELECT bri.borrow_request_id, ai.asset_id
+        FROM borrow_request_items bri
+        JOIN asset_items ai ON bri.asset_item_id = ai.item_id
+        WHERE bri.asset_item_id = ? AND bri.status = 'assigned'
+    ");
+    $stmt->bind_param("i", $item_id);
+    $stmt->execute();
+    $result = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
 
-            // Validate return quantity
-            if ($qty_to_return <= 0) {
-                throw new Exception("Return quantity must be greater than 0 for $asset_name.");
-            }
-
-            if ($qty_to_return > $borrowed_qty) {
-                throw new Exception("Return quantity ($qty_to_return) exceeds borrowed quantity ($borrowed_qty) for $asset_name.");
-            }
-
-            if ($current_status !== 'borrowed') {
-                throw new Exception("Cannot return asset that is not currently borrowed: $asset_name");
-            }
-
-            // Update asset quantity
-            $updateAsset = $conn->prepare("UPDATE assets SET quantity = quantity + ? WHERE id = ?");
-            $updateAsset->bind_param("ii", $qty_to_return, $asset_id);
-            if (!$updateAsset->execute()) {
-                throw new Exception("Failed to update asset quantity for $asset_name.");
-            }
-            $updateAsset->close();
-
-            // Update asset status if quantity becomes positive
-            $checkAsset = $conn->prepare("SELECT quantity FROM assets WHERE id = ?");
-            $checkAsset->bind_param("i", $asset_id);
-            $checkAsset->execute();
-            $checkAsset->bind_result($new_asset_qty);
-            $checkAsset->fetch();
-            $checkAsset->close();
-
-            if ($new_asset_qty > 0) {
-                $updateAssetStatus = $conn->prepare("UPDATE assets SET status = 'available' WHERE id = ?");
-                $updateAssetStatus->bind_param("i", $asset_id);
-                $updateAssetStatus->execute();
-                $updateAssetStatus->close();
-            }
-
-            // Update borrow request
-            if ($qty_to_return == $borrowed_qty) {
-                // Full return - mark as returned
-                $updateBorrow = $conn->prepare("
-                    UPDATE borrow_requests 
-                    SET status = 'returned', return_remarks = ?, returned_at = NOW(), quantity = ?
-                    WHERE id = ?
-                ");
-                $updateBorrow->bind_param("sii", $remark, $qty_to_return, $request_id);
-            } else {
-                // Partial return - update quantity and remarks
-                $remaining_qty = $borrowed_qty - $qty_to_return;
-                $updateBorrow = $conn->prepare("
-                    UPDATE borrow_requests 
-                    SET quantity = ?, return_remarks = ?, returned_at = NOW() 
-                    WHERE id = ?
-                ");
-                $updateBorrow->bind_param("isi", $remaining_qty, $remark, $request_id);
-            }
-
-            if (!$updateBorrow->execute()) {
-                throw new Exception("Failed to update borrow request for $asset_name.");
-            }
-            $updateBorrow->close();
-
-            $processed_count++;
-        }
-
-        // Commit transaction
-        $conn->commit();
-        $_SESSION['success_message'] = "$processed_count asset(s) returned successfully.";
-
-    } catch (Exception $e) {
-        // Rollback transaction on error
-        $conn->rollback();
-        $_SESSION['error_message'] = $e->getMessage();
+    if (!$result) {
+        throw new Exception("Item not found or already returned.");
     }
-} else {
-    $_SESSION['error_message'] = "No assets selected for return.";
+    $borrow_request_id = $result['borrow_request_id'];
+    $asset_id = $result['asset_id'];
+
+    // 2. Update the asset_items table
+    $stmt_ai = $conn->prepare("UPDATE asset_items SET status = ? WHERE item_id = ?");
+    $stmt_ai->bind_param("si", $new_item_status, $item_id);
+    $stmt_ai->execute();
+    $stmt_ai->close();
+
+    // 3. Update the borrow_request_items table
+    $stmt_bri = $conn->prepare("UPDATE borrow_request_items SET status = 'returned', returned_at = NOW() WHERE asset_item_id = ? AND borrow_request_id = ?");
+    $stmt_bri->bind_param("ii", $item_id, $borrow_request_id);
+    $stmt_bri->execute();
+    $stmt_bri->close();
+
+    // 4. Increment the quantity of the parent asset
+    $stmt_a = $conn->prepare("UPDATE assets SET quantity = quantity + 1 WHERE id = ?");
+    $stmt_a->bind_param("i", $asset_id);
+    $stmt_a->execute();
+    $stmt_a->close();
+
+    // 5. Check if all items for this borrow request are returned
+    $stmt_check = $conn->prepare("SELECT COUNT(*) FROM borrow_request_items WHERE borrow_request_id = ? AND status = 'assigned'");
+    $stmt_check->bind_param("i", $borrow_request_id);
+    $stmt_check->execute();
+    $remaining_items = $stmt_check->get_result()->fetch_row()[0];
+    $stmt_check->close();
+
+    if ($remaining_items == 0) {
+        // All items returned, update the main borrow_requests table
+        $stmt_br = $conn->prepare("UPDATE borrow_requests SET status = 'returned' WHERE id = ?");
+        $stmt_br->bind_param("i", $borrow_request_id);
+        $stmt_br->execute();
+        $stmt_br->close();
+    }
+
+    $conn->commit();
+    $_SESSION['success_message'] = "Asset item has been successfully marked as returned.";
+
+} catch (Exception $e) {
+    $conn->rollback();
+    $_SESSION['error_message'] = "An error occurred: " . $e->getMessage();
 }
 
 header("Location: borrowed_assets.php");
 exit();
+?>
