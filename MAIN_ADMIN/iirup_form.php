@@ -202,6 +202,17 @@ if ($result_assets && $result_assets->num_rows > 0) {
     <tbody>
         <?php for ($i = 0; $i < 5; $i++): ?>
             <?php 
+                // Pre-populate first row if asset is selected from QR scan
+                $is_first_row = ($i === 0);
+                $preselected_description = ($is_first_row && $preselected_asset) ? $preselected_asset['description'] : '';
+                $preselected_asset_id = ($is_first_row && $preselected_asset) ? $preselected_asset['id'] : '';
+                $preselected_property_no = ($is_first_row && $preselected_asset) ? ($preselected_asset['inventory_tag'] ?? '') : '';
+                $preselected_unit_cost = ($is_first_row && $preselected_asset) ? $preselected_asset['value'] : '';
+                $preselected_office = ($is_first_row && $preselected_asset) ? $preselected_asset['office_name'] : '';
+                $show_remove_btn = ($is_first_row && $preselected_asset) ? 'inline-block' : 'none';
+            ?>
+            <tr>
+                <td><input type="date" name="date_acquired[]" value="<?= date('Y-m-d'); ?>"></td>
                 <td>
                     <div class="d-flex align-items-center">
                         <input type="text" name="particulars[]" list="asset_descriptions" class="particulars flex-grow-1" 
