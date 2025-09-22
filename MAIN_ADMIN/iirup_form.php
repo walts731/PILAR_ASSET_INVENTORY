@@ -30,9 +30,13 @@ if ($result_office && $result_office->num_rows > 0) {
     }
 }
 
-// Fetch asset data for datalist and JS
+// Fetch asset data for datalist and JS (include asset ID, office name, inventory_tag) and only where type='asset' and has inventory_tag
 $assets_data = [];
-$sql_assets = "SELECT description, quantity, value FROM assets ORDER BY description ASC";
+$sql_assets = "SELECT a.id, a.description, a.quantity, a.value, a.office_id, a.inventory_tag, o.office_name
+               FROM assets a
+               LEFT JOIN offices o ON o.id = a.office_id
+               WHERE a.type = 'asset' AND a.inventory_tag IS NOT NULL AND a.inventory_tag <> ''
+               ORDER BY a.description ASC";
 $result_assets = $conn->query($sql_assets);
 if ($result_assets && $result_assets->num_rows > 0) {
     while ($row_asset = $result_assets->fetch_assoc()) {
@@ -40,7 +44,9 @@ if ($result_assets && $result_assets->num_rows > 0) {
     }
 }
 ?>
+
 <?php if (!empty($header_image)): ?>
+
     <div style="text-align: center; margin-bottom: 15px;">
         <img src="../img/<?= $header_image ?>" 
              alt="Header Image" 
@@ -48,12 +54,30 @@ if ($result_assets && $result_assets->num_rows > 0) {
         <div style="font-size: 12px; color: gray; margin-top: 5px;">
             As of <?= date("F, Y") ?>
         </div>
+        <!-- Hidden input so header_image is retained if user doesn't upload a new one -->
+        <input type="hidden" name="header_image" value="<?= htmlspecialchars($header_image) ?>">
+
     </div>
 <?php endif; ?>
 
 
 <!-- IIRUP FORM HEADER -->
-<div style="display: flex; justify-content: space-between; text-align: center; margin-top: 20px;" class="mb-3">
+<?php if (isset($_GET['success']) && $_GET['success'] == '1'): ?>
+    <?php $savedCount = isset($_GET['count']) ? (int)$_GET['count'] : 0; ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <strong>Success!</strong> IIRUP form and <?= htmlspecialchars((string)$savedCount) ?> item(s) were saved successfully.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
+
+<form method="POST" action="save_iirup_items.php" enctype="multipart/form-data">
+
+<div class="mb-3" style="text-align:center;">
+    <label class="form-label">Header Image</label>
+    <input type="file" name="header_image" accept="image/*" class="form-control" style="max-width: 400px; margin: 0 auto;">
+</div>
+
+<div style="display: flex; justify-content: space-between; text-align: center; margin-top: 10px;" class="mb-3">
     <div style="flex: 1; margin: 0 5px;">
         <input type="text" name="accountable_officer" value="<?= $accountable_officer ?>"
             style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;">
@@ -112,6 +136,7 @@ if ($result_assets && $result_assets->num_rows > 0) {
 </style>
 
 <table class="excel-table">
+
     <thead>
         <tr>
             <th colspan="10">INVENTORY</th>
@@ -149,6 +174,7 @@ if ($result_assets && $result_assets->num_rows > 0) {
                 <td><input type="date" name="date_acquired[]" value="<?= date('Y-m-d'); ?>"></td>
                 <td>
                     <input type="text" name="particulars[]" list="asset_descriptions" class="particulars">
+                    <input type="hidden" name="asset_id[]" class="asset_id" value="">
                 </td>
                 <td><input type="text" name="property_no[]"></td>
                 <td><input type="number" name="qty[]" min="1" class="qty" max="1"></td>
@@ -161,10 +187,8 @@ if ($result_assets && $result_assets->num_rows > 0) {
                 <td><input type="number" step="0.01" name="carrying_amount[]" min="1"></td>
                 <td>
                     <select name="remarks[]">
-                        <option value="">Select</option>
-                        <option value="Unserviceable">Unserviceable</option>
-                        <option value="Unserviceable">Serviceable</option>
-
+                        <option value="Unserviceable" selected>Unserviceable</option>
+                        <option value="Serviceable">Serviceable</option>
                     </select>
                 </td>
                 <td><input type="text" name="sale[]"></td>
@@ -176,20 +200,7 @@ if ($result_assets && $result_assets->num_rows > 0) {
                 <td><input type="text" name="or_no[]"></td>
                 <td><input type="number" step="0.01" name="amount[]" min="1"></td>
                 <td>
-                    <select name="dept_office[]">
-                        <option value="">Select</option>
-                        <?php
-                        // Fetch all office names from the database
-                        $office_sql = "SELECT office_name FROM offices ORDER BY office_name ASC";
-                        $office_result = $conn->query($office_sql);
-
-                        if ($office_result && $office_result->num_rows > 0) {
-                            while ($office_row = $office_result->fetch_assoc()) {
-                                echo '<option value="' . htmlspecialchars($office_row['office_name']) . '">' . htmlspecialchars($office_row['office_name']) . '</option>';
-                            }
-                        }
-                        ?>
-                    </select>
+                    <input type="text" name="dept_office[]" class="dept_office" value="" readonly>
                 </td>
                 <td><input type="text" name="code[]"></td>
                 <td><input type="text" name="red_tag[]"></td>
@@ -201,11 +212,14 @@ if ($result_assets && $result_assets->num_rows > 0) {
 
 <datalist id="asset_descriptions">
     <?php foreach ($assets_data as $asset): ?>
-        <option value="<?= htmlspecialchars($asset['description']) ?>"></option>
+        <option 
+            value="<?= htmlspecialchars($asset['description']) ?>"
+            label="<?= htmlspecialchars(($asset['inventory_tag'] ?? '') . ' - ' . $asset['description']) ?>">
+        </option>
     <?php endforeach; ?>
 </datalist>
 
-</table>
+<!-- (Single-submit) Keep form open; footer is below -->
 
 <?php
 // Handle footer save/update
@@ -317,10 +331,19 @@ if ($result_footer && $result_footer->num_rows > 0) {
             <td></td>
         </tr>
     </table>
+    <small class="text-muted">Ensure details are correct before submitting.</small>
+    <br>
 </div>
 
+<div class="d-flex justify-content-end gap-2" style="margin-top:10px;">
+    <a href="saved_iirup.php" class="btn btn-success">
+        <i class="bi bi-folder-check"></i> View Saved IIRUP
+    </a>
+    <button type="submit" name="save_iirup" class="btn btn-primary">Submit IIRUP</button>
+    
+</div>
 
-
+</form>
 
 <script>
     const assetsData = <?= json_encode($assets_data) ?>;
@@ -328,15 +351,27 @@ if ($result_footer && $result_footer->num_rows > 0) {
     document.querySelectorAll('.particulars').forEach((particularInput, index) => {
         particularInput.addEventListener('input', function() {
             const selected = assetsData.find(a => a.description === this.value);
-            if (selected) {
-                // Set max quantity based on DB
-                const qtyInput = document.querySelectorAll('.qty')[index];
-                qtyInput.max = selected.quantity;
-                qtyInput.value = 1;
+            const qtyInput = document.querySelectorAll('.qty')[index];
+            const unitCostInput = document.querySelectorAll('.unit_cost')[index];
+            const idInput = document.querySelectorAll('.asset_id')[index];
+            const deptInput = document.querySelectorAll('.dept_office')[index];
 
+            if (selected) {
+                // Set hidden asset id
+                if (idInput) idInput.value = selected.id || '';
+                // Set max quantity based on DB
+                if (qtyInput) {
+                    qtyInput.max = selected.quantity;
+                    qtyInput.value = 1;
+                }
                 // Autofill unit cost based on DB
-                const unitCostInput = document.querySelectorAll('.unit_cost')[index];
-                unitCostInput.value = selected.value;
+                if (unitCostInput) unitCostInput.value = selected.value;
+                // Autofill department/office name (read-only)
+                if (deptInput) deptInput.value = selected.office_name || '';
+            } else {
+                // Clear when no matching asset
+                if (idInput) idInput.value = '';
+                if (deptInput) deptInput.value = '';
             }
         });
     });
