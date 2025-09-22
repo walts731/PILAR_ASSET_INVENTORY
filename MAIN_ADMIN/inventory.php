@@ -126,6 +126,23 @@ $stmt->close();
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="no-property-tab" data-bs-toggle="tab" data-bs-target="#no_property" type="button" role="tab">No Property Tag <sub class="text-muted">(<?= $noPropCount ?>)</sub></button>
       </li>
+      <?php
+        // Count unserviceable assets without red tags
+        $unserviceableCount = 0;
+        if ($selected_office === "all") {
+          $stmtUnserv = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND red_tagged = 0 AND quantity > 0");
+        } else {
+          $stmtUnserv = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND red_tagged = 0 AND office_id = ? AND quantity > 0");
+          $stmtUnserv->bind_param("i", $selected_office);
+        }
+        $stmtUnserv->execute();
+        $stmtUnserv->bind_result($unserviceableCount);
+        $stmtUnserv->fetch();
+        $stmtUnserv->close();
+      ?>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="unserviceable-tab" data-bs-toggle="tab" data-bs-target="#unserviceable" type="button" role="tab">Unserviceable (No Red Tag) <sub class="text-muted">(<?= $unserviceableCount ?>)</sub></button>
+      </li>
     </ul>
 
     <div class="tab-content" id="inventoryTabsContent">
@@ -611,6 +628,175 @@ $stmt->close();
             </table>
           </div>
         </div>
+      </div>
+      
+      <!-- Unserviceable (No Red Tag) Tab -->
+      <div class="tab-pane fade" id="unserviceable" role="tabpanel">
+        <?php
+        // Query for unserviceable assets without red tags, including IIRUP ID
+        if ($selected_office === "all") {
+          $stmtUnserv = $conn->prepare("
+            SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
+            FROM assets a
+            LEFT JOIN categories c ON a.category = c.id
+            LEFT JOIN offices o ON a.office_id = o.id
+            LEFT JOIN employees e ON a.employee_id = e.employee_id
+            LEFT JOIN iirup_items ii ON a.id = ii.asset_id
+            WHERE a.status = 'unserviceable' AND a.red_tagged = 0 AND a.quantity > 0
+            ORDER BY a.last_updated DESC
+          ");
+        } else {
+          $stmtUnserv = $conn->prepare("
+            SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
+            FROM assets a
+            LEFT JOIN categories c ON a.category = c.id
+            LEFT JOIN offices o ON a.office_id = o.id
+            LEFT JOIN employees e ON a.employee_id = e.employee_id
+            LEFT JOIN iirup_items ii ON a.id = ii.asset_id
+            WHERE a.status = 'unserviceable' AND a.red_tagged = 0 AND a.office_id = ? AND a.quantity > 0
+            ORDER BY a.last_updated DESC
+          ");
+          $stmtUnserv->bind_param("i", $selected_office);
+        }
+        
+        $stmtUnserv->execute();
+        $unservResult = $stmtUnserv->get_result();
+        ?>
+        
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="alert alert-warning">
+              <h6 class="alert-heading mb-2">
+                <i class="bi bi-exclamation-triangle"></i> Unserviceable Assets Without Red Tags
+              </h6>
+              <p class="mb-0">
+                These assets are marked as unserviceable but have not been red tagged yet. 
+                Consider creating IIRUP forms and red tags for proper documentation.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+              <i class="bi bi-exclamation-circle text-warning"></i> 
+              Unserviceable Assets (<?= $unservResult->num_rows ?> items)
+            </h6>
+            
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover" id="unserviceableTable">
+                <thead class="table-light">
+                  <tr>
+                    <th>Asset ID</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Office</th>
+                    <th>Person Accountable</th>
+                    <th>Value</th>
+                    <th>Qty</th>
+                    <th>Last Updated</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php if ($unservResult->num_rows > 0): ?>
+                    <?php while ($row = $unservResult->fetch_assoc()): ?>
+                      <tr>
+                        <td>
+                          <span class="badge bg-secondary"><?= $row['id'] ?></span>
+                        </td>
+                        <td>
+                          <div class="d-flex align-items-center">
+                            <?php if (!empty($row['image'])): ?>
+                              <img src="../img/assets/<?= htmlspecialchars($row['image']) ?>" 
+                                   alt="Asset" class="rounded me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                            <?php else: ?>
+                              <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center" 
+                                   style="width: 32px; height: 32px;">
+                                <i class="bi bi-image text-muted"></i>
+                              </div>
+                            <?php endif; ?>
+                            <div>
+                              <div class="fw-medium"><?= htmlspecialchars($row['description']) ?></div>
+                              <?php if (!empty($row['brand']) || !empty($row['model'])): ?>
+                                <small class="text-muted">
+                                  <?= htmlspecialchars(trim(($row['brand'] ?? '') . ' ' . ($row['model'] ?? ''))) ?>
+                                </small>
+                              <?php endif; ?>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span class="badge bg-info text-dark">
+                            <?= htmlspecialchars($row['category_name'] ?? 'Uncategorized') ?>
+                          </span>
+                        </td>
+                        <td>
+                          <div class="text-truncate" style="max-width: 120px;" title="<?= htmlspecialchars($row['office_name'] ?? 'Not Assigned') ?>">
+                            <?= htmlspecialchars($row['office_name'] ?? 'Not Assigned') ?>
+                          </div>
+                        </td>
+                        <td>
+                          <div class="text-truncate" style="max-width: 120px;" title="<?= htmlspecialchars($row['employee_name'] ?? 'Not Assigned') ?>">
+                            <?= htmlspecialchars($row['employee_name'] ?? 'Not Assigned') ?>
+                          </div>
+                        </td>
+                        <td>
+                          <span class="text-success fw-medium">
+                            ₱<?= number_format((float)$row['value'], 2) ?>
+                          </span>
+                        </td>
+                        <td>
+                          <span class="badge bg-light text-dark">
+                            <?= (int)$row['quantity'] ?> <?= htmlspecialchars($row['unit']) ?>
+                          </span>
+                        </td>
+                        <td>
+                          <small class="text-muted">
+                            <?= $row['last_updated'] ? date('M j, Y', strtotime($row['last_updated'])) : 'N/A' ?>
+                          </small>
+                        </td>
+                        <td class="text-nowrap">
+                          <?php if (!empty($row['iirup_id'])): ?>
+                            <a href="create_red_tag.php?asset_id=<?= $row['id'] ?>&iirup_id=<?= $row['iirup_id'] ?>" 
+                               class="btn btn-sm btn-danger rounded-pill" 
+                               title="Create Red Tag">
+                              <i class="bi bi-tag-fill"></i> Create Red Tag
+                            </a>
+                          <?php else: ?>
+                            <div class="d-flex gap-1">
+                              <a href="forms.php?id=7&asset_id=<?= $row['id'] ?>&asset_description=<?= urlencode($row['description']) ?>&inventory_tag=<?= urlencode($row['inventory_tag'] ?? $row['property_no'] ?? '') ?>" 
+                                 class="btn btn-sm btn-outline-warning rounded-pill" 
+                                 title="Create IIRUP Form First">
+                                <i class="bi bi-file-earmark-plus"></i>
+                              </a>
+                              <small class="text-muted align-self-center">IIRUP Required</small>
+                            </div>
+                          <?php endif; ?>
+                        </td>
+                      </tr>
+                    <?php endwhile; ?>
+                  <?php else: ?>
+                    <tr>
+                      <td colspan="9" class="text-center py-4">
+                        <div class="text-muted">
+                          <i class="bi bi-check-circle display-4 d-block mb-2 text-success"></i>
+                          <h6>No Unserviceable Assets Without Red Tags</h6>
+                          <p class="mb-0">All unserviceable assets have been properly red tagged.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <?php $stmtUnserv->close(); ?>
       </div>
     </div>
   </div>

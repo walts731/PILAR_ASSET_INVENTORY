@@ -189,7 +189,7 @@ try {
   $insertStmt = $conn->prepare($insertSql);
   if (!$insertStmt) { throw new Exception('Prepare insert failed: ' . $conn->error); }
 
-  $updateAssetSql = "UPDATE assets SET status = 'unserviceable', red_tagged = 1 WHERE id = ?";
+  $updateAssetSql = "UPDATE assets SET status = 'unserviceable' WHERE id = ?";
   $updateAssetStmt = $conn->prepare($updateAssetSql);
   if (!$updateAssetStmt) { throw new Exception('Prepare update-asset failed: ' . $conn->error); }
 
@@ -267,7 +267,8 @@ try {
 
     $inserted++;
 
-    // If an existing asset is selected, update its status and red_tagged
+    // If an existing asset is selected, update its status to unserviceable
+    // Note: red_tagged remains 0 until create_red_tag.php is executed
     if (!is_null($aid) && $aid > 0) {
       $updateAssetStmt->bind_param('i', $aid);
       if (!$updateAssetStmt->execute()) {

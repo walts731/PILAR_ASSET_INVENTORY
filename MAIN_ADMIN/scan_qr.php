@@ -286,11 +286,14 @@ $stmt->close();
       $asset_id = $_GET['asset_id'];
 
       $stmt = $conn->prepare("
-        SELECT a.*, c.category_name, o.office_name, e.name AS employee_name
+        SELECT a.*, c.category_name, o.office_name, e.name AS employee_name,
+               ics.ics_no, par.par_no
         FROM assets a
         LEFT JOIN categories c ON a.category = c.id
         LEFT JOIN offices o ON a.office_id = o.id
         LEFT JOIN employees e ON a.employee_id = e.employee_id
+        LEFT JOIN ics_form ics ON a.ics_id = ics.id
+        LEFT JOIN par_form par ON a.par_id = par.id
         WHERE a.id = ?
       ");
       $stmt->bind_param("i", $asset_id);
@@ -299,43 +302,241 @@ $stmt->close();
 
       if ($row = $result->fetch_assoc()):
     ?>
-      <div class="card mt-4 shadow-sm mx-auto" style="max-width: 700px;">
-        <div class="card-header">
-          <h5 class="mb-0"><i class="bi bi-box-seam"></i> Asset Details</h5>
+      <?php
+        // Determine which form number to display based on asset value
+        $asset_value = (float)$row['value'];
+        $form_number = '';
+        $form_type = '';
+        
+        if ($asset_value < 50000) {
+          // Show ICS number for assets below ₱50,000
+          if (!empty($row['ics_no'])) {
+            $form_number = $row['ics_no'];
+            $form_type = 'ICS No.';
+          }
+        } else {
+          // Show PAR number for assets ₱50,000 and above
+          if (!empty($row['par_no'])) {
+            $form_number = $row['par_no'];
+            $form_type = 'PAR No.';
+          }
+        }
+      ?>
+      
+      <div class="card mt-4 shadow-sm mx-auto" style="max-width: 800px;">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="bi bi-box-seam"></i> Asset Information</h5>
         </div>
         <div class="card-body">
-          <div class="row g-3">
-            <div class="col-md-8">
-              <p class="mb-1"><strong>Asset ID:</strong> <?= (int)$row['id'] ?></p>
-              <p class="mb-1"><strong>Name:</strong> <?= htmlspecialchars($row['asset_name'] ?? $row['description']) ?></p>
-              <p class="mb-1"><strong>Description:</strong> <?= htmlspecialchars($row['description']) ?></p>
-              <p class="mb-1"><strong>Category:</strong> <?= htmlspecialchars($row['category_name'] ?? 'Uncategorized') ?></p>
-              <p class="mb-1"><strong>Type:</strong> <?= htmlspecialchars($row['type']) ?></p>
-              <p class="mb-1"><strong>Quantity / Unit:</strong> <?= (int)$row['quantity'] ?> <?= htmlspecialchars($row['unit']) ?></p>
-              <p class="mb-1"><strong>Status:</strong>
-                <span class="badge bg-<?= $row['status'] === 'available' ? 'success' : ($row['status'] === 'borrowed' ? 'warning' : 'secondary') ?>">
-                  <?= $row['red_tagged'] ? 'Red-Tagged' : ucfirst($row['status']) ?>
-                </span>
-              </p>
-              <p class="mb-1"><strong>Value:</strong> &#8369;<?= number_format((float)$row['value'], 2) ?></p>
-              <p class="mb-1"><strong>Office:</strong> <?= htmlspecialchars($row['office_name'] ?? '—') ?></p>
-              <p class="mb-1"><strong>Person Accountable:</strong> <?= htmlspecialchars($row['employee_name'] ?? '—') ?></p>
-              <p class="mb-1"><strong>Property No.:</strong> <?= htmlspecialchars($row['property_no'] ?? '') ?></p>
-              <p class="mb-1"><strong>Serial No.:</strong> <?= htmlspecialchars($row['serial_no'] ?? '') ?></p>
-              <p class="mb-1"><strong>Model:</strong> <?= htmlspecialchars($row['model'] ?? '') ?></p>
-              <p class="mb-1"><strong>Brand:</strong> <?= htmlspecialchars($row['brand'] ?? '') ?></p>
-              <p class="mb-1"><strong>Code:</strong> <?= htmlspecialchars($row['code'] ?? '') ?></p>
-              <p class="mb-1"><strong>ICS ID:</strong> <?= htmlspecialchars($row['ics_id'] ?? '') ?></p>
-              <p class="mb-1"><strong>Acquired On:</strong> <?= $row['acquisition_date'] ? date('F j, Y', strtotime($row['acquisition_date'])) : '—' ?></p>
-              <p class="mb-1"><strong>Last Updated:</strong> <?= $row['last_updated'] ? date('F j, Y', strtotime($row['last_updated'])) : '—' ?></p>
+          <div class="row g-4">
+            <!-- Main Asset Information -->
+            <div class="col-lg-8">
+              <div class="row g-3">
+                <!-- Basic Information -->
+                <div class="col-12">
+                  <h6 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="bi bi-info-circle"></i> Basic Information
+                  </h6>
+                  <div class="row g-2">
+                    <div class="col-md-6">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Asset Name</small>
+                        <strong><?= htmlspecialchars($row['asset_name'] ?? $row['description']) ?></strong>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Category</small>
+                        <strong><?= htmlspecialchars($row['category_name'] ?? 'Uncategorized') ?></strong>
+                      </div>
+                    </div>
+                    <div class="col-12">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Description</small>
+                        <strong><?= htmlspecialchars($row['description']) ?></strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Status and Value -->
+                <div class="col-12">
+                  <h6 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="bi bi-clipboard-check"></i> Status & Value
+                  </h6>
+                  <div class="row g-2">
+                    <div class="col-md-4">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Status</small>
+                        <span class="badge bg-<?= $row['status'] === 'available' ? 'success' : ($row['status'] === 'borrowed' ? 'warning' : 'secondary') ?> fs-6">
+                          <?= $row['red_tagged'] ? 'Red-Tagged' : ucfirst($row['status']) ?>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Value</small>
+                        <strong class="text-success">₱<?= number_format($asset_value, 2) ?></strong>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Quantity</small>
+                        <strong><?= (int)$row['quantity'] ?> <?= htmlspecialchars($row['unit']) ?></strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Form and Property Information -->
+                <div class="col-12">
+                  <h6 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="bi bi-file-earmark-text"></i> Form & Property Details
+                  </h6>
+                  <div class="row g-2">
+                    <?php if ($form_number): ?>
+                    <div class="col-md-6">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block"><?= $form_type ?></small>
+                        <strong class="text-info"><?= htmlspecialchars($form_number) ?></strong>
+                      </div>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($row['property_no'])): ?>
+                    <div class="col-md-6">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Property No.</small>
+                        <strong><?= htmlspecialchars($row['property_no']) ?></strong>
+                      </div>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($row['inventory_tag'])): ?>
+                    <div class="col-md-6">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Inventory Tag</small>
+                        <strong><?= htmlspecialchars($row['inventory_tag']) ?></strong>
+                      </div>
+                    </div>
+                    <?php endif; ?>
+                  </div>
+                </div>
+
+                <!-- Technical Specifications -->
+                <?php if (!empty($row['brand']) || !empty($row['model']) || !empty($row['serial_no']) || !empty($row['type'])): ?>
+                <div class="col-12">
+                  <h6 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="bi bi-gear"></i> Technical Specifications
+                  </h6>
+                  <div class="row g-2">
+                    <?php if (!empty($row['brand'])): ?>
+                    <div class="col-md-6">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Brand</small>
+                        <strong><?= htmlspecialchars($row['brand']) ?></strong>
+                      </div>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($row['model'])): ?>
+                    <div class="col-md-6">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Model</small>
+                        <strong><?= htmlspecialchars($row['model']) ?></strong>
+                      </div>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($row['serial_no'])): ?>
+                    <div class="col-md-6">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Serial No.</small>
+                        <strong><?= htmlspecialchars($row['serial_no']) ?></strong>
+                      </div>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($row['type'])): ?>
+                    <div class="col-md-6">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Type</small>
+                        <strong><?= htmlspecialchars($row['type']) ?></strong>
+                      </div>
+                    </div>
+                    <?php endif; ?>
+                  </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- Assignment Information -->
+                <div class="col-12">
+                  <h6 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="bi bi-person-badge"></i> Assignment Information
+                  </h6>
+                  <div class="row g-2">
+                    <div class="col-md-6">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Office</small>
+                        <strong><?= htmlspecialchars($row['office_name'] ?? 'Not Assigned') ?></strong>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Person Accountable</small>
+                        <strong><?= htmlspecialchars($row['employee_name'] ?? 'Not Assigned') ?></strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Date Information -->
+                <div class="col-12">
+                  <h6 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="bi bi-calendar"></i> Date Information
+                  </h6>
+                  <div class="row g-2">
+                    <div class="col-md-6">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Date Acquired</small>
+                        <strong><?= $row['acquisition_date'] ? date('F j, Y', strtotime($row['acquisition_date'])) : 'Not Available' ?></strong>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="p-2 bg-light rounded">
+                        <small class="text-muted d-block">Last Updated</small>
+                        <strong><?= $row['last_updated'] ? date('F j, Y g:i A', strtotime($row['last_updated'])) : 'Not Available' ?></strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="col-md-4 text-center">
-              <?php if (!empty($row['image'])): ?>
-                <img src="../img/<?= htmlspecialchars($row['image']) ?>" alt="Asset Image" class="img-fluid border rounded mb-2" style="max-height: 160px; object-fit: contain;">
-              <?php endif; ?>
-              <?php if (!empty($row['qr_code'])): ?>
-                <img src="../img/<?= htmlspecialchars($row['qr_code']) ?>" alt="QR Code" class="img-fluid border rounded" style="max-height: 160px; object-fit: contain;">
-              <?php endif; ?>
+
+            <!-- Images Section -->
+            <div class="col-lg-4">
+              <h6 class="text-primary border-bottom pb-2 mb-3">
+                <i class="bi bi-images"></i> Asset Images
+              </h6>
+              <div class="text-center">
+                <?php if (!empty($row['image'])): ?>
+                  <div class="mb-3">
+                    <small class="text-muted d-block mb-2">Asset Photo</small>
+                    <img src="../img/<?= htmlspecialchars($row['image']) ?>" alt="Asset Image" 
+                         class="img-fluid border rounded shadow-sm" style="max-height: 200px; object-fit: contain;">
+                  </div>
+                <?php endif; ?>
+                
+                <?php if (!empty($row['qr_code'])): ?>
+                  <div class="mb-3">
+                    <small class="text-muted d-block mb-2">QR Code</small>
+                    <img src="../img/<?= htmlspecialchars($row['qr_code']) ?>" alt="QR Code" 
+                         class="img-fluid border rounded shadow-sm" style="max-height: 150px; object-fit: contain;">
+                  </div>
+                <?php endif; ?>
+                
+                <?php if (empty($row['image']) && empty($row['qr_code'])): ?>
+                  <div class="text-muted p-4 border rounded bg-light">
+                    <i class="bi bi-image display-4 d-block mb-2"></i>
+                    <small>No images available</small>
+                  </div>
+                <?php endif; ?>
+              </div>
             </div>
           </div>
 

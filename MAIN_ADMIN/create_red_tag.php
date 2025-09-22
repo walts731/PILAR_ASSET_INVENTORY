@@ -123,6 +123,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         
         if ($update_query->execute()) {
+            // Update asset to set red_tagged = 1
+            $update_asset_query = $conn->prepare("UPDATE assets SET red_tagged = 1 WHERE id = ?");
+            $update_asset_query->bind_param('i', $asset_id);
+            $update_asset_query->execute();
+            $update_asset_query->close();
+            
             $_SESSION['success_message'] = 'Red Tag successfully updated!';
             $form_id = isset($_GET['form_id']) ? intval($_GET['form_id']) : 7;
             header("Location: create_red_tag.php?asset_id=" . $asset_id . "&iirup_id=" . $iirup_id . "&form_id=" . $form_id);
@@ -154,6 +160,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         
         if ($insert_query->execute()) {
+            // Update asset to set red_tagged = 1
+            $update_asset_query = $conn->prepare("UPDATE assets SET red_tagged = 1 WHERE id = ?");
+            $update_asset_query->bind_param('i', $asset_id);
+            $update_asset_query->execute();
+            $update_asset_query->close();
+            
             $_SESSION['success_message'] = 'Red Tag has been successfully created!';
             $form_id = isset($_GET['form_id']) ? intval($_GET['form_id']) : 7;
             header("Location: create_red_tag.php?asset_id=" . $asset_id . "&iirup_id=" . $iirup_id . "&form_id=" . $form_id);
