@@ -86,8 +86,8 @@ $stmt->close();
             </select>
           </form>
 
-          <!-- Show buttons only if selected office = user's office -->
-          <?php if ($selected_office == $_SESSION['office_id']): ?>
+          <!-- Add Asset and Import Asset buttons - visible for all offices -->
+          <div class="d-flex flex-wrap gap-2">
             <!-- Add Asset Button -->
             <button class="btn btn-outline-primary rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
               <i class="bi bi-plus-circle"></i> Add Asset
@@ -97,7 +97,7 @@ $stmt->close();
             <button class="btn btn-outline-success rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#importCSVModal">
               <i class="bi bi-upload"></i> Import CSV
             </button>
-          <?php endif; ?>
+          </div>
 
 
         </div>

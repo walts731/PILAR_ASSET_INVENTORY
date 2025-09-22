@@ -158,6 +158,9 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
             <a href="usage.php" class="<?= ($page == 'usage') ? 'active' : '' ?>">
                 <i class="bi bi-clock-history"></i> Usage
             </a>
+            <a href="logs.php" class="<?= ($page == 'logs') ? 'active' : '' ?>">
+                <i class="bi bi-journal-text"></i> Audit Trail
+            </a>
             <a href="employees.php" class="<?= ($page == 'employees') ? 'active' : '' ?>">
                 <i class="bi bi-people-fill"></i> Employees
             </a>
