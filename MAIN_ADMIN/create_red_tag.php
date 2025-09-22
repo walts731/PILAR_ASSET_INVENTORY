@@ -39,16 +39,18 @@ $user = $user_result->fetch_assoc();
 $user_query->close();
 
 // Check if Red Tag already exists for this asset and IIRUP
-$red_tag_exists = false;
+$existing_red_tag_check = false;
 $red_tag_id = null;
-$check_red_tag = $conn->prepare("SELECT id FROM red_tags WHERE asset_id = ? AND iirup_id = ?");
+$existing_red_tag_data = null;
+
+$check_red_tag = $conn->prepare("SELECT * FROM red_tags WHERE asset_id = ? AND iirup_id = ?");
 $check_red_tag->bind_param('ii', $asset_id, $iirup_id);
 $check_red_tag->execute();
 $red_tag_result = $check_red_tag->get_result();
 if ($red_tag_result->num_rows > 0) {
-    $red_tag_exists = true;
-    $red_tag_row = $red_tag_result->fetch_assoc();
-    $red_tag_id = $red_tag_row['id'];
+    $existing_red_tag_check = true;
+    $existing_red_tag_data = $red_tag_result->fetch_assoc();
+    $red_tag_id = $existing_red_tag_data['id'];
 }
 $check_red_tag->close();
 
@@ -70,10 +72,14 @@ if (!$asset) {
     die('Asset not found.');
 }
 
-// Generate Red Tag number
-$red_tag_query = $conn->query("SELECT COALESCE(MAX(SUBSTRING_INDEX(red_tag_number, '-', -1)), 0) + 1 as next_num FROM red_tags");
-$next_num = str_pad($red_tag_query->fetch_assoc()['next_num'], 2, '0', STR_PAD_LEFT);
-$red_tag_number = "PS-5S-03-F01-01-" . $next_num;
+// Generate Red Tag number (only for new Red Tags)
+if ($existing_red_tag_check && $existing_red_tag_data) {
+    $red_tag_number = $existing_red_tag_data['red_tag_number'];
+} else {
+    $red_tag_query = $conn->query("SELECT COALESCE(MAX(SUBSTRING_INDEX(red_tag_number, '-', -1)), 0) + 1 as next_num FROM red_tags");
+    $next_num = str_pad($red_tag_query->fetch_assoc()['next_num'], 2, '0', STR_PAD_LEFT);
+    $red_tag_number = "PS-5S-03-F01-01-" . $next_num;
+}
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -84,37 +90,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $description = $asset['description'] . ' (' . $asset['property_no'] . ')';
     
-    $insert_query = $conn->prepare("
-        INSERT INTO red_tags (
-            red_tag_number, asset_id, iirup_id, date_received, 
-            tagged_by, item_location, description, removal_reason, 
-            action, status
-        ) VALUES (?, ?, ?, CURDATE(), ?, ?, ?, ?, ?, 'Pending')
-    ");
-    
-    $insert_query->bind_param(
-        'siisssss',
-        $red_tag_number,
-        $asset_id,
-        $iirup_id,
-        $tagged_by,
-        $item_location,
-        $description,
-        $removal_reason,
-        $action
-    );
-    
-    if ($insert_query->execute()) {
-        $_SESSION['flash'] = [
-            'type' => 'success',
-            'message' => 'Red Tag created successfully!'
-        ];
-        header("Location: view_iirup.php?id=" . $iirup_id);
-        exit();
+    if ($existing_red_tag_check) {
+        // UPDATE existing Red Tag
+        $update_query = $conn->prepare("
+            UPDATE red_tags SET 
+                item_location = ?, 
+                removal_reason = ?, 
+                action = ?,
+                description = ?
+            WHERE asset_id = ? AND iirup_id = ?
+        ");
+        
+        $update_query->bind_param(
+            'ssssii',
+            $item_location,
+            $removal_reason,
+            $action,
+            $description,
+            $asset_id,
+            $iirup_id
+        );
+        
+        if ($update_query->execute()) {
+            $_SESSION['success_message'] = 'Red Tag successfully updated!';
+            $form_id = isset($_GET['form_id']) ? intval($_GET['form_id']) : 7;
+            header("Location: create_red_tag.php?asset_id=" . $asset_id . "&iirup_id=" . $iirup_id . "&form_id=" . $form_id);
+            exit();
+        } else {
+            $_SESSION['error_message'] = "Error updating Red Tag: " . $conn->error;
+        }
+        $update_query->close();
     } else {
-        $error = "Error creating Red Tag: " . $conn->error;
+        // Create new Red Tag
+        $insert_query = $conn->prepare("
+            INSERT INTO red_tags (
+                red_tag_number, asset_id, iirup_id, date_received, 
+                tagged_by, item_location, description, removal_reason, 
+                action, status
+            ) VALUES (?, ?, ?, CURDATE(), ?, ?, ?, ?, ?, 'Pending')
+        ");
+        
+        $insert_query->bind_param(
+            'siisssss',
+            $red_tag_number,
+            $asset_id,
+            $iirup_id,
+            $tagged_by,
+            $item_location,
+            $description,
+            $removal_reason,
+            $action
+        );
+        
+        if ($insert_query->execute()) {
+            $_SESSION['success_message'] = 'Red Tag has been successfully created!';
+            $form_id = isset($_GET['form_id']) ? intval($_GET['form_id']) : 7;
+            header("Location: create_red_tag.php?asset_id=" . $asset_id . "&iirup_id=" . $iirup_id . "&form_id=" . $form_id);
+            exit();
+        } else {
+            $_SESSION['error_message'] = "Error creating Red Tag: " . $conn->error;
+        }
+        $insert_query->close();
     }
-    $insert_query->close();
 }
 ?>
 <!DOCTYPE html>
@@ -172,9 +209,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php include 'includes/topbar.php' ?>
         
         <div class="container py-4">
-            <?php if (isset($error)): ?>
-                <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-            <?php endif; ?>
+            <?php
+            // Display success or error messages
+            if (isset($_SESSION['success_message'])) {
+                echo '<div class="alert alert-success alert-dismissible fade show" role="alert">'
+                    . htmlspecialchars($_SESSION['success_message']) .
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' .
+                    '</div>';
+                unset($_SESSION['success_message']);
+            }
+            if (isset($_SESSION['error_message'])) {
+                echo '<div class="alert alert-danger alert-dismissible fade show" role="alert">'
+                    . htmlspecialchars($_SESSION['error_message']) .
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' .
+                    '</div>';
+                unset($_SESSION['error_message']);
+            }
+
+            if ($existing_red_tag_check) {
+                echo '<div class="alert alert-info">A Red Tag record already exists for this item. You can review and edit the details below.</div>';
+            }
+            ?>
             
             <form method="POST" class="red-tag-form">
                 <!-- Header -->
@@ -183,10 +238,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <img id="municipalLogoImg" src="<?= $logo_path ?>" alt="Municipal Logo" style="height: 70px;">
                     </div>
                     <div class="title">
-                        <h3>5S RED TAG</h3>
                         <div>Republic of the Philippines</div>
                         <div>Province of Sorsogon</div>
                         <div>Municipality of Pilar</div>
+                        <h3>5S RED TAG</h3>
                     </div>
                     <div class="red-tag-no">
                         <div>Red Tag No.:</div>
@@ -213,7 +268,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="mb-3">
                     <label for="item_location" class="form-label required">Item Location:</label>
-                    <input type="text" class="form-control" id="item_location" name="item_location" required>
+                    <input type="text" class="form-control" id="item_location" name="item_location" 
+                           value="<?= $existing_red_tag_check && $existing_red_tag_data ? htmlspecialchars($existing_red_tag_data['item_location']) : '' ?>" required>
                 </div>
 
                 <div class="mb-3">
@@ -225,11 +281,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label for="removal_reason" class="form-label required">Removal Reason:</label>
                     <select class="form-select" id="removal_reason" name="removal_reason" required>
                         <option value="">-- Select Reason --</option>
-                        <option value="Unnecessary">Unnecessary</option>
-                        <option value="Broken">Broken</option>
-                        <option value="Obsolete">Obsolete</option>
-                        <option value="Not in use">Not in use</option>
-                        <option value="Other">Other (specify in Action)</option>
+                        <option value="Unnecessary" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['removal_reason'] == 'Unnecessary') ? 'selected' : '' ?>>Unnecessary</option>
+                        <option value="Broken" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['removal_reason'] == 'Broken') ? 'selected' : '' ?>>Broken</option>
+                        <option value="Obsolete" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['removal_reason'] == 'Obsolete') ? 'selected' : '' ?>>Obsolete</option>
+                        <option value="Not in use" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['removal_reason'] == 'Not in use') ? 'selected' : '' ?>>Not in use</option>
+                        <option value="Other" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['removal_reason'] == 'Other') ? 'selected' : '' ?>>Other (specify in Action)</option>
                     </select>
                 </div>
 
@@ -237,27 +293,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label for="action" class="form-label required">Action:</label>
                     <select class="form-select" id="action" name="action" required>
                         <option value="">-- Select Action --</option>
-                        <option value="For Disposal">For Disposal</option>
-                        <option value="For Repair">For Repair</option>
-                        <option value="For Relocation">For Relocation</option>
-                        <option value="For Donation">For Donation</option>
-                        <option value="Other">Other (specify)</option>
+                        <option value="For Disposal" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['action'] == 'For Disposal') ? 'selected' : '' ?>>For Disposal</option>
+                        <option value="For Repair" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['action'] == 'For Repair') ? 'selected' : '' ?>>For Repair</option>
+                        <option value="For Relocation" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['action'] == 'For Relocation') ? 'selected' : '' ?>>For Relocation</option>
+                        <option value="For Donation" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['action'] == 'For Donation') ? 'selected' : '' ?>>For Donation</option>
+                        <option value="Other" <?= ($existing_red_tag_check && $existing_red_tag_data && $existing_red_tag_data['action'] == 'Other') ? 'selected' : '' ?>>Other (specify)</option>
                     </select>
                 </div>
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                    <?php if ($red_tag_exists): ?>
+                    <?php if ($existing_red_tag_check): ?>
                         <a href="print_red_tag.php?id=<?= $red_tag_id ?>" target="_blank" class="btn btn-primary me-2">
                             <i class="bi bi-printer"></i> Print Red Tag
                         </a>
-                        <a href="edit_red_tag.php?id=<?= $red_tag_id ?>" class="btn btn-warning me-2">
-                            <i class="bi bi-pencil"></i> Edit Red Tag
-                        </a>
-                        <a href="view_iirup.php?id=<?= $iirup_id ?>" class="btn btn-secondary">
+                        <?php $form_id = isset($_GET['form_id']) ? intval($_GET['form_id']) : 7; ?>
+                        <a href="view_iirup.php?id=<?= $iirup_id ?>&form_id=<?= $form_id ?>" class="btn btn-secondary me-2">
                             <i class="bi bi-arrow-left"></i> Back to IIRUP
                         </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Update Red Tag
+                        </button>
                     <?php else: ?>
-                        <a href="view_iirup.php?id=<?= $iirup_id ?>" class="btn btn-secondary me-2">
+                        <?php $form_id = isset($_GET['form_id']) ? intval($_GET['form_id']) : 7; ?>
+                        <a href="view_iirup.php?id=<?= $iirup_id ?>&form_id=<?= $form_id ?>" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                         <button type="submit" class="btn btn-danger">
