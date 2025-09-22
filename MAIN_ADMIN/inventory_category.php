@@ -48,7 +48,7 @@ $stmt->close();
 
 // Fetch aggregates from assets_new that have at least one linked asset in this category
 $an_rows = [];
-if ($category) {
+if ($category && isset($category['category_name'])) {
   $stmt = $conn->prepare("
     SELECT 
       an.id AS an_id,
@@ -113,9 +113,30 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
 
         <?php if (count($an_rows) > 0): ?>
           <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">
+                <i class="bi bi-list-ul"></i> <?= htmlspecialchars($category['category_name'] ?? 'Unknown Category') ?> Assets
+              </h5>
+              <div class="d-flex gap-2">
+                <button type="button" id="selectAllBtn" class="btn btn-sm btn-outline-secondary">
+                  <i class="bi bi-check-square"></i> Select All
+                </button>
+                <button type="button" id="generateReportBtn" class="btn btn-sm btn-primary" disabled>
+                  <i class="bi bi-file-earmark-text"></i> Generate Report (<span id="selectedCount">0</span>)
+                </button>
+              </div>
+            </div>
             <div class="card-body">
+              <!-- Alert for selection feedback -->
+              <div id="selectionAlert" class="alert alert-info d-none" role="alert">
+                <i class="bi bi-info-circle"></i> 
+                <span id="selectionMessage">Please select assets to generate a report.</span>
+              </div>
+              
               <?php if (count($an_rows) > 0): ?>
-                <div class="table-responsive">
+                <form id="reportForm" method="POST" action="generate_selected_report.php" target="_blank">
+                  
+                  <div class="table-responsive">
                   <table id="inventoryTable" class="table table-hover align-middle">
                     <thead class="table-light">
                       <tr>
@@ -131,7 +152,7 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
                     <tbody>
                       <?php foreach ($an_rows as $row): ?>
                         <tr>
-                          <td><input type="checkbox" class="asset-checkbox-cat" value="<?= (int)$row['an_id'] ?>" /></td>
+                          <td><input type="checkbox" class="asset-checkbox-cat" name="selected_assets_new[]" value="<?= (int)$row['an_id'] ?>" /></td>
                           <td><?= htmlspecialchars($row['ics_no'] ?? '') ?></td>
                           <td><?= htmlspecialchars($row['description']) ?></td>
                           <td><?= htmlspecialchars($row['category_name']) ?></td>
@@ -151,7 +172,8 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
                       <?php endforeach; ?>
                     </tbody>
                   </table>
-                </div>
+                  </div>
+                </form>
               <?php else: ?>
                 <div class="text-center py-5">
                   <i class="bi bi-box-seam text-muted" style="font-size: 3rem;"></i>
@@ -180,6 +202,115 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
   <script src="js/dashboard.js"></script>
 
   <script>
+    // Report generation and checkbox functionality
+    $(document).ready(function() {
+      // Initialize DataTable first
+      $('#inventoryTable').DataTable({
+        paging: true,
+        searching: true,
+        ordering: true,
+        info: true,
+        pageLength: 10,
+        lengthMenu: [5, 10, 25, 50, 100],
+        language: {
+          search: "Filter records:",
+          lengthMenu: "Show _MENU_ entries",
+          info: "Showing _START_ to _END_ of _TOTAL_ entries",
+          paginate: {
+            previous: "Prev",
+            next: "Next"
+          }
+        }
+      });
+
+      // Checkbox functionality
+      function updateSelectionCount() {
+        const checkedBoxes = $('.asset-checkbox-cat:checked').length;
+        $('#selectedCount').text(checkedBoxes);
+        
+        if (checkedBoxes > 0) {
+          $('#generateReportBtn').prop('disabled', false).removeClass('btn-secondary').addClass('btn-primary');
+          $('#selectionAlert').removeClass('d-none').removeClass('alert-info').addClass('alert-success');
+          $('#selectionMessage').text(`${checkedBoxes} asset(s) selected for report generation.`);
+        } else {
+          $('#generateReportBtn').prop('disabled', true).removeClass('btn-primary').addClass('btn-secondary');
+          $('#selectionAlert').removeClass('d-none').removeClass('alert-success').addClass('alert-info');
+          $('#selectionMessage').text('Please select assets to generate a report.');
+        }
+      }
+
+      // Select All functionality
+      $('#selectAllAssetsCat').on('change', function() {
+        const isChecked = $(this).is(':checked');
+        $('.asset-checkbox-cat').prop('checked', isChecked);
+        updateSelectionCount();
+        
+        // Update button text
+        $('#selectAllBtn').html(isChecked 
+          ? '<i class="bi bi-square"></i> Deselect All' 
+          : '<i class="bi bi-check-square"></i> Select All'
+        );
+      });
+
+      // Individual checkbox change
+      $('.asset-checkbox-cat').on('change', function() {
+        updateSelectionCount();
+        
+        // Update select all checkbox state
+        const totalBoxes = $('.asset-checkbox-cat').length;
+        const checkedBoxes = $('.asset-checkbox-cat:checked').length;
+        
+        if (checkedBoxes === 0) {
+          $('#selectAllAssetsCat').prop('indeterminate', false).prop('checked', false);
+          $('#selectAllBtn').html('<i class="bi bi-check-square"></i> Select All');
+        } else if (checkedBoxes === totalBoxes) {
+          $('#selectAllAssetsCat').prop('indeterminate', false).prop('checked', true);
+          $('#selectAllBtn').html('<i class="bi bi-square"></i> Deselect All');
+        } else {
+          $('#selectAllAssetsCat').prop('indeterminate', true);
+          $('#selectAllBtn').html('<i class="bi bi-check-square"></i> Select All');
+        }
+      });
+
+      // Select All button click
+      $('#selectAllBtn').on('click', function() {
+        const anyChecked = $('.asset-checkbox-cat:checked').length > 0;
+        $('.asset-checkbox-cat').prop('checked', !anyChecked);
+        $('#selectAllAssetsCat').prop('checked', !anyChecked).prop('indeterminate', false);
+        updateSelectionCount();
+        
+        $(this).html(!anyChecked 
+          ? '<i class="bi bi-square"></i> Deselect All' 
+          : '<i class="bi bi-check-square"></i> Select All'
+        );
+      });
+
+      // Generate Report button click
+      $('#generateReportBtn').on('click', function() {
+        const checkedBoxes = $('.asset-checkbox-cat:checked').length;
+        
+        if (checkedBoxes === 0) {
+          $('#selectionAlert').removeClass('d-none alert-success').addClass('alert-warning');
+          $('#selectionMessage').text('Please select at least one asset to generate a report.');
+          return;
+        }
+
+        // Show loading state
+        $(this).prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Generating...');
+        
+        // Submit the form
+        $('#reportForm').submit();
+        
+        // Reset button after a delay
+        setTimeout(() => {
+          $(this).prop('disabled', false).html('<i class="bi bi-file-earmark-text"></i> Generate Report (<span id="selectedCount">' + checkedBoxes + '</span>)');
+        }, 2000);
+      });
+
+      // Initialize count
+      updateSelectionCount();
+    });
+
     function formatDateFormal(dateStr) {
       const options = { year: 'numeric', month: 'long', day: 'numeric' };
       const date = new Date(dateStr);
@@ -278,26 +409,6 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
       })
       .catch(err => alert('Error deleting: ' + err));
     }
-
-    $(document).ready(function() {
-      $('#inventoryTable').DataTable({
-        paging: true,
-        searching: true,
-        ordering: true,
-        info: true,
-        pageLength: 10,
-        lengthMenu: [5, 10, 25, 50, 100],
-        language: {
-          search: "Filter records:",
-          lengthMenu: "Show _MENU_ entries",
-          info: "Showing _START_ to _END_ of _TOTAL_ entries",
-          paginate: {
-            previous: "Prev",
-            next: "Next"
-          }
-        }
-      });
-    });
   </script>
 
 </body>

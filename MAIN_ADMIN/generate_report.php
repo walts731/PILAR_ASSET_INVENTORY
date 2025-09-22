@@ -9,6 +9,25 @@ session_start();
 
 if (!isset($_SESSION['user_id'])) exit("Unauthorized access.");
 
+// Check report type
+$report_type = $_POST['report_type'] ?? 'consumption_log';
+
+if ($report_type === 'category_inventory') {
+    // Handle category inventory report
+    $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+    $category_name = $_POST['category_name'] ?? 'Unknown Category';
+    $selected_assets = $_POST['selected_assets'] ?? [];
+    
+    if (empty($selected_assets)) {
+        exit("No assets selected for report generation.");
+    }
+    
+    // Generate category inventory report
+    generateCategoryInventoryReport($conn, $category_id, $category_name, $selected_assets);
+    exit();
+}
+
+// --- Original consumption log report logic ---
 // --- Filters ---
 $selected_office = isset($_POST['office']) ? intval($_POST['office']) : 0;
 $selected_year   = isset($_POST['year']) ? intval($_POST['year']) : 0;
@@ -173,4 +192,179 @@ $insert->execute();
 // --- Stream PDF ---
 $dompdf->stream($reportFilename, ['Attachment' => false]);
 exit;
+
+function generateCategoryInventoryReport($conn, $category_id, $category_name, $selected_assets) {
+    // Sanitize asset IDs
+    $asset_ids = array_map('intval', $selected_assets);
+    $asset_ids_str = implode(',', $asset_ids);
+    
+    if (empty($asset_ids_str)) {
+        exit("Invalid asset selection.");
+    }
+    
+    // Fetch selected assets data
+    $sql = "
+        SELECT 
+            an.id AS an_id,
+            an.description,
+            an.quantity,
+            an.unit,
+            an.unit_cost,
+            an.date_created,
+            (an.quantity * an.unit_cost) AS total_value,
+            COALESCE((
+                SELECT c.category_name
+                FROM assets a
+                LEFT JOIN categories c ON a.category = c.id
+                WHERE a.asset_new_id = an.id
+                ORDER BY a.id ASC
+                LIMIT 1
+            ), 'Uncategorized') AS category_name,
+            f.ics_no AS ics_no
+        FROM assets_new an
+        LEFT JOIN ics_form f ON f.id = an.ics_id
+        WHERE an.id IN ($asset_ids_str)
+        ORDER BY an.description ASC
+    ";
+    
+    $result = $conn->query($sql);
+    
+    if (!$result || $result->num_rows === 0) {
+        exit("No data found for selected assets.");
+    }
+    
+    // Get system info
+    $system_result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
+    $system = $system_result->fetch_assoc();
+    $logo_path = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
+    $system_title = $system['system_title'] ?? 'Asset Inventory System';
+    
+    // Calculate totals
+    $total_quantity = 0;
+    $total_value = 0;
+    $assets_data = [];
+    
+    while ($row = $result->fetch_assoc()) {
+        $assets_data[] = $row;
+        $total_quantity += $row['quantity'];
+        $total_value += $row['total_value'];
+    }
+    
+    // Generate HTML for PDF
+    $current_date = date('F j, Y');
+    $current_time = date('g:i A');
+    $report_filename = 'Category_Inventory_Report_' . str_replace(' ', '_', $category_name) . '_' . date('Y-m-d_H-i-s') . '.pdf';
+    
+    $html = '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body { font-family: DejaVu Sans, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .logo { max-height: 80px; margin-bottom: 10px; }
+            .title { font-size: 24px; font-weight: bold; margin: 10px 0; }
+            .subtitle { font-size: 18px; color: #666; margin: 5px 0; }
+            .info-section { margin: 20px 0; }
+            .info-row { margin: 5px 0; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f5f5f5; font-weight: bold; }
+            .text-right { text-align: right; }
+            .text-center { text-align: center; }
+            .summary { background-color: #f9f9f9; padding: 15px; margin: 20px 0; }
+            .footer { margin-top: 30px; font-size: 12px; color: #666; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            ' . ($logo_path ? '<img src="' . $logo_path . '" alt="Logo" class="logo">' : '') . '
+            <div class="title">' . htmlspecialchars($system_title) . '</div>
+            <div class="subtitle">Category Inventory Report</div>
+        </div>
+        
+        <div class="info-section">
+            <div class="info-row"><strong>Category:</strong> ' . htmlspecialchars($category_name) . '</div>
+            <div class="info-row"><strong>Report Date:</strong> ' . $current_date . ' at ' . $current_time . '</div>
+            <div class="info-row"><strong>Total Assets:</strong> ' . count($assets_data) . ' items</div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>ICS No.</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th class="text-center">Quantity</th>
+                    <th>Unit</th>
+                    <th class="text-right">Unit Cost</th>
+                    <th class="text-right">Total Value</th>
+                    <th class="text-center">Date Created</th>
+                </tr>
+            </thead>
+            <tbody>';
+    
+    foreach ($assets_data as $row) {
+        $html .= '<tr>
+            <td>' . htmlspecialchars($row['ics_no'] ?? '-') . '</td>
+            <td>' . htmlspecialchars($row['description']) . '</td>
+            <td>' . htmlspecialchars($row['category_name']) . '</td>
+            <td class="text-center">' . number_format($row['quantity']) . '</td>
+            <td>' . htmlspecialchars($row['unit']) . '</td>
+            <td class="text-right">₱' . number_format($row['unit_cost'], 2) . '</td>
+            <td class="text-right">₱' . number_format($row['total_value'], 2) . '</td>
+            <td class="text-center">' . date('M j, Y', strtotime($row['date_created'])) . '</td>
+        </tr>';
+    }
+    
+    $html .= '</tbody>
+        </table>
+        
+        <div class="summary">
+            <div style="display: flex; justify-content: space-between;">
+                <div><strong>Summary:</strong></div>
+                <div>
+                    <div><strong>Total Quantity:</strong> ' . number_format($total_quantity) . ' items</div>
+                    <div><strong>Total Value:</strong> ₱' . number_format($total_value, 2) . '</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div>Generated on ' . $current_date . ' at ' . $current_time . '</div>
+            <div>Report generated by: ' . htmlspecialchars($_SESSION['fullname'] ?? 'System User') . '</div>
+        </div>
+    </body>
+    </html>';
+    
+    // Generate PDF
+    $options = new Options();
+    $options->set('defaultFont', 'DejaVu Sans');
+    $options->set('isRemoteEnabled', true);
+    $dompdf = new Dompdf($options);
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'landscape');
+    $dompdf->render();
+    
+    // Save PDF (create directory if it doesn't exist)
+    $report_dir = '../generated_reports/';
+    if (!is_dir($report_dir)) {
+        mkdir($report_dir, 0755, true);
+    }
+    
+    $pdf_output = $dompdf->output();
+    $save_path = $report_dir . $report_filename;
+    file_put_contents($save_path, $pdf_output);
+    
+    // Log the report generation
+    $user_id = $_SESSION['user_id'];
+    $office_id = $_SESSION['office_id'] ?? null;
+    $insert = $conn->prepare("INSERT INTO generated_reports (user_id, office_id, filename, generated_at) VALUES (?, ?, ?, NOW())");
+    $insert->bind_param("iis", $user_id, $office_id, $report_filename);
+    $insert->execute();
+    
+    // Stream PDF to browser
+    $dompdf->stream($report_filename, ['Attachment' => false]);
+}
 ?>
