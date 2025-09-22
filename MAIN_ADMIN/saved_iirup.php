@@ -14,7 +14,8 @@ $sql = "SELECT f.id AS iirup_id,
                f.accountable_officer,
                f.designation,
                f.office,
-               f.header_image
+               f.header_image,
+               f.created_at
         FROM iirup_form f
         ORDER BY f.id DESC";
 $result = $conn->query($sql);
@@ -83,6 +84,7 @@ if ($result && $result->num_rows > 0) {
                     <th>Accountable Officer</th>
                     <th>Designation</th>
                     <th>Office</th>
+                    <th>Date Created</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -92,6 +94,7 @@ if ($result && $result->num_rows > 0) {
                       <td><?= htmlspecialchars($iirup['accountable_officer'] ?? '') ?></td>
                       <td><?= htmlspecialchars($iirup['designation'] ?? '') ?></td>
                       <td><?= htmlspecialchars($iirup['office'] ?? 'N/A') ?></td>
+                      <td><?= $iirup['created_at'] ? date('F d, Y g:i A', strtotime($iirup['created_at'])) : 'N/A' ?></td>
                       <td class="text-center">
                         <a href="view_iirup.php?id=<?= $iirup['iirup_id'] ?>&form_id=<?= $form_id ?>" class="btn btn-sm btn-primary">
                           <i class="bi bi-eye"></i> View

@@ -144,7 +144,7 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
                 <a class="nav-link <?= ($page == 'Saved Property Tags') ? 'active' : '' ?>" href="saved_mr.php">
                     Property Tags
                 </a>
-                <a class="nav-link <?= ($page == 'Saved Red Tags') ? 'active' : '' ?>" href="red_tags.php">
+                <a class="nav-link <?= ($page == 'Saved Red Tags') ? 'active' : '' ?>" href="red_tag.php">
                     Red Tags
                 </a>
             </div>
