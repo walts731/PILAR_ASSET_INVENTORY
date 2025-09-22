@@ -644,7 +644,7 @@ $stmt->close();
                     <td>&#8369; <?= number_format($row['value'], 2) ?></td>
                     <td class="text-nowrap">
                       <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal">
+                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetNoTagBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal">
                           <i class="bi bi-eye"></i>
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" onclick="forceDeleteAsset(<?= (int)$row['id'] ?>)" title="Delete Asset">
@@ -1170,6 +1170,126 @@ $stmt->close();
           .catch(error => {
             console.error('Error:', error);
           });
+      });
+    });
+
+    // Dedicated handler for No Property Tag tab to avoid conflicts with other tabs
+    document.querySelectorAll('.viewAssetNoTagBtn').forEach(button => {
+      button.addEventListener('click', function() {
+        const assetId = this.getAttribute('data-id');
+        if (!assetId) { alert('No asset ID found'); return; }
+
+        // Always fetch from main asset details endpoint; backend may return either direct object or {success, asset}
+        fetch(`get_asset_details.php?id=${assetId}`)
+          .then(r => r.json())
+          .then(resp => {
+            // Normalize response: direct object or wrapped
+            const data = (resp && typeof resp === 'object' && 'asset' in resp)
+              ? resp.asset
+              : resp;
+            if (!data || data.error || resp?.success === false) {
+              alert(data?.error || resp?.message || 'Failed to load asset details');
+              return;
+            }
+
+            // Safe setters
+            const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? ''; };
+
+            // Populate core fields
+            setText('viewOfficeName', data.office_name ?? '');
+            setText('viewCategoryName', `${data.category_name ?? ''}${data.category_type ? ' (' + data.category_type + ')' : ''}`);
+            setText('viewType', data.type ?? '');
+            setText('viewQuantity', data.quantity ?? '');
+            setText('viewUnit', data.unit ?? '');
+            setText('viewDescription', data.description ?? '');
+            if (data.acquisition_date) setText('viewAcquisitionDate', formatDateFormal(data.acquisition_date));
+            if (data.last_updated) setText('viewLastUpdated', formatDateFormal(data.last_updated));
+            const valNum = parseFloat(data.value || 0) || 0;
+            setText('viewValue', valNum.toFixed(2));
+            const totalValue = valNum * (parseInt(data.quantity || 1) || 1);
+            setText('viewTotalValue', isFinite(totalValue) ? totalValue.toFixed(2) : '0.00');
+
+            // Images
+            const logoEl = document.getElementById('municipalLogoImg');
+            if (logoEl && data.system_logo) logoEl.src = '../img/' + data.system_logo;
+
+            const imgEl = document.getElementById('viewAssetImage');
+            const imagesCard = document.getElementById('viewImagesCard');
+            const mainImageContainer = document.getElementById('mainImageContainer');
+            const additionalImagesContainer = document.getElementById('additionalImagesContainer');
+            const additionalImagesDiv = document.getElementById('viewAdditionalImages');
+            let hasImages = false;
+
+            if (imgEl && data.image) {
+              imgEl.src = '../img/assets/' + data.image;
+              if (mainImageContainer) mainImageContainer.style.display = 'block';
+              hasImages = true;
+            } else if (mainImageContainer) {
+              mainImageContainer.style.display = 'none';
+            }
+
+            if (additionalImagesDiv) {
+              additionalImagesDiv.innerHTML = '';
+              let additionalImages = [];
+              if (data.additional_images) {
+                try { additionalImages = Array.isArray(data.additional_images) ? data.additional_images : JSON.parse(data.additional_images); } catch(e) { additionalImages = []; }
+              }
+              if (Array.isArray(additionalImages) && additionalImages.length > 0) {
+                additionalImages.forEach((imageName, index) => {
+                  const imgDiv = document.createElement('div');
+                  imgDiv.className = 'position-relative';
+                  imgDiv.innerHTML = `
+                    <img src="../img/assets/${imageName}" alt="Additional Image ${index + 1}" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;" onclick="showImageModal('../img/assets/${imageName}', 'Additional Image ${index + 1}')">
+                    <div class="position-absolute top-0 end-0 bg-primary text-white rounded-circle" style="width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; margin: -5px;">${index + 1}</div>`;
+                  additionalImagesDiv.appendChild(imgDiv);
+                });
+                if (additionalImagesContainer) additionalImagesContainer.style.display = 'block';
+                hasImages = true;
+              } else {
+                if (additionalImagesContainer) additionalImagesContainer.style.display = 'none';
+              }
+            }
+            if (imagesCard) imagesCard.style.display = hasImages ? 'block' : 'none';
+
+            // Items table: prefer server-provided items; fallback to single main-asset row
+            const itemsBody = document.getElementById('viewItemsBody');
+            if (itemsBody) {
+              itemsBody.innerHTML = '';
+              const items = Array.isArray(data.items) ? data.items : [];
+              if (items.length > 0) {
+                items.forEach(it => {
+                  const tr = document.createElement('tr');
+                  tr.innerHTML = `
+                    <td>${it.property_no ?? ''}</td>
+                    <td>${it.inventory_tag ?? ''}</td>
+                    <td>${it.serial_no ?? ''}</td>
+                    <td>${it.status ?? ''}</td>
+                    <td>${it.date_acquired ? new Date(it.date_acquired).toLocaleDateString('en-US') : ''}</td>
+                    <td class="text-nowrap d-flex gap-1">
+                      <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id ?? data.id}" target="_blank" title="${(it.property_no && it.property_no.trim()) ? 'View Property Tag' : 'Create Property Tag'}">
+                        <i class="bi bi-tag"></i> ${(it.property_no && it.property_no.trim()) ? 'View Property Tag' : 'Create Property Tag'}
+                      </a>
+                    </td>`;
+                  itemsBody.appendChild(tr);
+                });
+              } else {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                  <td>${data.property_no ?? ''}</td>
+                  <td>${data.inventory_tag ?? ''}</td>
+                  <td>${data.serial_no ?? ''}</td>
+                  <td>${data.status ?? ''}</td>
+                  <td>${data.acquisition_date ? new Date(data.acquisition_date).toLocaleDateString('en-US') : ''}</td>
+                  <td class="text-nowrap d-flex gap-1">
+                    <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${data.id}" target="_blank" title="${(data.property_no && String(data.property_no).trim()) ? 'Edit Property Tag' : 'Create Property Tag'}">
+                      <i class="bi bi-tag"></i> ${(data.property_no && String(data.property_no).trim()) ? 'Edit Property Tag' : 'Create Property Tag'}
+                    </a>
+                  </td>`;
+                itemsBody.appendChild(tr);
+              }
+            }
+          })
+          .catch(err => console.error('NoTag fetch error:', err));
       });
     });
 
