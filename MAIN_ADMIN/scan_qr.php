@@ -221,8 +221,11 @@ $stmt->close();
           <button id="resetScanBtn" class="btn btn-outline-warning me-2">
             <i class="bi bi-arrow-clockwise"></i> Reset
           </button>
-          <button id="retryInitBtn" class="btn btn-outline-info" style="display: none;">
+          <button id="retryInitBtn" class="btn btn-outline-info me-2" style="display: none;">
             <i class="bi bi-bootstrap-reboot"></i> Retry Camera
+          </button>
+          <button id="reinitScanBtn" class="btn btn-outline-success" onclick="reinitializeScanner()">
+            <i class="bi bi-arrow-repeat"></i> Reinitialize
           </button>
         </div>
         
@@ -347,9 +350,15 @@ $stmt->close();
             <a href="return_asset.php?id=<?= $row['id'] ?>" class="btn btn-outline-secondary btn-sm rounded-pill">
               <i class="bi bi-box-arrow-in-left"></i> Return
             </a>
-            <a href="iirup_form.php?asset_id=<?= $row['id'] ?>&asset_description=<?= urlencode($row['description']) ?>&inventory_tag=<?= urlencode($row['inventory_tag'] ?? $row['property_no'] ?? '') ?>" class="btn btn-danger btn-sm rounded-pill">
-              <i class="bi bi-tag"></i> Red Tag
-            </a>
+            <?php if ($row['red_tagged'] == 1): ?>
+              <button type="button" class="btn btn-danger btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#alreadyRedTaggedModal">
+                <i class="bi bi-tag-fill"></i> Already Red Tagged
+              </button>
+            <?php else: ?>
+              <a href="forms.php?id=7&asset_id=<?= $row['id'] ?>&asset_description=<?= urlencode($row['description']) ?>&inventory_tag=<?= urlencode($row['inventory_tag'] ?? $row['property_no'] ?? '') ?>" class="btn btn-danger btn-sm rounded-pill">
+                <i class="bi bi-tag"></i> Red Tag
+              </a>
+            <?php endif; ?>
           </div>
         </div>
       </div>
@@ -390,6 +399,40 @@ $stmt->close();
                 <button type="submit" class="btn btn-primary">Confirm Transfer</button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Already Red Tagged Modal -->
+      <div class="modal fade" id="alreadyRedTaggedModal" tabindex="-1" aria-labelledby="alreadyRedTaggedModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-warning">
+              <h5 class="modal-title" id="alreadyRedTaggedModalLabel">
+                <i class="bi bi-exclamation-triangle"></i> Asset Already Red Tagged
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="alert alert-warning mb-3">
+                <i class="bi bi-tag-fill"></i> <strong>Notice:</strong> This asset is already red tagged.
+              </div>
+              <p><strong>Asset:</strong> <?= htmlspecialchars($row['description']) ?></p>
+              <p><strong>Inventory Tag:</strong> <?= htmlspecialchars($row['inventory_tag'] ?? $row['property_no'] ?? 'N/A') ?></p>
+              <p class="mb-3">This asset has already been marked as unserviceable and red tagged in the system.</p>
+              
+              <div class="d-grid gap-2">
+                <a href="red_tag.php" class="btn btn-outline-primary">
+                  <i class="bi bi-tags"></i> View All Red Tags
+                </a>
+                <a href="saved_iirup.php?id=7" class="btn btn-outline-secondary">
+                  <i class="bi bi-folder-check"></i> View IIRUP Records
+                </a>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
           </div>
         </div>
       </div>
@@ -532,8 +575,6 @@ $stmt->close();
   async function startScanning() {
     if (cameras.length === 0) {
       updateStatus('No cameras available', 'inactive');
-      // Try to reinitialize
-      setTimeout(initializeScanner, 2000);
       return;
     }
     
@@ -548,73 +589,47 @@ $stmt->close();
       );
       
       isScanning = true;
-      updateStatus('Scanning... Point camera at QR code', 'scanning');
+      updateStatus('Ready to scan', 'scanning');
       document.getElementById('scanOverlay').style.display = 'block';
       updateToggleButton();
       
-      // Force video to display properly
-      setTimeout(() => {
-        forceVideoDisplay();
-      }, 1000);
+      // Force video display immediately
+      forceVideoDisplay();
       
     } catch (err) {
       console.error('Camera start error:', err);
       
-      let errorMessage = 'Failed to start camera';
-      if (err.name === 'NotAllowedError') {
-        errorMessage = 'Camera permission denied. Please allow camera access.';
-        showCameraPermissionHelp();
-      } else if (err.name === 'NotFoundError') {
-        errorMessage = 'Camera not found. Please check your camera connection.';
-      } else if (err.name === 'NotReadableError') {
-        errorMessage = 'Camera is being used by another application.';
-      } else if (err.name === 'OverconstrainedError') {
-        errorMessage = 'Camera constraints not supported. Trying fallback...';
-        // Try with simpler constraints
-        setTimeout(() => startScanningWithFallback(), 1000);
-        return;
-      } else if (err.message && err.message.includes('Permission denied')) {
-        errorMessage = 'Camera permission denied. Please allow camera access.';
-        showCameraPermissionHelp();
+      // Quick fallback attempt
+      try {
+        await html5QrCode.start(
+          cameras[currentCameraIndex].id,
+          { fps: 20, qrbox: 250 },
+          onScanSuccess,
+          onScanError
+        );
+        
+        isScanning = true;
+        updateStatus('Ready to scan (fallback mode)', 'scanning');
+        document.getElementById('scanOverlay').style.display = 'block';
+        updateToggleButton();
+        forceVideoDisplay();
+        
+      } catch (fallbackErr) {
+        let errorMessage = 'Failed to start camera';
+        if (err.name === 'NotAllowedError') {
+          errorMessage = 'Camera permission denied';
+          showCameraPermissionHelp();
+        } else if (err.name === 'NotFoundError') {
+          errorMessage = 'Camera not found';
+        } else if (err.name === 'NotReadableError') {
+          errorMessage = 'Camera in use by another app';
+        }
+        
+        updateStatus(errorMessage, 'inactive');
       }
-      
-      updateStatus(errorMessage, 'inactive');
     }
   }
   
-  // Fallback scanning with simpler constraints
-  async function startScanningWithFallback() {
-    const fallbackConfig = {
-      fps: 15,
-      qrbox: { width: 300, height: 300 }, // Larger fallback scan area
-      aspectRatio: 1.0
-    };
-    
-    try {
-      updateStatus('Trying fallback camera settings...', 'scanning');
-      
-      await html5QrCode.start(
-        cameras[currentCameraIndex].id,
-        fallbackConfig,
-        onScanSuccess,
-        onScanError
-      );
-      
-      isScanning = true;
-      updateStatus('Scanning with fallback settings...', 'scanning');
-      document.getElementById('scanOverlay').style.display = 'block';
-      updateToggleButton();
-      
-      // Force video to display properly
-      setTimeout(() => {
-        forceVideoDisplay();
-      }, 1000);
-      
-    } catch (err) {
-      console.error('Fallback camera start error:', err);
-      updateStatus('Unable to start camera with any settings', 'inactive');
-    }
-  }
   
   function stopScanning() {
     if (!isScanning) return;
@@ -653,12 +668,16 @@ $stmt->close();
   }
   
   function resetScanner() {
-    stopScanning();
-    scanCount = 0;
-    lastScanTime = 0;
-    document.getElementById('scan-result').textContent = '';
-    document.getElementById('loadingSpinner').style.display = 'none';
-    updateStatus('Scanner reset', 'inactive');
+    console.log('Manual scanner reset requested');
+    resetScannerState();
+    
+    // Reinitialize after reset
+    setTimeout(() => {
+      initializeScanner();
+    }, 500);
+    
+    // Update scan counter display
+    updateScanCounter();
   }
   
   function showScannerTips() {
@@ -674,12 +693,12 @@ $stmt->close();
     }
   }
   
-  // Request camera permissions explicitly
+  // Optimized fast camera permission request
   async function requestCameraPermission() {
     try {
-      updateStatus('Requesting camera permission...', 'scanning');
+      updateStatus('Accessing camera...', 'scanning');
       
-      // Request camera permission explicitly
+      // Fast permission check - try environment camera first
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: "environment",
@@ -688,26 +707,39 @@ $stmt->close();
         } 
       });
       
-      // Stop the stream immediately - we just needed permission
-      stream.getTracks().forEach(track => track.stop());
-      
-      updateStatus('Camera permission granted', 'active');
-      return true;
-    } catch (err) {
-      console.error('Camera permission error:', err);
-      
-      if (err.name === 'NotAllowedError') {
-        updateStatus('Camera permission denied. Please allow camera access.', 'inactive');
-        showCameraPermissionHelp();
-      } else if (err.name === 'NotFoundError') {
-        updateStatus('No camera found on this device', 'inactive');
-      } else if (err.name === 'NotSupportedError') {
-        updateStatus('Camera not supported on this browser', 'inactive');
-      } else {
-        updateStatus('Camera access failed: ' + err.message, 'inactive');
+      // Quick validation and cleanup
+      if (stream.getVideoTracks().length === 0) {
+        stream.getTracks().forEach(track => track.stop());
+        throw new Error('No video tracks available');
       }
       
-      return false;
+      // Stop immediately - we just needed permission
+      stream.getTracks().forEach(track => track.stop());
+      
+      updateStatus('Camera ready', 'active');
+      return true;
+      
+    } catch (err) {
+      // Fast fallback - try any camera
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        fallbackStream.getTracks().forEach(track => track.stop());
+        updateStatus('Camera ready', 'active');
+        return true;
+      } catch (fallbackErr) {
+        console.error('Camera permission error:', err);
+        
+        if (err.name === 'NotAllowedError') {
+          updateStatus('Camera permission denied. Please allow camera access.', 'inactive');
+          showCameraPermissionHelp();
+        } else if (err.name === 'NotFoundError') {
+          updateStatus('No camera found on this device', 'inactive');
+        } else {
+          updateStatus('Camera access failed', 'inactive');
+        }
+        
+        return false;
+      }
     }
   }
   
@@ -734,76 +766,146 @@ $stmt->close();
     document.querySelector('.scanner-controls').after(helpDiv);
   }
   
-  // Initialize scanner with better error handling
+  // Fast scanner initialization
   async function initializeScanner() {
     try {
-      updateStatus('Initializing scanner...', 'scanning');
+      updateStatus('Starting scanner...', 'scanning');
       
-      // First, request camera permission
-      const hasPermission = await requestCameraPermission();
-      if (!hasPermission) {
-        return;
+      // Quick browser support check
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Camera not supported in this browser');
       }
       
-      // Initialize the QR code scanner
-      html5QrCode = new Html5Qrcode("reader");
+      // Fast camera permission check
+      const hasPermission = await requestCameraPermission();
+      if (!hasPermission) {
+        throw new Error('Camera permission required');
+      }
       
-      // Get available cameras
+      // Quick cleanup of existing instance
+      if (html5QrCode) {
+        try {
+          await html5QrCode.stop();
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+      
+      // Fast scanner initialization
+      html5QrCode = new Html5Qrcode("reader", { verbose: false });
+      
+      // Quick camera detection
       const detectedCameras = await Html5Qrcode.getCameras();
       cameras = detectedCameras;
       
       if (cameras.length === 0) {
-        updateStatus('No cameras detected on this device', 'inactive');
-        return;
+        throw new Error('No cameras found');
       }
       
-      updateStatus(`${cameras.length} camera(s) detected`, 'active');
-      console.log('Available cameras:', cameras);
+      updateStatus(`Ready - ${cameras.length} camera(s) found`, 'active');
       
-      // Show camera switch button if multiple cameras
+      // Fast camera selection - prefer back camera
+      currentCameraIndex = 0;
+      for (let i = 0; i < cameras.length; i++) {
+        const label = cameras[i].label.toLowerCase();
+        if (label.includes('back') || label.includes('rear') || label.includes('environment')) {
+          currentCameraIndex = i;
+          break;
+        }
+      }
+      
+      // Show controls
       if (cameras.length > 1) {
         document.getElementById('switchCameraBtn').style.display = 'inline-block';
       }
+      document.getElementById('retryInitBtn').style.display = 'none';
       
-      // Auto-start scanning after a short delay
-      setTimeout(startScanning, 1000);
+      // Start scanning immediately
+      setTimeout(startScanning, 300);
       
     } catch (err) {
       console.error('Scanner initialization error:', err);
       
-      let errorMessage = 'Failed to initialize scanner';
-      if (err.name === 'NotAllowedError') {
+      let errorMessage = 'Scanner initialization failed';
+      if (err.message.includes('permission') || err.name === 'NotAllowedError') {
         errorMessage = 'Camera permission denied';
         showCameraPermissionHelp();
-      } else if (err.name === 'NotFoundError') {
+      } else if (err.message.includes('No cameras') || err.name === 'NotFoundError') {
         errorMessage = 'No camera found';
-      } else if (err.name === 'NotSupportedError') {
+      } else if (err.message.includes('not supported')) {
         errorMessage = 'Camera not supported in this browser';
       }
       
       updateStatus(errorMessage, 'inactive');
-      
-      // Show retry button on initialization failure
       document.getElementById('retryInitBtn').style.display = 'inline-block';
     }
   }
   
-  // Retry camera initialization
-  function retryInitialization() {
+  // Reset scanner state completely
+  function resetScannerState() {
+    console.log('Resetting scanner state...');
+    
+    // Stop any existing scanner
+    if (html5QrCode && isScanning) {
+      try {
+        html5QrCode.stop().catch(() => {});
+      } catch (e) {
+        // Ignore stop errors
+      }
+    }
+    
+    // Clear scanner instance
+    if (html5QrCode) {
+      try {
+        html5QrCode.clear().catch(() => {});
+      } catch (e) {
+        // Ignore clear errors
+      }
+      html5QrCode = null;
+    }
+    
+    // Reset all state variables
+    cameras = [];
+    currentCameraIndex = 0;
+    isScanning = false;
+    scanCount = 0;
+    lastScanTime = 0;
+    
+    // Reset UI elements
+    document.getElementById('scanOverlay').style.display = 'none';
+    document.getElementById('switchCameraBtn').style.display = 'none';
     document.getElementById('retryInitBtn').style.display = 'none';
+    
     // Clear any existing help messages
     const existingHelp = document.querySelector('.alert-warning');
     if (existingHelp) {
       existingHelp.remove();
     }
     
-    // Reset scanner state
-    cameras = [];
-    currentCameraIndex = 0;
-    isScanning = false;
+    // Reset button states
+    updateToggleButton();
     
-    // Try initialization again
+    // Clear scan results
+    const resultDiv = document.getElementById('scan-result');
+    if (resultDiv) {
+      resultDiv.textContent = '';
+      resultDiv.className = 'fw-bold';
+    }
+    
+    updateStatus('Resetting scanner...', 'scanning');
+  }
+  
+  // Retry camera initialization
+  function retryInitialization() {
+    resetScannerState();
     setTimeout(initializeScanner, 500);
+  }
+  
+  // Manual reinitialize function for the button
+  function reinitializeScanner() {
+    console.log('Manual reinitialize requested');
+    resetScannerState();
+    setTimeout(initializeScanner, 300);
   }
   
   // Event listeners
@@ -837,20 +939,115 @@ $stmt->close();
     }
   });
   
-  // Initialize when page loads
-  document.addEventListener('DOMContentLoaded', initializeScanner);
+  // Fast page load initialization
+  function startImmediately() {
+    // Check if this is a navigation return (like back button)
+    if (performance.navigation && performance.navigation.type === 2) {
+      console.log('Page loaded from navigation - doing full reset');
+      resetScannerState();
+    }
+    
+    // Start as soon as possible
+    initializeScanner();
+  }
   
-  // Periodic check to ensure video stays properly sized
+  // Immediate initialization - don't wait
+  if (document.readyState === 'loading') {
+    // DOM still loading - wait for it
+    document.addEventListener('DOMContentLoaded', startImmediately);
+  } else {
+    // DOM ready - start immediately
+    startImmediately();
+  }
+  
+  // Handle browser back/forward navigation
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      // Page was loaded from cache (back/forward navigation)
+      console.log('Page loaded from cache - reinitializing scanner');
+      setTimeout(() => {
+        resetScannerState();
+        initializeScanner();
+      }, 100);
+    }
+  });
+  
+  
+  // Lightweight periodic check for video health
   setInterval(() => {
     if (isScanning) {
       forceVideoDisplay();
     }
-  }, 3000);
+  }, 10000); // Check every 10 seconds instead of 5
   
   // Cleanup on page unload
   window.addEventListener('beforeunload', () => {
-    if (isScanning) {
-      html5QrCode.stop();
+    if (isScanning && html5QrCode) {
+      try {
+        html5QrCode.stop();
+      } catch (e) {
+        console.log('Cleanup error:', e.message);
+      }
+    }
+  });
+  
+  // Enhanced page focus/blur handling for proper re-initialization
+  window.addEventListener('focus', () => {
+    console.log('Page focused - checking scanner state');
+    
+    // Always attempt to reinitialize when page regains focus
+    setTimeout(() => {
+      if (!isScanning) {
+        console.log('Scanner not running, reinitializing...');
+        resetScannerState();
+        initializeScanner();
+      } else {
+        // Scanner is running, but verify it's actually working
+        const videos = document.querySelectorAll('#reader video');
+        if (videos.length === 0) {
+          console.log('Scanner running but no video found, reinitializing...');
+          resetScannerState();
+          initializeScanner();
+        }
+      }
+    }, 500);
+  });
+  
+  window.addEventListener('blur', () => {
+    // Clean up when page loses focus to prevent resource conflicts
+    console.log('Page lost focus - cleaning up scanner');
+    if (isScanning && html5QrCode) {
+      try {
+        html5QrCode.stop().catch(() => {
+          // Ignore stop errors when page is losing focus
+        });
+        isScanning = false;
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    }
+  });
+  
+  // Handle page visibility changes (when user switches tabs or minimizes)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      // Page hidden - pause scanner
+      if (isScanning && html5QrCode) {
+        try {
+          html5QrCode.stop().catch(() => {});
+          isScanning = false;
+          updateStatus('Scanner paused', 'inactive');
+        } catch (e) {
+          // Ignore errors
+        }
+      }
+    } else {
+      // Page visible - reinitialize scanner
+      console.log('Page became visible - reinitializing scanner');
+      setTimeout(() => {
+        resetScannerState();
+        initializeScanner();
+      }, 300);
     }
   });
 </script>
