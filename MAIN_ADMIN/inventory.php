@@ -128,20 +128,36 @@ $stmt->close();
       </li>
       <?php
         // Count unserviceable assets without red tags
-        $unserviceableCount = 0;
+        $noRedTagCount = 0;
         if ($selected_office === "all") {
-          $stmtUnserv = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND red_tagged = 0 AND quantity > 0");
+          $stmtNoRedTag = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND red_tagged = 0 AND quantity > 0");
         } else {
-          $stmtUnserv = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND red_tagged = 0 AND office_id = ? AND quantity > 0");
-          $stmtUnserv->bind_param("i", $selected_office);
+          $stmtNoRedTag = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND red_tagged = 0 AND office_id = ? AND quantity > 0");
+          $stmtNoRedTag->bind_param("i", $selected_office);
         }
-        $stmtUnserv->execute();
-        $stmtUnserv->bind_result($unserviceableCount);
-        $stmtUnserv->fetch();
-        $stmtUnserv->close();
+        $stmtNoRedTag->execute();
+        $stmtNoRedTag->bind_result($noRedTagCount);
+        $stmtNoRedTag->fetch();
+        $stmtNoRedTag->close();
+        
+        // Count all unserviceable assets
+        $allUnserviceableCount = 0;
+        if ($selected_office === "all") {
+          $stmtAllUnserv = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND quantity > 0");
+        } else {
+          $stmtAllUnserv = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND office_id = ? AND quantity > 0");
+          $stmtAllUnserv->bind_param("i", $selected_office);
+        }
+        $stmtAllUnserv->execute();
+        $stmtAllUnserv->bind_result($allUnserviceableCount);
+        $stmtAllUnserv->fetch();
+        $stmtAllUnserv->close();
       ?>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="unserviceable-tab" data-bs-toggle="tab" data-bs-target="#unserviceable" type="button" role="tab">Unserviceable (No Red Tag) <sub class="text-muted">(<?= $unserviceableCount ?>)</sub></button>
+        <button class="nav-link" id="no-red-tag-tab" data-bs-toggle="tab" data-bs-target="#no_red_tag" type="button" role="tab">No Red Tag Only <sub class="text-muted">(<?= $noRedTagCount ?>)</sub></button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="unserviceable-tab" data-bs-toggle="tab" data-bs-target="#unserviceable" type="button" role="tab">Unserviceable <sub class="text-muted">(<?= $allUnserviceableCount ?>)</sub></button>
       </li>
     </ul>
 
@@ -630,12 +646,12 @@ $stmt->close();
         </div>
       </div>
       
-      <!-- Unserviceable (No Red Tag) Tab -->
-      <div class="tab-pane fade" id="unserviceable" role="tabpanel">
+      <!-- No Red Tag Only Tab -->
+      <div class="tab-pane fade" id="no_red_tag" role="tabpanel">
         <?php
         // Query for unserviceable assets without red tags, including IIRUP ID
         if ($selected_office === "all") {
-          $stmtUnserv = $conn->prepare("
+          $stmtNoRedTag = $conn->prepare("
             SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
             FROM assets a
             LEFT JOIN categories c ON a.category = c.id
@@ -646,7 +662,7 @@ $stmt->close();
             ORDER BY a.last_updated DESC
           ");
         } else {
-          $stmtUnserv = $conn->prepare("
+          $stmtNoRedTag = $conn->prepare("
             SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
             FROM assets a
             LEFT JOIN categories c ON a.category = c.id
@@ -656,11 +672,11 @@ $stmt->close();
             WHERE a.status = 'unserviceable' AND a.red_tagged = 0 AND a.office_id = ? AND a.quantity > 0
             ORDER BY a.last_updated DESC
           ");
-          $stmtUnserv->bind_param("i", $selected_office);
+          $stmtNoRedTag->bind_param("i", $selected_office);
         }
         
-        $stmtUnserv->execute();
-        $unservResult = $stmtUnserv->get_result();
+        $stmtNoRedTag->execute();
+        $noRedTagResult = $stmtNoRedTag->get_result();
         ?>
         
         <div class="row mb-4">
@@ -681,13 +697,13 @@ $stmt->close();
           <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">
               <i class="bi bi-exclamation-circle text-warning"></i> 
-              Unserviceable Assets (<?= $unservResult->num_rows ?> items)
+              Unserviceable Assets Without Red Tags (<?= $noRedTagResult->num_rows ?> items)
             </h6>
             
           </div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-hover" id="unserviceableTable">
+              <table class="table table-hover" id="noRedTagTable">
                 <thead class="table-light">
                   <tr>
                     <th>Asset ID</th>
@@ -702,8 +718,8 @@ $stmt->close();
                   </tr>
                 </thead>
                 <tbody>
-                  <?php if ($unservResult->num_rows > 0): ?>
-                    <?php while ($row = $unservResult->fetch_assoc()): ?>
+                  <?php if ($noRedTagResult->num_rows > 0): ?>
+                    <?php while ($row = $noRedTagResult->fetch_assoc()): ?>
                       <tr>
                         <td>
                           <span class="badge bg-secondary"><?= $row['id'] ?></span>
@@ -796,7 +812,193 @@ $stmt->close();
           </div>
         </div>
         
-        <?php $stmtUnserv->close(); ?>
+        <?php $stmtNoRedTag->close(); ?>
+      </div>
+      
+      <!-- Unserviceable Tab -->
+      <div class="tab-pane fade" id="unserviceable" role="tabpanel">
+        <?php
+        // Query for all unserviceable assets, including IIRUP ID
+        if ($selected_office === "all") {
+          $stmtAllUnserv = $conn->prepare("
+            SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
+            FROM assets a
+            LEFT JOIN categories c ON a.category = c.id
+            LEFT JOIN offices o ON a.office_id = o.id
+            LEFT JOIN employees e ON a.employee_id = e.employee_id
+            LEFT JOIN iirup_items ii ON a.id = ii.asset_id
+            WHERE a.status = 'unserviceable' AND a.quantity > 0
+            ORDER BY a.last_updated DESC
+          ");
+        } else {
+          $stmtAllUnserv = $conn->prepare("
+            SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
+            FROM assets a
+            LEFT JOIN categories c ON a.category = c.id
+            LEFT JOIN offices o ON a.office_id = o.id
+            LEFT JOIN employees e ON a.employee_id = e.employee_id
+            LEFT JOIN iirup_items ii ON a.id = ii.asset_id
+            WHERE a.status = 'unserviceable' AND a.office_id = ? AND a.quantity > 0
+            ORDER BY a.last_updated DESC
+          ");
+          $stmtAllUnserv->bind_param("i", $selected_office);
+        }
+        
+        $stmtAllUnserv->execute();
+        $allUnservResult = $stmtAllUnserv->get_result();
+        ?>
+        
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="alert alert-info">
+              <h6 class="alert-heading mb-2">
+                <i class="bi bi-info-circle"></i> All Unserviceable Assets
+              </h6>
+              <p class="mb-0">
+                This shows all assets marked as unserviceable, including those with and without red tags.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+              <i class="bi bi-exclamation-circle text-info"></i> 
+              All Unserviceable Assets (<?= $allUnservResult->num_rows ?> items)
+            </h6>
+            
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover" id="allUnserviceableTable">
+                <thead class="table-light">
+                  <tr>
+                    <th>Asset ID</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Office</th>
+                    <th>Person Accountable</th>
+                    <th>Value</th>
+                    <th>Qty</th>
+                    <th>Red Tag Status</th>
+                    <th>Last Updated</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php if ($allUnservResult->num_rows > 0): ?>
+                    <?php while ($row = $allUnservResult->fetch_assoc()): ?>
+                      <tr>
+                        <td>
+                          <span class="badge bg-secondary"><?= $row['id'] ?></span>
+                        </td>
+                        <td>
+                          <div class="d-flex align-items-center">
+                            <?php if (!empty($row['image'])): ?>
+                              <img src="../img/assets/<?= htmlspecialchars($row['image']) ?>" 
+                                   alt="Asset" class="rounded me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                            <?php else: ?>
+                              <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center" 
+                                   style="width: 32px; height: 32px;">
+                                <i class="bi bi-image text-muted"></i>
+                              </div>
+                            <?php endif; ?>
+                            <div>
+                              <div class="fw-medium"><?= htmlspecialchars($row['description']) ?></div>
+                              <?php if (!empty($row['brand']) || !empty($row['model'])): ?>
+                                <small class="text-muted">
+                                  <?= htmlspecialchars(trim(($row['brand'] ?? '') . ' ' . ($row['model'] ?? ''))) ?>
+                                </small>
+                              <?php endif; ?>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span class="badge bg-info text-dark">
+                            <?= htmlspecialchars($row['category_name'] ?? 'Uncategorized') ?>
+                          </span>
+                        </td>
+                        <td>
+                          <div class="text-truncate" style="max-width: 120px;" title="<?= htmlspecialchars($row['office_name'] ?? 'Not Assigned') ?>">
+                            <?= htmlspecialchars($row['office_name'] ?? 'Not Assigned') ?>
+                          </div>
+                        </td>
+                        <td>
+                          <div class="text-truncate" style="max-width: 120px;" title="<?= htmlspecialchars($row['employee_name'] ?? 'Not Assigned') ?>">
+                            <?= htmlspecialchars($row['employee_name'] ?? 'Not Assigned') ?>
+                          </div>
+                        </td>
+                        <td>
+                          <span class="text-success fw-medium">
+                            ₱<?= number_format((float)$row['value'], 2) ?>
+                          </span>
+                        </td>
+                        <td>
+                          <span class="badge bg-light text-dark">
+                            <?= (int)$row['quantity'] ?> <?= htmlspecialchars($row['unit']) ?>
+                          </span>
+                        </td>
+                        <td>
+                          <?php if ($row['red_tagged'] == 1): ?>
+                            <span class="badge bg-danger">
+                              <i class="bi bi-tag-fill"></i> Red Tagged
+                            </span>
+                          <?php else: ?>
+                            <span class="badge bg-warning text-dark">
+                              <i class="bi bi-exclamation-triangle"></i> No Red Tag
+                            </span>
+                          <?php endif; ?>
+                        </td>
+                        <td>
+                          <small class="text-muted">
+                            <?= $row['last_updated'] ? date('M j, Y', strtotime($row['last_updated'])) : 'N/A' ?>
+                          </small>
+                        </td>
+                        <td class="text-nowrap">
+                          <?php if ($row['red_tagged'] == 0): ?>
+                            <?php if (!empty($row['iirup_id'])): ?>
+                              <a href="create_red_tag.php?asset_id=<?= $row['id'] ?>&iirup_id=<?= $row['iirup_id'] ?>" 
+                                 class="btn btn-sm btn-danger rounded-pill" 
+                                 title="Create Red Tag">
+                                <i class="bi bi-tag-fill"></i> Create Red Tag
+                              </a>
+                            <?php else: ?>
+                              <div class="d-flex gap-1">
+                                <a href="forms.php?id=7&asset_id=<?= $row['id'] ?>&asset_description=<?= urlencode($row['description']) ?>&inventory_tag=<?= urlencode($row['inventory_tag'] ?? $row['property_no'] ?? '') ?>" 
+                                   class="btn btn-sm btn-outline-warning rounded-pill" 
+                                   title="Create IIRUP Form First">
+                                  <i class="bi bi-file-earmark-plus"></i>
+                                </a>
+                                <small class="text-muted align-self-center">IIRUP Required</small>
+                              </div>
+                            <?php endif; ?>
+                          <?php else: ?>
+                            <span class="badge bg-success">
+                              <i class="bi bi-check-circle"></i> Processed
+                            </span>
+                          <?php endif; ?>
+                        </td>
+                      </tr>
+                    <?php endwhile; ?>
+                  <?php else: ?>
+                    <tr>
+                      <td colspan="10" class="text-center py-4">
+                        <div class="text-muted">
+                          <i class="bi bi-check-circle display-4 d-block mb-2 text-success"></i>
+                          <h6>No Unserviceable Assets</h6>
+                          <p class="mb-0">All assets are in serviceable condition.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <?php $stmtAllUnserv->close(); ?>
       </div>
     </div>
   </div>
@@ -864,8 +1066,68 @@ $stmt->close();
             // Images (guard elements in case some are removed from modal)
             const logoEl = document.getElementById('municipalLogoImg');
             if (logoEl) logoEl.src = '../img/' + (data.system_logo ?? '');
+            
+            // Handle main image and additional images
             const imgEl = document.getElementById('viewAssetImage');
-            if (imgEl) imgEl.src = '../img/assets/' + (data.image ?? '');
+            const imagesCard = document.getElementById('viewImagesCard');
+            const mainImageContainer = document.getElementById('mainImageContainer');
+            const additionalImagesContainer = document.getElementById('additionalImagesContainer');
+            const additionalImagesDiv = document.getElementById('viewAdditionalImages');
+            
+            let hasImages = false;
+            
+            // Handle main image
+            if (data.image && imgEl) {
+                imgEl.src = '../img/assets/' + data.image;
+                mainImageContainer.style.display = 'block';
+                hasImages = true;
+            } else if (mainImageContainer) {
+                mainImageContainer.style.display = 'none';
+            }
+            
+            // Handle additional images
+            if (additionalImagesDiv) {
+                additionalImagesDiv.innerHTML = '';
+                
+                if (data.additional_images) {
+                    let additionalImages = [];
+                    try {
+                        additionalImages = JSON.parse(data.additional_images);
+                    } catch (e) {
+                        console.error('Error parsing additional images:', e);
+                    }
+                    
+                    if (Array.isArray(additionalImages) && additionalImages.length > 0) {
+                        additionalImages.forEach((imageName, index) => {
+                            const imgDiv = document.createElement('div');
+                            imgDiv.className = 'position-relative';
+                            imgDiv.innerHTML = `
+                                <img src="../img/assets/${imageName}" 
+                                     alt="Additional Image ${index + 1}" 
+                                     class="img-thumbnail" 
+                                     style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;"
+                                     onclick="showImageModal('../img/assets/${imageName}', 'Additional Image ${index + 1}')">
+                                <div class="position-absolute top-0 end-0 bg-primary text-white rounded-circle" 
+                                     style="width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; margin: -5px;">
+                                    ${index + 1}
+                                </div>
+                            `;
+                            additionalImagesDiv.appendChild(imgDiv);
+                        });
+                        additionalImagesContainer.style.display = 'block';
+                        hasImages = true;
+                    } else {
+                        additionalImagesContainer.style.display = 'none';
+                    }
+                } else {
+                    additionalImagesContainer.style.display = 'none';
+                }
+            }
+            
+            // Show/hide images card based on whether there are any images
+            if (imagesCard) {
+                imagesCard.style.display = hasImages ? 'block' : 'none';
+            }
 
             // Items table (from asset_items)
             const itemsBody = document.getElementById('viewItemsBody');
@@ -1099,6 +1361,39 @@ $stmt->close();
           alert(err.message || 'Unexpected error while deleting asset.');
         }
       });
+    }
+    
+    // Function to show image in modal
+    window.showImageModal = function(imageSrc, imageTitle) {
+      // Create modal if it doesn't exist
+      let imageModal = document.getElementById('imageViewModal');
+      if (!imageModal) {
+        const modalHTML = `
+          <div class="modal fade" id="imageViewModal" tabindex="-1" aria-labelledby="imageViewModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="imageViewModalLabel">Asset Image</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                  <img id="modalImage" src="" alt="Asset Image" class="img-fluid" style="max-height: 70vh;">
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        imageModal = document.getElementById('imageViewModal');
+      }
+      
+      // Update modal content
+      document.getElementById('imageViewModalLabel').textContent = imageTitle;
+      document.getElementById('modalImage').src = imageSrc;
+      
+      // Show modal
+      const modal = new bootstrap.Modal(imageModal);
+      modal.show();
     }
   </script>
 

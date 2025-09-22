@@ -18,6 +18,7 @@ if (isset($_GET['id'])) {
       a.value,
       a.qr_code,
       a.image,
+      a.additional_images,
       a.type,
       a.serial_no,       -- optional field
       a.code,            -- optional field

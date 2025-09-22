@@ -101,6 +101,96 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $description = $asset['description'] . ' (' . $asset['property_no'] . ')';
     
+    // Handle multiple image uploads
+    $uploaded_images = [];
+    $upload_errors = [];
+    
+    if (isset($_FILES['asset_images']) && is_array($_FILES['asset_images']['name'])) {
+        $upload_dir = '../img/assets/';
+        
+        // Create upload directory if it doesn't exist
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+        
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $max_file_size = 5 * 1024 * 1024; // 5MB
+        $max_files = 4;
+        
+        $file_count = count(array_filter($_FILES['asset_images']['name']));
+        
+        if ($file_count > $max_files) {
+            $upload_errors[] = "Maximum $max_files images allowed.";
+        } else {
+            for ($i = 0; $i < count($_FILES['asset_images']['name']); $i++) {
+                if ($_FILES['asset_images']['error'][$i] === UPLOAD_ERR_OK) {
+                    $file_name = $_FILES['asset_images']['name'][$i];
+                    $file_tmp = $_FILES['asset_images']['tmp_name'][$i];
+                    $file_size = $_FILES['asset_images']['size'][$i];
+                    $file_type = $_FILES['asset_images']['type'][$i];
+                    
+                    // Validate file type
+                    if (!in_array($file_type, $allowed_types)) {
+                        $upload_errors[] = "Invalid file type for $file_name. Only JPEG, PNG, GIF, and WebP are allowed.";
+                        continue;
+                    }
+                    
+                    // Validate file size
+                    if ($file_size > $max_file_size) {
+                        $upload_errors[] = "File $file_name is too large. Maximum size is 5MB.";
+                        continue;
+                    }
+                    
+                    // Generate unique filename
+                    $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
+                    $unique_filename = 'asset_' . $asset_id . '_' . time() . '_' . $i . '.' . $file_extension;
+                    $upload_path = $upload_dir . $unique_filename;
+                    
+                    // Move uploaded file
+                    if (move_uploaded_file($file_tmp, $upload_path)) {
+                        $uploaded_images[] = $unique_filename;
+                    } else {
+                        $upload_errors[] = "Failed to upload $file_name.";
+                    }
+                } elseif ($_FILES['asset_images']['error'][$i] !== UPLOAD_ERR_NO_FILE) {
+                    $upload_errors[] = "Upload error for file " . ($_FILES['asset_images']['name'][$i] ?? 'unknown') . ": " . $_FILES['asset_images']['error'][$i];
+                }
+            }
+        }
+    }
+    
+    // Update asset with new images if any were uploaded
+    if (!empty($uploaded_images)) {
+        // Get existing additional images
+        $existing_images_query = $conn->prepare("SELECT additional_images FROM assets WHERE id = ?");
+        $existing_images_query->bind_param('i', $asset_id);
+        $existing_images_query->execute();
+        $existing_result = $existing_images_query->get_result();
+        $existing_data = $existing_result->fetch_assoc();
+        $existing_images_query->close();
+        
+        $existing_images = [];
+        if (!empty($existing_data['additional_images'])) {
+            $existing_images = json_decode($existing_data['additional_images'], true) ?: [];
+        }
+        
+        // Merge new images with existing ones (limit to 4 total)
+        $all_images = array_merge($existing_images, $uploaded_images);
+        $all_images = array_slice($all_images, 0, 4); // Keep only first 4 images
+        
+        // Update asset with new images
+        $update_images_query = $conn->prepare("UPDATE assets SET additional_images = ? WHERE id = ?");
+        $images_json = json_encode($all_images);
+        $update_images_query->bind_param('si', $images_json, $asset_id);
+        $update_images_query->execute();
+        $update_images_query->close();
+    }
+    
+    // Display upload errors if any
+    if (!empty($upload_errors)) {
+        $_SESSION['upload_errors'] = $upload_errors;
+    }
+    
     if ($existing_red_tag_check) {
         // UPDATE existing Red Tag
         $update_query = $conn->prepare("
@@ -224,6 +314,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             content: " *";
             color: red;
         }
+        .img-thumbnail {
+            border: 2px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+        .img-thumbnail:hover {
+            border-color: #0d6efd;
+        }
     </style>
 </head>
 <body>
@@ -248,13 +345,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     '</div>';
                 unset($_SESSION['error_message']);
             }
+            
+            // Display upload errors if any
+            if (isset($_SESSION['upload_errors'])) {
+                echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">';
+                echo '<strong>Image Upload Issues:</strong><ul class="mb-0">';
+                foreach ($_SESSION['upload_errors'] as $error) {
+                    echo '<li>' . htmlspecialchars($error) . '</li>';
+                }
+                echo '</ul>';
+                echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                echo '</div>';
+                unset($_SESSION['upload_errors']);
+            }
 
             if ($existing_red_tag_check) {
                 echo '<div class="alert alert-info">A Red Tag record already exists for this item. You can review and edit the details below.</div>';
             }
             ?>
             
-            <form method="POST" class="red-tag-form">
+            <form method="POST" class="red-tag-form" enctype="multipart/form-data">
                 <!-- Header -->
                 <div class="header">
                     <div class="logo">
@@ -344,6 +454,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
+                <!-- Asset Images Upload Section -->
+                <div class="mb-4">
+                    <label for="asset_images" class="form-label">Asset Images (Optional):</label>
+                    <input type="file" class="form-control" id="asset_images" name="asset_images[]" 
+                           accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" multiple>
+                    <div class="form-text">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> 
+                            Upload up to 4 images (JPEG, PNG, GIF, WebP). Maximum file size: 5MB each.
+                        </small>
+                    </div>
+                    
+                    <!-- Image Preview Container -->
+                    <div id="image_preview_container" class="mt-3" style="display: none;">
+                        <label class="form-label">Preview:</label>
+                        <div id="image_previews" class="d-flex flex-wrap gap-2"></div>
+                    </div>
+                    
+                    <?php
+                    // Display existing images if any
+                    $existing_images_query = $conn->prepare("SELECT additional_images FROM assets WHERE id = ?");
+                    $existing_images_query->bind_param('i', $asset_id);
+                    $existing_images_query->execute();
+                    $existing_result = $existing_images_query->get_result();
+                    $existing_data = $existing_result->fetch_assoc();
+                    $existing_images_query->close();
+                    
+                    $existing_images = [];
+                    if (!empty($existing_data['additional_images'])) {
+                        $existing_images = json_decode($existing_data['additional_images'], true) ?: [];
+                    }
+                    
+                    if (!empty($existing_images)): ?>
+                        <div class="mt-3">
+                            <label class="form-label">Current Images:</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <?php foreach ($existing_images as $index => $image): ?>
+                                    <div class="position-relative">
+                                        <img src="../img/assets/<?= htmlspecialchars($image) ?>" 
+                                             alt="Asset Image <?= $index + 1 ?>" 
+                                             class="img-thumbnail" 
+                                             style="width: 100px; height: 100px; object-fit: cover;">
+                                        <button type="button" 
+                                                class="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle" 
+                                                style="width: 25px; height: 25px; padding: 0; margin: -5px;" 
+                                                onclick="removeExistingImage('<?= htmlspecialchars($image) ?>', this)" 
+                                                title="Remove image">
+                                            <i class="bi bi-x" style="font-size: 12px;"></i>
+                                        </button>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                     <?php if ($existing_red_tag_check): ?>
                         <a href="print_red_tag.php?id=<?= $red_tag_id ?>" target="_blank" class="btn btn-primary me-2">
@@ -385,6 +551,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const customActionDiv = document.getElementById('custom_action_div');
             const customActionInput = document.getElementById('custom_action');
             
+            const imageInput = document.getElementById('asset_images');
+            const previewContainer = document.getElementById('image_preview_container');
+            const previewsDiv = document.getElementById('image_previews');
+            
             // Function to toggle custom removal reason input
             function toggleCustomRemovalReason() {
                 if (removalReasonSelect.value === 'Other') {
@@ -409,9 +579,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
+            // Function to handle image preview
+            function handleImagePreview() {
+                const files = imageInput.files;
+                previewsDiv.innerHTML = '';
+                
+                if (files.length > 0) {
+                    if (files.length > 4) {
+                        alert('Maximum 4 images allowed. Only the first 4 will be processed.');
+                    }
+                    
+                    previewContainer.style.display = 'block';
+                    
+                    for (let i = 0; i < Math.min(files.length, 4); i++) {
+                        const file = files[i];
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(e) {
+                            const previewDiv = document.createElement('div');
+                            previewDiv.className = 'position-relative';
+                            previewDiv.innerHTML = `
+                                <img src="${e.target.result}" 
+                                     alt="Preview ${i + 1}" 
+                                     class="img-thumbnail" 
+                                     style="width: 100px; height: 100px; object-fit: cover;">
+                                <div class="position-absolute top-0 end-0 bg-dark text-white rounded-circle" 
+                                     style="width: 20px; height: 20px; font-size: 10px; display: flex; align-items: center; justify-content: center; margin: -5px;">
+                                    ${i + 1}
+                                </div>
+                            `;
+                            previewsDiv.appendChild(previewDiv);
+                        };
+                        
+                        reader.readAsDataURL(file);
+                    }
+                } else {
+                    previewContainer.style.display = 'none';
+                }
+            }
+            
             // Add event listeners
             removalReasonSelect.addEventListener('change', toggleCustomRemovalReason);
             actionSelect.addEventListener('change', toggleCustomAction);
+            imageInput.addEventListener('change', handleImagePreview);
             
             // Initialize on page load (for existing red tags)
             toggleCustomRemovalReason();
@@ -425,6 +635,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             });
         });
+        
+        // Function to remove existing images
+        function removeExistingImage(imageName, buttonElement) {
+            if (confirm('Are you sure you want to remove this image?')) {
+                // Send AJAX request to remove the image
+                fetch('remove_asset_image.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `asset_id=<?= $asset_id ?>&image_name=${encodeURIComponent(imageName)}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove the image element from DOM
+                        buttonElement.parentElement.remove();
+                    } else {
+                        alert('Failed to remove image: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while removing the image.');
+                });
+            }
+        }
     </script>
 </body>
 </html>
