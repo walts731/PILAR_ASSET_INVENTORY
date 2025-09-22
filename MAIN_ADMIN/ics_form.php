@@ -9,16 +9,18 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 // Get form_id from URL, default to null if not provided
 $form_id = isset($_GET['id']) ? intval($_GET['id']) : null;
 
-// Fetch the latest ICS data (remove conditional by $ics_id)
+// Always fetch the latest ICS data for header/footer information
 $sql = "SELECT id, header_image, entity_name, fund_cluster, ics_no, 
                received_from_name, received_from_position, 
                received_by_name, received_by_position, created_at 
         FROM ics_form 
         ORDER BY id DESC 
-        LIMIT 1"; // ← Gets the most recent record
+        LIMIT 1";
 $result = $conn->query($sql);
 
+// Default values for new forms
 $ics_data = [
+    'id' => null,
     'header_image' => '',
     'entity_name' => '',
     'fund_cluster' => '',
@@ -30,8 +32,23 @@ $ics_data = [
     'created_at' => ''
 ];
 
+// If we have previous records, use the latest for header/footer defaults
 if ($result && $result->num_rows > 0) {
-    $ics_data = $result->fetch_assoc();
+    $latest_record = $result->fetch_assoc();
+    
+    // Use latest record data for header/footer fields, but generate new ICS number
+    $ics_data = [
+        'id' => null, // Always null for new forms
+        'header_image' => $latest_record['header_image'],
+        'entity_name' => $latest_record['entity_name'],
+        'fund_cluster' => $latest_record['fund_cluster'],
+        'ics_no' => '', // Will be generated fresh
+        'received_from_name' => $latest_record['received_from_name'],
+        'received_from_position' => $latest_record['received_from_position'],
+        'received_by_name' => $latest_record['received_by_name'],
+        'received_by_position' => $latest_record['received_by_position'],
+        'created_at' => ''
+    ];
 }
 
 // Fetch unit options
@@ -135,7 +152,7 @@ $new_ics_no = generateICSNo($conn);
                 <!-- ENTITY NAME -->
                 <div class="col-6">
                     <label class="form-label fw-semibold">ENTITY NAME</label>
-                    <input type="text" class="form-control" name="entity_name" value="">
+                    <input type="text" class="form-control" name="entity_name" value="<?= htmlspecialchars($ics_data['entity_name']) ?>">
                 </div>
 
                 <!-- OFFICE -->
@@ -160,7 +177,7 @@ $new_ics_no = generateICSNo($conn);
                 <!-- FUND CLUSTER -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">FUND CLUSTER</label>
-                    <input type="text" class="form-control" name="fund_cluster" value="">
+                    <input type="text" class="form-control" name="fund_cluster" value="<?= htmlspecialchars($ics_data['fund_cluster']) ?>">
                 </div>
 
                 <!-- ICS NO -->
@@ -282,14 +299,14 @@ $new_ics_no = generateICSNo($conn);
                     <td style="text-align:center;">
                         <input type="text" name="received_from_name"
                             class="form-control text-center fw-bold"
-                            value=""
+                            value="<?= htmlspecialchars($ics_data['received_from_name']) ?>"
                             placeholder="Enter name"
                             style="text-decoration:underline;">
                     </td>
                     <td style="text-align:center;">
                         <input type="text" name="received_by_name"
                             class="form-control text-center fw-bold"
-                            value=""
+                            value="<?= htmlspecialchars($ics_data['received_by_name']) ?>"
                             placeholder="Enter name"
                             style="text-decoration:underline;">
                     </td>
@@ -298,13 +315,13 @@ $new_ics_no = generateICSNo($conn);
                     <td style="text-align:center;">
                         <input type="text" name="received_from_position"
                             class="form-control text-center"
-                            value=""
+                            value="<?= htmlspecialchars($ics_data['received_from_position']) ?>"
                             placeholder="Enter position">
                     </td>
                     <td style="text-align:center;">
                         <input type="text" name="received_by_position"
                             class="form-control text-center"
-                            value=""
+                            value="<?= htmlspecialchars($ics_data['received_by_position']) ?>"
                             placeholder="Enter position">
                     </td>
                 </tr>

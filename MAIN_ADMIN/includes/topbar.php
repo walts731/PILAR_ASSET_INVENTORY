@@ -120,6 +120,44 @@ $low_stock_count = count($low_stock_items);
               <span class="mx-1 text-muted"> &gt; </span>
               <span class="text-dark">View PAR</span>
             </h5>';
+    } elseif ($current_page === 'iirup_form') {
+      $formId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <a href="saved_iirup.php?id=' . $formId . '" class="text-decoration-none text-primary">Saved IIRUP</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">IIRUP Form</span>
+            </h5>';
+    } elseif ($current_page === 'saved_iirup') {
+      $formId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">Saved IIRUP</span>
+            </h5>';
+    } elseif ($current_page === 'view_iirup') {
+      $iirupId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+      $formId = isset($_GET['form_id']) ? intval($_GET['form_id']) : 0;
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <a href="saved_iirup.php?id=' . $formId . '" class="text-decoration-none text-primary">Saved IIRUP</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">View IIRUP</span>
+            </h5>';
+    } elseif ($current_page === 'create_red_tag') {
+      $iirup_id = isset($_GET['iirup_id']) ? intval($_GET['iirup_id']) : 0;
+      $form_id = isset($_GET['form_id']) ? intval($_GET['form_id']) : 7; // Default to 7 if not provided
+      echo '<h5 class="m-0 text-center text-sm-start">
+              <a href="forms.php?id=' . $form_id . '" class="text-decoration-none text-primary">Forms</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <a href="saved_iirup.php?id=' . $form_id . '" class="text-decoration-none text-primary">Saved IIRUP</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <a href="view_iirup.php?id=' . $iirup_id . '&form_id=' . $form_id . '" class="text-decoration-none text-primary">View IIRUP</a>
+              <span class="mx-1 text-muted"> &gt; </span>
+              <span class="text-dark">Create Red Tag</span>
+            </h5>';
     } elseif ($current_page === 'create_mr') {
       // Show PAR breadcrumb if par_id present; otherwise default to ICS breadcrumb
       $formId = isset($_GET['form_id']) ? intval($_GET['form_id']) : 0;

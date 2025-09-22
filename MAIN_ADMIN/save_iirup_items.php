@@ -189,9 +189,14 @@ try {
   $insertStmt = $conn->prepare($insertSql);
   if (!$insertStmt) { throw new Exception('Prepare insert failed: ' . $conn->error); }
 
-  $updateAssetSql = "UPDATE assets SET status = 'unserviceable', red_tagged = 1 WHERE id = ?";
+  $updateAssetSql = "UPDATE assets SET status = 'unserviceable' WHERE id = ?";
   $updateAssetStmt = $conn->prepare($updateAssetSql);
   if (!$updateAssetStmt) { throw new Exception('Prepare update-asset failed: ' . $conn->error); }
+
+  // Prepare mr_details update to set unserviceable = 1
+  $updateMrSql = "UPDATE mr_details SET unserviceable = 1, serviceable = 0 WHERE asset_id = ?";
+  $updateMrStmt = $conn->prepare($updateMrSql);
+  if (!$updateMrStmt) { throw new Exception('Prepare update-mr failed: ' . $conn->error); }
 
   $inserted = 0;
   for ($i = 0; $i < $rows; $i++) {
@@ -267,14 +272,29 @@ try {
 
     $inserted++;
 
-    // If an existing asset is selected, update its status and red_tagged
+    // If an existing asset is selected, update its status to unserviceable
+    // Note: red_tagged remains 0 until create_red_tag.php is executed
     if (!is_null($aid) && $aid > 0) {
+      // Update asset status to unserviceable
       $updateAssetStmt->bind_param('i', $aid);
       if (!$updateAssetStmt->execute()) {
         throw new Exception('Asset update failed: ' . $updateAssetStmt->error);
       }
+      
+      // Update corresponding mr_details record to set unserviceable = 1
+      // Only update if mr_details record exists for this asset
+      $updateMrStmt->bind_param('i', $aid);
+      if (!$updateMrStmt->execute()) {
+        // Log warning but don't fail the transaction if mr_details doesn't exist
+        error_log("Warning: Failed to update mr_details for asset_id $aid: " . $updateMrStmt->error);
+      }
     }
   }
+
+  // Close prepared statements
+  $insertStmt->close();
+  $updateAssetStmt->close();
+  $updateMrStmt->close();
 
   $conn->commit();
 

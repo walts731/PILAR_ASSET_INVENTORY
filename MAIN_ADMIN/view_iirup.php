@@ -122,6 +122,7 @@ if ($res_off && $res_off->num_rows) {
               <th rowspan="2">CODE</th>
               <th rowspan="2">RED TAG</th>
               <th rowspan="2">DATE RECEIVED</th>
+              <th rowspan="2">ACTIONS</th>
             </tr>
             <tr>
               <th>Date Acquired<br>(1)</th>
@@ -178,6 +179,20 @@ if ($res_off && $res_off->num_rows) {
                   <td><input type="text" value="<?= htmlspecialchars($it['code']) ?>" disabled></td>
                   <td><input type="text" value="<?= htmlspecialchars($it['red_tag']) ?>" disabled></td>
                   <td><input type="date" value="<?= htmlspecialchars($it['date_received']) ?>" disabled></td>
+                  <td class="text-center">
+                    <?php if (!empty($it['asset_id']) && strtolower($it['remarks']) !== 'serviceable'): ?>
+                      <button type="button" class="btn btn-sm btn-danger create-red-tag" 
+                              data-asset-id="<?= (int)$it['asset_id'] ?>"
+                              data-property-no="<?= htmlspecialchars($it['property_no']) ?>"
+                              data-particulars="<?= htmlspecialchars($it['particulars']) ?>">
+                        <i class="bi bi-tag"></i> Red Tag
+                      </button>
+                    <?php elseif (!empty($it['asset_id']) && strtolower($it['remarks']) === 'serviceable'): ?>
+                      <span class="text-muted small">
+                        <i class="bi bi-check-circle"></i> Serviceable
+                      </span>
+                    <?php endif; ?>
+                  </td>
                 </tr>
               <?php endforeach; ?>
             <?php else: ?>
@@ -242,5 +257,19 @@ if ($res_off && $res_off->num_rows) {
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Handle Red Tag button click - redirect directly to create_red_tag.php
+      document.querySelectorAll('.create-red-tag').forEach(button => {
+        button.addEventListener('click', function() {
+          const assetId = this.getAttribute('data-asset-id');
+          const iirupId = '<?= $iirup_id ?>';
+          const formId = '<?= isset($_GET['form_id']) ? intval($_GET['form_id']) : 7 ?>';
+          // Redirect to red tag creation page with asset details
+          window.location.href = `create_red_tag.php?asset_id=${assetId}&iirup_id=${iirupId}&form_id=${formId}`;
+        });
+      });
+    });
+  </script>
 </body>
 </html>

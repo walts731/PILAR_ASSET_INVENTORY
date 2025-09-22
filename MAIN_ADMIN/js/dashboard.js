@@ -25,6 +25,38 @@ function updateDateTime() {
           info: "Showing _START_ to _END_ of _TOTAL_ assets"
         }
       });
+      
+      // Initialize DataTable for No Red Tag Only assets
+      $('#noRedTagTable').DataTable({
+        responsive: true,
+        pageLength: 10,
+        order: [[7, 'desc']], // Sort by Last Updated column (index 7) in descending order
+        language: {
+          search: "Search assets without red tags:",
+          lengthMenu: "Show _MENU_ entries",
+          info: "Showing _START_ to _END_ of _TOTAL_ assets without red tags",
+          emptyTable: "No unserviceable assets without red tags found"
+        },
+        columnDefs: [
+          { orderable: false, targets: [8] } // Disable sorting on Actions column
+        ]
+      });
+      
+      // Initialize DataTable for all unserviceable assets
+      $('#allUnserviceableTable').DataTable({
+        responsive: true,
+        pageLength: 10,
+        order: [[8, 'desc']], // Sort by Last Updated column (index 8) in descending order
+        language: {
+          search: "Search all unserviceable assets:",
+          lengthMenu: "Show _MENU_ entries",
+          info: "Showing _START_ to _END_ of _TOTAL_ unserviceable assets",
+          emptyTable: "No unserviceable assets found"
+        },
+        columnDefs: [
+          { orderable: false, targets: [9] } // Disable sorting on Actions column
+        ]
+      });
     });
 
     const toggleBtn = document.getElementById('toggleSidebar');

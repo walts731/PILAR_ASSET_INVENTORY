@@ -144,7 +144,7 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
                 <a class="nav-link <?= ($page == 'Saved Property Tags') ? 'active' : '' ?>" href="saved_mr.php">
                     Property Tags
                 </a>
-                <a class="nav-link <?= ($page == 'Saved Red Tags') ? 'active' : '' ?>" href="red_tags.php">
+                <a class="nav-link <?= ($page == 'Saved Red Tags') ? 'active' : '' ?>" href="red_tag.php">
                     Red Tags
                 </a>
             </div>
@@ -157,6 +157,9 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
             </a>
             <a href="usage.php" class="<?= ($page == 'usage') ? 'active' : '' ?>">
                 <i class="bi bi-clock-history"></i> Usage
+            </a>
+            <a href="logs.php" class="<?= ($page == 'logs') ? 'active' : '' ?>">
+                <i class="bi bi-journal-text"></i> Audit Trail
             </a>
             <a href="employees.php" class="<?= ($page == 'employees') ? 'active' : '' ?>">
                 <i class="bi bi-people-fill"></i> Employees

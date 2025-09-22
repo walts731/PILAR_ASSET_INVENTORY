@@ -18,6 +18,7 @@ if (isset($_GET['id'])) {
       a.value,
       a.qr_code,
       a.image,
+      a.additional_images,
       a.type,
       a.serial_no,       -- optional field
       a.code,            -- optional field
@@ -45,20 +46,16 @@ if (isset($_GET['id'])) {
   $result = $stmt->get_result();
 
   if ($row = $result->fetch_assoc()) {
-    // Return the asset itself as the only item entry so the modal lists assets instead of asset_items
-    $row['items'] = [[
-      'item_id' => $row['id'],
-      'asset_id' => $row['id'],
-      'qr_code' => $row['qr_code'],
-      'inventory_tag' => $row['inventory_tag'],
-      'serial_no' => $row['serial_no'],
-      'property_no' => $row['property_no'],
-      'status' => $row['status'],
-      'date_acquired' => $row['acquisition_date']
-    ]];
-    echo json_encode($row);
+    // Return the asset data in the expected format
+    echo json_encode([
+      'success' => true,
+      'asset' => $row
+    ]);
   } else {
-    echo json_encode(['error' => 'Asset not found']);
+    echo json_encode([
+      'success' => false,
+      'message' => 'Asset not found'
+    ]);
   }
 }
 ?>

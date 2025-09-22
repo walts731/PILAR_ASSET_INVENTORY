@@ -53,6 +53,33 @@
               </div>
             </div>
 
+            <!-- Asset Images -->
+            <div class="card shadow-sm mb-3" id="viewImagesCard" style="display: none;">
+              <div class="card-header py-2"><strong>Asset Images</strong></div>
+              <div class="card-body">
+                <div class="row g-2">
+                  <!-- Main Image -->
+                  <div class="col-md-6" id="mainImageContainer" style="display: none;">
+                    <div class="text-center">
+                      <label class="form-label small text-muted">Main Image</label>
+                      <div>
+                        <img id="viewAssetImage" src="" alt="Asset Image" 
+                             class="img-thumbnail" style="max-width: 200px; max-height: 150px; object-fit: cover;">
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Additional Images -->
+                  <div class="col-md-6" id="additionalImagesContainer" style="display: none;">
+                    <div class="text-center">
+                      <label class="form-label small text-muted">Additional Images</label>
+                      <div id="viewAdditionalImages" class="d-flex flex-wrap gap-2 justify-content-center"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Items table -->
             <div class="card shadow-sm">
               <div class="card-header py-2 d-flex align-items-center justify-content-between">

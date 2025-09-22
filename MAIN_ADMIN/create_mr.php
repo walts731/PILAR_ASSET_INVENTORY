@@ -469,7 +469,7 @@ if ($asset_id) {
     $stmt_offices->close();
 
     // Fetch detailed asset record
-    $stmt_assets = $conn->prepare("SELECT id, asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand FROM assets WHERE id = ?");
+    $stmt_assets = $conn->prepare("SELECT id, asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, additional_images, serial_no, code, property_no, model, brand FROM assets WHERE id = ?");
     $stmt_assets->bind_param("i", $asset_id);
     $stmt_assets->execute();
     $result_assets = $stmt_assets->get_result();
@@ -527,6 +527,30 @@ if (!empty($asset_id) && !empty($employee_id)) {
     $stmt_assets->bind_param("ii", $employee_id, $asset_id);
     $stmt_assets->execute();
     $stmt_assets->close();
+}
+
+// Fetch existing MR details to populate serviceable/unserviceable checkboxes
+$mr_serviceable = 0;
+$mr_unserviceable = 0;
+if ($asset_id && $existing_mr_check) {
+    if ($mr_item_id) {
+        $stmt_mr = $conn->prepare("SELECT serviceable, unserviceable FROM mr_details WHERE item_id = ? AND asset_id = ?");
+        $stmt_mr->bind_param("ii", $mr_item_id, $asset_id);
+    } else {
+        $stmt_mr = $conn->prepare("SELECT serviceable, unserviceable FROM mr_details WHERE asset_id = ?");
+        $stmt_mr->bind_param("i", $asset_id);
+    }
+    $stmt_mr->execute();
+    $result_mr = $stmt_mr->get_result();
+    if ($result_mr && $mr_data = $result_mr->fetch_assoc()) {
+        $mr_serviceable = (int)$mr_data['serviceable'];
+        $mr_unserviceable = (int)$mr_data['unserviceable'];
+    }
+    $stmt_mr->close();
+} else {
+    // Default values for new MR records
+    $mr_serviceable = 1; // Default to serviceable for new assets
+    $mr_unserviceable = 0;
 }
 
 // Compute system-generated Property No for the form
@@ -695,18 +719,134 @@ if ($baseProp !== '') {
                             </div>
                         </div>
 
+                        <!-- Additional Asset Images -->
+                        <?php
+                        $additional_images = [];
+                        if (!empty($asset_details['additional_images'])) {
+                            $additional_images = json_decode($asset_details['additional_images'], true);
+                            if (!is_array($additional_images)) {
+                                $additional_images = [];
+                            }
+                        }
+                        ?>
+                        <?php if (!empty($asset_details['image']) || !empty($additional_images)): ?>
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card border-0 bg-light">
+                                    <div class="card-header bg-transparent border-0 pb-0">
+                                        <h6 class="mb-0 text-primary">
+                                            <i class="bi bi-images me-2"></i>Asset Image Gallery
+                                            <small class="text-muted ms-2">
+                                                (<?= (!empty($asset_details['image']) ? 1 : 0) + count($additional_images) ?> image<?= ((!empty($asset_details['image']) ? 1 : 0) + count($additional_images)) > 1 ? 's' : '' ?>)
+                                            </small>
+                                        </h6>
+                                    </div>
+                                    <div class="card-body pt-3">
+                                        <div class="row g-3">
+                                            <?php if (!empty($asset_details['image'])): ?>
+                                            <!-- Main Image -->
+                                            <div class="col-6 col-md-4 col-lg-3">
+                                                <div class="card shadow-sm border-primary" style="transition: transform 0.2s;">
+                                                    <div class="position-relative overflow-hidden rounded-top">
+                                                        <img src="../img/assets/<?= htmlspecialchars($asset_details['image']) ?>" 
+                                                             class="card-img-top" 
+                                                             style="height: 160px; object-fit: cover; cursor: pointer; transition: transform 0.3s;"
+                                                             onclick="showImageModal('../img/assets/<?= htmlspecialchars($asset_details['image']) ?>', 'Main Asset Image')"
+                                                             onmouseover="this.style.transform='scale(1.05)'"
+                                                             onmouseout="this.style.transform='scale(1)'"
+                                                             alt="Main Asset Image">
+                                                        <div class="position-absolute top-0 start-0 m-2">
+                                                            <span class="badge bg-primary shadow-sm">
+                                                                <i class="bi bi-star-fill me-1"></i>Main
+                                                            </span>
+                                                        </div>
+                                                        <div class="position-absolute bottom-0 end-0 m-2">
+                                                            <span class="badge bg-dark bg-opacity-75">
+                                                                <i class="bi bi-zoom-in"></i>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-body p-2 text-center bg-primary bg-opacity-10">
+                                                        <small class="text-primary fw-medium">Primary Image</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($additional_images)): ?>
+                                            <!-- Additional Images -->
+                                            <?php foreach ($additional_images as $index => $imageName): ?>
+                                            <div class="col-6 col-md-4 col-lg-3">
+                                                <div class="card shadow-sm border-info" style="transition: transform 0.2s;">
+                                                    <div class="position-relative overflow-hidden rounded-top">
+                                                        <img src="../img/assets/<?= htmlspecialchars($imageName) ?>" 
+                                                             class="card-img-top" 
+                                                             style="height: 160px; object-fit: cover; cursor: pointer; transition: transform 0.3s;"
+                                                             onclick="showImageModal('../img/assets/<?= htmlspecialchars($imageName) ?>', 'Additional Image <?= $index + 1 ?>')"
+                                                             onmouseover="this.style.transform='scale(1.05)'"
+                                                             onmouseout="this.style.transform='scale(1)'"
+                                                             alt="Additional Asset Image <?= $index + 1 ?>">
+                                                        <div class="position-absolute top-0 start-0 m-2">
+                                                            <span class="badge bg-info shadow-sm">
+                                                                <i class="bi bi-image me-1"></i><?= $index + 1 ?>
+                                                            </span>
+                                                        </div>
+                                                        <div class="position-absolute bottom-0 end-0 m-2">
+                                                            <span class="badge bg-dark bg-opacity-75">
+                                                                <i class="bi bi-zoom-in"></i>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-body p-2 text-center bg-info bg-opacity-10">
+                                                        <small class="text-info fw-medium">Additional Image <?= $index + 1 ?></small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <!-- Gallery Instructions -->
+                                        <div class="mt-3 text-center">
+                                            <small class="text-muted">
+                                                <i class="bi bi-info-circle me-1"></i>
+                                                Click on any image to view in full size
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php else: ?>
+                        <!-- No Images Available -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card border-0 bg-light">
+                                    <div class="card-body text-center py-4">
+                                        <div class="text-muted">
+                                            <i class="bi bi-image display-6 d-block mb-2 opacity-50"></i>
+                                            <h6 class="text-muted">No Images Available</h6>
+                                            <p class="mb-0 small">No images have been uploaded for this asset yet.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
                         <!-- Serviceable and Unserviceable -->
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="serviceable" value="1" checked>
+                                    <input class="form-check-input" type="checkbox" name="serviceable" value="1" 
+                                           <?= $mr_serviceable == 1 ? 'checked' : '' ?>>
                                     <label class="form-check-label">Serviceable</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="unserviceable" value="1"
-                                        <?= (isset($asset_data['quantity']) && $asset_data['quantity'] == 0) ? 'checked' : '' ?>>
+                                           <?= $mr_unserviceable == 1 ? 'checked' : '' ?>>
                                     <label class="form-check-label">Unserviceable</label>
                                 </div>
                             </div>
@@ -718,7 +858,8 @@ if ($baseProp !== '') {
                                 <label for="unit_quantity" class="form-label">Unit Quantity</label>
                                 <div class="d-flex">
                                     <input type="number" class="form-control" name="unit_quantity"
-                                        value="1" min="1" required>
+                                        value="1" min="1" required readonly style="background-color: #f8f9fa;"
+                                        title="Quantity is fixed at 1 for individual asset records">
                                     <select name="unit" class="form-select" required>
                                         <?php
                                         // Populate units from unit table if available
@@ -824,6 +965,92 @@ if ($baseProp !== '') {
                 };
                 reader.readAsDataURL(file);
             });
+        }
+
+        // Function to show image in modal with enhanced features
+        function showImageModal(imageSrc, imageTitle) {
+            // Create modal if it doesn't exist
+            let imageModal = document.getElementById('imageViewModal');
+            if (!imageModal) {
+                const modalHTML = `
+                    <div class="modal fade" id="imageViewModal" tabindex="-1" aria-labelledby="imageViewModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-xl modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title" id="imageViewModalLabel">
+                                        <i class="bi bi-image me-2"></i>Asset Image Viewer
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body text-center p-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                                    <div class="mb-3">
+                                        <h6 id="imageTitle" class="text-primary mb-2"></h6>
+                                    </div>
+                                    <div class="position-relative d-inline-block">
+                                        <img id="modalImage" src="" alt="Asset Image" 
+                                             class="img-fluid rounded shadow-lg" 
+                                             style="max-height: 75vh; max-width: 100%; object-fit: contain; transition: transform 0.3s;">
+                                        <div class="position-absolute top-0 end-0 m-2">
+                                            <button class="btn btn-sm btn-dark bg-opacity-75 border-0" 
+                                                    onclick="toggleImageZoom()" 
+                                                    title="Toggle Zoom">
+                                                <i class="bi bi-zoom-in" id="zoomIcon"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer bg-light">
+                                    <small class="text-muted me-auto">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Click the zoom button or double-click the image to zoom
+                                    </small>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        <i class="bi bi-x-lg me-1"></i>Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                imageModal = document.getElementById('imageViewModal');
+                
+                // Add double-click zoom functionality
+                document.getElementById('modalImage').addEventListener('dblclick', toggleImageZoom);
+            }
+            
+            // Update modal content
+            document.getElementById('imageViewModalLabel').innerHTML = '<i class="bi bi-image me-2"></i>Asset Image Viewer';
+            document.getElementById('imageTitle').textContent = imageTitle;
+            document.getElementById('modalImage').src = imageSrc;
+            
+            // Reset zoom state
+            const img = document.getElementById('modalImage');
+            img.style.transform = 'scale(1)';
+            img.style.cursor = 'zoom-in';
+            document.getElementById('zoomIcon').className = 'bi bi-zoom-in';
+            
+            // Show modal
+            const modal = new bootstrap.Modal(imageModal);
+            modal.show();
+        }
+
+        // Function to toggle image zoom
+        function toggleImageZoom() {
+            const img = document.getElementById('modalImage');
+            const zoomIcon = document.getElementById('zoomIcon');
+            
+            if (img.style.transform === 'scale(2)') {
+                // Zoom out
+                img.style.transform = 'scale(1)';
+                img.style.cursor = 'zoom-in';
+                zoomIcon.className = 'bi bi-zoom-in';
+            } else {
+                // Zoom in
+                img.style.transform = 'scale(2)';
+                img.style.cursor = 'zoom-out';
+                zoomIcon.className = 'bi bi-zoom-out';
+            }
         }
     </script>
 

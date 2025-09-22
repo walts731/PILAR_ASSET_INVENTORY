@@ -1,6 +1,7 @@
 <?php
 require_once '../connect.php';
 require_once '../phpqrcode/qrlib.php';
+require_once '../includes/audit_logger.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -76,6 +77,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $stmt->close();
 
+        // Log ICS form update
+        $logger = new AuditLogger($conn);
+        $user_stmt = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
+        $user_stmt->bind_param("i", $_SESSION['user_id']);
+        $user_stmt->execute();
+        $user_result = $user_stmt->get_result();
+        $username = $user_result->fetch_assoc()['fullname'] ?? 'Unknown User';
+        $user_stmt->close();
+        
+        $logger->logICSCreate($_SESSION['user_id'], $username, $ics_id, "Updated ICS form: {$ics_no} - {$entity_name}");
+
         // Update ICS items submitted as items[item_id][field]
         if (!empty($_POST['items']) && is_array($_POST['items'])) {
             $stmt_item_upd = $conn->prepare("UPDATE ics_items SET quantity = ?, unit = ?, unit_cost = ?, total_cost = ?, description = ?, item_no = ?, estimated_useful_life = ? WHERE item_id = ? AND ics_id = ?");
@@ -122,6 +134,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute();
     $ics_id = $conn->insert_id;
     $stmt->close();
+
+    // Log new ICS form creation
+    $logger = new AuditLogger($conn);
+    $user_stmt = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
+    $user_stmt->bind_param("i", $_SESSION['user_id']);
+    $user_stmt->execute();
+    $user_result = $user_stmt->get_result();
+    $username = $user_result->fetch_assoc()['fullname'] ?? 'Unknown User';
+    $user_stmt->close();
+    
+    $office_name = 'Outside LGU';
+    if (!$is_outside_lgu && $office_id > 0) {
+        $office_stmt = $conn->prepare("SELECT office_name FROM offices WHERE id = ?");
+        $office_stmt->bind_param("i", $office_id);
+        $office_stmt->execute();
+        $office_result = $office_stmt->get_result();
+        if ($office_data = $office_result->fetch_assoc()) {
+            $office_name = $office_data['office_name'];
+        }
+        $office_stmt->close();
+    }
+    
+    $logger->logICSCreate($_SESSION['user_id'], $username, $ics_id, "Created new ICS form: {$ics_no} - {$entity_name} (Destination: {$office_name})");
 
     // ICS items data
     $quantities = $_POST['quantity'] ?? [];
@@ -188,6 +223,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $estimated_life
         );
         $stmt_items->execute();
+        
+        // Log individual ICS item creation
+        $item_details = "Added item to ICS {$ics_no}: {$description} (Qty: {$quantity}, Unit Cost: ₱" . number_format($unit_cost, 2) . ", Total: ₱" . number_format($total_cost, 2) . ")";
+        $logger->log($_SESSION['user_id'], $username, 'CREATE', 'ICS Items', $item_details, 'ics_items', $conn->insert_id);
     }
 
     $stmt_items->close();
