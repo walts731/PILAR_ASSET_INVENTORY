@@ -151,6 +151,9 @@ while ($row = $result->fetch_assoc()) {
   $employees[] = $row;
 }
 
+// Fetch offices for filter dropdown
+$officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_name ASC");
+
 
 ?>
 
@@ -181,7 +184,18 @@ while ($row = $result->fetch_assoc()) {
               <i class="bi bi-people-fill"></i>
               Employees
             </h5>
-            <div class="d-flex flex-wrap gap-2">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+              <div class="d-flex align-items-center gap-2">
+                <label for="officeFilter" class="mb-0 small text-muted">Office:</label>
+                <select id="officeFilter" class="form-select form-select-sm w-auto">
+                  <option value="">All Offices</option>
+                  <?php if ($officesRes && $officesRes->num_rows > 0): ?>
+                    <?php while ($off = $officesRes->fetch_assoc()): ?>
+                      <option value="<?= htmlspecialchars($off['office_name']) ?>"><?= htmlspecialchars($off['office_name']) ?></option>
+                    <?php endwhile; ?>
+                  <?php endif; ?>
+                </select>
+              </div>
               <div class="btn-group" role="group" aria-label="Employee Actions">
                 <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#addEmployeeModal" title="Add Employee">
                   <i class="bi bi-plus-circle"></i> Add
@@ -407,6 +421,22 @@ while ($row = $result->fetch_assoc()) {
 
     $(document).ready(function() {
       const table = $('#employeeTable').DataTable();
+
+      // Office filter dropdown -> filter Office column (index 3)
+      const $officeFilter = $('#officeFilter');
+      if ($officeFilter.length) {
+        $officeFilter.on('change', function() {
+          const val = this.value;
+          if (!val) {
+            // All Offices
+            table.column(3).search('').draw();
+          } else {
+            // Exact match search using regex
+            const pattern = '^' + $.fn.dataTable.util.escapeRegex(val) + '$';
+            table.column(3).search(pattern, true, false).draw();
+          }
+        });
+      }
 
       // Deletion feedback from query params (render Bootstrap alert)
       (function(){
