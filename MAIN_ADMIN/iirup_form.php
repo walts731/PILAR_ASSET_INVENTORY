@@ -62,6 +62,12 @@ if ($result_assets && $result_assets->num_rows > 0) {
 
 
 <!-- IIRUP FORM HEADER -->
+<div class="d-flex justify-content-end mb-2">
+    <a href="saved_iirup.php" class="btn btn-outline-info btn-sm">
+        <i class="bi bi-folder-check"></i> View Saved IIRUP
+    </a>
+&nbsp;
+</div>
 <?php if (isset($_GET['success']) && $_GET['success'] == '1'): ?>
     <?php $savedCount = isset($_GET['count']) ? (int)$_GET['count'] : 0; ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
