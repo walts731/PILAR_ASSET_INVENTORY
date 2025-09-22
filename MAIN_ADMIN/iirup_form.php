@@ -63,7 +63,7 @@ if ($result_assets && $result_assets->num_rows > 0) {
 
 <!-- IIRUP FORM HEADER -->
 <div class="d-flex justify-content-end mb-2">
-    <a href="saved_iirup.php" class="btn btn-outline-info btn-sm">
+    <a href="saved_iirup.php?id=<?= isset($_GET['id']) ? intval($_GET['id']) : 7 ?>" class="btn btn-outline-info btn-sm">
         <i class="bi bi-folder-check"></i> View Saved IIRUP
     </a>
 &nbsp;
@@ -342,7 +342,7 @@ if ($result_footer && $result_footer->num_rows > 0) {
 </div>
 
 <div class="d-flex justify-content-end gap-2" style="margin-top:10px;">
-    <a href="saved_iirup.php" class="btn btn-success">
+    <a href="saved_iirup.php?id=<?= isset($_GET['id']) ? intval($_GET['id']) : 7 ?>" class="btn btn-success">
         <i class="bi bi-folder-check"></i> View Saved IIRUP
     </a>
     <button type="submit" name="save_iirup" class="btn btn-primary">Submit IIRUP</button>

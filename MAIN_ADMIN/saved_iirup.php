@@ -37,6 +37,9 @@ if ($result && $result->num_rows > 0) {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
   <link rel="stylesheet" href="css/dashboard.css" />
+  <?php if ($form_id): ?>
+    <base href="saved_iirup.php?id=<?= $form_id ?>">
+  <?php endif; ?>
 </head>
 <body>
   <?php include 'includes/sidebar.php' ?>
@@ -46,6 +49,11 @@ if ($result && $result->num_rows > 0) {
     <div class="container-fluid py-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="fw-bold"><i class="bi bi-folder-check"></i> Saved IIRUP Records</h4>
+        <?php if ($form_id): ?>
+          <a href="forms.php?id=<?= $form_id ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Forms
+          </a>
+        <?php endif; ?>
       </div>
 
       <?php if (!empty($iirup_forms)): ?>
@@ -85,7 +93,7 @@ if ($result && $result->num_rows > 0) {
                       <td><?= htmlspecialchars($iirup['designation'] ?? '') ?></td>
                       <td><?= htmlspecialchars($iirup['office'] ?? 'N/A') ?></td>
                       <td class="text-center">
-                        <a href="view_iirup.php?id=<?= $iirup['iirup_id'] ?>&form_id=<?php echo $form_id ?>" class="btn btn-sm btn-primary">
+                        <a href="view_iirup.php?id=<?= $iirup['iirup_id'] ?>&form_id=<?= $form_id ?>" class="btn btn-sm btn-primary">
                           <i class="bi bi-eye"></i> View
                         </a>
                       </td>
@@ -110,8 +118,23 @@ if ($result && $result->num_rows > 0) {
   <script>
     $(document).ready(function () {
       $('#iirupTable').DataTable({
-        order: [[0, 'desc']]
+        order: [[0, 'desc']],
+        columnDefs: [
+          { orderable: false, targets: -1 } // Disable sorting on the last column (Action)
+        ]
       });
+      
+      // Ensure all links have the form_id parameter if it exists
+      if (<?= $form_id ? 'true' : 'false' ?>) {
+        $('a[href^="view_iirup.php"]').each(function() {
+          const $this = $(this);
+          let href = $this.attr('href');
+          if (href.indexOf('form_id=') === -1) {
+            href += (href.indexOf('?') === -1 ? '?' : '&') + 'form_id=<?= $form_id ?>';
+            $this.attr('href', href);
+          }
+        });
+      }
     });
   </script>
 </body>
