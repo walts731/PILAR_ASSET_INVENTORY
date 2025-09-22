@@ -881,13 +881,43 @@ $stmt->close();
               <i class="bi bi-exclamation-circle text-info"></i> 
               All Unserviceable Assets (<?= $allUnservResult->num_rows ?> items)
             </h6>
-            
+            <form id="unservReportForm" class="d-flex align-items-center gap-2 flex-wrap" action="generate_unserviceable_report.php" method="POST" target="_blank">
+              <input type="hidden" name="office" value="<?= htmlspecialchars($selected_office) ?>">
+              <label for="unservReportType" class="mb-0 small">Report:</label>
+              <select id="unservReportType" name="report_type" class="form-select form-select-sm w-auto">
+                <option value="monthly" selected>Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+              <div id="unservMonthWrap" class="d-flex align-items-center gap-1">
+                <label for="unservMonth" class="mb-0 small">Month:</label>
+                <select id="unservMonth" name="month" class="form-select form-select-sm w-auto">
+                  <?php for ($m = 1; $m <= 12; $m++): ?>
+                    <option value="<?= $m ?>" <?= ($m == (int)date('n')) ? 'selected' : '' ?>><?= date('F', mktime(0,0,0,$m,1)) ?></option>
+                  <?php endfor; ?>
+                </select>
+              </div>
+              <label for="unservYear" class="mb-0 small">Year:</label>
+              <select id="unservYear" name="year" class="form-select form-select-sm w-auto">
+                <?php $currentY = (int)date('Y'); for ($y = $currentY; $y >= $currentY - 10; $y--): ?>
+                  <option value="<?= $y ?>" <?= ($y === $currentY) ? 'selected' : '' ?>><?= $y ?></option>
+                <?php endfor; ?>
+              </select>
+              <div class="vr d-none d-md-block"></div>
+              
+              <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill">
+                <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
+              </button>
+              <button type="button" id="btnPrintSelectedUnserv" class="btn btn-primary btn-sm rounded-pill">
+                <i class="bi bi-printer"></i> Print Selected (<span id="unservSelectedCount">0</span>)
+              </button>
+            </form>
           </div>
           <div class="card-body">
             <div class="table-responsive">
               <table class="table table-hover" id="allUnserviceableTable">
                 <thead class="table-light">
                   <tr>
+                    <th style="width:32px;"><input type="checkbox" id="selectAllUnserv"></th>
                     <th>Property No.</th>
                     <th>Description</th>
                     <th>Person Accountable</th>
@@ -900,7 +930,10 @@ $stmt->close();
                 <tbody>
                   <?php if ($allUnservResult->num_rows > 0): ?>
                     <?php while ($row = $allUnservResult->fetch_assoc()): ?>
-                      <tr>
+                      <tr data-updated="<?= htmlspecialchars($row['last_updated'] ?? '') ?>">
+                        <td>
+                          <input type="checkbox" class="unserv-checkbox" name="selected_assets[]" value="<?= (int)$row['id'] ?>">
+                        </td>
                         <td>
                           <div class="text-truncate" style="max-width: 120px;" title="<?= htmlspecialchars($row['property_no'] ?? $row['inventory_tag'] ?? 'Not Set') ?>">
                             <?= htmlspecialchars($row['property_no'] ?? $row['inventory_tag'] ?? 'Not Set') ?>
@@ -968,7 +1001,7 @@ $stmt->close();
                                 <a href="create_red_tag.php?asset_id=<?= $row['id'] ?>&iirup_id=<?= $row['iirup_id'] ?>" 
                                    class="btn btn-sm btn-danger rounded-pill" 
                                    title="Create Red Tag">
-                                  <i class="bi bi-tag-fill"></i> Create Red Tag
+                                  <i class="bi bi-tag-fill"></i> Red Tag
                                 </a>
                               <?php else: ?>
                                 <a href="forms.php?id=7&asset_id=<?= $row['id'] ?>&asset_description=<?= urlencode($row['description']) ?>&inventory_tag=<?= urlencode($row['inventory_tag'] ?? $row['property_no'] ?? '') ?>" 
@@ -1172,6 +1205,127 @@ $stmt->close();
           });
       });
     });
+
+    // ================= Unserviceable Tab: DataTable, Filters, and Bulk Select =================
+    (function() {
+      const $table = $('#allUnserviceableTable');
+      if ($table.length === 0) return;
+
+      // Initialize DataTable
+      const dt = $table.DataTable({
+        order: [[6, 'desc']], // Last Updated column index after adding checkbox
+        columnDefs: [
+          { targets: 0, orderable: false, searchable: false }, // checkbox column
+          { targets: -1, orderable: false, searchable: false } // actions column
+        ]
+      });
+
+      // Search box hookup
+      const $search = $('#unservSearch');
+      if ($search.length) {
+        $search.on('keyup change', function() {
+          dt.search(this.value).draw();
+        });
+      }
+
+      // Custom filter for month/year using each row's data-updated attribute
+      const typeSel = document.getElementById('unservReportType');
+      const monthSel = document.getElementById('unservMonth');
+      const yearSel = document.getElementById('unservYear');
+
+      $.fn.dataTable.ext.search.push(function(settings, rowData, rowIndex, rowNodes) {
+        if (settings.nTable !== $table.get(0)) return true; // only apply to this table
+        const tr = dt.row(rowIndex).node();
+        const raw = tr && tr.getAttribute('data-updated');
+        if (!raw) return true; // no date -> include
+        const d = new Date(raw);
+        if (isNaN(d)) return true;
+
+        const selType = typeSel ? typeSel.value : 'monthly';
+        const selYear = yearSel ? parseInt(yearSel.value, 10) : d.getFullYear();
+        if (selType === 'yearly') {
+          return d.getFullYear() === selYear;
+        } else {
+          const selMonth = monthSel ? parseInt(monthSel.value, 10) : (d.getMonth() + 1);
+          return d.getFullYear() === selYear && (d.getMonth() + 1) === selMonth;
+        }
+      });
+
+      const triggerFilter = () => dt.draw();
+      if (typeSel) typeSel.addEventListener('change', triggerFilter);
+      if (monthSel) monthSel.addEventListener('change', triggerFilter);
+      if (yearSel) yearSel.addEventListener('change', triggerFilter);
+
+      // Month visibility toggle (reuse if exists)
+      const monthWrap = document.getElementById('unservMonthWrap');
+      const toggleMonth = () => { if (typeSel && monthWrap) monthWrap.style.display = (typeSel.value === 'monthly') ? 'flex' : 'none'; };
+      toggleMonth();
+      if (typeSel) typeSel.addEventListener('change', toggleMonth);
+
+      // Persistent selection store
+      const selected = new Set();
+      const $count = $('#unservSelectedCount');
+      const updateCount = () => $count.text(selected.size);
+
+      // Apply selection state when table draws (pagination, filtering, etc.)
+      $table.on('draw.dt', function() {
+        dt.rows({ search: 'applied' }).every(function() {
+          const node = this.node();
+          const cb = node.querySelector('input.unserv-checkbox');
+          if (cb) cb.checked = selected.has(cb.value);
+        });
+      });
+
+      // Row checkbox handler
+      $table.on('change', 'input.unserv-checkbox', function() {
+        if (this.checked) selected.add(this.value); else selected.delete(this.value);
+        updateCount();
+      });
+
+      // Select All for filtered rows
+      $('#selectAllUnserv').on('change', function() {
+        const checked = this.checked;
+        dt.rows({ search: 'applied' }).every(function() {
+          const node = this.node();
+          const cb = node.querySelector('input.unserv-checkbox');
+          if (cb) {
+            cb.checked = checked;
+            if (checked) selected.add(cb.value); else selected.delete(cb.value);
+          }
+        });
+        updateCount();
+      });
+
+      // Print Selected button posts selected ids
+      $('#btnPrintSelectedUnserv').on('click', function() {
+        if (selected.size === 0) { alert('Please select at least one asset.'); return; }
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'generate_unserviceable_report.php';
+        form.target = '_blank';
+
+        // Append selected ids
+        selected.forEach(id => {
+          const inp = document.createElement('input');
+          inp.type = 'hidden';
+          inp.name = 'selected_assets[]';
+          inp.value = id;
+          form.appendChild(inp);
+        });
+
+        // Include office
+        const office = document.querySelector('input[name="office"][type="hidden"]');
+        if (office) {
+          const inp = document.createElement('input');
+          inp.type = 'hidden'; inp.name = 'office'; inp.value = office.value; form.appendChild(inp);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+      });
+    })();
+    // ================= End Unserviceable enhancements =================
 
     // Dedicated handler for No Property Tag tab to avoid conflicts with other tabs
     document.querySelectorAll('.viewAssetNoTagBtn').forEach(button => {
