@@ -494,7 +494,6 @@ $stmt->close();
                     <th>Stock No</th>
                     <th>Description</th>
                     <th>On Hand</th>
-                    <th>Restocked Qty</th>
                     <th>Unit</th>
                     <th>Status</th>
                     <th>Last Updated</th>
@@ -531,7 +530,6 @@ $stmt->close();
                       <td><?= htmlspecialchars($row['property_no']) ?></td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['quantity'] ?></td>
-                      <td><?= $row['added_stock'] ?></td>
                       <td><?= $row['unit'] ?></td>
                       <td>
                         <span class="badge bg-<?= $row['status'] === 'available' ? 'success' : 'secondary' ?>">
