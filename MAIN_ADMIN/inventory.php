@@ -592,9 +592,15 @@ $stmt->close();
         <?php
         // Query for assets missing property_no (not filtered by office)
         $stmtNP = $conn->prepare("
-          SELECT a.*, COALESCE(c.category_name, 'Uncategorized') AS category_name
+          SELECT 
+            a.*, 
+            COALESCE(c.category_name, 'Uncategorized') AS category_name, 
+            f.ics_no,
+            p.par_no
           FROM assets a
           LEFT JOIN categories c ON a.category = c.id
+          LEFT JOIN ics_form f ON a.ics_id = f.id
+          LEFT JOIN par_form p ON a.par_id = p.id
           WHERE a.type = 'asset' AND a.quantity > 0 AND (a.property_no IS NULL OR a.property_no = '')
           ORDER BY a.last_updated DESC
         ");
@@ -610,7 +616,7 @@ $stmt->close();
             <table id="noPropertyTable" class="table table-hover align-middle">
               <thead class="table-light">
                 <tr>
-                  <th>Asset ID</th>
+                  <th>ICS/PAR No.</th>
                   <th>Description</th>
                   <th>Category</th>
                   <th>Qty</th>
@@ -622,7 +628,17 @@ $stmt->close();
               <tbody>
                 <?php while ($row = $npResult->fetch_assoc()): ?>
                   <tr>
-                    <td><?= $row['id'] ?></td>
+                    <td>
+                      <?php 
+                      $displayNo = 'N/A';
+                      if (isset($row['value']) && $row['value'] >= 50000) {
+                          $displayNo = htmlspecialchars($row['par_no'] ?? 'N/A (PAR)');
+                      } else {
+                          $displayNo = htmlspecialchars($row['ics_no'] ?? 'N/A (ICS)');
+                      }
+                      echo $displayNo;
+                      ?>
+                    </td>
                     <td><?= htmlspecialchars($row['description']) ?></td>
                     <td><?= htmlspecialchars($row['category_name']) ?></td>
                     <td><?= $row['quantity'] ?></td>
@@ -706,7 +722,7 @@ $stmt->close();
               <table class="table table-hover" id="noRedTagTable">
                 <thead class="table-light">
                   <tr>
-                    <th>Asset ID</th>
+                    <th>Property No</th>
                     <th>Description</th>
                     <th>Category</th>
                     <th>Office</th>
@@ -722,7 +738,7 @@ $stmt->close();
                     <?php while ($row = $noRedTagResult->fetch_assoc()): ?>
                       <tr>
                         <td>
-                          <span class="badge bg-secondary"><?= $row['id'] ?></span>
+                          <span class="badge bg-secondary"><?= htmlspecialchars($row['property_no'] ?? 'N/A') ?></span>
                         </td>
                         <td>
                           <div class="d-flex align-items-center">
@@ -818,7 +834,7 @@ $stmt->close();
       <!-- Unserviceable Tab -->
       <div class="tab-pane fade" id="unserviceable" role="tabpanel">
         <?php
-        // Query for all unserviceable assets, including IIRUP ID
+        // Query for all unserviceable assets, including IIRUP ID and additional_images
         if ($selected_office === "all") {
           $stmtAllUnserv = $conn->prepare("
             SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
@@ -874,12 +890,9 @@ $stmt->close();
               <table class="table table-hover" id="allUnserviceableTable">
                 <thead class="table-light">
                   <tr>
-                    <th>Asset ID</th>
+                    <th>Property No.</th>
                     <th>Description</th>
-                    <th>Category</th>
-                    <th>Office</th>
                     <th>Person Accountable</th>
-                    <th>Value</th>
                     <th>Qty</th>
                     <th>Red Tag Status</th>
                     <th>Last Updated</th>
@@ -891,7 +904,9 @@ $stmt->close();
                     <?php while ($row = $allUnservResult->fetch_assoc()): ?>
                       <tr>
                         <td>
-                          <span class="badge bg-secondary"><?= $row['id'] ?></span>
+                          <div class="text-truncate" style="max-width: 120px;" title="<?= htmlspecialchars($row['property_no'] ?? $row['inventory_tag'] ?? 'Not Set') ?>">
+                            <?= htmlspecialchars($row['property_no'] ?? $row['inventory_tag'] ?? 'Not Set') ?>
+                          </div>
                         </td>
                         <td>
                           <div class="d-flex align-items-center">
@@ -915,24 +930,9 @@ $stmt->close();
                           </div>
                         </td>
                         <td>
-                          <span class="badge bg-info text-dark">
-                            <?= htmlspecialchars($row['category_name'] ?? 'Uncategorized') ?>
-                          </span>
-                        </td>
-                        <td>
-                          <div class="text-truncate" style="max-width: 120px;" title="<?= htmlspecialchars($row['office_name'] ?? 'Not Assigned') ?>">
-                            <?= htmlspecialchars($row['office_name'] ?? 'Not Assigned') ?>
-                          </div>
-                        </td>
-                        <td>
                           <div class="text-truncate" style="max-width: 120px;" title="<?= htmlspecialchars($row['employee_name'] ?? 'Not Assigned') ?>">
                             <?= htmlspecialchars($row['employee_name'] ?? 'Not Assigned') ?>
                           </div>
-                        </td>
-                        <td>
-                          <span class="text-success fw-medium">
-                            ₱<?= number_format((float)$row['value'], 2) ?>
-                          </span>
                         </td>
                         <td>
                           <span class="badge bg-light text-dark">
@@ -956,34 +956,41 @@ $stmt->close();
                           </small>
                         </td>
                         <td class="text-nowrap">
-                          <?php if ($row['red_tagged'] == 0): ?>
-                            <?php if (!empty($row['iirup_id'])): ?>
-                              <a href="create_red_tag.php?asset_id=<?= $row['id'] ?>&iirup_id=<?= $row['iirup_id'] ?>" 
-                                 class="btn btn-sm btn-danger rounded-pill" 
-                                 title="Create Red Tag">
-                                <i class="bi bi-tag-fill"></i> Create Red Tag
-                              </a>
-                            <?php else: ?>
-                              <div class="d-flex gap-1">
+                          <div class="d-flex gap-1 flex-wrap">
+                            <!-- View Button -->
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-info rounded-pill" 
+                                    onclick="viewAssetDetails(<?= $row['id'] ?>)"
+                                    title="View Asset Details">
+                              <i class="bi bi-eye"></i> View
+                            </button>
+                            
+                            <?php if ($row['red_tagged'] == 0): ?>
+                              <?php if (!empty($row['iirup_id'])): ?>
+                                <a href="create_red_tag.php?asset_id=<?= $row['id'] ?>&iirup_id=<?= $row['iirup_id'] ?>" 
+                                   class="btn btn-sm btn-danger rounded-pill" 
+                                   title="Create Red Tag">
+                                  <i class="bi bi-tag-fill"></i> Create Red Tag
+                                </a>
+                              <?php else: ?>
                                 <a href="forms.php?id=7&asset_id=<?= $row['id'] ?>&asset_description=<?= urlencode($row['description']) ?>&inventory_tag=<?= urlencode($row['inventory_tag'] ?? $row['property_no'] ?? '') ?>" 
                                    class="btn btn-sm btn-outline-warning rounded-pill" 
                                    title="Create IIRUP Form First">
-                                  <i class="bi bi-file-earmark-plus"></i>
+                                  <i class="bi bi-file-earmark-plus"></i> IIRUP
                                 </a>
-                                <small class="text-muted align-self-center">IIRUP Required</small>
-                              </div>
+                              <?php endif; ?>
+                            <?php else: ?>
+                              <span class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> Processed
+                              </span>
                             <?php endif; ?>
-                          <?php else: ?>
-                            <span class="badge bg-success">
-                              <i class="bi bi-check-circle"></i> Processed
-                            </span>
-                          <?php endif; ?>
+                          </div>
                         </td>
                       </tr>
                     <?php endwhile; ?>
                   <?php else: ?>
                     <tr>
-                      <td colspan="10" class="text-center py-4">
+                      <td colspan="7" class="text-center py-4">
                         <div class="text-muted">
                           <i class="bi bi-check-circle display-4 d-block mb-2 text-success"></i>
                           <h6>No Unserviceable Assets</h6>
@@ -1393,6 +1400,170 @@ $stmt->close();
       
       // Show modal
       const modal = new bootstrap.Modal(imageModal);
+      modal.show();
+    }
+
+    // Function to view asset details with multiple images
+    window.viewAssetDetails = function(assetId) {
+      if (!assetId) return;
+      
+      // Fetch asset details including additional images
+      fetch('get_asset_details.php?id=' + encodeURIComponent(assetId))
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showAssetDetailsModal(data.asset);
+          } else {
+            alert('Error loading asset details: ' + (data.message || 'Unknown error'));
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error loading asset details');
+        });
+    }
+
+    // Function to show asset details modal
+    function showAssetDetailsModal(asset) {
+      // Create modal if it doesn't exist
+      let detailsModal = document.getElementById('assetDetailsModal');
+      if (!detailsModal) {
+        const modalHTML = `
+          <div class="modal fade" id="assetDetailsModal" tabindex="-1" aria-labelledby="assetDetailsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="assetDetailsModalLabel">Asset Details</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="assetDetailsContent">
+                  <!-- Content will be populated by JavaScript -->
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        detailsModal = document.getElementById('assetDetailsModal');
+      }
+
+      // Parse additional images
+      let additionalImages = [];
+      try {
+        if (asset.additional_images) {
+          additionalImages = JSON.parse(asset.additional_images);
+        }
+      } catch (e) {
+        console.warn('Error parsing additional images:', e);
+      }
+
+      // Build images gallery HTML
+      let imagesHTML = '';
+      if (asset.image || additionalImages.length > 0) {
+        imagesHTML = '<div class="row g-2 mb-4">';
+        
+        // Main image
+        if (asset.image) {
+          imagesHTML += `
+            <div class="col-6 col-md-3">
+              <div class="card">
+                <img src="../img/assets/${asset.image}" 
+                     class="card-img-top" 
+                     style="height: 150px; object-fit: cover; cursor: pointer;"
+                     onclick="showImageModal('../img/assets/${asset.image}', 'Main Image')"
+                     alt="Main Asset Image">
+                <div class="card-body p-2">
+                  <small class="text-muted">Main Image</small>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        
+        // Additional images
+        additionalImages.forEach((imageName, index) => {
+          imagesHTML += `
+            <div class="col-6 col-md-3">
+              <div class="card">
+                <img src="../img/assets/${imageName}" 
+                     class="card-img-top" 
+                     style="height: 150px; object-fit: cover; cursor: pointer;"
+                     onclick="showImageModal('../img/assets/${imageName}', 'Additional Image ${index + 1}')"
+                     alt="Additional Asset Image ${index + 1}">
+                <div class="card-body p-2">
+                  <small class="text-muted">Image ${index + 1}</small>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        imagesHTML += '</div>';
+      } else {
+        imagesHTML = `
+          <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle"></i> No images available for this asset.
+          </div>
+        `;
+      }
+
+      // Build the complete modal content
+      const modalContent = `
+        <div class="row">
+          <div class="col-12">
+            <h6 class="text-primary mb-3">
+              <i class="bi bi-box-seam"></i> ${asset.description || 'N/A'}
+            </h6>
+          </div>
+        </div>
+
+        <!-- Images Section -->
+        <div class="mb-4">
+          <h6 class="border-bottom pb-2 mb-3">
+            <i class="bi bi-images"></i> Asset Images
+          </h6>
+          ${imagesHTML}
+        </div>
+
+        <!-- Asset Information -->
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="border-bottom pb-2 mb-3">
+              <i class="bi bi-info-circle"></i> Basic Information
+            </h6>
+            <table class="table table-sm">
+              <tr><td class="fw-medium">Property No.:</td><td>${asset.property_no || asset.inventory_tag || 'Not Set'}</td></tr>
+              <tr><td class="fw-medium">Description:</td><td>${asset.description || 'N/A'}</td></tr>
+              <tr><td class="fw-medium">Brand:</td><td>${asset.brand || 'N/A'}</td></tr>
+              <tr><td class="fw-medium">Model:</td><td>${asset.model || 'N/A'}</td></tr>
+              <tr><td class="fw-medium">Serial No.:</td><td>${asset.serial_no || 'N/A'}</td></tr>
+              <tr><td class="fw-medium">Code:</td><td>${asset.code || 'N/A'}</td></tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <h6 class="border-bottom pb-2 mb-3">
+              <i class="bi bi-gear"></i> Status & Details
+            </h6>
+            <table class="table table-sm">
+              <tr><td class="fw-medium">Status:</td><td><span class="badge bg-${asset.status === 'available' ? 'success' : asset.status === 'borrowed' ? 'warning' : 'danger'}">${asset.status || 'N/A'}</span></td></tr>
+              <tr><td class="fw-medium">Quantity:</td><td>${asset.quantity || '0'} ${asset.unit || ''}</td></tr>
+              <tr><td class="fw-medium">Value:</td><td>₱${asset.value ? parseFloat(asset.value).toLocaleString('en-US', {minimumFractionDigits: 2}) : '0.00'}</td></tr>
+              <tr><td class="fw-medium">Red Tagged:</td><td><span class="badge bg-${asset.red_tagged == 1 ? 'danger' : 'success'}">${asset.red_tagged == 1 ? 'Yes' : 'No'}</span></td></tr>
+              <tr><td class="fw-medium">Acquisition Date:</td><td>${asset.acquisition_date || 'N/A'}</td></tr>
+              <tr><td class="fw-medium">Last Updated:</td><td>${asset.last_updated ? new Date(asset.last_updated).toLocaleDateString() : 'N/A'}</td></tr>
+            </table>
+          </div>
+        </div>
+      `;
+
+      // Update modal content and show
+      document.getElementById('assetDetailsContent').innerHTML = modalContent;
+      document.getElementById('assetDetailsModalLabel').textContent = `Asset Details - ${asset.description || 'Unknown Asset'}`;
+      
+      const modal = new bootstrap.Modal(detailsModal);
       modal.show();
     }
   </script>
