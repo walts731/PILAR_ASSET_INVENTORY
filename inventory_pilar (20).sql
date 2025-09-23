@@ -3,17 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
-<<<<<<< HEAD
--- Generation Time: Sep 22, 2025 at 03:25 PM
--- Server version: 10.4.28-MariaDB
--- PHP Version: 8.2.4
-=======
--- Generation Time: Sep 22, 2025 at 08:45 AM
+-- Generation Time: Sep 23, 2025 at 06:38 PM
 -- Server version: 10.6.15-MariaDB
 -- PHP Version: 8.2.12
-
-SET FOREIGN_KEY_CHECKS=0;
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -132,51 +124,42 @@ CREATE TABLE `assets` (
   `ics_id` int(11) DEFAULT NULL,
   `par_id` int(11) DEFAULT NULL,
   `asset_new_id` int(11) DEFAULT NULL,
-  `inventory_tag` varchar(255) DEFAULT NULL
+  `inventory_tag` varchar(255) DEFAULT NULL,
+  `additional_images` text DEFAULT NULL COMMENT 'JSON array storing paths to up to 4 additional images for the asset'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `assets`
 --
 
-INSERT INTO `assets` (`id`, `asset_name`, `category`, `description`, `quantity`, `added_stock`, `unit`, `status`, `acquisition_date`, `office_id`, `employee_id`, `red_tagged`, `last_updated`, `value`, `qr_code`, `type`, `image`, `serial_no`, `code`, `property_no`, `model`, `brand`, `ics_id`, `par_id`, `asset_new_id`, `inventory_tag`) VALUES
-(1, 'Office Table – Wooden', 2, 'Office Table – Wooden', 1, 0, 'pcs', 'available', '2025-09-19', 4, 1, 0, '2025-09-19 14:23:56', 3500.00, '1.png', 'asset', '', '', '', 'MR-2025-00001', '', '', 17, NULL, 1, 'No. PS-5S-03-F02-01'),
-(3, 'Mouse', 2, 'Mouse', 1, 0, 'pcs', 'available', '2025-09-19', 4, 1, 0, '2025-09-19 14:56:07', 350.00, '3.png', 'asset', 'asset_3_1758293767.jpg', '', '', 'MR-2025-00003', '', '', 18, NULL, 2, 'No. PS-5S-03-F02-03'),
-(5, 'Printer Epson', 1, 'Printer Epson', 1, 0, 'pcs', 'available', '2025-09-19', 4, 1, 0, '2025-09-19 15:05:22', 4593.00, '5.png', 'asset', '', '', '', 'MR-2025-00005', '', '', 19, NULL, 3, 'No. PS-5S-03-F02-05'),
-(6, 'Printer Epson', 1, 'Printer Epson', 1, 0, 'pcs', 'available', '2025-09-19', 4, 1, 0, '2025-09-19 15:24:55', 4593.00, '6.png', 'asset', '', '', '', 'MR-2025-00006', '', '', 19, NULL, 3, 'No. PS-5S-03-F02-06'),
-(15, 'Blue Chair', 2, 'Uratex', 3, 0, 'pcs', 'available', '2025-04-04', 4, NULL, 0, '2025-06-13 08:39:23', 30000.00, 'QR.png', 'asset', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(16, 'eagle', 1, 'eagle', 1, 0, 'box', 'available', '2025-09-19', 49, NULL, 0, '2025-09-19 14:08:11', 345.00, '21.png', 'asset', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-<<<<<<< HEAD
-(17, 'Van', 4, 'Van', 6, 0, 'unit', 'available', '2025-09-18', 49, NULL, 0, '2025-09-22 13:11:02', 49999.99, '54.png', 'asset', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(19, 'Cellphone', 1, 'Cellphone', 1, 0, 'pcs', 'available', '2025-09-21', 4, 1, 0, '2025-09-21 08:12:19', 5678.00, '19.png', 'asset', '', '', '', 'MR-2025-00019', '', '', 25, NULL, 8, 'No. PS-5S-03-F02-19'),
-(20, 'Cellphone', 1, 'Cellphone', 1, 0, 'pcs', 'available', '2025-09-21', 4, 2, 0, '2025-09-21 13:16:38', 5678.00, '20.png', 'asset', '', '', '', 'MR-2025-00020', '', '', 25, NULL, 8, 'No. PS-5S-03-F02-20'),
-(21, 'Ballpen', NULL, 'Ballpen', 2, 2, 'box', 'available', '2025-09-21', 3, NULL, 0, '2025-09-21 09:03:46', 345.00, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, ''),
-(22, 'Ballpen', NULL, 'Ballpen', 2, 2, 'box', 'available', '2025-09-21', 3, NULL, 0, '2025-09-21 09:27:23', 234.01, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, ''),
-(23, 'Dell Unit', 1, 'Dell Unit', 1, 0, 'unit', 'available', '2025-09-21', 4, 1, 0, '2025-09-21 13:15:16', 99000.00, '23.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 9, NULL),
-(24, 'Dell Unit', NULL, 'Dell Unit', 1, 0, 'unit', 'available', '2025-09-21', 4, NULL, 0, '2025-09-21 13:14:32', 99000.00, '24.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 9, NULL),
-(27, 'Jetski', 1, 'Jetski', 1, 0, 'unit', 'available', '2025-09-21', 4, 2, 0, '2025-09-21 13:25:39', 96780.00, '27.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 12, NULL),
-(28, 'Jetski', NULL, 'Jetski', 1, 0, 'unit', 'available', '2025-09-21', 4, NULL, 0, '2025-09-21 13:25:03', 96780.00, '28.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 12, NULL),
-(29, 'HIlux', NULL, 'HIlux', 1, 0, 'roll', 'available', '2025-09-21', 4, NULL, 0, '2025-09-21 13:28:12', 1000000.00, '29.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 13, NULL),
-(30, 'Car', NULL, 'Car', 1, 0, 'unit', 'available', '2025-09-21', 4, NULL, 0, '2025-09-21 13:33:35', 4500000.00, '30.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 14, NULL);
-=======
-(17, 'Van', 1, 'Van', 6, 0, 'unit', 'available', '2025-09-18', 49, NULL, 0, '2025-09-19 03:04:12', 49999.99, '54.png', 'asset', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(19, 'Cellphone', 1, 'Cellphone', 1, 0, 'pcs', 'unserviceable', '2025-09-21', 4, 1, 1, '2025-09-22 00:40:33', 5678.00, '19.png', 'asset', '', '', '', 'MR-2025-00019', '', '', 25, NULL, 8, 'No. PS-5S-03-F02-19'),
-(20, 'Cellphone', 1, 'Cellphone', 1, 0, 'pcs', 'unserviceable', '2025-09-21', 4, 2, 1, '2025-09-22 04:55:47', 5678.00, '20.png', 'asset', '', '', '', 'MR-2025-00020', '', '', 25, NULL, 8, 'No. PS-5S-03-F02-20'),
-(21, 'Ballpen', NULL, 'Ballpen', 2, 2, 'box', 'available', '2025-09-21', 3, NULL, 0, '2025-09-21 09:03:46', 345.00, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, ''),
-(22, 'Ballpen', NULL, 'Ballpen', 2, 2, 'box', 'available', '2025-09-21', 3, NULL, 0, '2025-09-21 09:27:23', 234.01, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, ''),
-(23, 'Dell Unit', 1, 'Dell Unit', 1, 0, 'unit', 'unserviceable', '2025-09-21', 4, 1, 1, '2025-09-22 00:54:21', 99000.00, '23.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 9, NULL),
-(24, 'Dell Unit', NULL, 'Dell Unit', 1, 0, 'unit', 'available', '2025-09-21', 4, NULL, 0, '2025-09-21 13:14:32', 99000.00, '24.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 9, NULL),
-(27, 'Jetski', 1, 'Jetski', 1, 0, 'unit', 'unserviceable', '2025-09-21', 4, 2, 1, '2025-09-22 00:51:24', 96780.00, '27.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 12, NULL),
-(28, 'Jetski', NULL, 'Jetski', 1, 0, 'unit', 'available', '2025-09-21', 4, NULL, 0, '2025-09-21 13:25:03', 96780.00, '28.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 12, NULL),
-(29, 'HIlux', NULL, 'HIlux', 1, 0, 'roll', 'available', '2025-09-21', 4, NULL, 0, '2025-09-21 13:28:12', 1000000.00, '29.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 13, NULL),
-(30, 'Car', NULL, 'Car', 1, 0, 'unit', 'unserviceable', '2025-09-21', 4, NULL, 1, '2025-09-22 00:57:11', 4500000.00, '30.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 14, NULL),
-(31, 'Mio Soul i', 1, 'Mio Soul i', 1, 0, 'unit', 'available', '2025-09-21', 4, 2, 0, '2025-09-21 13:41:27', 75000.00, '31.png', 'asset', '', '', '', NULL, '', '', NULL, 44, 15, NULL),
-(32, 'Honda', 1, 'Honda Click 125', 1, 0, 'unit', 'unserviceable', '0000-00-00', 7, 2, 1, '2025-09-22 06:28:52', 75000.00, '32.png', 'asset', '', '', '', '', '', '', NULL, 45, 16, 'No. PS-5S-03-F02-32'),
-(33, 'Hilux Van', 1, 'Hilux Van', 1, 0, 'unit', 'available', '2025-09-21', 4, 3, 0, '2025-09-21 21:57:07', 7600000.00, '33.png', 'asset', '', '', '', 'MR-2025-00033', '', '', NULL, 46, 17, 'No. PS-5S-03-F02-33'),
-(34, 'Hilux van black', 2, 'Hilux van black', 1, 0, 'unit', 'unserviceable', '2025-09-22', 4, 8, 1, '2025-09-22 00:30:09', 2300000.00, '34.png', 'asset', '', '', 'EQP-001', 'MR-2025-00034', '', '', NULL, 47, 18, 'No. PS-5S-03-F02-34'),
-(35, 'Lenovo AMD Ryzen 7', NULL, 'Lenovo AMD Ryzen 7', 1, 0, 'unit', 'unserviceable', '2025-09-22', 4, NULL, 1, '2025-09-22 00:52:03', 75000.00, '35.png', 'asset', '', '', '', NULL, '', '', NULL, 49, 19, NULL),
-(36, 'Lenovo AMD Ryzen 7', NULL, 'Lenovo AMD Ryzen 7', 1, 0, 'unit', 'available', '2025-09-22', 4, NULL, 0, '2025-09-21 22:07:07', 75000.00, '36.png', 'asset', '', '', '', NULL, '', '', NULL, 49, 19, NULL);
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
+INSERT INTO `assets` (`id`, `asset_name`, `category`, `description`, `quantity`, `added_stock`, `unit`, `status`, `acquisition_date`, `office_id`, `employee_id`, `red_tagged`, `last_updated`, `value`, `qr_code`, `type`, `image`, `serial_no`, `code`, `property_no`, `model`, `brand`, `ics_id`, `par_id`, `asset_new_id`, `inventory_tag`, `additional_images`) VALUES
+(1, 'Office Table – Wooden', 2, 'Office Table – Wooden', 1, 0, 'pcs', 'unserviceable', '2025-09-19', 4, 1, 1, '2025-09-22 10:04:13', 3500.00, '1.png', 'asset', '', '', '', 'MR-2025-00001', '', '', 17, NULL, 1, 'No. PS-5S-03-F02-01', '[]'),
+(3, 'Mouse', 2, 'Mouse', 1, 0, 'pcs', 'available', '2025-09-19', 4, 1, 0, '2025-09-22 10:04:13', 350.00, '3.png', 'asset', 'asset_3_1758293767.jpg', '', '', 'MR-2025-00003', '', '', 18, NULL, 2, 'No. PS-5S-03-F02-03', '[]'),
+(5, 'Printer Epson', 1, 'Printer Epson', 1, 0, 'pcs', 'unserviceable', '2025-09-19', 4, 1, 1, '2025-09-22 11:32:35', 4593.00, '5.png', 'asset', '', '', '', 'MR-2025-00005', '', '', 19, NULL, 3, 'No. PS-5S-03-F02-05', '[\"asset_5_1758540755_0.jpg\"]'),
+(6, 'Printer Epson', 1, 'Printer Epson', 1, 0, 'pcs', 'available', '2025-09-19', 4, 1, 0, '2025-09-22 10:04:13', 4593.00, '6.png', 'asset', '', '', '', 'MR-2025-00006', '', '', 19, NULL, 3, 'No. PS-5S-03-F02-06', '[]'),
+(15, 'Blue Chair', 2, 'Uratex', 3, 0, 'pcs', 'available', '2025-04-04', 4, NULL, 0, '2025-09-22 10:04:13', 30000.00, 'QR.png', 'asset', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '[]'),
+(16, 'eagle', 1, 'eagle', 1, 0, 'box', 'available', '2025-09-19', 49, NULL, 0, '2025-09-22 10:04:13', 345.00, '21.png', 'asset', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '[]'),
+(17, 'Van', 1, 'Van', 6, 0, 'unit', 'available', '2025-09-18', 49, NULL, 0, '2025-09-22 10:04:13', 49999.99, '54.png', 'asset', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '[]'),
+(19, 'Cellphone', 1, 'Cellphone', 1, 0, 'pcs', 'unserviceable', '2025-09-21', 4, 1, 1, '2025-09-22 10:04:13', 5678.00, '19.png', 'asset', '', '', '', 'MR-2025-00019', '', '', 25, NULL, 8, 'No. PS-5S-03-F02-19', '[]'),
+(20, 'Cellphone', 1, 'Cellphone', 1, 0, 'pcs', 'unserviceable', '2025-09-21', 4, 2, 1, '2025-09-22 10:04:13', 5678.00, '20.png', 'asset', '', '', '', 'MR-2025-00020', '', '', 25, NULL, 8, 'No. PS-5S-03-F02-20', '[]'),
+(21, 'Ballpen', NULL, 'Ballpen', 2, 2, 'box', 'available', '2025-09-21', 3, NULL, 0, '2025-09-22 10:04:13', 345.00, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, '', '[]'),
+(22, 'Ballpen', NULL, 'Ballpen', 2, 2, 'box', 'available', '2025-09-21', 3, NULL, 0, '2025-09-22 10:04:13', 234.01, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, '', '[]'),
+(23, 'Dell Unit', 1, 'Dell Unit', 1, 0, 'unit', 'unserviceable', '2025-09-21', 4, 1, 1, '2025-09-22 10:04:13', 99000.00, '23.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 9, NULL, '[]'),
+(24, 'Dell Unit', NULL, 'Dell Unit', 1, 0, 'unit', 'available', '2025-09-21', 4, NULL, 0, '2025-09-22 10:04:13', 99000.00, '24.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 9, NULL, '[]'),
+(27, 'Jetski', 1, 'Jetski', 1, 0, 'unit', 'unserviceable', '2025-09-21', 4, 2, 1, '2025-09-22 10:04:13', 96780.00, '27.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 12, NULL, '[]'),
+(28, 'Jetski', NULL, 'Jetski', 1, 0, 'unit', 'available', '2025-09-21', 4, NULL, 0, '2025-09-22 10:04:13', 96780.00, '28.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 12, NULL, '[]'),
+(29, 'HIlux', NULL, 'HIlux', 1, 0, 'roll', 'available', '2025-09-21', 4, NULL, 0, '2025-09-22 10:04:13', 1000000.00, '29.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 13, NULL, '[]'),
+(30, 'Car', NULL, 'Car', 1, 0, 'unit', 'unserviceable', '2025-09-21', 4, NULL, 1, '2025-09-22 10:04:13', 4500000.00, '30.png', 'asset', '', '', '', NULL, '', '', NULL, NULL, 14, NULL, '[]'),
+(31, 'Mio Soul i', 1, 'Mio Soul i', 1, 0, 'unit', 'available', '2025-09-21', 4, 2, 0, '2025-09-22 10:04:13', 75000.00, '31.png', 'asset', '', '', '', NULL, '', '', NULL, 44, 15, NULL, '[]'),
+(32, 'Honda', 1, 'Honda Click 125', 1, 0, 'unit', 'unserviceable', '0000-00-00', 7, 2, 1, '2025-09-22 10:04:13', 75000.00, '32.png', 'asset', '', '', '', '', '', '', NULL, 45, 16, 'No. PS-5S-03-F02-32', '[]'),
+(33, 'Hilux Van', 1, 'Hilux Van', 1, 0, 'unit', 'unserviceable', '2025-09-21', 4, 3, 1, '2025-09-22 10:13:37', 7600000.00, '33.png', 'asset', '', '', '', 'MR-2025-00033', '', '', NULL, 46, 17, 'No. PS-5S-03-F02-33', '[\"asset_33_1758536017_0.jpg\"]'),
+(34, 'Hilux van black', 2, 'Hilux van black', 1, 0, 'unit', 'unserviceable', '2025-09-22', 4, 8, 1, '2025-09-22 10:04:13', 2300000.00, '34.png', 'asset', '', '', 'EQP-001', 'MR-2025-00034', '', '', NULL, 47, 18, 'No. PS-5S-03-F02-34', '[]'),
+(35, 'Lenovo AMD Ryzen 7', NULL, 'Lenovo AMD Ryzen 7', 1, 0, 'unit', 'unserviceable', '2025-09-22', 4, NULL, 1, '2025-09-22 10:04:13', 75000.00, '35.png', 'asset', '', '', '', NULL, '', '', NULL, 49, 19, NULL, '[]'),
+(36, 'Lenovo AMD Ryzen 7', NULL, 'Lenovo AMD Ryzen 7', 1, 0, 'unit', 'available', '2025-09-22', 4, NULL, 0, '2025-09-22 10:04:13', 75000.00, '36.png', 'asset', '', '', '', NULL, '', '', NULL, 49, 19, NULL, '[]'),
+(40, 'Computer', 1, 'Computer', 1, 0, 'unit', 'unserviceable', '2025-09-22', 4, 2, 1, '2025-09-23 10:17:04', 36500.00, '40.png', 'asset', '', '', '', 'MR-2025-00040', '', '', 27, NULL, 21, 'No. PS-5S-03-F02-40', NULL),
+(41, 'Computer', 1, 'Computer', 1, 0, 'unit', 'unserviceable', '2025-09-22', 4, 2, 0, '2025-09-23 10:17:39', 36500.00, '41.png', 'asset', '', '', '', 'MR-2025-00041', '', '', 27, NULL, 21, 'No. PS-5S-03-F02-41', NULL),
+(42, 'ballpen', NULL, 'ballpen', 100, 100, 'pcs', 'available', '2025-09-23', 3, NULL, 0, '2025-09-23 03:42:36', 7.50, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, '', NULL),
+(43, 'ballpen panda', NULL, 'ballpen panda', 20, 20, 'pcs', 'available', '2025-09-23', 3, NULL, 0, '2025-09-23 06:03:11', 7.00, '', 'consumable', '', '', '', '1', '', '', NULL, NULL, NULL, '', NULL);
 
 --
 -- Triggers `assets`
@@ -261,30 +244,14 @@ INSERT INTO `assets_new` (`id`, `description`, `quantity`, `unit_cost`, `unit`, 
 (11, 'Jetski', 2, 96780.00, 'unit', 4, NULL, 40, '2025-09-21 18:22:37'),
 (12, 'Jetski', 2, 96780.00, 'unit', 4, NULL, NULL, '2025-09-21 18:25:03'),
 (13, 'HIlux', 1, 1000000.00, 'roll', 4, NULL, NULL, '2025-09-21 18:28:12'),
-<<<<<<< HEAD
-(14, 'Car', 1, 4500000.00, 'unit', 4, NULL, NULL, '2025-09-21 18:33:35');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `asset_items`
---
-
-CREATE TABLE `asset_items` (
-  `item_id` int(11) NOT NULL,
-  `asset_id` int(11) NOT NULL,
-  `status` enum('available','borrowed','maintenance','lost') NOT NULL DEFAULT 'available',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-=======
 (14, 'Car', 1, 4500000.00, 'unit', 4, NULL, NULL, '2025-09-21 18:33:35'),
 (15, 'Mio Soul i', 1, 75000.00, 'unit', 4, 44, NULL, '2025-09-21 18:40:55'),
 (16, 'Honda Click 125', 1, 75000.00, 'unit', 4, 45, NULL, '2025-09-21 18:51:18'),
 (17, 'Hilux Van', 1, 7600000.00, 'unit', 4, 46, NULL, '2025-09-22 02:56:51'),
 (18, 'Hilux van black', 1, 2300000.00, 'unit', 4, 47, NULL, '2025-09-22 03:04:09'),
-(19, 'Lenovo AMD Ryzen 7', 2, 75000.00, 'unit', 4, 49, NULL, '2025-09-22 03:07:07');
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
+(19, 'Lenovo AMD Ryzen 7', 2, 75000.00, 'unit', 4, 49, NULL, '2025-09-22 03:07:07'),
+(20, 'Stylus', 0, 450.00, 'unit', 4, NULL, 26, '2025-09-22 17:31:24'),
+(21, 'Computer', 2, 36500.00, 'unit', 4, NULL, 27, '2025-09-22 17:44:10');
 
 -- --------------------------------------------------------
 
@@ -320,6 +287,52 @@ INSERT INTO `asset_requests` (`request_id`, `asset_name`, `user_id`, `status`, `
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `audit_logs`
+--
+
+CREATE TABLE `audit_logs` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `username` varchar(255) DEFAULT NULL,
+  `action` varchar(100) NOT NULL,
+  `module` varchar(50) NOT NULL,
+  `details` text DEFAULT NULL,
+  `affected_table` varchar(50) DEFAULT NULL,
+  `affected_id` int(11) DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `audit_logs`
+--
+
+INSERT INTO `audit_logs` (`id`, `user_id`, `username`, `action`, `module`, `details`, `affected_table`, `affected_id`, `ip_address`, `user_agent`, `created_at`) VALUES
+(1, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Form', 'Created new ICS form: ICS-2025-0023 - INVENTORY (Destination: Supply Office)', 'ics_form', 27, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-22 12:44:10'),
+(2, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Items', 'Added item to ICS ICS-2025-0023: Computer (Qty: 2, Unit Cost: ₱36,500.00, Total: ₱73,000.00)', 'ics_items', 13, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-22 12:44:10'),
+(3, 17, 'Mark Jayson Namia', 'LOGOUT', 'Authentication', 'User logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-22 13:40:03'),
+(4, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-22 13:40:11'),
+(5, 17, 'Mark Jayson Namia', 'ACTIVATE', 'User Management', 'ACTIVATE user: josh (Full Name: Joshua Escano, Status changed to: active)', 'users', 15, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-22 13:40:29'),
+(6, 17, 'Mark Jayson Namia', 'BULK_PRINT', 'Bulk Operations', 'Bulk PRINT: 2 items (MR Records)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-22 13:40:54'),
+(7, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-22 14:32:08'),
+(8, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-23 01:30:41'),
+(9, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-23 02:25:39'),
+(10, 17, 'Mark Jayson Namia', 'BULK_PRINT', 'Bulk Operations', 'Bulk PRINT: 3 items (MR Records)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-23 03:07:50'),
+(11, 17, 'Mark Jayson Namia', 'BULK_PRINT', 'Bulk Operations', 'Bulk PRINT: 2 items (Red Tags)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-23 03:31:34'),
+(12, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0023, Entity: INVENTORY', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-23 03:34:15'),
+(13, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-23 05:31:56'),
+(14, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-23 09:09:47'),
+(15, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-23 10:15:18'),
+(16, 17, 'Mark Jayson Namia', 'CREATE', 'Red Tags', 'Created Red Tag: PS-5S-03-F01-01-05 for asset: Computer (Reason: Unnecessary, Action: For Disposal)', 'red_tags', 5, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-23 10:17:04'),
+(17, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-23 11:01:56'),
+(18, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-23 14:39:55'),
+(19, 17, 'Mark Jayson Namia', 'LOGOUT', 'Authentication', 'User logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-23 16:18:56'),
+(20, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-23 16:19:06');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `borrow_requests`
 --
 
@@ -328,44 +341,16 @@ CREATE TABLE `borrow_requests` (
   `user_id` int(11) NOT NULL,
   `asset_id` int(11) NOT NULL,
   `office_id` int(11) NOT NULL,
-<<<<<<< HEAD
-  `quantity` int(11) NOT NULL,
-  `status` enum('pending','approved','rejected','borrowed','returned','cancelled') NOT NULL DEFAULT 'pending',
-  `requested_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `approved_at` datetime DEFAULT NULL,
-  `rejected_at` datetime DEFAULT NULL,
-  `returned_at` datetime DEFAULT NULL,
-  `purpose` text DEFAULT NULL,
-  `due_date` date DEFAULT NULL,
-=======
   `status` enum('pending','approved','rejected','borrowed','returned') NOT NULL DEFAULT 'pending',
   `requested_at` datetime DEFAULT NULL,
   `approved_at` datetime DEFAULT NULL,
   `return_remarks` text DEFAULT NULL,
   `returned_at` datetime DEFAULT NULL,
   `quantity` int(11) NOT NULL DEFAULT 1,
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-<<<<<<< HEAD
--- --------------------------------------------------------
-
---
--- Table structure for table `borrow_request_items`
---
-
-CREATE TABLE `borrow_request_items` (
-  `id` int(11) NOT NULL,
-  `borrow_request_id` int(11) NOT NULL,
-  `asset_item_id` int(11) NOT NULL,
-  `status` enum('assigned','returned') NOT NULL DEFAULT 'assigned',
-  `returned_at` datetime DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-=======
 --
 -- Dumping data for table `borrow_requests`
 --
@@ -381,7 +366,10 @@ INSERT INTO `borrow_requests` (`id`, `user_id`, `asset_id`, `office_id`, `status
 (9, 17, 3, 2, 'pending', '2025-08-20 08:09:14', NULL, NULL, NULL, 5, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
 (10, 17, 64, 9, 'pending', '2025-08-20 08:17:57', NULL, NULL, NULL, 3, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
 (11, 12, 64, 9, 'pending', '2025-08-20 08:24:23', NULL, NULL, NULL, 3, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
-(12, 17, 64, 9, 'pending', '2025-08-29 15:24:45', NULL, NULL, NULL, 1, '2025-08-30 03:09:31', '2025-08-30 03:09:31');
+(12, 17, 64, 9, 'pending', '2025-08-29 15:24:45', NULL, NULL, NULL, 1, '2025-08-30 03:09:31', '2025-08-30 03:09:31'),
+(13, 17, 3, 4, 'pending', '2025-09-22 10:01:54', NULL, NULL, NULL, 1, '2025-09-22 08:01:54', '2025-09-22 08:01:54'),
+(14, 17, 5, 4, 'pending', '2025-09-22 10:01:54', NULL, NULL, NULL, 1, '2025-09-22 08:01:54', '2025-09-22 08:01:54'),
+(15, 17, 15, 4, 'pending', '2025-09-22 10:01:54', NULL, NULL, NULL, 3, '2025-09-22 08:01:54', '2025-09-22 08:01:54');
 
 --
 -- Triggers `borrow_requests`
@@ -417,7 +405,6 @@ CREATE TRIGGER `tr_borrow_requests_validation` BEFORE INSERT ON `borrow_requests
 END
 $$
 DELIMITER ;
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 
 -- --------------------------------------------------------
 
@@ -448,7 +435,6 @@ INSERT INTO `categories` (`id`, `category_name`, `type`) VALUES
 -- --------------------------------------------------------
 
 --
-<<<<<<< HEAD
 -- Table structure for table `category`
 --
 
@@ -459,24 +445,9 @@ CREATE TABLE `category` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `category`
---
-
-INSERT INTO `category` (`id`, `category`, `created_at`, `updated_at`) VALUES
-(1, 'Electronics', '2025-09-22 13:09:39', '2025-09-22 13:09:39'),
-(2, 'Furniture', '2025-09-22 13:09:39', '2025-09-22 13:09:39'),
-(3, 'Office Equipment', '2025-09-22 13:09:39', '2025-09-22 13:09:39'),
-(4, 'IT Equipment', '2025-09-22 13:09:39', '2025-09-22 13:09:39'),
-(5, 'Tools', '2025-09-22 13:09:39', '2025-09-22 13:09:39'),
-(6, 'Vehicles', '2025-09-22 13:09:39', '2025-09-22 13:09:39'),
-(7, 'Other', '2025-09-22 13:09:39', '2025-09-22 13:09:39');
-
 -- --------------------------------------------------------
 
 --
-=======
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 -- Table structure for table `consumption_log`
 --
 
@@ -673,7 +644,17 @@ INSERT INTO `generated_reports` (`id`, `user_id`, `office_id`, `filename`, `temp
 (80, 17, 4, 'Inventory_Report_20250921_103829.pdf', 0, '2025-09-21 13:38:30'),
 (81, 17, 4, 'Consumption_Report_20250921_104456.pdf', 0, '2025-09-21 13:44:57'),
 (82, 17, 4, 'Consumption_Report_20250921_104505.pdf', 0, '2025-09-21 13:45:05'),
-(83, 17, 4, 'Inventory_Report_20250921_112526.pdf', 0, '2025-09-21 14:25:27');
+(83, 17, 4, 'Inventory_Report_20250921_112526.pdf', 0, '2025-09-21 14:25:27'),
+(84, 17, 4, 'Category_Inventory_Report_<br_/>\r\n<b>Warning</b>:__Undefined_array_key__2025-09-22_10-04-38.pdf', 0, '2025-09-22 13:04:39'),
+(85, 17, 4, 'Category_Inventory_Report_Unknown_Category_2025-09-22_10-06-23.pdf', 0, '2025-09-22 13:06:23'),
+(86, 17, 4, 'Inventory_Report_20250922_100930.pdf', 0, '2025-09-22 13:09:30'),
+(87, 17, 4, 'Inventory_Report_20250922_101005.pdf', 0, '2025-09-22 13:10:06'),
+(88, 17, 4, 'Unserviceable_Inventory_Report_2024-09_20250922_173512.pdf', 0, '2025-09-22 20:35:15'),
+(89, 17, 4, 'Unserviceable_Inventory_Report_2025-09_20250922_173601.pdf', 0, '2025-09-22 20:36:02'),
+(90, 17, 4, 'Unserviceable_Inventory_Report_2025-09_20250922_174512.pdf', 0, '2025-09-22 20:45:13'),
+(91, 17, 4, 'Unserviceable_Inventory_Report_2025-09_20250922_174913.pdf', 0, '2025-09-22 20:49:13'),
+(92, 17, 4, 'Unserviceable_Inventory_Report_2025-09_20250922_174918.pdf', 0, '2025-09-22 20:49:19'),
+(93, 17, 4, 'Employee_MR_Report_20250922_180210.pdf', 0, '2025-09-22 21:02:11');
 
 -- --------------------------------------------------------
 
@@ -724,7 +705,9 @@ INSERT INTO `ics_form` (`id`, `header_image`, `entity_name`, `fund_cluster`, `ic
 (22, 'ics_header_1758325430_e38f060b.png', 'INVENTORY', 'FC-2025-001', 'ICS-2025-0018', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER LGU', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-19 23:43:50', 4),
 (23, 'ics_header_1758325430_e38f060b.png', 'INVENTORY', 'FC-2025-001', 'ICS-2025-0019', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER LGU', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-20 09:30:22', 49),
 (24, 'ics_header_1758325430_e38f060b.png', 'INVENTORY', 'FC-2025-001', 'ICS-2025-0020', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER LGU', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-20 09:30:54', 49),
-(25, 'ics_header_1758325430_e38f060b.png', 'INVENTORY', 'FC-2025-001', 'ICS-2025-0021', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER LGU', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-21 08:11:37', 4);
+(25, 'ics_header_1758325430_e38f060b.png', 'INVENTORY', 'FC-2025-001', 'ICS-2025-0021', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER LGU', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-21 08:11:37', 4),
+(26, 'ics_header_1758325430_e38f060b.png', 'INVENTORY', 'fc-001', 'ICS-2025-0022', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER LGU', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-22 12:31:24', 4),
+(27, 'ics_header_1758325430_e38f060b.png', 'INVENTORY', 'fc-001', 'ICS-2025-0023', 'IVAN CHRISTOPHER R. MILLABAS', 'OFFICER LGU', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-22 12:44:10', 4);
 
 -- --------------------------------------------------------
 
@@ -758,7 +741,10 @@ INSERT INTO `ics_items` (`item_id`, `ics_id`, `asset_id`, `ics_no`, `quantity`, 
 (5, 19, 6, 'ICS-2025-0016', 1, 'pcs', 4593.00, 4593.00, 'Printer Epson', '', '', '2025-09-19 15:24:55'),
 (7, 22, 8, 'ICS-2025-0018', 1, 'pcs', 4573.98, 4573.98, 'Desktop Computer – Intel i5, 8GB RAM, 256GB SSD', '', '', '2025-09-19 23:43:50'),
 (10, 25, 19, 'ICS-2025-0021', 2, 'pcs', 5678.00, 11356.00, 'Cellphone', '', '', '2025-09-21 08:11:37'),
-(11, 25, 20, 'ICS-2025-0021', 1, 'pcs', 5678.00, 5678.00, 'Cellphone', '', '', '2025-09-21 13:16:38');
+(11, 25, 20, 'ICS-2025-0021', 1, 'pcs', 5678.00, 5678.00, 'Cellphone', '', '', '2025-09-21 13:16:38'),
+(12, 26, 37, 'ICS-2025-0022', 2, 'unit', 450.00, 900.00, 'Stylus', '', '', '2025-09-22 12:31:24'),
+(13, 27, 40, 'ICS-2025-0023', 2, 'unit', 36500.00, 73000.00, 'Computer', '', '', '2025-09-22 12:44:10'),
+(14, 27, 41, 'ICS-2025-0023', 1, 'unit', 36500.00, 36500.00, 'Computer', '', '', '2025-09-22 13:23:20');
 
 -- --------------------------------------------------------
 
@@ -788,9 +774,6 @@ INSERT INTO `iirup_form` (`id`, `header_image`, `accountable_officer`, `designat
 (2, NULL, 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer II', 'Municipal Mayor', '2025-08-29 13:48:25'),
 (3, NULL, 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer II', 'Municipal Mayor', '2025-08-29 13:49:18'),
 (4, NULL, 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer II', 'Municipal Mayor', '2025-08-29 13:50:45'),
-<<<<<<< HEAD
-(5, '1756475584_Screenshot 2025-08-29 204458.png', 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer II', 'Municipal Mayor', '2025-08-29 13:53:04');
-=======
 (5, '1756475584_Screenshot 2025-08-29 204458.png', 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer II', 'Municipal Mayor', '2025-08-29 13:53:04'),
 (7, NULL, 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer II', 'Municipal Mayor', '2025-09-22 00:39:27'),
 (8, NULL, 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer II', 'Municipal Mayor', '2025-09-22 00:40:33'),
@@ -804,7 +787,13 @@ INSERT INTO `iirup_form` (`id`, `header_image`, `accountable_officer`, `designat
 (16, 'iirup_header_1758502620_0acbd277_Screenshot_2025-08-29_204458.png', 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-22 01:01:17'),
 (17, 'iirup_header_1758502620_0acbd277_Screenshot_2025-08-29_204458.png', 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-22 04:39:04'),
 (18, 'iirup_header_1758502620_0acbd277_Screenshot_2025-08-29_204458.png', 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-22 04:55:47'),
-(19, 'iirup_header_1758502620_0acbd277_Screenshot_2025-08-29_204458.png', 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-22 06:08:16');
+(19, 'iirup_header_1758502620_0acbd277_Screenshot_2025-08-29_204458.png', 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-22 06:08:16'),
+(20, 'iirup_header_1758502620_0acbd277_Screenshot_2025-08-29_204458.png', 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-22 07:29:25'),
+(21, 'iirup_header_1758502620_0acbd277_Screenshot_2025-08-29_204458.png', 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-22 07:34:16'),
+(22, 'iirup_header_1758502620_0acbd277_Screenshot_2025-08-29_204458.png', 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-22 10:41:47'),
+(23, 'iirup_header_1758502620_0acbd277_Screenshot_2025-08-29_204458.png', 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-22 15:08:52'),
+(24, 'iirup_header_1758502620_0acbd277_Screenshot_2025-08-29_204458.png', 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-23 03:27:29'),
+(25, 'iirup_header_1758502620_0acbd277_Screenshot_2025-08-29_204458.png', 'WALTON LONEZA', 'OFFICE', 'DILG', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-23 10:17:39');
 
 -- --------------------------------------------------------
 
@@ -859,8 +848,13 @@ INSERT INTO `iirup_items` (`item_id`, `iirup_id`, `asset_id`, `date_acquired`, `
 (11, 16, 19, '2025-09-22', 'Cellphone', '', 1, 5678.00, 5678.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-22', '2025-09-22 01:01:17'),
 (12, 17, 32, '2025-09-22', 'Honda Click 125', '', 1, 75000.00, 75000.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-22', '2025-09-22 04:39:04'),
 (13, 18, 20, '2025-09-22', 'Cellphone', '', 1, 5678.00, 5678.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-22', '2025-09-22 04:55:47'),
-(14, 19, 32, '2025-09-22', 'Honda Click 125', 'No. PS-5S-03-F02-32', 1, 75000.00, 75000.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-22', '2025-09-22 06:08:16');
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
+(14, 19, 32, '2025-09-22', 'Honda Click 125', 'No. PS-5S-03-F02-32', 1, 75000.00, 75000.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-22', '2025-09-22 06:08:16'),
+(15, 20, 1, '2025-09-22', 'Office Table – Wooden', '', 1, 3500.00, 3500.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-22', '2025-09-22 07:29:25'),
+(16, 21, 33, '2025-09-22', 'Hilux Van', '', 1, 7600000.00, 7600000.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-22', '2025-09-22 07:34:16'),
+(17, 22, 5, '2025-09-22', 'Printer Epson', '', 1, 4593.00, 4593.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-22', '2025-09-22 10:41:47'),
+(18, 23, 40, '2025-09-22', 'Computer', '', 1, 36500.00, 36500.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-22', '2025-09-22 15:08:52'),
+(19, 24, 40, '2025-09-23', 'Computer', '', 1, 36500.00, 36500.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-23', '2025-09-23 03:27:29'),
+(20, 25, 41, '2025-09-23', 'Computer', '', 1, 36500.00, 36500.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-23', '2025-09-23 10:17:39');
 
 -- --------------------------------------------------------
 
@@ -943,17 +937,15 @@ CREATE TABLE `mr_details` (
 INSERT INTO `mr_details` (`mr_id`, `item_id`, `office_location`, `description`, `model_no`, `serial_no`, `serviceable`, `unserviceable`, `unit_quantity`, `unit`, `acquisition_date`, `acquisition_cost`, `person_accountable`, `acquired_date`, `counted_date`, `created_at`, `asset_id`, `inventory_tag`) VALUES
 (1, 1, 'Supply Office', 'Office Table – Wooden', '', '', 0, 0, 1.00, 'pcs', '2025-09-19', 3500.00, 'Juan A. Dela Cruz', '0000-00-00', '0000-00-00', '2025-09-19 14:23:56', 1, 'No. PS-5S-03-F02-01'),
 (3, 3, 'Supply Office', 'Mouse', '', '', 0, 0, 1.00, 'pcs', '2025-09-19', 350.00, 'Juan A. Dela Cruz', '0000-00-00', '0000-00-00', '2025-09-19 14:36:44', 3, 'No. PS-5S-03-F02-03'),
-(4, 4, 'Supply Office', 'Printer Epson', '', '', 0, 0, 1.00, 'pcs', '2025-09-19', 4593.00, 'Juan A. Dela Cruz', '0000-00-00', '0000-00-00', '2025-09-19 15:05:22', 5, 'No. PS-5S-03-F02-05'),
+(4, 4, 'Supply Office', 'Printer Epson', '', '', 0, 1, 1.00, 'pcs', '2025-09-19', 4593.00, 'Juan A. Dela Cruz', '0000-00-00', '0000-00-00', '2025-09-19 15:05:22', 5, 'No. PS-5S-03-F02-05'),
 (5, 5, 'Supply Office', 'Printer Epson', '', '', 0, 0, 1.00, 'pcs', '2025-09-19', 4593.00, 'Juan A. Dela Cruz', '0000-00-00', '0000-00-00', '2025-09-19 15:24:55', 6, 'No. PS-5S-03-F02-06'),
 (8, 10, 'Supply Office', 'Cellphone', '', '', 0, 0, 1.00, 'pcs', '2025-09-21', 5678.00, 'Juan A. Dela Cruz', '0000-00-00', '0000-00-00', '2025-09-21 08:12:19', 19, 'No. PS-5S-03-F02-19'),
-<<<<<<< HEAD
-(9, 11, 'Supply Office', 'Cellphone', '', '', 0, 0, 1.00, 'pcs', '2025-09-21', 5678.00, 'Maria Santos', '0000-00-00', '0000-00-00', '2025-09-21 13:16:38', 20, 'No. PS-5S-03-F02-20');
-=======
 (9, 11, 'Supply Office', 'Cellphone', '', '', 0, 0, 1.00, 'pcs', '2025-09-21', 5678.00, 'Maria Santos', '0000-00-00', '0000-00-00', '2025-09-21 13:16:38', 20, 'No. PS-5S-03-F02-20'),
 (11, NULL, 'Supply Office', 'Honda', '', '', 0, 0, 1.00, 'unit', '2025-09-21', 75000.00, 'Maria Santos', '0000-00-00', '0000-00-00', '2025-09-21 13:53:13', 32, 'No. PS-5S-03-F02-32'),
 (12, NULL, 'Supply Office', 'Hilux Van', '', '', 0, 0, 1.00, 'unit', '2025-09-21', 7600000.00, 'Pedro Reyes', '0000-00-00', '0000-00-00', '2025-09-21 21:57:07', 33, 'No. PS-5S-03-F02-33'),
-(13, NULL, 'Supply Office', 'Hilux van black', '', '', 0, 0, 1.00, 'unit', '2025-09-22', 2300000.00, 'Ryan Bang', '0000-00-00', '0000-00-00', '2025-09-21 22:04:25', 34, 'No. PS-5S-03-F02-34');
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
+(13, NULL, 'Supply Office', 'Hilux van black', '', '', 0, 0, 1.00, 'unit', '2025-09-22', 2300000.00, 'Ryan Bang', '0000-00-00', '0000-00-00', '2025-09-21 22:04:25', 34, 'No. PS-5S-03-F02-34'),
+(14, 13, 'Supply Office', 'Computer', '', '', 0, 1, 1.00, 'unit', '2025-09-22', 36500.00, 'Maria Santos', '0000-00-00', '0000-00-00', '2025-09-22 13:04:03', 40, 'No. PS-5S-03-F02-40'),
+(15, 14, 'Supply Office', 'Computer', '', '', 0, 1, 1.00, 'unit', '2025-09-22', 36500.00, 'Maria Santos', '0000-00-00', '0000-00-00', '2025-09-22 13:23:20', 41, 'No. PS-5S-03-F02-41');
 
 -- --------------------------------------------------------
 
@@ -1091,9 +1083,6 @@ INSERT INTO `par_form` (`id`, `form_id`, `office_id`, `position_office_left`, `p
 (40, 0, 4, 'OFFICER', 'PROPERTY CUSTODIAN', '1757991153_Screenshot 2025-09-16 105218.png', 'LGU', 'FC-2025-001', 'PAR-0022', '2025-09-21 13:22:37', '2025-09-21', '2025-09-21'),
 (41, 0, 4, 'OFFICER', 'PROPERTY CUSTODIAN', '1757991153_Screenshot 2025-09-16 105218.png', 'LGU', 'FC-2025-001', 'PAR-0022', '2025-09-21 13:25:03', '2025-09-21', '2025-09-21'),
 (42, 0, 4, 'OFFICER', 'PROPERTY CUSTODIAN', '1757991153_Screenshot 2025-09-16 105218.png', 'LGU', 'FC-2025-001', 'PAR-0023', '2025-09-21 13:28:12', '2025-09-21', '2025-09-21'),
-<<<<<<< HEAD
-(43, 0, 4, 'OFFICER', 'PROPERTY CUSTODIAN', '1757991153_Screenshot 2025-09-16 105218.png', 'LGU', 'FC-2025-001', 'PAR-0024', '2025-09-21 13:33:35', '2025-09-21', '2025-09-21');
-=======
 (43, 0, 4, 'OFFICER', 'PROPERTY CUSTODIAN', '1757991153_Screenshot 2025-09-16 105218.png', 'LGU', 'FC-2025-001', 'PAR-0024', '2025-09-21 13:33:35', '2025-09-21', '2025-09-21'),
 (44, 0, 4, 'OFFICER', 'PROPERTY CUSTODIAN', '1757991153_Screenshot 2025-09-16 105218.png', 'LGU', 'FC-2025-001', 'PAR-0025', '2025-09-21 13:40:55', '2025-09-21', '2025-09-21'),
 (45, 0, 4, 'OFFICER', 'PROPERTY CUSTODIAN', '1757991153_Screenshot 2025-09-16 105218.png', 'LGU', 'FC-2025-001', 'PAR-0026', '2025-09-21 13:51:18', '2025-09-21', '2025-09-21'),
@@ -1101,7 +1090,6 @@ INSERT INTO `par_form` (`id`, `form_id`, `office_id`, `position_office_left`, `p
 (47, 0, 4, 'OFFICER', 'PROPERTY CUSTODIAN', '1757991153_Screenshot 2025-09-16 105218.png', 'LGU', 'FC-2025-001', 'PAR-0028', '2025-09-21 22:04:09', '2025-09-22', '2025-09-22'),
 (48, 0, 4, 'OFFICER', 'PROPERTY CUSTODIAN', '1757991153_Screenshot 2025-09-16 105218.png', 'LGU', 'FC-2025-001', 'PAR-0029', '2025-09-21 22:06:40', '2025-09-22', '2025-09-22'),
 (49, 0, 4, 'OFFICER', 'PROPERTY CUSTODIAN', '1757991153_Screenshot 2025-09-16 105218.png', 'LGU', 'FC-2025-001', 'PAR-0030', '2025-09-21 22:07:07', '2025-09-22', '2025-09-22');
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 
 -- --------------------------------------------------------
 
@@ -1144,9 +1132,6 @@ INSERT INTO `par_items` (`item_id`, `form_id`, `asset_id`, `quantity`, `unit`, `
 (15, 38, 23, 2, 'unit', 'Dell Unit', '', '0000-00-00', 99000.00, 198000.00),
 (16, 41, 27, 2, 'unit', 'Jetski', '', '0000-00-00', 96780.00, 193560.00),
 (17, 42, 29, 1, 'roll', 'HIlux', '', '0000-00-00', 1000000.00, 1000000.00),
-<<<<<<< HEAD
-(18, 43, 30, 1, 'unit', 'Car', '', '0000-00-00', 4500000.00, 4500000.00);
-=======
 (18, 43, 30, 1, 'unit', 'Car', '', '0000-00-00', 4500000.00, 4500000.00),
 (19, 44, 31, 1, 'unit', 'Mio Soul i', '', '0000-00-00', 75000.00, 75000.00),
 (20, 45, 32, 1, 'unit', 'Honda Click 125', '', '0000-00-00', 75000.00, 75000.00),
@@ -1182,8 +1167,10 @@ CREATE TABLE `red_tags` (
 
 INSERT INTO `red_tags` (`id`, `red_tag_number`, `asset_id`, `iirup_id`, `date_received`, `tagged_by`, `item_location`, `description`, `removal_reason`, `action`, `status`, `created_at`, `updated_at`) VALUES
 (1, 'PS-5S-03-F01-01-01', 19, 16, '2025-09-22', 17, 'Supply Offices', 'Cellphone (MR-2025-00019)', 'Broken', 'For Disposal', 'Pending', '2025-09-22 02:48:14', '2025-09-22 03:23:20'),
-(2, 'PS-5S-03-F01-01-02', 20, 18, '2025-09-22', 17, 'Supply Office', 'Cellphone (MR-2025-00020)', 'Marupok', 'For Donation', 'Pending', '2025-09-22 05:10:09', '2025-09-22 05:10:09');
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
+(2, 'PS-5S-03-F01-01-02', 20, 18, '2025-09-22', 17, 'Supply Office', 'Cellphone (MR-2025-00020)', 'Marupok', 'For Donation', 'Pending', '2025-09-22 05:10:09', '2025-09-22 05:10:09'),
+(3, 'PS-5S-03-F01-01-03', 33, 21, '2025-09-22', 17, 'Garage', 'Hilux Van (MR-2025-00033)', 'Not in use', 'For Relocation', 'Pending', '2025-09-22 07:35:32', '2025-09-22 07:35:32'),
+(4, 'PS-5S-03-F01-01-04', 5, 22, '2025-09-22', 17, 'Supply Office', 'Printer Epson (MR-2025-00005)', 'Not in use', 'For Disposal', 'Pending', '2025-09-22 11:32:35', '2025-09-22 11:32:35'),
+(5, 'PS-5S-03-F01-01-05', 40, 23, '2025-09-23', 17, 'Garage', 'Computer (MR-2025-00040)', 'Unnecessary', 'For Disposal', 'Pending', '2025-09-23 10:17:04', '2025-09-23 10:17:04');
 
 -- --------------------------------------------------------
 
@@ -1373,7 +1360,9 @@ INSERT INTO `ris_form` (`id`, `form_id`, `office_id`, `header_image`, `division`
 (72, 6, 3, '1757740937_Screenshot_2025-09-13_132057.png', 'V', '', '1', 'RIS-2025-0067', 'SAI-2025-0067', '2025-09-20', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-20', 'ROY L. RICACHO', 'CLERK', '2025-09-20', '0000-00-00', 'For printing', '2025-09-20 01:24:02', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-20', 'IVAN CHRISTOPHER R. MILLABAS', 'SUPPLY OFFICER', '2025-09-20'),
 (73, 6, 3, '1757740937_Screenshot_2025-09-13_132057.png', 'V', '', '1', 'RIS-2025-0068', 'SAI-2025-0068', '2025-09-20', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-20', 'ROY L. RICACHO', 'CLERK', '2025-09-20', '0000-00-00', 'For printing', '2025-09-20 14:40:24', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-20', 'IVAN CHRISTOPHER R. MILLABAS', 'SUPPLY OFFICER', '2025-09-20'),
 (74, 6, 3, '1757740937_Screenshot_2025-09-13_132057.png', 'V', '', '1', 'RIS-2025-0069', 'SAI-2025-0069', '2025-09-21', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-21', 'ROY L. RICACHO', 'CLERK', '2025-09-21', '0000-00-00', 'For printing', '2025-09-21 09:03:46', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-21', 'IVAN CHRISTOPHER R. MILLABAS', 'SUPPLY OFFICER', '2025-09-21'),
-(75, 6, 3, '1757740937_Screenshot_2025-09-13_132057.png', 'V', '', '1', 'RIS-2025-0070', 'SAI-2025-0070', '2025-09-21', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-21', 'ROY L. RICACHO', 'CLERK', '2025-09-21', '0000-00-00', 'For printing', '2025-09-21 09:27:23', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-21', 'IVAN CHRISTOPHER R. MILLABAS', 'SUPPLY OFFICER', '2025-09-21');
+(75, 6, 3, '1757740937_Screenshot_2025-09-13_132057.png', 'V', '', '1', 'RIS-2025-0070', 'SAI-2025-0070', '2025-09-21', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-21', 'ROY L. RICACHO', 'CLERK', '2025-09-21', '0000-00-00', 'For printing', '2025-09-21 09:27:23', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-21', 'IVAN CHRISTOPHER R. MILLABAS', 'SUPPLY OFFICER', '2025-09-21'),
+(76, 6, 3, '1757740937_Screenshot_2025-09-13_132057.png', 'V', '', '1', 'RIS-2025-0071', 'SAI-2025-0071', '2025-09-23', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-23', 'ROY L. RICACHO', 'CLERK', '2025-09-23', '0000-00-00', 'For printing', '2025-09-23 03:42:36', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-23', 'IVAN CHRISTOPHER R. MILLABAS', 'SUPPLY OFFICER', '2025-09-23'),
+(77, 6, 3, '1757740937_Screenshot_2025-09-13_132057.png', 'V', '', '1', 'RIS-2025-0072', 'SAI-2025-0072', '2025-09-23', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-23', 'ROY L. RICACHO', 'CLERK', '2025-09-23', '0000-00-00', 'For printing', '2025-09-23 06:03:11', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-23', 'IVAN CHRISTOPHER R. MILLABAS', 'SUPPLY OFFICER', '2025-09-23');
 
 -- --------------------------------------------------------
 
@@ -1453,7 +1442,9 @@ INSERT INTO `ris_items` (`id`, `ris_form_id`, `stock_no`, `unit`, `description`,
 (54, 72, '', '22', 'bond paper', 6, 350.00, 1400.00),
 (55, 73, '', '2', 'ink', 2, 340.00, 680.00),
 (56, 74, '', '2', 'Ballpen', 2, 345.00, 690.00),
-(57, 75, '', '2', 'Ballpen', 2, 234.01, 468.02);
+(57, 75, '', '2', 'Ballpen', 2, 234.01, 468.02),
+(58, 76, '', '1', 'ballpen', 100, 7.50, 750.00),
+(59, 77, '1', '1', 'ballpen panda', 20, 7.00, 140.00);
 
 -- --------------------------------------------------------
 
@@ -1565,6 +1556,27 @@ INSERT INTO `system_logs` (`id`, `user_id`, `office_id`, `module`, `action`, `ip
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `tag_formats`
+--
+
+CREATE TABLE `tag_formats` (
+  `id` int(11) NOT NULL,
+  `tag_type` varchar(50) NOT NULL,
+  `format_code` varchar(100) NOT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tag_formats`
+--
+
+INSERT INTO `tag_formats` (`id`, `tag_type`, `format_code`, `created_by`, `created_at`) VALUES
+(1, 'Red Tag', 'PS-5S-03-F01-01-01', 1, '2025-09-23 16:19:49');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `unit`
 --
 
@@ -1638,7 +1650,7 @@ INSERT INTO `users` (`id`, `username`, `fullname`, `email`, `password`, `role`, 
 (9, 'peterwhite', 'Peter White', 'peterwhite@example.com', 'password123', 'admin', 'active', '2025-04-03 04:45:50', NULL, NULL, 2, 'default_profile.png', 1800),
 (10, 'walt', 'Walton Loneza', 'waltielappy@gmail.com', '$2y$10$j5gUPrRPP0w0REknIdYrce.l5ZItK3c5WJXX3eC2OSQHtJ/YchHey', 'admin', 'active', '2025-04-04 01:31:30', NULL, NULL, NULL, 'default_profile.png', 1800),
 (12, 'walts', 'Walton Loneza', 'wjll@bicol-u.edu.ph', '$2y$10$tsOlFU9fjwi/DLRKdGkqL.aIXhKnlFxnNbA8ZoXeMbEiAhoe.sg/i', 'office_admin', 'inactive', '2025-04-07 14:13:29', NULL, NULL, 4, 'WIN_20240930_21_49_09_Pro.jpg', 1800),
-(15, 'josh', 'Joshua Escano', 'jmfte@gmail.com', '$2y$10$IFmIX3WZ0YOxdf41EYzX6.IF51IKEg0bL0kmyORCI8dod42v.JeN6', 'office_user', 'inactive', '2025-04-09 00:49:07', '5a8b600a59a80f2bf5028ae258b3aae8', '2025-04-09 09:49:07', 4, 'josh.jpg', 1800),
+(15, 'josh', 'Joshua Escano', 'jmfte@gmail.com', '$2y$10$IFmIX3WZ0YOxdf41EYzX6.IF51IKEg0bL0kmyORCI8dod42v.JeN6', 'office_user', 'active', '2025-04-09 00:49:07', '5a8b600a59a80f2bf5028ae258b3aae8', '2025-04-09 09:49:07', 4, 'josh.jpg', 1800),
 (16, 'elton', 'Elton John B. Moises', 'ejbm@bicol-u.edu.ph', '$2y$10$Botz5wCa9biZrVT7IdEDau.uVBcw3ByoD75pX2BYYe7dtutigluY.', 'user', 'inactive', '2025-04-13 06:01:46', NULL, NULL, 9, 'profile_16_1749816479.jpg', 600),
 (17, 'nami', 'Mark Jayson Namia', 'mjn@gmail.com', '$2y$10$2MIZlmP380wS0sj/cOfqbe20HkPz234S49cJEj2omrrTjBasHVqyO', 'admin', 'active', '2025-04-13 15:43:51', NULL, NULL, 4, 'default_profile.png', 1800),
 (18, 'kiimon', 'Seynatour Kiimon', 'sk@gmail.com', '$2y$10$UGpyMRA79O2OKhKfZDEf5O9CyXkMFlhDsVpWdELXMYnMtdFIV0mSC', 'office_user', 'deleted', '2025-04-20 21:36:04', '6687598406441374aeffbc338a60f728', '2025-04-21 06:36:04', 4, 'default_profile.png', 1800),
@@ -1690,11 +1702,8 @@ ALTER TABLE `assets`
   ADD PRIMARY KEY (`id`),
   ADD KEY `category` (`category`),
   ADD KEY `fk_assets_employee` (`employee_id`),
-<<<<<<< HEAD
-=======
   ADD KEY `idx_assets_office_status` (`office_id`,`status`),
   ADD KEY `idx_assets_status` (`status`),
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
   ADD KEY `idx_assets_ics_id` (`ics_id`),
   ADD KEY `idx_assets_asset_new_id` (`asset_new_id`),
   ADD KEY `idx_assets_par_id` (`par_id`);
@@ -1715,16 +1724,6 @@ ALTER TABLE `assets_new`
   ADD KEY `idx_assets_new_par_id` (`par_id`);
 
 --
-<<<<<<< HEAD
--- Indexes for table `asset_items`
---
-ALTER TABLE `asset_items`
-  ADD PRIMARY KEY (`item_id`),
-  ADD KEY `idx_asset_id` (`asset_id`);
-
---
-=======
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 -- Indexes for table `asset_requests`
 --
 ALTER TABLE `asset_requests`
@@ -1732,6 +1731,16 @@ ALTER TABLE `asset_requests`
   ADD KEY `asset_id` (`asset_name`(768)),
   ADD KEY `user_id` (`user_id`),
   ADD KEY `fk_office` (`office_id`);
+
+--
+-- Indexes for table `audit_logs`
+--
+ALTER TABLE `audit_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user_id` (`user_id`),
+  ADD KEY `idx_module` (`module`),
+  ADD KEY `idx_action` (`action`),
+  ADD KEY `idx_created_at` (`created_at`);
 
 --
 -- Indexes for table `borrow_requests`
@@ -1745,33 +1754,12 @@ ALTER TABLE `borrow_requests`
   ADD KEY `idx_borrow_requests_requested_at` (`requested_at`);
 
 --
-<<<<<<< HEAD
--- Indexes for table `borrow_request_items`
---
-ALTER TABLE `borrow_request_items`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_borrow_request_id` (`borrow_request_id`),
-  ADD KEY `idx_asset_item_id` (`asset_item_id`);
-
---
-=======
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 -- Indexes for table `categories`
 --
 ALTER TABLE `categories`
   ADD PRIMARY KEY (`id`);
 
 --
-<<<<<<< HEAD
--- Indexes for table `category`
---
-ALTER TABLE `category`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_category` (`category`);
-
---
-=======
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 -- Indexes for table `consumption_log`
 --
 ALTER TABLE `consumption_log`
@@ -1820,12 +1808,7 @@ ALTER TABLE `ics_form`
 --
 ALTER TABLE `ics_items`
   ADD PRIMARY KEY (`item_id`),
-<<<<<<< HEAD
-  ADD KEY `ics_id` (`ics_id`),
-  ADD KEY `fk_ics_items_asset` (`asset_id`);
-=======
   ADD KEY `ics_id` (`ics_id`);
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 
 --
 -- Indexes for table `iirup_form`
@@ -1834,8 +1817,6 @@ ALTER TABLE `iirup_form`
   ADD PRIMARY KEY (`id`);
 
 --
-<<<<<<< HEAD
-=======
 -- Indexes for table `iirup_items`
 --
 ALTER TABLE `iirup_items`
@@ -1843,7 +1824,6 @@ ALTER TABLE `iirup_items`
   ADD KEY `idx_iirup_id` (`iirup_id`);
 
 --
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 -- Indexes for table `infrastructure_inventory`
 --
 ALTER TABLE `infrastructure_inventory`
@@ -1875,12 +1855,7 @@ ALTER TABLE `offices`
 -- Indexes for table `par_form`
 --
 ALTER TABLE `par_form`
-<<<<<<< HEAD
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `par_form_ibfk_2` (`office_id`);
-=======
   ADD PRIMARY KEY (`id`);
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 
 --
 -- Indexes for table `par_items`
@@ -1891,8 +1866,6 @@ ALTER TABLE `par_items`
   ADD KEY `asset_id` (`asset_id`);
 
 --
-<<<<<<< HEAD
-=======
 -- Indexes for table `red_tags`
 --
 ALTER TABLE `red_tags`
@@ -1903,7 +1876,6 @@ ALTER TABLE `red_tags`
   ADD KEY `tagged_by` (`tagged_by`);
 
 --
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 -- Indexes for table `report_generation_settings`
 --
 ALTER TABLE `report_generation_settings`
@@ -1975,6 +1947,13 @@ ALTER TABLE `system_logs`
   ADD KEY `office_id` (`office_id`);
 
 --
+-- Indexes for table `tag_formats`
+--
+ALTER TABLE `tag_formats`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `format_code` (`format_code`);
+
+--
 -- Indexes for table `unit`
 --
 ALTER TABLE `unit`
@@ -2009,11 +1988,7 @@ ALTER TABLE `archives`
 -- AUTO_INCREMENT for table `assets`
 --
 ALTER TABLE `assets`
-<<<<<<< HEAD
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
-=======
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT for table `assets_archive`
@@ -2025,17 +2000,7 @@ ALTER TABLE `assets_archive`
 -- AUTO_INCREMENT for table `assets_new`
 --
 ALTER TABLE `assets_new`
-<<<<<<< HEAD
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
-
---
--- AUTO_INCREMENT for table `asset_items`
---
-ALTER TABLE `asset_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT;
-=======
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `asset_requests`
@@ -2044,20 +2009,16 @@ ALTER TABLE `asset_requests`
   MODIFY `request_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
+-- AUTO_INCREMENT for table `audit_logs`
+--
+ALTER TABLE `audit_logs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+
+--
 -- AUTO_INCREMENT for table `borrow_requests`
 --
 ALTER TABLE `borrow_requests`
-<<<<<<< HEAD
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `borrow_request_items`
---
-ALTER TABLE `borrow_request_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-=======
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `categories`
@@ -2066,15 +2027,6 @@ ALTER TABLE `categories`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
-<<<<<<< HEAD
--- AUTO_INCREMENT for table `category`
---
-ALTER TABLE `category`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
-=======
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 -- AUTO_INCREMENT for table `consumption_log`
 --
 ALTER TABLE `consumption_log`
@@ -2102,35 +2054,31 @@ ALTER TABLE `forms`
 -- AUTO_INCREMENT for table `generated_reports`
 --
 ALTER TABLE `generated_reports`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=94;
 
 --
 -- AUTO_INCREMENT for table `ics_form`
 --
 ALTER TABLE `ics_form`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `ics_items`
 --
 ALTER TABLE `ics_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `iirup_form`
 --
 ALTER TABLE `iirup_form`
-<<<<<<< HEAD
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-=======
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `iirup_items`
 --
 ALTER TABLE `iirup_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `infrastructure_inventory`
@@ -2148,11 +2096,7 @@ ALTER TABLE `inventory_actions`
 -- AUTO_INCREMENT for table `mr_details`
 --
 ALTER TABLE `mr_details`
-<<<<<<< HEAD
-  MODIFY `mr_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
-=======
-  MODIFY `mr_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
+  MODIFY `mr_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `offices`
@@ -2164,27 +2108,19 @@ ALTER TABLE `offices`
 -- AUTO_INCREMENT for table `par_form`
 --
 ALTER TABLE `par_form`
-<<<<<<< HEAD
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
-=======
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 
 --
 -- AUTO_INCREMENT for table `par_items`
 --
 ALTER TABLE `par_items`
-<<<<<<< HEAD
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
-=======
   MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `red_tags`
 --
 ALTER TABLE `red_tags`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `report_generation_settings`
@@ -2208,13 +2144,13 @@ ALTER TABLE `returned_assets`
 -- AUTO_INCREMENT for table `ris_form`
 --
 ALTER TABLE `ris_form`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
 
 --
 -- AUTO_INCREMENT for table `ris_items`
 --
 ALTER TABLE `ris_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
 -- AUTO_INCREMENT for table `rpcppe_form`
@@ -2239,6 +2175,12 @@ ALTER TABLE `system_info`
 --
 ALTER TABLE `system_logs`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `tag_formats`
+--
+ALTER TABLE `tag_formats`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `unit`
@@ -2266,10 +2208,7 @@ ALTER TABLE `activity_log`
 -- Constraints for table `assets`
 --
 ALTER TABLE `assets`
-<<<<<<< HEAD
-=======
   ADD CONSTRAINT `assets_ibfk_1` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`) ON DELETE SET NULL,
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
   ADD CONSTRAINT `assets_ibfk_2` FOREIGN KEY (`category`) REFERENCES `categories` (`id`),
   ADD CONSTRAINT `fk_assets_employee` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_assets_ics` FOREIGN KEY (`ics_id`) REFERENCES `ics_form` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
@@ -2282,145 +2221,12 @@ ALTER TABLE `assets_new`
   ADD CONSTRAINT `fk_assets_new_par` FOREIGN KEY (`par_id`) REFERENCES `par_form` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
-<<<<<<< HEAD
--- Constraints for table `asset_items`
+-- Constraints for table `audit_logs`
 --
-ALTER TABLE `asset_items`
-  ADD CONSTRAINT `asset_items_ibfk_1` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `borrow_requests`
---
-ALTER TABLE `borrow_requests`
-=======
--- Constraints for table `borrow_requests`
---
-ALTER TABLE `borrow_requests`
-  ADD CONSTRAINT `borrow_requests_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `borrow_requests_ibfk_2` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`),
-  ADD CONSTRAINT `borrow_requests_ibfk_3` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`),
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
-  ADD CONSTRAINT `fk_borrow_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_borrow_office` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_borrow_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
-<<<<<<< HEAD
--- Constraints for table `borrow_request_items`
---
-ALTER TABLE `borrow_request_items`
-  ADD CONSTRAINT `borrow_request_items_ibfk_1` FOREIGN KEY (`borrow_request_id`) REFERENCES `borrow_requests` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `borrow_request_items_ibfk_2` FOREIGN KEY (`asset_item_id`) REFERENCES `asset_items` (`item_id`) ON DELETE CASCADE;
-
---
-=======
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
--- Constraints for table `consumption_log`
---
-ALTER TABLE `consumption_log`
-  ADD CONSTRAINT `consumption_log_ibfk_1` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `consumption_log_ibfk_2` FOREIGN KEY (`recipient_user_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `consumption_log_ibfk_3` FOREIGN KEY (`dispensed_by_user_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `fk_consumption_log_office` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Constraints for table `employees`
---
-ALTER TABLE `employees`
-  ADD CONSTRAINT `fk_employees_office` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
---
--- Constraints for table `generated_reports`
---
-ALTER TABLE `generated_reports`
-  ADD CONSTRAINT `generated_reports_ibfk_1` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`);
-
---
--- Constraints for table `ics_items`
---
-ALTER TABLE `ics_items`
-  ADD CONSTRAINT `fk_ics_items_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`),
-  ADD CONSTRAINT `ics_items_ibfk_1` FOREIGN KEY (`ics_id`) REFERENCES `ics_form` (`id`) ON DELETE CASCADE;
-
---
-<<<<<<< HEAD
-=======
--- Constraints for table `iirup_items`
---
-ALTER TABLE `iirup_items`
-  ADD CONSTRAINT `fk_iirup_items_iirup` FOREIGN KEY (`iirup_id`) REFERENCES `iirup_form` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
--- Constraints for table `inventory_actions`
---
-ALTER TABLE `inventory_actions`
-  ADD CONSTRAINT `inventory_actions_ibfk_1` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`),
-  ADD CONSTRAINT `inventory_actions_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
-
---
--- Constraints for table `mr_details`
---
-ALTER TABLE `mr_details`
-  ADD CONSTRAINT `mr_details_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `ics_items` (`item_id`);
-
---
--- Constraints for table `par_form`
---
-ALTER TABLE `par_form`
-  ADD CONSTRAINT `par_form_ibfk_2` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `par_items`
---
-ALTER TABLE `par_items`
-  ADD CONSTRAINT `par_items_ibfk_1` FOREIGN KEY (`form_id`) REFERENCES `par_form` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `par_items_ibfk_2` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE SET NULL;
-
---
-<<<<<<< HEAD
-=======
--- Constraints for table `red_tags`
---
-ALTER TABLE `red_tags`
-  ADD CONSTRAINT `red_tags_ibfk_1` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `red_tags_ibfk_2` FOREIGN KEY (`iirup_id`) REFERENCES `iirup_form` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `red_tags_ibfk_3` FOREIGN KEY (`tagged_by`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
--- Constraints for table `report_templates`
---
-ALTER TABLE `report_templates`
-  ADD CONSTRAINT `fk_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
-
---
--- Constraints for table `ris_items`
---
-ALTER TABLE `ris_items`
-  ADD CONSTRAINT `ris_items_ibfk_1` FOREIGN KEY (`ris_form_id`) REFERENCES `ris_form` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `system_logs`
---
-ALTER TABLE `system_logs`
-  ADD CONSTRAINT `system_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `system_logs_ibfk_2` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `users`
---
-ALTER TABLE `users`
-  ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`office_id`) REFERENCES `offices` (`id`) ON DELETE SET NULL;
+ALTER TABLE `audit_logs`
+  ADD CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 COMMIT;
 
-<<<<<<< HEAD
-=======
-SET FOREIGN_KEY_CHECKS=1;
-
-
->>>>>>> 21b584494dbe6c9319494eb8e0d3b76e2c4e3ea6
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

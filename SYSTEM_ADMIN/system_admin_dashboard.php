@@ -36,6 +36,92 @@ $stmt->execute();
 $stmt->bind_result($fullname);
 $stmt->fetch();
 $stmt->close();
+
+// Include audit helper for availability checks (and potential future logging)
+require_once __DIR__ . '/../includes/audit_helper.php';
+
+// Helper: check if a table exists
+function table_exists($conn, $table_name) {
+  try {
+    $tbl = $conn->real_escape_string($table_name);
+    $res = $conn->query("SHOW TABLES LIKE '{$tbl}'");
+    return $res && $res->num_rows > 0;
+  } catch (Exception $e) {
+    return false;
+  }
+}
+
+// Data for "At a Glance"
+$metrics = [
+  'active_users' => 0,
+  'total_users' => 0,
+  'failed_logins_24h' => 0,
+  'errors_24h' => 0,
+  'db_size_mb' => null,
+  'last_backup' => null,
+  'recent_audit' => []
+];
+
+// Total registered users
+try {
+  $res = $conn->query("SELECT COUNT(*) AS c FROM users");
+  if ($res && ($row = $res->fetch_assoc())) { $metrics['total_users'] = (int)$row['c']; }
+} catch (Exception $e) {}
+
+// Active users currently logged in (approx): users whose latest action in audit_logs is LOGIN within last 30 minutes and not followed by LOGOUT
+if (isAuditLoggingAvailable()) {
+  try {
+    $sql = "
+      SELECT COUNT(DISTINCT al.user_id) AS c
+      FROM audit_logs al
+      WHERE al.action = 'LOGIN'
+        AND al.created_at >= (NOW() - INTERVAL 30 MINUTE)
+        AND al.user_id IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM audit_logs al2
+          WHERE al2.user_id = al.user_id
+            AND al2.created_at > al.created_at
+            AND al2.action = 'LOGOUT'
+        )
+    ";
+    $res = $conn->query($sql);
+    if ($res && ($row = $res->fetch_assoc())) { $metrics['active_users'] = (int)$row['c']; }
+  } catch (Exception $e) {}
+
+  // Failed logins in last 24h
+  try {
+    $res = $conn->query("SELECT COUNT(*) AS c FROM audit_logs WHERE action='LOGIN_FAILED' AND created_at >= (NOW() - INTERVAL 1 DAY)");
+    if ($res && ($row = $res->fetch_assoc())) { $metrics['failed_logins_24h'] = (int)$row['c']; }
+  } catch (Exception $e) {}
+
+  // Error entries in last 24h
+  try {
+    $res = $conn->query("SELECT COUNT(*) AS c FROM audit_logs WHERE action='ERROR' AND created_at >= (NOW() - INTERVAL 1 DAY)");
+    if ($res && ($row = $res->fetch_assoc())) { $metrics['errors_24h'] = (int)$row['c']; }
+  } catch (Exception $e) {}
+
+  // Recent audit trail (latest 5)
+  try {
+    $res = $conn->query("SELECT username, action, module, details, created_at FROM audit_logs ORDER BY created_at DESC LIMIT 5");
+    if ($res) {
+      while ($row = $res->fetch_assoc()) { $metrics['recent_audit'][] = $row; }
+    }
+  } catch (Exception $e) {}
+}
+
+// Database size (MB)
+try {
+  $res = $conn->query("SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size_mb FROM information_schema.tables WHERE table_schema = DATABASE()");
+  if ($res && ($row = $res->fetch_assoc())) { $metrics['db_size_mb'] = $row['size_mb']; }
+} catch (Exception $e) {}
+
+// Last backup date if a backups table exists (backups table should have created_at or backup_time column)
+try {
+  if (table_exists($conn, 'backups')) {
+    $res = $conn->query("SELECT COALESCE(MAX(created_at), MAX(backup_time)) AS last_backup FROM backups");
+    if ($res && ($row = $res->fetch_assoc())) { $metrics['last_backup'] = $row['last_backup']; }
+  }
+} catch (Exception $e) {}
 ?>
 
 <!DOCTYPE html>
@@ -59,7 +145,116 @@ $stmt->close();
 
     <?php include 'includes/topbar.php' ?>
 
-    
+    <div class="container-fluid py-4">
+      <h4 class="mb-3">At a Glance</h4>
+
+      <div class="row g-3">
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex align-items-center">
+              <div class="me-3 text-primary"><i class="bi bi-people-fill fs-2"></i></div>
+              <div>
+                <div class="fw-semibold">Active Users (last 30m)</div>
+                <div class="fs-4 fw-bold"><?php echo (int)$metrics['active_users']; ?></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex align-items-center">
+              <div class="me-3 text-success"><i class="bi bi-person-badge-fill fs-2"></i></div>
+              <div>
+                <div class="fw-semibold">Total Registered Users</div>
+                <div class="fs-4 fw-bold"><?php echo (int)$metrics['total_users']; ?></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex align-items-center">
+              <div class="me-3 text-danger"><i class="bi bi-shield-lock-fill fs-2"></i></div>
+              <div>
+                <div class="fw-semibold">Failed Logins (24h)</div>
+                <div class="fs-4 fw-bold"><?php echo (int)$metrics['failed_logins_24h']; ?></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex align-items-center mb-2">
+                <div class="me-2 text-info"><i class="bi bi-activity fs-4"></i></div>
+                <div class="fw-semibold">System Health</div>
+              </div>
+              <div class="small text-muted">DB Size</div>
+              <div class="fw-semibold mb-2"><?php echo $metrics['db_size_mb'] !== null ? $metrics['db_size_mb'] . ' MB' : 'N/A'; ?></div>
+              <div class="small text-muted">Last Backup</div>
+              <div class="fw-semibold mb-2"><?php echo $metrics['last_backup'] ? date('M d, Y h:i A', strtotime($metrics['last_backup'])) : 'Not available'; ?></div>
+              <div class="small text-muted">Errors (24h)</div>
+              <div class="fw-semibold text-<?php echo ((int)$metrics['errors_24h'] > 0) ? 'danger' : 'success'; ?>"><?php echo (int)$metrics['errors_24h']; ?></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mt-1">
+        <div class="col-12 col-lg-8">
+          <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+              <div class="d-flex align-items-center justify-content-between">
+                <span class="fw-semibold"><i class="bi bi-clock-history me-2"></i>Recent Audit Trail</span>
+                <?php if (isAuditLoggingAvailable()) : ?>
+                  <span class="badge text-bg-light">Latest 5</span>
+                <?php endif; ?>
+              </div>
+            </div>
+            <div class="card-body">
+              <?php if (!isAuditLoggingAvailable()) : ?>
+                <div class="alert alert-warning mb-0">Audit logging table not found. Please run <code>create_audit_logs_table.sql</code> to enable this feature.</div>
+              <?php elseif (empty($metrics['recent_audit'])) : ?>
+                <div class="text-muted">No recent activities.</div>
+              <?php else : ?>
+                <ul class="list-group list-group-flush">
+                  <?php foreach ($metrics['recent_audit'] as $log) : ?>
+                    <li class="list-group-item px-0 d-flex align-items-start">
+                      <div class="me-3 text-secondary"><i class="bi bi-dot fs-3 lh-1"></i></div>
+                      <div class="flex-grow-1">
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                          <span class="badge text-bg-secondary"><?php echo htmlspecialchars($log['action']); ?></span>
+                          <span class="badge text-bg-light border"><?php echo htmlspecialchars($log['module']); ?></span>
+                          <span class="text-muted small"><?php echo date('M d, Y h:i A', strtotime($log['created_at'])); ?></span>
+                        </div>
+                        <div class="mt-1 fw-semibold"><?php echo htmlspecialchars($log['username'] ?? 'System'); ?></div>
+                        <div class="text-muted small"><?php echo htmlspecialchars($log['details'] ?? ''); ?></div>
+                      </div>
+                    </li>
+                  <?php endforeach; ?>
+                </ul>
+              <?php endif; ?>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-2"></i>Notes</div>
+            <div class="card-body">
+              <ul class="mb-0 small text-muted">
+                <li><strong>Active Users</strong> is approximated from recent LOGIN events without subsequent LOGOUT.</li>
+                <li><strong>Failed Logins</strong> and <strong>Errors</strong> are derived from <code>audit_logs</code>.</li>
+                <li><strong>Last Backup</strong> appears if a <code>backups</code> table is available.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
