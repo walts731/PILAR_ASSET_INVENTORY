@@ -83,6 +83,12 @@ $page = basename($_SERVER['PHP_SELF'], ".php");
                 <i class="bi bi-bounding-box"></i> Units
             </a>
 
+            <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'super_admin'): ?>
+            <a href="../SYSTEM_ADMIN/tag_formats.php" class="<?= ($page == 'tag_formats') ? 'active' : '' ?>">
+                <i class="bi bi-tags"></i> Tag Formats
+            </a>
+            <?php endif; ?>
+
             <a href="../SYSTEM_ADMIN/edit_system.php" class="<?= ($page == 'System') ? 'active' : '' ?>">
                 <i class="bi bi-gear"></i> System
             </a>
