@@ -115,11 +115,15 @@ try {
   if ($res && ($row = $res->fetch_assoc())) { $metrics['db_size_mb'] = $row['size_mb']; }
 } catch (Exception $e) {}
 
-// Last backup date if a backups table exists (backups table should have created_at or backup_time column)
+// Last backup info if a backups table exists
 try {
   if (table_exists($conn, 'backups')) {
-    $res = $conn->query("SELECT COALESCE(MAX(created_at), MAX(backup_time)) AS last_backup FROM backups");
-    if ($res && ($row = $res->fetch_assoc())) { $metrics['last_backup'] = $row['last_backup']; }
+    $res = $conn->query("SELECT created_at AS last_backup, status AS last_backup_status, filename FROM backups ORDER BY created_at DESC LIMIT 1");
+    if ($res && ($row = $res->fetch_assoc())) {
+      $metrics['last_backup'] = $row['last_backup'];
+      $metrics['last_backup_status'] = $row['last_backup_status'] ?? null;
+      $metrics['last_backup_filename'] = $row['filename'] ?? null;
+    }
   }
 } catch (Exception $e) {}
 
@@ -202,19 +206,23 @@ if (!empty($metrics['last_backup'])) {
               <div class="fw-semibold mb-2"><?php echo $metrics['db_size_mb'] !== null ? $metrics['db_size_mb'] . ' MB' : 'N/A'; ?></div>
               <div class="small text-muted">Last Backup</div>
               <div class="fw-semibold mb-2" id="lastBackupText"><?php echo $metrics['last_backup'] ? date('M d, Y h:i A', strtotime($metrics['last_backup'])) : 'Not available'; ?></div>
+              <?php if (!empty($metrics['last_backup_status'])): ?>
+                <div class="small text-muted">Last Backup Status</div>
+                <div class="mb-2">
+                  <span class="badge text-bg-<?php echo ($metrics['last_backup_status']==='success') ? 'success' : 'danger'; ?>"><?php echo htmlspecialchars($metrics['last_backup_status']); ?></span>
+                </div>
+              <?php endif; ?>
               <div class="small text-muted">Next Scheduled Backup</div>
               <div class="fw-semibold mb-2" id="nextBackupText"><?php echo $metrics['next_backup'] ? date('M d, Y h:i A', strtotime($metrics['next_backup'])) : 'Not available'; ?></div>
               <div class="small text-muted">Errors (24h)</div>
               <div class="fw-semibold text-<?php echo ((int)$metrics['errors_24h'] > 0) ? 'danger' : 'success'; ?>"><?php echo (int)$metrics['errors_24h']; ?></div>
               <hr class="my-3" />
               <div class="d-grid">
-                <button class="btn btn-primary mb-2" id="cloudBackupBtn">
-                  <span class="me-1"><i class="bi bi-cloud-arrow-up"></i></span> Cloud Backup Now
+                <button class="btn btn-primary mb-2" id="localBackupBtn">
+                  <span class="me-1"><i class="bi bi-hdd"></i></span> Backup Now
                 </button>
-                <div class="small text-muted mb-2" id="cloudBackupStatus" style="min-height:1rem;"></div>
-                <a class="btn btn-outline-primary" href="simple_backup.php">
-                  <i class="bi bi-hdd"></i> Backup (Download .sql)
-                </a>
+                <div class="small text-muted mb-2" id="localBackupStatus" style="min-height:1rem;"></div>
+                
               </div>
             </div>
           </div>
@@ -282,9 +290,9 @@ if (!empty($metrics['last_backup'])) {
   <script src="js/dashboard.js"></script>
   <script>
     (function(){
-      const btn = document.getElementById('cloudBackupBtn');
+      const btn = document.getElementById('localBackupBtn');
       if (!btn) return;
-      const statusEl = document.getElementById('cloudBackupStatus');
+      const statusEl = document.getElementById('localBackupStatus');
       const lastEl = document.getElementById('lastBackupText');
       const nextEl = document.getElementById('nextBackupText');
 
@@ -295,13 +303,13 @@ if (!empty($metrics['last_backup'])) {
           if (statusEl) statusEl.textContent = '';
         } else {
           btn.disabled = false;
-          btn.innerHTML = '<span class="me-1"><i class="bi bi-cloud-arrow-up"></i></span> Cloud Backup Now';
+          btn.innerHTML = '<span class="me-1"><i class="bi bi-hdd"></i></span> Backup Now';
         }
       }
 
       btn.addEventListener('click', function(){
         setLoading(true);
-        fetch('auto_backup.php', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }})
+        fetch('auto_local_backup.php', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }})
           .then(r => r.json())
           .then(data => {
             if (data.success){
@@ -323,6 +331,28 @@ if (!empty($metrics['last_backup'])) {
           })
           .finally(() => setLoading(false));
       });
+    })();
+
+    // Auto monthly local backup check (no extra config). Runs backup only if due.
+    (function(){
+      const lastEl = document.getElementById('lastBackupText');
+      const nextEl = document.getElementById('nextBackupText');
+      fetch('auto_local_backup.php?check=1', { headers: { 'X-Requested-With': 'XMLHttpRequest' }})
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.ran && data.last_backup) {
+            const d = new Date((data.last_backup+'').replace(' ', 'T'));
+            if (lastEl) lastEl.textContent = d.toLocaleString();
+            if (data.next_backup){
+              const d2 = new Date((data.next_backup+'').replace(' ', 'T'));
+              if (nextEl) nextEl.textContent = d2.toLocaleString();
+            }
+          } else if (data && data.next_backup && nextEl) {
+            const d2 = new Date((data.next_backup+'').replace(' ', 'T'));
+            nextEl.textContent = d2.toLocaleString();
+          }
+        })
+        .catch(() => {});
     })();
   </script>
 </body>
