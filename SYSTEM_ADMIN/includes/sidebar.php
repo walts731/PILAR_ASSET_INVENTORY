@@ -87,6 +87,9 @@ $page = basename($_SERVER['PHP_SELF'], ".php");
             <a href="../SYSTEM_ADMIN/tag_formats.php" class="<?= ($page == 'tag_formats') ? 'active' : '' ?>">
                 <i class="bi bi-tags"></i> Tag Formats
             </a>
+            <a href="../SYSTEM_ADMIN/simple_backup.php" class="<?= ($page == 'simple_backup') ? 'active' : '' ?>">
+                <i class="bi bi-hdd"></i> Simple Backup
+            </a>
             <?php endif; ?>
 
             <a href="../SYSTEM_ADMIN/edit_system.php" class="<?= ($page == 'System') ? 'active' : '' ?>">

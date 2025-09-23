@@ -195,9 +195,15 @@ try {
               <div class="small text-muted">DB Size</div>
               <div class="fw-semibold mb-2"><?php echo $metrics['db_size_mb'] !== null ? $metrics['db_size_mb'] . ' MB' : 'N/A'; ?></div>
               <div class="small text-muted">Last Backup</div>
-              <div class="fw-semibold mb-2"><?php echo $metrics['last_backup'] ? date('M d, Y h:i A', strtotime($metrics['last_backup'])) : 'Not available'; ?></div>
+              <div class="fw-semibold mb-2" id="lastBackupText"><?php echo $metrics['last_backup'] ? date('M d, Y h:i A', strtotime($metrics['last_backup'])) : 'Not available'; ?></div>
               <div class="small text-muted">Errors (24h)</div>
               <div class="fw-semibold text-<?php echo ((int)$metrics['errors_24h'] > 0) ? 'danger' : 'success'; ?>"><?php echo (int)$metrics['errors_24h']; ?></div>
+              <hr class="my-3" />
+              <div class="d-grid">
+                <a class="btn btn-outline-primary" href="simple_backup.php">
+                  <i class="bi bi-hdd"></i> Go to Simple Backup
+                </a>
+              </div>
             </div>
           </div>
         </div>
