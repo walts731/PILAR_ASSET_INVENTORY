@@ -122,6 +122,13 @@ try {
     if ($res && ($row = $res->fetch_assoc())) { $metrics['last_backup'] = $row['last_backup']; }
   }
 } catch (Exception $e) {}
+
+// Calculate next scheduled backup (30 days after last_backup or from now)
+if (!empty($metrics['last_backup'])) {
+  $metrics['next_backup'] = date('Y-m-d H:i:s', strtotime($metrics['last_backup'] . ' +30 days'));
+} else {
+  $metrics['next_backup'] = date('Y-m-d H:i:s', strtotime('+30 days'));
+}
 ?>
 
 <!DOCTYPE html>
@@ -146,7 +153,6 @@ try {
     <?php include 'includes/topbar.php' ?>
 
     <div class="container-fluid py-4">
-      <h4 class="mb-3">At a Glance</h4>
 
       <div class="row g-3">
         <div class="col-12 col-sm-6 col-lg-3">
@@ -164,7 +170,7 @@ try {
         <div class="col-12 col-sm-6 col-lg-3">
           <div class="card h-100 shadow-sm">
             <div class="card-body d-flex align-items-center">
-              <div class="me-3 text-success"><i class="bi bi-person-badge-fill fs-2"></i></div>
+              <div class="me-3 text-info"><i class="bi bi-person-badge-fill fs-2"></i></div>
               <div>
                 <div class="fw-semibold">Total Registered Users</div>
                 <div class="fs-4 fw-bold"><?php echo (int)$metrics['total_users']; ?></div>
@@ -196,12 +202,18 @@ try {
               <div class="fw-semibold mb-2"><?php echo $metrics['db_size_mb'] !== null ? $metrics['db_size_mb'] . ' MB' : 'N/A'; ?></div>
               <div class="small text-muted">Last Backup</div>
               <div class="fw-semibold mb-2" id="lastBackupText"><?php echo $metrics['last_backup'] ? date('M d, Y h:i A', strtotime($metrics['last_backup'])) : 'Not available'; ?></div>
+              <div class="small text-muted">Next Scheduled Backup</div>
+              <div class="fw-semibold mb-2" id="nextBackupText"><?php echo $metrics['next_backup'] ? date('M d, Y h:i A', strtotime($metrics['next_backup'])) : 'Not available'; ?></div>
               <div class="small text-muted">Errors (24h)</div>
               <div class="fw-semibold text-<?php echo ((int)$metrics['errors_24h'] > 0) ? 'danger' : 'success'; ?>"><?php echo (int)$metrics['errors_24h']; ?></div>
               <hr class="my-3" />
               <div class="d-grid">
+                <button class="btn btn-primary mb-2" id="cloudBackupBtn">
+                  <span class="me-1"><i class="bi bi-cloud-arrow-up"></i></span> Cloud Backup Now
+                </button>
+                <div class="small text-muted mb-2" id="cloudBackupStatus" style="min-height:1rem;"></div>
                 <a class="btn btn-outline-primary" href="simple_backup.php">
-                  <i class="bi bi-hdd"></i> Go to Simple Backup
+                  <i class="bi bi-hdd"></i> Backup (Download .sql)
                 </a>
               </div>
             </div>
@@ -268,6 +280,51 @@ try {
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <script src="js/dashboard.js"></script>
+  <script>
+    (function(){
+      const btn = document.getElementById('cloudBackupBtn');
+      if (!btn) return;
+      const statusEl = document.getElementById('cloudBackupStatus');
+      const lastEl = document.getElementById('lastBackupText');
+      const nextEl = document.getElementById('nextBackupText');
+
+      function setLoading(on){
+        if (on){
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+          if (statusEl) statusEl.textContent = '';
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = '<span class="me-1"><i class="bi bi-cloud-arrow-up"></i></span> Cloud Backup Now';
+        }
+      }
+
+      btn.addEventListener('click', function(){
+        setLoading(true);
+        fetch('auto_backup.php', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }})
+          .then(r => r.json())
+          .then(data => {
+            if (data.success){
+              if (statusEl) statusEl.textContent = 'Backup completed: ' + (data.filename || '');
+              if (data.last_backup && lastEl){
+                const d = new Date(data.last_backup.replace(' ', 'T'));
+                lastEl.textContent = d.toLocaleString();
+              }
+              if (data.next_backup && nextEl){
+                const d2 = new Date(data.next_backup.replace(' ', 'T'));
+                nextEl.textContent = d2.toLocaleString();
+              }
+            } else {
+              if (statusEl) statusEl.textContent = 'Backup failed: ' + (data.message || 'Unknown error');
+            }
+          })
+          .catch(err => {
+            if (statusEl) statusEl.textContent = 'Backup failed: ' + err;
+          })
+          .finally(() => setLoading(false));
+      });
+    })();
+  </script>
 </body>
 
 </html>

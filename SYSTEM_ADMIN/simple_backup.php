@@ -31,7 +31,7 @@ $csrf = $_SESSION['csrf_token'];
     <div class="container-fluid py-4">
       <div class="d-flex align-items-center justify-content-between mb-3">
         <h4 class="mb-0"><i class="bi bi-database-down me-2"></i>Simple Backup</h4>
-        <a class="btn btn-outline-secondary" href="system_admin_dashboard.php"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+        
       </div>
 
       <div class="row g-3">
