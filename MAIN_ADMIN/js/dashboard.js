@@ -42,21 +42,24 @@ function updateDateTime() {
         ]
       });
       
-      // Initialize DataTable for all unserviceable assets
-      $('#allUnserviceableTable').DataTable({
-        responsive: true,
-        pageLength: 10,
-        order: [[8, 'desc']], // Sort by Last Updated column (index 8) in descending order
-        language: {
-          search: "Search all unserviceable assets:",
-          lengthMenu: "Show _MENU_ entries",
-          info: "Showing _START_ to _END_ of _TOTAL_ unserviceable assets",
-          emptyTable: "No unserviceable assets found"
-        },
-        columnDefs: [
-          { orderable: false, targets: [9] } // Disable sorting on Actions column
-        ]
-      });
+      // Initialize DataTable for all unserviceable assets (guard against double init)
+      if ($('#allUnserviceableTable').length && !$.fn.DataTable.isDataTable('#allUnserviceableTable')) {
+        $('#allUnserviceableTable').DataTable({
+          responsive: true,
+          pageLength: 10,
+          // Table has 8 columns (0-7). Last Updated is index 6
+          order: [[6, 'desc']],
+          language: {
+            search: "Search all unserviceable assets:",
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ unserviceable assets",
+            emptyTable: "No unserviceable assets found"
+          },
+          columnDefs: [
+            { orderable: false, targets: [0, 7] } // Disable sorting on Checkbox and Actions columns
+          ]
+        });
+      }
     });
 
     const toggleBtn = document.getElementById('toggleSidebar');

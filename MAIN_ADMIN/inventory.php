@@ -127,32 +127,22 @@ $stmt->close();
         <button class="nav-link" id="no-property-tab" data-bs-toggle="tab" data-bs-target="#no_property" type="button" role="tab">No Property Tag <sub class="text-muted">(<?= $noPropCount ?>)</sub></button>
       </li>
       <?php
-        // Count unserviceable assets without red tags
-        $noRedTagCount = 0;
-        if ($selected_office === "all") {
-          $stmtNoRedTag = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND red_tagged = 0 AND quantity > 0");
-        } else {
-          $stmtNoRedTag = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND red_tagged = 0 AND office_id = ? AND quantity > 0");
-          $stmtNoRedTag->bind_param("i", $selected_office);
-        }
-        $stmtNoRedTag->execute();
-        $stmtNoRedTag->bind_result($noRedTagCount);
-        $stmtNoRedTag->fetch();
-        $stmtNoRedTag->close();
-        
-        // Count all unserviceable assets
-        $allUnserviceableCount = 0;
-        if ($selected_office === "all") {
-          $stmtAllUnserv = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND quantity > 0");
-        } else {
-          $stmtAllUnserv = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND office_id = ? AND quantity > 0");
-          $stmtAllUnserv->bind_param("i", $selected_office);
-        }
-        $stmtAllUnserv->execute();
-        $stmtAllUnserv->bind_result($allUnserviceableCount);
-        $stmtAllUnserv->fetch();
-        $stmtAllUnserv->close();
-      ?>
+  // Count unserviceable assets without red tags (system-wide)
+  $noRedTagCount = 0;
+  $stmtNoRedTag = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND red_tagged = 0 AND quantity > 0");
+  $stmtNoRedTag->execute();
+  $stmtNoRedTag->bind_result($noRedTagCount);
+  $stmtNoRedTag->fetch();
+  $stmtNoRedTag->close();
+
+  // Count all unserviceable assets (system-wide)
+  $allUnserviceableCount = 0;
+  $stmtAllUnserv = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND quantity > 0");
+  $stmtAllUnserv->execute();
+  $stmtAllUnserv->bind_result($allUnserviceableCount);
+  $stmtAllUnserv->fetch();
+  $stmtAllUnserv->close();
+?>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="no-red-tag-tab" data-bs-toggle="tab" data-bs-target="#no_red_tag" type="button" role="tab">No Red Tag Only <sub class="text-muted">(<?= $noRedTagCount ?>)</sub></button>
       </li>
@@ -662,36 +652,21 @@ $stmt->close();
       
       <!-- No Red Tag Only Tab -->
       <div class="tab-pane fade" id="no_red_tag" role="tabpanel">
-        <?php
-        // Query for unserviceable assets without red tags, including IIRUP ID
-        if ($selected_office === "all") {
-          $stmtNoRedTag = $conn->prepare("
-            SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
-            FROM assets a
-            LEFT JOIN categories c ON a.category = c.id
-            LEFT JOIN offices o ON a.office_id = o.id
-            LEFT JOIN employees e ON a.employee_id = e.employee_id
-            LEFT JOIN iirup_items ii ON a.id = ii.asset_id
-            WHERE a.status = 'unserviceable' AND a.red_tagged = 0 AND a.quantity > 0
-            ORDER BY a.last_updated DESC
-          ");
-        } else {
-          $stmtNoRedTag = $conn->prepare("
-            SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
-            FROM assets a
-            LEFT JOIN categories c ON a.category = c.id
-            LEFT JOIN offices o ON a.office_id = o.id
-            LEFT JOIN employees e ON a.employee_id = e.employee_id
-            LEFT JOIN iirup_items ii ON a.id = ii.asset_id
-            WHERE a.status = 'unserviceable' AND a.red_tagged = 0 AND a.office_id = ? AND a.quantity > 0
-            ORDER BY a.last_updated DESC
-          ");
-          $stmtNoRedTag->bind_param("i", $selected_office);
-        }
-        
-        $stmtNoRedTag->execute();
-        $noRedTagResult = $stmtNoRedTag->get_result();
-        ?>
+      <?php
+  // Query for unserviceable assets without red tags, including IIRUP ID (system-wide)
+  $stmtNoRedTag = $conn->prepare("
+    SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
+    FROM assets a
+    LEFT JOIN categories c ON a.category = c.id
+    LEFT JOIN offices o ON a.office_id = o.id
+    LEFT JOIN employees e ON a.employee_id = e.employee_id
+    LEFT JOIN iirup_items ii ON a.id = ii.asset_id
+    WHERE a.status = 'unserviceable' AND a.red_tagged = 0 AND a.quantity > 0
+    ORDER BY a.last_updated DESC
+  ");
+  $stmtNoRedTag->execute();
+  $noRedTagResult = $stmtNoRedTag->get_result();
+?>
         
         <div class="row mb-4">
           <div class="col-12">
@@ -832,31 +807,17 @@ $stmt->close();
       <!-- Unserviceable Tab -->
       <div class="tab-pane fade" id="unserviceable" role="tabpanel">
         <?php
-        // Query for all unserviceable assets, including IIRUP ID and additional_images
-        if ($selected_office === "all") {
-          $stmtAllUnserv = $conn->prepare("
-            SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
-            FROM assets a
-            LEFT JOIN categories c ON a.category = c.id
-            LEFT JOIN offices o ON a.office_id = o.id
-            LEFT JOIN employees e ON a.employee_id = e.employee_id
-            LEFT JOIN iirup_items ii ON a.id = ii.asset_id
-            WHERE a.status = 'unserviceable' AND a.quantity > 0
-            ORDER BY a.last_updated DESC
-          ");
-        } else {
-          $stmtAllUnserv = $conn->prepare("
-            SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
-            FROM assets a
-            LEFT JOIN categories c ON a.category = c.id
-            LEFT JOIN offices o ON a.office_id = o.id
-            LEFT JOIN employees e ON a.employee_id = e.employee_id
-            LEFT JOIN iirup_items ii ON a.id = ii.asset_id
-            WHERE a.status = 'unserviceable' AND a.office_id = ? AND a.quantity > 0
-            ORDER BY a.last_updated DESC
-          ");
-          $stmtAllUnserv->bind_param("i", $selected_office);
-        }
+        // Query for all unserviceable assets, including IIRUP ID and additional_images (system-wide)
+        $stmtAllUnserv = $conn->prepare("
+          SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
+          FROM assets a
+          LEFT JOIN categories c ON a.category = c.id
+          LEFT JOIN offices o ON a.office_id = o.id
+          LEFT JOIN employees e ON a.employee_id = e.employee_id
+          LEFT JOIN iirup_items ii ON a.id = ii.asset_id
+          WHERE a.status = 'unserviceable' AND a.quantity > 0
+          ORDER BY a.last_updated DESC
+        ");
         
         $stmtAllUnserv->execute();
         $allUnservResult = $stmtAllUnserv->get_result();
@@ -1021,7 +982,7 @@ $stmt->close();
                     <?php endwhile; ?>
                   <?php else: ?>
                     <tr>
-                      <td colspan="7" class="text-center py-4">
+                      <td colspan="8" class="text-center py-4">
                         <div class="text-muted">
                           <i class="bi bi-check-circle display-4 d-block mb-2 text-success"></i>
                           <h6>No Unserviceable Assets</h6>
@@ -1211,14 +1172,16 @@ $stmt->close();
       const $table = $('#allUnserviceableTable');
       if ($table.length === 0) return;
 
-      // Initialize DataTable
-      const dt = $table.DataTable({
-        order: [[6, 'desc']], // Last Updated column index after adding checkbox
-        columnDefs: [
-          { targets: 0, orderable: false, searchable: false }, // checkbox column
-          { targets: -1, orderable: false, searchable: false } // actions column
-        ]
-      });
+      // Initialize DataTable (guard against double initialization)
+      const dt = $.fn.DataTable.isDataTable($table) 
+        ? $table.DataTable()
+        : $table.DataTable({
+            order: [[6, 'desc']], // Last Updated column index after adding checkbox
+            columnDefs: [
+              { targets: 0, orderable: false, searchable: false }, // checkbox column
+              { targets: -1, orderable: false, searchable: false } // actions column
+            ]
+          });
 
       // Search box hookup
       const $search = $('#unservSearch');
