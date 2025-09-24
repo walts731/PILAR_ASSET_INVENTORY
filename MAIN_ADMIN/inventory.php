@@ -106,9 +106,9 @@ $stmt->close();
 
 
     <?php
-      // Count of assets without property number (not filtered by office)
+      // Count of assets without inventory tag (not filtered by office)
       $noPropCount = 0;
-      if ($stmtCnt = $conn->prepare("SELECT COUNT(*) AS cnt FROM assets WHERE type='asset' AND quantity > 0 AND (property_no IS NULL OR property_no = '')")) {
+      if ($stmtCnt = $conn->prepare("SELECT COUNT(*) AS cnt FROM assets WHERE type='asset' AND quantity > 0 AND (inventory_tag IS NULL OR inventory_tag = '')")) {
         $stmtCnt->execute();
         $resCnt = $stmtCnt->get_result();
         if ($resCnt && ($rc = $resCnt->fetch_assoc())) { $noPropCount = (int)$rc['cnt']; }
@@ -124,7 +124,7 @@ $stmt->close();
         <button class="nav-link" id="consumables-tab" data-bs-toggle="tab" data-bs-target="#consumables" type="button" role="tab">Consumables</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="no-property-tab" data-bs-toggle="tab" data-bs-target="#no_property" type="button" role="tab">No Property Tag <sub class="text-muted">(<?= $noPropCount ?>)</sub></button>
+        <button class="nav-link" id="no-property-tab" data-bs-toggle="tab" data-bs-target="#no_property" type="button" role="tab">No Inventory Tag <sub class="text-muted">(<?= $noPropCount ?>)</sub></button>
       </li>
       <?php
   // Count unserviceable assets without red tags (system-wide)
@@ -244,9 +244,9 @@ $stmt->close();
             <?php
             // Warn about assets without property numbers
             if ($selected_office === "all") {
-              $stmtMissing = $conn->prepare("SELECT id, description FROM assets WHERE type='asset' AND quantity > 0 AND (property_no IS NULL OR property_no = '') ORDER BY last_updated DESC LIMIT 10");
+              $stmtMissing = $conn->prepare("SELECT id, description FROM assets WHERE type='asset' AND quantity > 0 AND (inventory_tag IS NULL OR inventory_tag = '') ORDER BY last_updated DESC LIMIT 10");
             } else {
-              $stmtMissing = $conn->prepare("SELECT id, description FROM assets WHERE type='asset' AND quantity > 0 AND office_id = ? AND (property_no IS NULL OR property_no = '') ORDER BY last_updated DESC LIMIT 10");
+              $stmtMissing = $conn->prepare("SELECT id, description FROM assets WHERE type='asset' AND quantity > 0 AND office_id = ? AND (inventory_tag IS NULL OR inventory_tag = '') ORDER BY last_updated DESC LIMIT 10");
               $stmtMissing->bind_param("i", $selected_office);
             }
             $missingAssets = [];
@@ -259,8 +259,8 @@ $stmt->close();
             if (count($missingAssets) > 0): ?>
               <div class="alert alert-warning d-flex align-items-start" role="alert">
                 <div>
-                  <div class="fw-bold mb-1">Some assets have no Property Number</div>
-                  <div class="small mb-1">Recently inserted assets may be missing property numbers. Please review and update them.</div>
+                  <div class="fw-bold mb-1">Some assets have no Inventory Tag</div>
+                  <div class="small mb-1">Recently inserted assets may be missing inventory tags. Please review and update them.</div>
                   <ul class="mb-0 small">
                     <?php foreach ($missingAssets as $mi): ?>
                       <li>
@@ -578,7 +578,7 @@ $stmt->close();
       <!-- No Property Tag Tab -->
       <div class="tab-pane fade" id="no_property" role="tabpanel">
         <?php
-        // Query for assets missing property_no (not filtered by office)
+        // Query for assets missing inventory_tag (not filtered by office)
         $stmtNP = $conn->prepare("
           SELECT 
             a.*, 
@@ -589,16 +589,17 @@ $stmt->close();
           LEFT JOIN categories c ON a.category = c.id
           LEFT JOIN ics_form f ON a.ics_id = f.id
           LEFT JOIN par_form p ON a.par_id = p.id
-          WHERE a.type = 'asset' AND a.quantity > 0 AND (a.property_no IS NULL OR a.property_no = '')
+          WHERE a.type = 'asset' AND a.quantity > 0 AND (a.inventory_tag IS NULL OR a.inventory_tag = '')
           ORDER BY a.last_updated DESC
         ");
+
         $stmtNP->execute();
         $npResult = $stmtNP->get_result();
         ?>
 
         <div class="card shadow-sm">
           <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 class="mb-0">Assets Without Property Number</h5>
+            <h5 class="mb-0">Assets Without Inventory Tag</h5>
           </div>
           <div class="card-body table-responsive">
             <table id="noPropertyTable" class="table table-hover align-middle">
