@@ -287,7 +287,6 @@ $stmt->close();
                     <th>Actions</th>
                   </tr>
                 </thead>
-                </thead>
                 <tbody>
                   <?php
                   // Fetch rows from assets_new, joined with assets (which stores asset_new_id) and ics_form to respect office filter

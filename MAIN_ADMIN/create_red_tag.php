@@ -9,6 +9,25 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Ensure red_tag_number allows duplicates by removing UNIQUE index if it exists
+try {
+    $idxSql = "SELECT INDEX_NAME, NON_UNIQUE FROM INFORMATION_SCHEMA.STATISTICS 
+               WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'red_tags' AND COLUMN_NAME = 'red_tag_number'";
+    if ($res = $conn->query($idxSql)) {
+        while ($row = $res->fetch_assoc()) {
+            $indexName = $row['INDEX_NAME'];
+            $nonUnique = (int)$row['NON_UNIQUE'];
+            // Drop any unique index on red_tag_number (ignore PRIMARY just in case)
+            if ($nonUnique === 0 && strcasecmp($indexName, 'PRIMARY') !== 0) {
+                $conn->query("ALTER TABLE red_tags DROP INDEX `" . $conn->real_escape_string($indexName) . "`");
+            }
+        }
+        $res->close();
+    }
+} catch (Throwable $e) {
+    // Non-fatal: if drop fails, insertion will still attempt; error will show if constraint remains
+}
+
 // Fetch the municipal logo from the system table
 $logo_path = '';
 $stmt_logo = $conn->prepare("SELECT logo FROM system WHERE id = 1");
@@ -38,6 +57,13 @@ $user_query->execute();
 $user_result = $user_query->get_result();
 $user = $user_result->fetch_assoc();
 $user_query->close();
+
+// Fetch list of users to allow selecting Tagged By
+$users_list = [];
+if ($resUsers = $conn->query("SELECT id, fullname FROM users ORDER BY fullname ASC")) {
+    while ($u = $resUsers->fetch_assoc()) { $users_list[] = $u; }
+    $resUsers->close();
+}
 
 // Check if Red Tag already exists for this asset and IIRUP
 $existing_red_tag_check = false;
@@ -108,7 +134,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = $conn->real_escape_string($_POST['custom_action']);
     }
     
-    $tagged_by = $user_id;
+    // Tagged by: prefer posted user id if provided, else fallback to current user
+    $tagged_by = isset($_POST['tagged_by']) ? (int)$_POST['tagged_by'] : $user_id;
     
     $description = $asset['description'] . ' (' . $asset['property_no'] . ')';
     
@@ -208,17 +235,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             UPDATE red_tags SET 
                 item_location = ?, 
                 removal_reason = ?, 
-                action = ?,
-                description = ?
+                action = ?, 
+                description = ?, 
+                tagged_by = ?
             WHERE asset_id = ? AND iirup_id = ?
         ");
         
         $update_query->bind_param(
-            'ssssii',
+            'sssssii',
             $item_location,
             $removal_reason,
             $action,
             $description,
+            $tagged_by,
             $asset_id,
             $iirup_id
         );
@@ -426,7 +455,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="mb-3">
                     <label class="form-label">Tagged By:</label>
-                    <input type="text" class="form-control" value="<?= htmlspecialchars($user['fullname'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control" name="tagged_by_name" id="tagged_by_name" list="userList"
+                           value="<?= htmlspecialchars($user['fullname'] ?? '') ?>" placeholder="Type to search user">
+                    <input type="hidden" name="tagged_by" id="tagged_by" value="<?= (int)($user_id ?? 0) ?>">
+                    <datalist id="userList">
+                        <?php foreach ($users_list as $u): ?>
+                            <option data-id="<?= (int)$u['id'] ?>" value="<?= htmlspecialchars($u['fullname']) ?>"></option>
+                        <?php endforeach; ?>
+                    </datalist>
+                    <div class="form-text">Start typing to select a user. You can adjust this before saving.</div>
                 </div>
 
                 <div class="mb-3">
@@ -584,6 +621,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const imageInput = document.getElementById('asset_images');
             const previewContainer = document.getElementById('image_preview_container');
             const previewsDiv = document.getElementById('image_previews');
+            // Tagged By mapping: map selected name to user id
+            const taggedByName = document.getElementById('tagged_by_name');
+            const taggedById = document.getElementById('tagged_by');
+            const userOptions = document.querySelectorAll('#userList option');
+            function syncTaggedById() {
+                const val = taggedByName.value;
+                let found = '';
+                userOptions.forEach(opt => { if (opt.value === val) { found = opt.getAttribute('data-id') || ''; } });
+                if (found) { taggedById.value = found; }
+            }
+            if (taggedByName) {
+                taggedByName.addEventListener('change', syncTaggedById);
+                taggedByName.addEventListener('input', syncTaggedById);
+            }
             
             // Function to toggle custom removal reason input
             function toggleCustomRemovalReason() {

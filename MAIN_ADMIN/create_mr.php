@@ -142,6 +142,18 @@ if ($stmt_tf = $conn->prepare("SELECT tag_type, format_code FROM tag_formats WHE
     $stmt_tf->close();
 }
 
+// Ensure database columns for End User exist (assets.end_user, mr_details.end_user)
+try {
+    if ($chk = $conn->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'assets' AND COLUMN_NAME = 'end_user'")) {
+        $chk->execute(); $chk->bind_result($cnt); $chk->fetch(); $chk->close();
+        if ((int)$cnt === 0) { $conn->query("ALTER TABLE assets ADD COLUMN end_user VARCHAR(255) NULL AFTER employee_id"); }
+    }
+    if ($chk2 = $conn->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mr_details' AND COLUMN_NAME = 'end_user'")) {
+        $chk2->execute(); $chk2->bind_result($cnt2); $chk2->fetch(); $chk2->close();
+        if ((int)$cnt2 === 0) { $conn->query("ALTER TABLE mr_details ADD COLUMN end_user VARCHAR(255) NULL AFTER person_accountable"); }
+    }
+} catch (Throwable $e) { /* non-fatal */ }
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Collect form data
     $asset_id_form = isset($_POST['asset_id']) ? (int)$_POST['asset_id'] : null;
@@ -166,6 +178,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $person_accountable_name = $_POST['person_accountable_name']; 
     $employee_id = $_POST['employee_id']; 
+    $end_user = trim($_POST['end_user'] ?? '');
     $acquired_date = $_POST['acquired_date'];
     $counted_date = $_POST['counted_date'];
 
@@ -250,10 +263,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($asset_id) {
         if ($category_id === null) {
             $stmt_update_asset = $conn->prepare("UPDATE assets 
-                SET description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ? 
+                SET description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ?, end_user = ? 
                 WHERE id = ?");
             $stmt_update_asset->bind_param(
-                "ssssssdsi",
+                "ssssssdssi",
                 $description,
                 $model_no,
                 $serial_no,
@@ -262,14 +275,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $unit,
                 $acquisition_cost,
                 $acquisition_date,
+                $end_user,
                 $asset_id
             );
         } else {
             $stmt_update_asset = $conn->prepare("UPDATE assets 
-                SET category = ?, description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ? 
+                SET category = ?, description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ?, end_user = ? 
                 WHERE id = ?");
             $stmt_update_asset->bind_param(
-                "issssssdsi",
+                "issssssdssi",
                 $category_id,
                 $description,
                 $model_no,
@@ -279,6 +293,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $unit,
                 $acquisition_cost,
                 $acquisition_date,
+                $end_user,
                 $asset_id
             );
         }
@@ -370,10 +385,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($existing_mr_check) {
         // UPDATE
         $stmt_upd = $conn->prepare("UPDATE mr_details SET 
-            office_location = ?, description = ?, model_no = ?, serial_no = ?, serviceable = ?, unserviceable = ?, unit_quantity = ?, unit = ?, acquisition_date = ?, acquisition_cost = ?, person_accountable = ?, acquired_date = ?, counted_date = ?, inventory_tag = ?
+            office_location = ?, description = ?, model_no = ?, serial_no = ?, serviceable = ?, unserviceable = ?, unit_quantity = ?, unit = ?, acquisition_date = ?, acquisition_cost = ?, person_accountable = ?, end_user = ?, acquired_date = ?, counted_date = ?, inventory_tag = ?
             WHERE (item_id = ? OR (? IS NULL AND item_id IS NULL)) AND asset_id = ?");
         $stmt_upd->bind_param(
-            "ssssiiisssssssiii",
+            "ssssiiissssssssiii",
             $office_location,
             $description,
             $model_no,
@@ -385,6 +400,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $acquisition_date,
             $acquisition_cost,
             $person_accountable_name,
+            $end_user,
             $acquired_date,
             $counted_date,
             $inventory_tag,
@@ -410,11 +426,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         // INSERT
         $stmt_insert = $conn->prepare("INSERT INTO mr_details 
-            (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, acquired_date, counted_date, inventory_tag) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, end_user, acquired_date, counted_date, inventory_tag) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
         $stmt_insert->bind_param(
-            "iissssiiisssssss",
+            "iissssiiissssssss",
             $mr_item_id,
             $asset_id,
             $office_location,
@@ -428,6 +444,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $acquisition_date,
             $acquisition_cost,
             $person_accountable_name,
+            $end_user,
             $acquired_date,
             $counted_date,
             $inventory_tag
@@ -467,7 +484,7 @@ if ($asset_id) {
     $stmt_offices->close();
 
     // Fetch detailed asset record
-    $stmt_assets = $conn->prepare("SELECT id, asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, additional_images, serial_no, code, property_no, model, brand FROM assets WHERE id = ?");
+    $stmt_assets = $conn->prepare("SELECT id, asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, end_user, red_tagged, last_updated, value, qr_code, type, image, additional_images, serial_no, code, property_no, model, brand FROM assets WHERE id = ?");
     $stmt_assets->bind_param("i", $asset_id);
     $stmt_assets->execute();
     $result_assets = $stmt_assets->get_result();
@@ -886,20 +903,25 @@ if ($baseProp !== '') {
                             </div>
                         </div>
 
-                        <!-- Person Accountable -->
+                        <!-- Person Accountable & End User -->
                         <div class="row mb-3">
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <label for="person_accountable" class="form-label">Person Accountable <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="person_accountable_name" id="person_accountable" required
                                     list="employeeList" placeholder="Type to search employee" autocomplete="off"
                                     value="<?= htmlspecialchars($person_accountable_name) ?>">
-                                <input type="hidden" name="employee_id" id="employee_id"
-                                    value="<?= isset($asset_details['employee_id']) ? htmlspecialchars($asset_details['employee_id']) : '' ?>">
+                                <input type="hidden" name="employee_id" id="employee_id" value="<?= isset($employee_id) ? htmlspecialchars($employee_id) : '' ?>">
                                 <datalist id="employeeList">
                                     <?php foreach ($employees as $emp): ?>
                                         <option data-id="<?= $emp['employee_id'] ?>" value="<?= htmlspecialchars($emp['name']) ?>"></option>
                                     <?php endforeach; ?>
                                 </datalist>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="end_user" class="form-label">End User</label>
+                                <input type="text" class="form-control" name="end_user" id="end_user"
+                                       placeholder="Enter end user"
+                                       value="<?= isset($asset_details['end_user']) ? htmlspecialchars($asset_details['end_user']) : '' ?>">
                             </div>
                         </div>
 
