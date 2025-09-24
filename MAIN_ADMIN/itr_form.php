@@ -7,17 +7,38 @@ if (!isset($_SESSION['user_id'])) {
   exit();
 }
 
-// Fetch latest ITR header
+// Get form ID from URL
+$form_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
+// Fetch latest ITR header or create default values
 $itr = null;
 $itr_sql = "SELECT itr_id, header_image, entity_name, fund_cluster, from_accountable_officer, to_accountable_officer, itr_no, `date`, transfer_type, reason_for_transfer, approved_by, approved_designation, approved_date, released_by, released_designation, released_date, received_by, received_designation, received_date FROM itr_form ORDER BY itr_id DESC LIMIT 1";
 $res = $conn->query($itr_sql);
 if ($res && $res->num_rows > 0) {
   $itr = $res->fetch_assoc();
-}
-
-if (!$itr) {
-  // Stop early with a simple message to avoid extra HTML wrappers
-  exit('No ITR header found. Please configure the ITR header in SYSTEM_ADMIN first.');
+} else {
+  // Create default ITR structure if none exists
+  $itr = [
+    'itr_id' => 0,
+    'header_image' => '',
+    'entity_name' => '',
+    'fund_cluster' => '',
+    'from_accountable_officer' => '',
+    'to_accountable_officer' => '',
+    'itr_no' => '',
+    'date' => date('Y-m-d'),
+    'transfer_type' => '',
+    'reason_for_transfer' => '',
+    'approved_by' => '',
+    'approved_designation' => '',
+    'approved_date' => '',
+    'released_by' => '',
+    'released_designation' => '',
+    'released_date' => '',
+    'received_by' => '',
+    'received_designation' => '',
+    'received_date' => ''
+  ];
 }
 
 $itr_id = (int)$itr['itr_id'];
@@ -47,19 +68,7 @@ if ($emp_q) {
     $employees[] = $er['name'];
   }
 }
-// Build header image URL (stored as filename in itr_form; file saved to ../img/)
-$headerImgUrl = '';
-$headerImgPath = '';
-if (!empty($itr['header_image'])) {
-  $img = trim($itr['header_image']);
-  if (preg_match('#^https?://#', $img) || substr($img, 0, 1) === '/') {
-    $headerImgUrl = $img;
-    $headerImgPath = $img; // For external URLs, assume they exist
-  } else {
-    $headerImgUrl = '../img/' . $img;
-    $headerImgPath = __DIR__ . '/../img/' . $img; // Absolute path for file_exists check
-  }
-}
+// Header image handling - simplified like ics_form.php
 
 ?>
 
@@ -78,27 +87,29 @@ if (!empty($_SESSION['flash'])) {
 
 <form id="itrItemsForm" method="POST" action="save_itr_items.php" enctype="multipart/form-data" class="mb-4">
   <input type="hidden" name="itr_id" value="<?= (int)$itr_id ?>">
+  <input type="hidden" name="form_id" value="<?= (int)$form_id ?>">
 
   <!-- ITR Header -->
   <div class="card shadow-sm mb-3">
     <div class="card-body">
       <!-- ITR Header Image Display -->
-      <div class="text-center mb-3">
-        <?php if (!empty($headerImgUrl) && (preg_match('#^https?://#', $headerImgUrl) || file_exists($headerImgPath))): ?>
-          <img src="<?= htmlspecialchars($headerImgUrl) ?>"
-            alt="ITR Header Image"
-            class="img-fluid rounded"
-            style="max-height:120px; object-fit:contain; border:1px solid #ccc; padding:5px;">
-        <?php else: ?>
-          <div class="border rounded p-2 text-muted" style="height:120px; display:flex; align-items:center; justify-content:center;">
-            No Header Image
-          </div>
-        <?php endif; ?>
-      </div>
+      <div class="mb-3 text-center">
+        <?php if (!empty($itr['header_image'])): ?>
+          <img src="../img/<?= htmlspecialchars($itr['header_image']) ?>"
+              class="img-fluid mb-2"
+              style="max-width: 100%; height: auto; object-fit: contain;">
 
-      <label for="header_image" class="form-label">Header Image</label>
-      <input type="file" id="header_image" name="header_image" class="form-control" accept="image/*">
-      <div class="form-text">Upload a new header image to replace the current one.</div>
+          <!-- Hidden input ensures it gets submitted -->
+          <input type="hidden" name="header_image" value="<?= htmlspecialchars($itr['header_image']) ?>">
+        <?php else: ?>
+          <p class="text-muted">No header image available</p>
+        <?php endif; ?>
+        <div class="mt-3 text-start">
+          <label for="header_image_file" class="form-label fw-semibold">Replace Header Image</label>
+          <input type="file" class="form-control" id="header_image_file" name="header_image_file" accept="image/*">
+          <div class="form-text">Optional. Upload a new header image (JPG, PNG, or WEBP). This will replace the current image.</div>
+        </div>
+      </div>
 
 
       <div class="row g-3 mt-2">

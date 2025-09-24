@@ -12,6 +12,7 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get ITR main info
     $itr_id = intval($_POST['itr_id'] ?? 0);
+    $form_id = intval($_POST['form_id'] ?? 0);
     $entity_name = $_POST['entity_name'] ?? '';
     $fund_cluster = $_POST['fund_cluster'] ?? '';
     $from_accountable_officer = $_POST['from_accountable_officer'] ?? '';
@@ -44,11 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $received_designation = $_POST['received_designation'] ?? '';
     $received_date = $_POST['received_date'] ?? '';
 
-    // Handle optional header image upload
-    $header_image = '';
-    if (isset($_FILES['header_image']) && $_FILES['header_image']['error'] === UPLOAD_ERR_OK) {
-        $tmp = $_FILES['header_image']['tmp_name'];
-        $origName = $_FILES['header_image']['name'];
+    // Handle header image (existing or new upload)
+    $header_image = $_POST['header_image'] ?? ''; // Get existing header image from hidden input
+    
+    // Handle optional header image file upload (overrides existing when provided)
+    if (isset($_FILES['header_image_file']) && $_FILES['header_image_file']['error'] === UPLOAD_ERR_OK) {
+        $tmp = $_FILES['header_image_file']['tmp_name'];
+        $origName = $_FILES['header_image_file']['name'];
         $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
         $allowed = ['jpg','jpeg','png','gif','webp'];
         if (in_array($ext, $allowed, true)) {
@@ -57,6 +60,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (@move_uploaded_file($tmp, $destRel)) {
                 $header_image = $newName;
             }
+        }
+    }
+
+    // Generate unique ITR number if empty
+    if (empty($itr_no)) {
+        $current_year = date('Y');
+        $attempt = 0;
+        do {
+            $attempt++;
+            // Get the latest ITR number to generate next one
+            $latest_query = $conn->query("SELECT itr_no FROM itr_form WHERE itr_no IS NOT NULL AND itr_no != '' ORDER BY itr_id DESC LIMIT 1");
+            if ($latest_query && $latest_query->num_rows > 0) {
+                $latest_row = $latest_query->fetch_assoc();
+                $latest_no = $latest_row['itr_no'];
+                // Extract number from format like "ITR-2024-001"
+                if (preg_match('/ITR-(\d{4})-(\d+)/', $latest_no, $matches)) {
+                    $year = $matches[1];
+                    $num = intval($matches[2]);
+                    if ($year == $current_year) {
+                        $next_num = $num + $attempt;
+                    } else {
+                        $next_num = $attempt; // Reset for new year
+                    }
+                    $itr_no = 'ITR-' . $current_year . '-' . str_pad($next_num, 3, '0', STR_PAD_LEFT);
+                } else {
+                    $itr_no = 'ITR-' . $current_year . '-' . str_pad($attempt, 3, '0', STR_PAD_LEFT);
+                }
+            } else {
+                $itr_no = 'ITR-' . $current_year . '-' . str_pad($attempt, 3, '0', STR_PAD_LEFT);
+            }
+            
+            // Check if this ITR number already exists
+            $check_stmt = $conn->prepare("SELECT COUNT(*) FROM itr_form WHERE itr_no = ?");
+            $check_stmt->bind_param("s", $itr_no);
+            $check_stmt->execute();
+            $check_stmt->bind_result($count);
+            $check_stmt->fetch();
+            $check_stmt->close();
+            
+        } while ($count > 0 && $attempt < 1000); // Prevent infinite loop
+        
+        if ($attempt >= 1000) {
+            // Fallback with timestamp if we can't find a unique number
+            $itr_no = 'ITR-' . $current_year . '-' . date('mdHis');
         }
     }
 
@@ -73,42 +120,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $emp_stmt->close();
     }
 
-    // Update ITR form header fields
+    // Insert new ITR form (always create new)
     if (!empty($header_image)) {
-        $stmt = $conn->prepare("UPDATE itr_form SET 
-            header_image = ?, entity_name = ?, fund_cluster = ?, from_accountable_officer = ?, 
-            to_accountable_officer = ?, itr_no = ?, `date` = ?, transfer_type = ?, 
-            reason_for_transfer = ?, approved_by = ?, approved_designation = ?, approved_date = ?, 
-            released_by = ?, released_designation = ?, released_date = ?, received_by = ?, 
-            received_designation = ?, received_date = ? WHERE itr_id = ?");
+        $stmt = $conn->prepare("INSERT INTO itr_form 
+            (header_image, entity_name, fund_cluster, from_accountable_officer, 
+            to_accountable_officer, itr_no, `date`, transfer_type, 
+            reason_for_transfer, approved_by, approved_designation, approved_date, 
+            released_by, released_designation, released_date, received_by, 
+            received_designation, received_date) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param(
-            "ssssssssssssssssssi",
+            "ssssssssssssssssss",
             $header_image, $entity_name, $fund_cluster, $from_accountable_officer,
             $to_accountable_officer, $itr_no, $date, $transfer_type,
             $reason_for_transfer, $approved_by, $approved_designation, $approved_date,
             $released_by, $released_designation, $released_date, $received_by,
-            $received_designation, $received_date, $itr_id
+            $received_designation, $received_date
         );
     } else {
-        $stmt = $conn->prepare("UPDATE itr_form SET 
-            entity_name = ?, fund_cluster = ?, from_accountable_officer = ?, 
-            to_accountable_officer = ?, itr_no = ?, `date` = ?, transfer_type = ?, 
-            reason_for_transfer = ?, approved_by = ?, approved_designation = ?, approved_date = ?, 
-            released_by = ?, released_designation = ?, released_date = ?, received_by = ?, 
-            received_designation = ?, received_date = ? WHERE itr_id = ?");
+        $stmt = $conn->prepare("INSERT INTO itr_form 
+            (entity_name, fund_cluster, from_accountable_officer, 
+            to_accountable_officer, itr_no, `date`, transfer_type, 
+            reason_for_transfer, approved_by, approved_designation, approved_date, 
+            released_by, released_designation, released_date, received_by, 
+            received_designation, received_date) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param(
-            "sssssssssssssssssi",
+            "sssssssssssssssss",
             $entity_name, $fund_cluster, $from_accountable_officer,
             $to_accountable_officer, $itr_no, $date, $transfer_type,
             $reason_for_transfer, $approved_by, $approved_designation, $approved_date,
             $released_by, $released_designation, $released_date, $received_by,
-            $received_designation, $received_date, $itr_id
+            $received_designation, $received_date
         );
     }
     $stmt->execute();
+    $new_itr_id = $conn->insert_id;
     $stmt->close();
 
-    // Log ITR form update
+    // Log ITR form creation
     $logger = new AuditLogger($conn);
     $user_stmt = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
     $user_stmt->bind_param("i", $_SESSION['user_id']);
@@ -117,13 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $user_result->fetch_assoc()['fullname'] ?? 'Unknown User';
     $user_stmt->close();
     
-    $logger->log($_SESSION['user_id'], $username, 'UPDATE', 'ITR Form', "Updated ITR form: {$itr_no} - {$entity_name}", 'itr_form', $itr_id);
-
-    // Clear existing ITR items for this ITR
-    $delete_stmt = $conn->prepare("DELETE FROM itr_items WHERE itr_id = ?");
-    $delete_stmt->bind_param("i", $itr_id);
-    $delete_stmt->execute();
-    $delete_stmt->close();
+    $logger->log($_SESSION['user_id'], $username, 'CREATE', 'ITR Form', "Created new ITR form: {$itr_no} - {$entity_name}", 'itr_form', $new_itr_id);
 
     // ITR items data
     $date_acquired = $_POST['date_acquired'] ?? [];
@@ -170,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Insert ITR item
         $stmt_items->bind_param(
             "iisssds",
-            $itr_id,
+            $new_itr_id,
             $asset_id,
             $acquired_date,
             $property_no,
@@ -213,7 +257,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'message' => 'ITR has been saved successfully. ' . count($assets_to_update) . ' asset(s) transferred to ' . $to_accountable_officer . '.'
     ];
 
-    header("Location: itr_form.php");
+    // Redirect to forms.php with form_id if available
+    if ($form_id > 0) {
+        header("Location: forms.php?id=" . $form_id);
+    } else {
+        header("Location: itr_form.php");
+    }
     exit();
 }
 
