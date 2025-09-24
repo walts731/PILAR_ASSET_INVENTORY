@@ -28,16 +28,16 @@ $asset_data = [];
 $office_name = '';
 $asset_details = [];
 
-// Fetch categories for dropdown
+// Fetch categories for dropdown (include category_code)
 $categories = [];
-$res_cats = $conn->query("SELECT id, category_name FROM categories ORDER BY category_name");
+$res_cats = $conn->query("SELECT id, category_name, category_code FROM categories ORDER BY category_name");
 if ($res_cats && $res_cats->num_rows > 0) {
     while ($cr = $res_cats->fetch_assoc()) { $categories[] = $cr; }
 }
 
-// Dedicated query: fetch ALL categories independently for the Category dropdown
+// Dedicated query: fetch ALL categories independently for the Category dropdown (include category_code)
 $all_categories = [];
-$res_all_categories = $conn->query("SELECT id, category_name FROM categories ORDER BY category_name");
+$res_all_categories = $conn->query("SELECT id, category_name, category_code FROM categories ORDER BY category_name");
 if ($res_all_categories && $res_all_categories->num_rows > 0) {
     while ($rowc = $res_all_categories->fetch_assoc()) { $all_categories[] = $rowc; }
 }
@@ -128,6 +128,19 @@ if ($fmt_row = $fmt_res->fetch_assoc()) {
     $inventory_tag = '';
 }
 $fmt_stmt->close();
+
+// Fetch format patterns for Property No and Code from tag_formats
+$property_no_format = '';
+$code_format = '';
+if ($stmt_tf = $conn->prepare("SELECT tag_type, format_code FROM tag_formats WHERE tag_type IN ('Property No','Code')")) {
+    $stmt_tf->execute();
+    $res_tf = $stmt_tf->get_result();
+    while ($r = $res_tf->fetch_assoc()) {
+        if ($r['tag_type'] === 'Property No') { $property_no_format = trim((string)$r['format_code']); }
+        if ($r['tag_type'] === 'Code') { $code_format = trim((string)$r['format_code']); }
+    }
+    $stmt_tf->close();
+}
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Collect form data
@@ -229,18 +242,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Property tags are stored on the item-level assets table now
 
-    // If property_no wasn't posted for some reason, compute a fallback
-    if (trim((string)$property_no) === '') {
-        $basePropPost = isset($asset_details['property_no']) ? trim((string)$asset_details['property_no']) : '';
-        if ($basePropPost !== '') {
-            $property_no = $basePropPost;
-        } elseif (!empty($auto_property_no)) {
-            $property_no = $auto_property_no;
-        } else {
-            $yr = date('Y');
-            $property_no = 'MR-' . $yr . '-' . str_pad((string)($asset_id_form ?? 0), 5, '0', STR_PAD_LEFT);
-        }
-    }
+    // No auto-generation of property_no; keep whatever user posted
+
+    // No backend auto-generation of code; UI will propose a pattern which user can edit
 
     // --- NEW: Update other asset details to complete the asset record ---
     if ($asset_id) {
@@ -547,15 +551,12 @@ if ($asset_id && $existing_mr_check) {
     $mr_unserviceable = 0;
 }
 
-// Compute system-generated Property No for the form
+// Determine default property number for display: use existing, else the configured Property No format
 $baseProp = isset($asset_details['property_no']) ? trim((string)$asset_details['property_no']) : '';
 if ($baseProp !== '') {
     $generated_property_no = $baseProp;
-} elseif (!empty($auto_property_no)) {
-    $generated_property_no = $auto_property_no;
 } else {
-    $yr = date('Y');
-    $generated_property_no = 'MR-' . $yr . '-' . str_pad((string)($asset_id ?? 0), 5, '0', STR_PAD_LEFT);
+    $generated_property_no = $property_no_format; // fetched from tag_formats
 }
 
 ?>
@@ -670,12 +671,13 @@ if ($baseProp !== '') {
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="code" class="form-label">Code</label>
-                                <input type="text" class="form-control" name="code"
+                                <input type="text" class="form-control" name="code" id="code"
                                        value="<?= isset($asset_details['code']) ? htmlspecialchars($asset_details['code']) : '' ?>">
                             </div>
                             <div class="col-md-6">
                                 <label for="property_no" class="form-label">Property No</label>
-                                <input type="text" class="form-control" name="property_no" readonly
+                                <input type="text" class="form-control" name="property_no" id="property_no"
+                                       placeholder="<?= htmlspecialchars($property_no_format ?: 'YYYY-CODE-0001') ?>"
                                        value="<?= htmlspecialchars($generated_property_no) ?>">
                             </div>
                         </div>
@@ -692,7 +694,7 @@ if ($baseProp !== '') {
                                 <select name="category_id" id="category_id" class="form-select" required>
                                     <option value="">Select Category</option>
                                     <?php foreach ($all_categories as $cat): ?>
-                                        <option value="<?= (int)$cat['id'] ?>" <?= (isset($asset_details['category']) && (int)$asset_details['category'] === (int)$cat['id']) ? 'selected' : '' ?>>
+                                        <option value="<?= (int)$cat['id'] ?>" data-code="<?= htmlspecialchars($cat['category_code'] ?? '') ?>" <?= (isset($asset_details['category']) && (int)$asset_details['category'] === (int)$cat['id']) ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($cat['category_name']) ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -1044,9 +1046,65 @@ if ($baseProp !== '') {
                 img.style.transform = 'scale(2)';
                 img.style.cursor = 'zoom-out';
                 zoomIcon.className = 'bi bi-zoom-out';
+
+<script>
+    (function() {
+        const categorySelect = document.getElementById('category_id');
+        const codeInput = document.getElementById('code');
+        // PHP-provided format for Code tag type
+        const codeFormatTemplate = <?= json_encode($code_format ?? '') ?>;
+
+        function buildCodeFromCategory(catCode) {
+            if (!catCode) return '';
+            const year = new Date().getFullYear().toString();
+            // Default sequence placeholder
+            const seq = '0001';
+
+            let template = (codeFormatTemplate || '').trim();
+            let output = '';
+            const hasBarePlaceholders = template.includes('YYYY') || template.includes('CODE') || template.includes('XXXX');
+            const hasCurlyPlaceholders = template.includes('{YYYY}') || template.includes('{CODE}') || template.includes('{XXXX}');
+            if (hasBarePlaceholders || hasCurlyPlaceholders) {
+                // Replace both bare and curly-braced placeholders
+                output = template
+                    .replace(/\{YYYY\}|YYYY/g, year)
+                    .replace(/\{CODE\}|CODE/g, catCode)
+                    .replace(/\{XXXX\}|XXXX/g, seq);
+            } else if (template.length > 0) {
+                // Treat as static prefix between year and code
+                // Result: YYYY-PREFIX-CODE-XXXX
+                output = `${year}-${template}-${catCode}-${seq}`;
+            } else {
+                // Fallback default
+                output = `${year}-${catCode}-${seq}`;
+            }
+            return output;
+        }
+
+        function maybePrefillCode() {
+            const selected = categorySelect.options[categorySelect.selectedIndex];
+            if (!selected) return;
+            const catCode = selected.getAttribute('data-code') || '';
+            if ((codeInput.value || '').trim() === '' && catCode) {
+                codeInput.value = buildCodeFromCategory(catCode);
             }
         }
-    </script>
+
+        if (categorySelect && codeInput) {
+            categorySelect.addEventListener('change', function() {
+                const selected = this.options[this.selectedIndex];
+                const catCode = selected ? (selected.getAttribute('data-code') || '') : '';
+                if (catCode) {
+                    codeInput.value = buildCodeFromCategory(catCode);
+                }
+            });
+            // Prefill on first load if empty
+            document.addEventListener('DOMContentLoaded', maybePrefillCode);
+            // Also attempt immediately in case DOMContentLoaded has fired
+            maybePrefillCode();
+        }
+    })();
+</script>
 
 </body>
 
