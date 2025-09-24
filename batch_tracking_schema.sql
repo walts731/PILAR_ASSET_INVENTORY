@@ -124,33 +124,66 @@ ALTER TABLE `borrow_requests`
   ADD COLUMN IF NOT EXISTS `batch_item_id` INT(11) DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS `expiry_date` DATE DEFAULT NULL;
 
--- Add foreign key constraints after all tables are created
-ALTER TABLE `batches`
-  ADD CONSTRAINT IF NOT EXISTS `fk_batch_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets`(`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT IF NOT EXISTS `fk_batch_category` FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT IF NOT EXISTS `fk_batch_creator` FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE SET NULL;
+-- Drop existing foreign key constraints before recreating them
+-- Note: This block is safe to run even if the constraints don't exist.
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+
+ALTER TABLE `batches` 
+    DROP FOREIGN KEY IF EXISTS `fk_batch_asset`,
+    DROP FOREIGN KEY IF EXISTS `fk_batch_category`,
+    DROP FOREIGN KEY IF EXISTS `fk_batch_creator`;
 
 ALTER TABLE `batch_items`
-  ADD CONSTRAINT IF NOT EXISTS `fk_batch_item_batch` FOREIGN KEY (`batch_id`) REFERENCES `batches`(`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT IF NOT EXISTS `fk_batch_item_office` FOREIGN KEY (`office_id`) REFERENCES `offices`(`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT IF NOT EXISTS `fk_batch_item_employee` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL;
+    DROP FOREIGN KEY IF EXISTS `fk_batch_item_batch`,
+    DROP FOREIGN KEY IF EXISTS `fk_batch_item_office`,
+    DROP FOREIGN KEY IF EXISTS `fk_batch_item_employee`;
 
 ALTER TABLE `batch_transactions`
-  ADD CONSTRAINT IF NOT EXISTS `fk_transaction_batch` FOREIGN KEY (`batch_id`) REFERENCES `batches`(`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT IF NOT EXISTS `fk_transaction_item` FOREIGN KEY (`batch_item_id`) REFERENCES `batch_items`(`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT IF NOT EXISTS `fk_transaction_from_office` FOREIGN KEY (`from_office_id`) REFERENCES `offices`(`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT IF NOT EXISTS `fk_transaction_to_office` FOREIGN KEY (`to_office_id`) REFERENCES `offices`(`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT IF NOT EXISTS `fk_transaction_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT IF NOT EXISTS `fk_transaction_recipient` FOREIGN KEY (`recipient_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL;
+    DROP FOREIGN KEY IF EXISTS `fk_transaction_batch`,
+    DROP FOREIGN KEY IF EXISTS `fk_transaction_item`,
+    DROP FOREIGN KEY IF EXISTS `fk_transaction_from_office`,
+    DROP FOREIGN KEY IF EXISTS `fk_transaction_to_office`,
+    DROP FOREIGN KEY IF EXISTS `fk_transaction_user`,
+    DROP FOREIGN KEY IF EXISTS `fk_transaction_recipient`;
 
 ALTER TABLE `batch_receipts`
-  ADD CONSTRAINT IF NOT EXISTS `fk_receipt_batch` FOREIGN KEY (`batch_id`) REFERENCES `batches`(`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT IF NOT EXISTS `fk_receipt_receiver` FOREIGN KEY (`received_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT IF NOT EXISTS `fk_receipt_checker` FOREIGN KEY (`quality_check_by`) REFERENCES `users`(`id`) ON DELETE SET NULL;
+    DROP FOREIGN KEY IF EXISTS `fk_receipt_batch`,
+    DROP FOREIGN KEY IF EXISTS `fk_receipt_receiver`,
+    DROP FOREIGN KEY IF EXISTS `fk_receipt_checker`;
 
 ALTER TABLE `borrow_requests`
-  ADD CONSTRAINT IF NOT EXISTS `fk_borrow_batch` FOREIGN KEY (`batch_id`) REFERENCES `batches`(`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT IF NOT EXISTS `fk_borrow_batch_item` FOREIGN KEY (`batch_item_id`) REFERENCES `batch_items`(`id`) ON DELETE SET NULL;
+    DROP FOREIGN KEY IF EXISTS `fk_borrow_batch`,
+    DROP FOREIGN KEY IF EXISTS `fk_borrow_batch_item`;
+
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+
+-- Add foreign key constraints after all tables are created
+ALTER TABLE `batches`
+  ADD CONSTRAINT `fk_batch_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets`(`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_batch_category` FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_batch_creator` FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE SET NULL;
+
+ALTER TABLE `batch_items`
+  ADD CONSTRAINT `fk_batch_item_batch` FOREIGN KEY (`batch_id`) REFERENCES `batches`(`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_batch_item_office` FOREIGN KEY (`office_id`) REFERENCES `offices`(`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_batch_item_employee` FOREIGN KEY (`employee_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL;
+
+ALTER TABLE `batch_transactions`
+  ADD CONSTRAINT `fk_transaction_batch` FOREIGN KEY (`batch_id`) REFERENCES `batches`(`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_transaction_item` FOREIGN KEY (`batch_item_id`) REFERENCES `batch_items`(`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_transaction_from_office` FOREIGN KEY (`from_office_id`) REFERENCES `offices`(`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_transaction_to_office` FOREIGN KEY (`to_office_id`) REFERENCES `offices`(`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_transaction_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_transaction_recipient` FOREIGN KEY (`recipient_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL;
+
+ALTER TABLE `batch_receipts`
+  ADD CONSTRAINT `fk_receipt_batch` FOREIGN KEY (`batch_id`) REFERENCES `batches`(`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_receipt_receiver` FOREIGN KEY (`received_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_receipt_checker` FOREIGN KEY (`quality_check_by`) REFERENCES `users`(`id`) ON DELETE SET NULL;
+
+ALTER TABLE `borrow_requests`
+  ADD CONSTRAINT `fk_borrow_batch` FOREIGN KEY (`batch_id`) REFERENCES `batches`(`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_borrow_batch_item` FOREIGN KEY (`batch_item_id`) REFERENCES `batch_items`(`id`) ON DELETE SET NULL;
 
 -- Create view for batch summary
 CREATE OR REPLACE VIEW `batch_summary` AS
