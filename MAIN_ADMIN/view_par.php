@@ -57,6 +57,25 @@ $stmt->close();
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="css/dashboard.css" />
+  <style>
+    /* Print styles */
+    @media print {
+      @page { size: A4 portrait; margin: 12mm; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      /* Hide navigation, buttons, alerts, and elements explicitly marked as no-print */
+      .sidebar, .topbar, .navbar, .btn, .alert, .no-print { display: none !important; }
+      /* Remove card chrome for clean print */
+      .card, .card-body, .container, .shadow, .shadow-sm { box-shadow: none !important; border: none !important; }
+      /* Make form fields print like plain text */
+      input, select, textarea { border: 0 !important; outline: 0 !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; }
+      .input-group, .input-group-text { border: 0 !important; background: transparent !important; box-shadow: none !important; }
+      /* Tables */
+      table { border-color: #000 !important; }
+      thead.table-secondary { background: #e9ecef !important; -webkit-print-color-adjust: exact; }
+      /* Hide action column */
+      th.no-print, td.no-print { display: none !important; }
+    }
+  </style>
 </head>
 
 <body>
@@ -78,6 +97,12 @@ $stmt->close();
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       <?php endif; ?>
+
+      <div class="d-flex justify-content-end gap-2 mb-3 no-print">
+        <a href="generate_par_pdf.php?id=<?= (int)$par['par_id'] ?>" target="_blank" class="btn btn-outline-dark">
+          <i class="bi bi-printer"></i> Print
+        </a>
+      </div>
 
       <form action="save_par_items.php" method="POST">
         <input type="hidden" name="existing_par_id" value="<?= (int)$par['par_id'] ?>" />
@@ -131,7 +156,7 @@ $stmt->close();
                   <th>Description</th>
                   <th>Property No</th>
                   <th>Date Acquired</th>
-                  <th>Action</th>
+                  <th class="no-print">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -166,7 +191,7 @@ $stmt->close();
                         <input type="date" class="form-control form-control-sm text-center" name="items[<?= (int)$item['item_id'] ?>][date_acquired]" value="<?= htmlspecialchars($item['date_acquired']) ?>">
                         <input type="hidden" name="items[<?= (int)$item['item_id'] ?>][asset_id]" value="<?= htmlspecialchars($item['asset_id']) ?>">
                       </td>
-                      <td class="text-nowrap">
+                      <td class="text-nowrap no-print">
                         <a href="create_mr.php?asset_id=<?= htmlspecialchars($item['asset_id']) ?>&par_id=<?= htmlspecialchars($par['par_id']) ?>&form_id=<?= htmlspecialchars($par_form_id) ?>" class="btn btn-primary btn-sm">
                           Create Property Tag
                         </a>

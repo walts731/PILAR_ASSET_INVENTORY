@@ -113,19 +113,21 @@ if ($mr_item_id) {
     }
     $stmt_check2->close();
 }
-// Generate Inventory Tag
-$inventory_tag = '';
-if ($asset_id) {
-    // Example logic for generating an inventory tag
-    $prefix = "PS"; // Asset type prefix
-    $size = "5S"; // Size or category, you can modify this based on your asset's size
-    $department_code = "03"; // Department or office number
-    $factory_code = "F02"; // Factory or location code
-    $unique_id = str_pad((string)$asset_id, 2, "0", STR_PAD_LEFT); // Use asset_id for the last part of the tag
 
-    // Concatenate to form the full inventory tag
-    $inventory_tag = "No. " . $prefix . "-" . $size . "-" . $department_code . "-" . $factory_code . "-" . $unique_id;
+// Determine Inventory Tag by fetching format_code for 'Property Tag' from tag_formats
+$inventory_tag = '';
+$fmt_stmt = $conn->prepare("SELECT format_code FROM tag_formats WHERE tag_type = ? LIMIT 1");
+$tag_type_prop = 'Property Tag';
+$fmt_stmt->bind_param('s', $tag_type_prop);
+$fmt_stmt->execute();
+$fmt_res = $fmt_stmt->get_result();
+if ($fmt_row = $fmt_res->fetch_assoc()) {
+    $inventory_tag = $fmt_row['format_code'];
+} else {
+    // If not configured, leave as empty string
+    $inventory_tag = '';
 }
+$fmt_stmt->close();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Collect form data
@@ -146,16 +148,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $acquisition_date = $_POST['acquisition_date'];
     $acquisition_cost = $_POST['acquisition_cost'];
 
-    // Generate inventory_tag for this POST scope as well (based on asset_id)
-    $inventory_tag_gen = '';
-    if (!empty($asset_id_form)) {
-        $prefix = "PS"; // Asset type prefix
-        $size = "5S";   // Category/size code
-        $department_code = "03";
-        $factory_code = "F02";
-        $unique_id = str_pad((string)$asset_id_form, 2, "0", STR_PAD_LEFT);
-        $inventory_tag_gen = "No. " . $prefix . "-" . $size . "-" . $department_code . "-" . $factory_code . "-" . $unique_id;
-    }
+    // Use the fetched format_code as the inventory_tag for saving as well
+    $inventory_tag_gen = $inventory_tag;
 
     $person_accountable_name = $_POST['person_accountable_name']; 
     $employee_id = $_POST['employee_id']; 

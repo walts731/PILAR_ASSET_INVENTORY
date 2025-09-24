@@ -27,21 +27,7 @@ if ($form_id) {
     $stmt->close();
 }
 
-// ✅ Auto-generate PAR No if creating a new form
-if (!$form_id || empty($par_data['par_no'])) {
-    $latest = $conn->query("SELECT par_no FROM par_form ORDER BY id DESC LIMIT 1");
-    if ($latest && $latest->num_rows > 0) {
-        $last = $latest->fetch_assoc();
-        if (preg_match('/PAR-(\d+)/', $last['par_no'], $matches)) {
-            $nextNum = str_pad(((int)$matches[1] + 1), 4, '0', STR_PAD_LEFT);
-            $par_data['par_no'] = "PAR-" . $nextNum;
-        } else {
-            $par_data['par_no'] = "PAR-0001";
-        }
-    } else {
-        $par_data['par_no'] = "PAR-0001";
-    }
-}
+// Do not auto-generate PAR No. If editing and value exists, it will be shown; otherwise leave blank or prefill elsewhere.
 ?>
 
 <div class="container mt-3">
@@ -95,11 +81,11 @@ if (!$form_id || empty($par_data['par_no'])) {
                         <input type="text" name="fund_cluster" class="form-control"
                             value="<?= htmlspecialchars($par_data['fund_cluster']) ?>">
                     </div>
-                    <!-- PAR Number (Auto-filled) -->
+                    <!-- PAR Number (Prefilled with latest when editing; editable) -->
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-semibold">PAR No.</label>
                         <input type="text" name="par_no" class="form-control"
-                            value="<?= htmlspecialchars($par_data['par_no']) ?>" readonly>
+                            value="<?= htmlspecialchars($par_data['par_no']) ?>">
                     </div>
                 </div>
             </div>

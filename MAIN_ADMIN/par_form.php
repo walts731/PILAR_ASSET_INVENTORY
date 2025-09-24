@@ -22,21 +22,11 @@ $par_data = [
     'date_received_right' => date('Y-m-d')
 ];
 
-// ✅ Always fetch the latest record
+// ✅ Always fetch the latest record and prefill PAR No (editable, no auto-increment)
 $latest = $conn->query("SELECT * FROM par_form ORDER BY id DESC LIMIT 1");
 if ($latest && $latest->num_rows > 0) {
     $par_data = $latest->fetch_assoc();
-
-    // Always auto-generate a new PAR number
-    if (preg_match('/PAR-(\d+)/', $par_data['par_no'], $matches)) {
-        $nextNum = str_pad(((int)$matches[1] + 1), 4, '0', STR_PAD_LEFT);
-        $par_data['par_no'] = "PAR-" . $nextNum;
-    } else {
-        $par_data['par_no'] = "PAR-0001";
-    }
-} else {
-    // No previous record → start fresh
-    $par_data['par_no'] = "PAR-0001";
+    // Keep par_no exactly as stored
 }
 
 // Fetch offices for dropdown
@@ -161,7 +151,7 @@ while ($row = $unit_query->fetch_assoc()) {
                     <td>
                         <label class="form-label fw-semibold mb-0">PAR No.</label>
                         <input type="text" name="par_no" class="form-control"
-                            value="<?= htmlspecialchars($par_data['par_no']) ?>" readonly>
+                            value="<?= htmlspecialchars($par_data['par_no']) ?>">
 
                     </td>
                 </tr>

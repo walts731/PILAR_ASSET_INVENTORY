@@ -32,17 +32,15 @@ $ics_data = [
     'created_at' => ''
 ];
 
-// If we have previous records, use the latest for header/footer defaults
+// If we have previous records, use the latest for header/footer defaults and prefill ics_no
 if ($result && $result->num_rows > 0) {
     $latest_record = $result->fetch_assoc();
-    
-    // Use latest record data for header/footer fields, but generate new ICS number
     $ics_data = [
         'id' => null, // Always null for new forms
         'header_image' => $latest_record['header_image'],
         'entity_name' => $latest_record['entity_name'],
         'fund_cluster' => $latest_record['fund_cluster'],
-        'ics_no' => '', // Will be generated fresh
+        'ics_no' => $latest_record['ics_no'], // Prefill latest ICS no (editable)
         'received_from_name' => $latest_record['received_from_name'],
         'received_from_position' => $latest_record['received_from_position'],
         'received_by_name' => $latest_record['received_by_name'],
@@ -74,31 +72,7 @@ if ($result && $result->num_rows > 0) {
     }
 }
 
-function generateICSNo($conn)
-{
-    $year = date("Y");
-
-    // Query the latest ics_no for this year
-    $sql = "SELECT ics_no 
-            FROM ics_form 
-            WHERE ics_no LIKE 'ICS-$year-%' 
-            ORDER BY id DESC LIMIT 1";
-    $result = $conn->query($sql);
-
-    if ($result && $row = $result->fetch_assoc()) {
-        // Extract the last number
-        $lastNo = intval(substr($row['ics_no'], -4));
-        $nextNo = str_pad($lastNo + 1, 4, "0", STR_PAD_LEFT);
-    } else {
-        // First number of the year
-        $nextNo = "0001";
-    }
-
-    return "ICS-$year-$nextNo";
-}
-
-// Generate the next ICS number
-$new_ics_no = generateICSNo($conn);
+// Do not auto-generate ICS number. Prefill with latest value (editable). If no previous record, leave empty.
 
 
 ?>
@@ -184,7 +158,7 @@ $new_ics_no = generateICSNo($conn);
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">ICS NO.</label>
                     <input type="text" class="form-control" name="ics_no"
-                        value="<?= htmlspecialchars($new_ics_no) ?>" readonly>
+                        value="<?= htmlspecialchars($ics_data['ics_no']) ?>">
                 </div>
 
             </div>
