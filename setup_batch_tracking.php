@@ -77,9 +77,16 @@ if (file_exists($schema_file)) {
                 echo "<span style='color: green;'>✓</span> " . substr(str_replace("\n", " ", $statement), 0, 100) . "...<br>";
             } else {
                 $error_count++;
-                $errors[] = mysqli_error($conn) . " (Statement: " . substr($statement, 0, 100) . "...)";
-                echo "<span style='color: red;'>✗</span> " . substr(str_replace("\n", " ", $statement), 0, 100) . "...<br>";
-                echo "<span style='color: red; font-size: 12px;'>Error: " . mysqli_error($conn) . "</span><br>";
+                $mysql_error = mysqli_error($conn);
+                // Check if this is a duplicate constraint error (errno 121 or error message contains "Duplicate key")
+                if (strpos($mysql_error, "Duplicate key") !== false || mysqli_errno($conn) == 121) {
+                    echo "<span style='color: orange;'>⚠</span> " . substr(str_replace("\n", " ", $statement), 0, 100) . "...<br>";
+                    echo "<span style='color: orange; font-size: 12px;'>Warning: Constraint already exists (this is normal if running setup multiple times)</span><br>";
+                } else {
+                    $errors[] = $mysql_error . " (Statement: " . substr($statement, 0, 100) . "...)";
+                    echo "<span style='color: red;'>✗</span> " . substr(str_replace("\n", " ", $statement), 0, 100) . "...<br>";
+                    echo "<span style='color: red; font-size: 12px;'>Error: " . $mysql_error . "</span><br>";
+                }
             }
         } catch (Exception $e) {
             $error_count++;
