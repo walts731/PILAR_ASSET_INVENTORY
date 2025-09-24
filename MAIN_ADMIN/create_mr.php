@@ -129,6 +129,19 @@ if ($fmt_row = $fmt_res->fetch_assoc()) {
 }
 $fmt_stmt->close();
 
+// Fetch format prefixes for Property No and Code from tag_formats
+$property_no_prefix = '';
+$code_prefix = '';
+if ($stmt_tf = $conn->prepare("SELECT tag_type, format_code FROM tag_formats WHERE tag_type IN ('Property No','Code')")) {
+    $stmt_tf->execute();
+    $res_tf = $stmt_tf->get_result();
+    while ($r = $res_tf->fetch_assoc()) {
+        if ($r['tag_type'] === 'Property No') { $property_no_prefix = trim((string)$r['format_code']); }
+        if ($r['tag_type'] === 'Code') { $code_prefix = trim((string)$r['format_code']); }
+    }
+    $stmt_tf->close();
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Collect form data
     $asset_id_form = isset($_POST['asset_id']) ? (int)$_POST['asset_id'] : null;
@@ -229,7 +242,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Property tags are stored on the item-level assets table now
 
-    // If property_no wasn't posted for some reason, compute a fallback
+    // If property_no wasn't posted for some reason, compute using tag_formats 'Property No' pattern PREFIX-YEAR-SEQ
     if (trim((string)$property_no) === '') {
         $basePropPost = isset($asset_details['property_no']) ? trim((string)$asset_details['property_no']) : '';
         if ($basePropPost !== '') {
@@ -238,7 +251,54 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $property_no = $auto_property_no;
         } else {
             $yr = date('Y');
-            $property_no = 'MR-' . $yr . '-' . str_pad((string)($asset_id_form ?? 0), 5, '0', STR_PAD_LEFT);
+            $pn_prefix = $property_no_prefix !== '' ? $property_no_prefix : 'MR';
+            $like = $pn_prefix . '-' . $yr . '-%';
+            $stmt_seq = $conn->prepare("SELECT property_no FROM assets WHERE property_no LIKE ? ORDER BY property_no DESC LIMIT 1");
+            $stmt_seq->bind_param('s', $like);
+            $next = 1;
+            if ($stmt_seq->execute()) {
+                $res_seq = $stmt_seq->get_result();
+                if ($res_seq && ($rowSeq = $res_seq->fetch_assoc())) {
+                    if (preg_match('/(\d+)$/', $rowSeq['property_no'], $m)) {
+                        $next = (int)$m[1] + 1;
+                    }
+                }
+            }
+            $stmt_seq->close();
+            $property_no = sprintf('%s-%s-%05d', $pn_prefix, $yr, $next);
+        }
+    }
+
+    // Auto-generate Code if empty using category_code and optional tag_formats 'Code' prefix
+    if (trim((string)$code) === '' && $category_id !== null) {
+        $cat_code = '';
+        if ($stmt_cat = $conn->prepare("SELECT category_code FROM categories WHERE id = ?")) {
+            $stmt_cat->bind_param('i', $category_id);
+            $stmt_cat->execute();
+            $res_cat = $stmt_cat->get_result();
+            if ($res_cat && ($rc = $res_cat->fetch_assoc())) {
+                $cat_code = trim((string)($rc['category_code'] ?? ''));
+            }
+            $stmt_cat->close();
+        }
+        if ($cat_code !== '') {
+            $yr = date('Y');
+            $base_prefix = $cat_code;
+            if ($code_prefix !== '') { $base_prefix = $code_prefix . '-' . $cat_code; }
+            $like = $base_prefix . '-' . $yr . '-%';
+            $stmt_cseq = $conn->prepare("SELECT code FROM assets WHERE code LIKE ? ORDER BY code DESC LIMIT 1");
+            $stmt_cseq->bind_param('s', $like);
+            $next = 1;
+            if ($stmt_cseq->execute()) {
+                $res_cseq = $stmt_cseq->get_result();
+                if ($res_cseq && ($rowC = $res_cseq->fetch_assoc())) {
+                    if (preg_match('/(\d+)$/', $rowC['code'], $m2)) {
+                        $next = (int)$m2[1] + 1;
+                    }
+                }
+            }
+            $stmt_cseq->close();
+            $code = sprintf('%s-%s-%05d', $base_prefix, $yr, $next);
         }
     }
 
@@ -547,7 +607,7 @@ if ($asset_id && $existing_mr_check) {
     $mr_unserviceable = 0;
 }
 
-// Compute system-generated Property No for the form
+// Compute system-generated Property No for the form (display)
 $baseProp = isset($asset_details['property_no']) ? trim((string)$asset_details['property_no']) : '';
 if ($baseProp !== '') {
     $generated_property_no = $baseProp;
@@ -555,7 +615,21 @@ if ($baseProp !== '') {
     $generated_property_no = $auto_property_no;
 } else {
     $yr = date('Y');
-    $generated_property_no = 'MR-' . $yr . '-' . str_pad((string)($asset_id ?? 0), 5, '0', STR_PAD_LEFT);
+    $pn_prefix = $property_no_prefix !== '' ? $property_no_prefix : 'MR';
+    $like = $pn_prefix . '-' . $yr . '-%';
+    $stmt_seq2 = $conn->prepare("SELECT property_no FROM assets WHERE property_no LIKE ? ORDER BY property_no DESC LIMIT 1");
+    $stmt_seq2->bind_param('s', $like);
+    $next2 = 1;
+    if ($stmt_seq2->execute()) {
+        $res_seq2 = $stmt_seq2->get_result();
+        if ($res_seq2 && ($rowS2 = $res_seq2->fetch_assoc())) {
+            if (preg_match('/(\d+)$/', $rowS2['property_no'], $m3)) {
+                $next2 = (int)$m3[1] + 1;
+            }
+        }
+    }
+    $stmt_seq2->close();
+    $generated_property_no = sprintf('%s-%s-%05d', $pn_prefix, $yr, $next2);
 }
 
 ?>

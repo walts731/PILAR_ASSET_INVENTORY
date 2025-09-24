@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $created_by = (int)($_SESSION['user_id'] ?? 0);
 
         // Basic validation
-        $valid_types = ['Red Tag', 'Property Tag'];
+        $valid_types = ['Red Tag', 'Property Tag', 'Property No', 'Code'];
         if (!in_array($tag_type, $valid_types, true)) {
             $message = 'Invalid tag type.'; $message_type = 'danger';
         } elseif ($format_code === '') {
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (int)($_POST['id'] ?? 0);
         $tag_type = trim($_POST['tag_type'] ?? '');
         $format_code = trim($_POST['format_code'] ?? '');
-        $valid_types = ['Red Tag', 'Property Tag'];
+        $valid_types = ['Red Tag', 'Property Tag', 'Property No', 'Code'];
         if ($id <= 0) {
             $message = 'Invalid record selected.'; $message_type = 'danger';
         } elseif (!in_array($tag_type, $valid_types, true)) {
@@ -205,6 +205,8 @@ if ($result) {
                                 <option value="">Select...</option>
                                 <option value="Red Tag">Red Tag</option>
                                 <option value="Property Tag">Property Tag</option>
+                                <option value="Property No">Property No</option>
+                                <option value="Code">Code</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -262,6 +264,8 @@ if ($result) {
                             <select name="tag_type" id="editType" class="form-select" required>
                                 <option value="Red Tag">Red Tag</option>
                                 <option value="Property Tag">Property Tag</option>
+                                <option value="Property No">Property No</option>
+                                <option value="Code">Code</option>
                             </select>
                         </div>
                         <div class="mb-3">
