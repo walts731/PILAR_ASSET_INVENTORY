@@ -22,8 +22,8 @@ $stmt->fetch();
 $stmt->close();
 
 // Pagination and filtering
-$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 25;
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 25;
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $limit;
 
 $search = isset($_GET['search']) ? $_GET['search'] : '';
@@ -369,6 +369,9 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                                 <?php
                                 $total_pages = ceil($total_records / $limit);
                                 $query_params = $_GET;
+                                
+                                // Ensure $page is an integer
+                                $page = (int)$page;
                                 
                                 // Previous button
                                 if ($page > 1):
