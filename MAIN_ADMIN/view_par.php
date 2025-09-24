@@ -18,8 +18,9 @@ $par_form_id = $_GET['form_id'] ?? '';
 // Fetch PAR form details
 $sql = "SELECT f.id AS par_id, f.header_image, f.entity_name, f.fund_cluster, f.par_no,
                f.position_office_left, f.position_office_right,
+               f.received_by_name, f.issued_by_name,
                f.date_received_left, f.date_received_right, f.created_at,
-               o.office_name
+               f.office_id, o.office_name
         FROM par_form f
         LEFT JOIN offices o ON f.office_id = o.id
         WHERE f.id = ?";
@@ -192,9 +193,11 @@ $stmt->close();
                         <input type="hidden" name="items[<?= (int)$item['item_id'] ?>][asset_id]" value="<?= htmlspecialchars($item['asset_id']) ?>">
                       </td>
                       <td class="text-nowrap no-print">
-                        <a href="create_mr.php?asset_id=<?= htmlspecialchars($item['asset_id']) ?>&par_id=<?= htmlspecialchars($par['par_id']) ?>&form_id=<?= htmlspecialchars($par_form_id) ?>" class="btn btn-primary btn-sm">
-                          Create Property Tag
-                        </a>
+                        <?php if (!empty($par['office_id']) && intval($par['office_id']) > 0 && !empty($par['office_name']) && strtoupper(trim($par['office_name'])) !== 'N/A'): ?>
+                          <a href="create_mr.php?asset_id=<?= htmlspecialchars($item['asset_id']) ?>&par_id=<?= htmlspecialchars($par['par_id']) ?>&form_id=<?= htmlspecialchars($par_form_id) ?>" class="btn btn-primary btn-sm">
+                            Create Property Tag
+                          </a>
+                        <?php endif; ?>
                       </td>
                     </tr>
                   <?php endforeach; ?>
@@ -210,13 +213,17 @@ $stmt->close();
           <!-- Signatories -->
           <div class="row mt-4">
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Received by (Left) - Position</label>
+              <label class="form-label fw-semibold">Received by - Signature over Printed Name</label>
+              <input type="text" class="form-control" name="received_by_name" value="<?= htmlspecialchars($par['received_by_name'] ?? '') ?>" placeholder="Signature over Printed Name">
+              <label class="form-label mt-2">Position / Office</label>
               <input type="text" class="form-control" name="position_office_left" value="<?= htmlspecialchars($par['position_office_left'] ?? '') ?>">
               <label class="form-label mt-2">Date</label>
               <input type="date" class="form-control" name="date_received_left" value="<?= htmlspecialchars($par['date_received_left'] ?? '') ?>">
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Issued by (Right) - Position</label>
+              <label class="form-label fw-semibold">Issued by - Signature over Printed Name</label>
+              <input type="text" class="form-control" name="issued_by_name" value="<?= htmlspecialchars($par['issued_by_name'] ?? '') ?>" placeholder="Signature over Printed Name">
+              <label class="form-label mt-2">Position / Office</label>
               <input type="text" class="form-control" name="position_office_right" value="<?= htmlspecialchars($par['position_office_right'] ?? '') ?>">
               <label class="form-label mt-2">Date</label>
               <input type="date" class="form-control" name="date_received_right" value="<?= htmlspecialchars($par['date_received_right'] ?? '') ?>">
@@ -229,9 +236,6 @@ $stmt->close();
           <button type="submit" class="btn btn-primary">
             <i class="bi bi-save"></i> Save Changes
           </button>
-          <a href="saved_par.php" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Back to Saved PAR
-          </a>
         </div>
       </form>
     </div>

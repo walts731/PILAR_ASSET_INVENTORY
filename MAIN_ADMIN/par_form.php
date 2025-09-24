@@ -278,35 +278,43 @@ while ($row = $unit_query->fetch_assoc()) {
             <!-- Left: Received by -->
             <div class="col-md-6 text-center">
                 <p class="fw-semibold">Received by:</p>
-                <br><br>
-                <p class="fw-semibold border-bottom border-dark d-inline-block" style="min-width: 250px;"></p>
-                <p>Signature over Printed Name</p>
+                <input type="text" class="form-control text-center fw-semibold" name="received_by_name"
+                    placeholder="Signature over Printed Name"
+                    value="<?= htmlspecialchars($par_data['received_by_name'] ?? '') ?>">
+                <small class="text-muted">Signature over Printed Name – Received By</small>
 
-                <label for="position_office_left">Position / Office:</label>
-                <input type="text" class="form-control text-center" name="position_office_left"
-                    value="<?= htmlspecialchars($par_data['position_office_left'] ?? '') ?>">
-                <br>
-                <label>Date:</label>
-                <input type="date" name="date_received_left"
-                    value="<?= date('Y-m-d') ?>"
-                    class="form-control">
+                <div class="mt-3">
+                    <label for="position_office_left">Position / Office:</label>
+                    <input type="text" class="form-control text-center" name="position_office_left"
+                        value="<?= htmlspecialchars($par_data['position_office_left'] ?? '') ?>">
+                </div>
+                <div class="mt-3">
+                    <label>Date:</label>
+                    <input type="date" name="date_received_left"
+                        value="<?= date('Y-m-d') ?>"
+                        class="form-control">
+                </div>
             </div>
 
             <!-- Right: Issued by -->
             <div class="col-md-6 text-center">
                 <p class="fw-semibold">Issued by:</p>
-                <br><br>
-                <p class="fw-semibold border-bottom border-dark d-inline-block" style="min-width: 250px;"></p>
-                <p>Signature over Printed Name</p>
+                <input type="text" class="form-control text-center fw-semibold" name="issued_by_name"
+                    placeholder="Signature over Printed Name"
+                    value="<?= htmlspecialchars($par_data['issued_by_name'] ?? '') ?>">
+                <small class="text-muted">Signature over Printed Name – Issued By</small>
 
-                <label for="position_office_right">Position / Office:</label>
-                <input type="text" class="form-control text-center" name="position_office_right"
-                    value="<?= htmlspecialchars($par_data['position_office_right'] ?? '') ?>">
-                <br>
-                <label>Date:</label>
-                <input type="date" name="date_received_right"
-                    value="<?= date('Y-m-d') ?>"
-                    class="form-control">
+                <div class="mt-3">
+                    <label for="position_office_right">Position / Office:</label>
+                    <input type="text" class="form-control text-center" name="position_office_right"
+                        value="<?= htmlspecialchars($par_data['position_office_right'] ?? '') ?>">
+                </div>
+                <div class="mt-3">
+                    <label>Date:</label>
+                    <input type="date" name="date_received_right"
+                        value="<?= date('Y-m-d') ?>"
+                        class="form-control">
+                </div>
             </div>
         </div>
 

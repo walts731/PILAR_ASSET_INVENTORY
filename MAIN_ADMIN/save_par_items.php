@@ -30,12 +30,14 @@ try {
   $par_no = trim($_POST['par_no'] ?? '');
   $position_office_left = trim($_POST['position_office_left'] ?? '');
   $position_office_right = trim($_POST['position_office_right'] ?? '');
+  $received_by_name = trim($_POST['received_by_name'] ?? '');
+  $issued_by_name = trim($_POST['issued_by_name'] ?? '');
   $date_received_left = $_POST['date_received_left'] ?? null;
   $date_received_right = $_POST['date_received_right'] ?? null;
 
-  $stmt_hdr = $conn->prepare("UPDATE par_form SET entity_name = ?, fund_cluster = ?, par_no = ?, position_office_left = ?, position_office_right = ?, date_received_left = ?, date_received_right = ? WHERE id = ?");
+  $stmt_hdr = $conn->prepare("UPDATE par_form SET entity_name = ?, fund_cluster = ?, par_no = ?, position_office_left = ?, position_office_right = ?, date_received_left = ?, date_received_right = ?, received_by_name = ?, issued_by_name = ? WHERE id = ?");
   $stmt_hdr->bind_param(
-    'sssssssi',
+    'sssssssssi',
     $entity_name,
     $fund_cluster,
     $par_no,
@@ -43,6 +45,8 @@ try {
     $position_office_right,
     $date_received_left,
     $date_received_right,
+    $received_by_name,
+    $issued_by_name,
     $par_id
   );
   if (!$stmt_hdr->execute()) {

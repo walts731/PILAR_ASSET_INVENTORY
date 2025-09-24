@@ -18,6 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $par_no = $_POST['par_no'] ?? '';
     $position_left = $_POST['position_office_left'] ?? '';
     $position_right = $_POST['position_office_right'] ?? '';
+    $received_by_name = trim($_POST['received_by_name'] ?? '');
+    $issued_by_name = trim($_POST['issued_by_name'] ?? '');
     $date_received_left = $_POST['date_received_left'] ?? date('Y-m-d');
     $date_received_right = $_POST['date_received_right'] ?? date('Y-m-d');
 
@@ -28,10 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- Insert PAR form ---
     $stmt = $conn->prepare("INSERT INTO par_form 
-        (header_image, entity_name, fund_cluster, par_no, position_office_left, position_office_right, date_received_left, date_received_right, office_id, created_at) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+        (header_image, entity_name, fund_cluster, par_no, position_office_left, position_office_right, date_received_left, date_received_right, office_id, received_by_name, issued_by_name, created_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
     $stmt->bind_param(
-        "sssssssss",
+        "ssssssssiss",
         $header_image,
         $entity_name,
         $fund_cluster,
@@ -40,7 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $position_right,
         $date_received_left,
         $date_received_right,
-        $office_id
+        $office_id,
+        $received_by_name,
+        $issued_by_name
     );
     $stmt->execute();
     $par_id = $conn->insert_id;

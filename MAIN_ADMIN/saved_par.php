@@ -12,6 +12,7 @@ $form_id = isset($_GET['id']) ? intval($_GET['id']) : null;
 // Fetch all PAR forms
 $sql = "SELECT f.id AS par_id, f.entity_name, f.fund_cluster, f.par_no,
                f.position_office_left, f.position_office_right,
+               f.received_by_name, f.issued_by_name,
                f.date_received_left, f.date_received_right, f.created_at,
                o.office_name
         FROM par_form f
@@ -75,12 +76,10 @@ if ($result && $result->num_rows > 0) {
                 <thead class="text-center">
                   <tr>
                     <th>PAR No</th>
-                    <th>Entity</th>
                     <th>Office</th>
-                    <th>Fund Cluster</th>
                     <th>Date Created</th>
-                    <th>Received By (Left)</th>
-                    <th>Issued By (Right)</th>
+                    <th>Received By</th>
+                    <th>Issued By</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -88,17 +87,13 @@ if ($result && $result->num_rows > 0) {
                   <?php foreach ($par_forms as $par): ?>
                     <tr>
                       <td class="text-center"><?= htmlspecialchars($par['par_no']) ?></td>
-                      <td><?= htmlspecialchars($par['entity_name']) ?></td>
                       <td><?= htmlspecialchars($par['office_name'] ?? 'N/A') ?></td>
-                      <td class="text-center"><?= htmlspecialchars($par['fund_cluster']) ?></td>
                       <td class="text-center"><?= date('F d, Y', strtotime($par['created_at'])) ?></td>
                       <td class="text-center">
-                        <small class="text-muted">Position:</small> <?= htmlspecialchars($par['position_office_left'] ?? '') ?><br>
-                        <small class="text-muted">Date:</small> <?= htmlspecialchars($par['date_received_left'] ?? '') ?>
+                        <div><strong><?= htmlspecialchars($par['received_by_name'] ?? '') ?></strong></div>
                       </td>
                       <td class="text-center">
-                        <small class="text-muted">Position:</small> <?= htmlspecialchars($par['position_office_right'] ?? '') ?><br>
-                        <small class="text-muted">Date:</small> <?= htmlspecialchars($par['date_received_right'] ?? '') ?>
+                        <div><strong><?= htmlspecialchars($par['issued_by_name'] ?? '') ?></strong></div>
                       </td>
                       <td class="text-center">
                         <a href="view_par.php?id=<?= $par['par_id'] ?>&form_id=<?= htmlspecialchars($form_id) ?>" class="btn btn-sm btn-primary">
@@ -127,7 +122,7 @@ if ($result && $result->num_rows > 0) {
   <script>
     $(document).ready(function () {
       $('#parTable').DataTable({
-        order: [[4, 'desc']]
+        order: [[2, 'desc']]
       });
     });
   </script>

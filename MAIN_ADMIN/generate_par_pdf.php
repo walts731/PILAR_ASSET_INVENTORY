@@ -16,6 +16,7 @@ if ($par_id <= 0) {
 // Fetch PAR form details
 $sql = "SELECT f.id AS par_id, f.header_image, f.entity_name, f.fund_cluster, f.par_no,
                f.position_office_left, f.position_office_right,
+               f.received_by_name, f.issued_by_name,
                f.date_received_left, f.date_received_right, f.created_at,
                o.office_name
         FROM par_form f
@@ -161,14 +162,14 @@ $html .= '<tr>
       <tr>
         <td style="width:50%; border-right:1px solid #000; height:80px; vertical-align:bottom; text-align:center;">
           <strong>Received by:</strong><br><br>
-          <u>' . strtoupper(htmlspecialchars($par['position_office_left'] ?? '')) . '</u><br>
-          <span class="designation">Position / Office</span><br>
+          <u>' . strtoupper(htmlspecialchars($par['received_by_name'] ?? '')) . '</u><br>
+          <span class="designation">' . htmlspecialchars($par['position_office_left'] ?? '') . '</span><br>
           Date: ' . (!empty($par['date_received_left']) ? htmlspecialchars(date('Y-m-d', strtotime($par['date_received_left']))) : '____________') . '
         </td>
         <td style="width:50%; height:80px; vertical-align:bottom; text-align:center;">
           <strong>Issued by:</strong><br><br>
-          <u>' . strtoupper(htmlspecialchars($par['position_office_right'] ?? '')) . '</u><br>
-          <span class="designation">Position / Office</span><br>
+          <u>' . strtoupper(htmlspecialchars($par['issued_by_name'] ?? '')) . '</u><br>
+          <span class="designation">' . htmlspecialchars($par['position_office_right'] ?? '') . '</span><br>
           Date: ' . (!empty($par['date_received_right']) ? htmlspecialchars(date('Y-m-d', strtotime($par['date_received_right']))) : '____________') . '
         </td>
       </tr>
