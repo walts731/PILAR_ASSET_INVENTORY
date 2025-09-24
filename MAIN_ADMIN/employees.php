@@ -590,7 +590,8 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
         $('#empInfoDateJoined').text(empJoined || '—');
 
         $('#assetsTableBody').html('<tr><td colspan="6" class="text-center">Loading...</td></tr>');
-        $('#assetsModal').modal('show');
+        // Store the current employee id on the modal for later use (asset detail fetching)
+        $('#assetsModal').data('employee-id', empId).modal('show');
 
         $.ajax({
           url: 'fetch_employee_assets.php',
@@ -607,12 +608,14 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
         });
       });
 
-      // Load asset details (new unified code)
+      // Load asset details for the selected employee's asset
       $(document).on("click", ".view-asset-details", function() {
         const assetId = $(this).data("id");
+        const employeeId = $('#assetsModal').data('employee-id') || '';
         $('#assetDetailsModal').modal('show');
 
-        fetch(`get_asset_details.php?id=${assetId}`)
+        // Fetch details ensuring the asset belongs to the selected employee
+        fetch(`get_asset_details_employee.php?employee_id=${encodeURIComponent(employeeId)}&asset_id=${encodeURIComponent(assetId)}`)
           .then(response => response.json())
           .then(data => {
             if (data.error) {
