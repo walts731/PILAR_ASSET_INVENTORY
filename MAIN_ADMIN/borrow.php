@@ -51,11 +51,39 @@ try {
 }
 
 // Base query for available assets
+// Debug: Show the current SQL query
+$debug_sql = "
+    SELECT a.id, a.asset_name, a.description, a.quantity, a.unit, a.image, a.status, a.type,
+           c.category, c.id as category_id
+    FROM assets a
+    LEFT JOIN category c ON a.category = c.id
+    WHERE a.status = 'available' AND a.quantity > 0
+";
+
+$debug_result = $conn->query($debug_sql);
+if ($debug_result) {
+    error_log("Debug - Available Assets Query: " . $debug_sql);
+    error_log("Debug - Found " . $debug_result->num_rows . " available assets");
+    while ($debug_row = $debug_result->fetch_assoc()) {
+        error_log(sprintf(
+            "Asset ID %d: %s (Status: %s, Type: %s, Qty: %d, Category: %s)",
+            $debug_row['id'],
+            $debug_row['asset_name'],
+            $debug_row['status'],
+            $debug_row['type'],
+            $debug_row['quantity'],
+            $debug_row['category'] ?? 'NULL'
+        ));
+    }
+    $debug_result->free();
+}
+
+// Original query
 $sql = "
     SELECT a.id, a.asset_name, a.description, a.quantity, a.unit, a.image, 
            c.category, c.id as category_id
     FROM assets a
-    JOIN category c ON a.category = c.id
+    LEFT JOIN category c ON a.category = c.id
     WHERE a.status = 'available' AND a.quantity > 0
 ";
 
@@ -171,40 +199,52 @@ $available_assets = $stmt->get_result();
 
             <!-- Asset Grid -->
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-                <?php if ($available_assets->num_rows > 0): ?>
-                    <?php while ($row = $available_assets->fetch_assoc()): ?>
+                <?php 
+            error_log("Rendering assets - Found " . $available_assets->num_rows . " assets to display");
+            if ($available_assets->num_rows > 0): 
+                while ($row = $available_assets->fetch_assoc()): 
+                    error_log(sprintf(
+                        "Rendering Asset ID %d: %s (Qty: %d, Category: %s)",
+                        $row['id'],
+                        $row['asset_name'],
+                        $row['quantity'],
+                        $row['category'] ?? 'NULL'
+                    ));
+            ?>
                         <div class="col">
                             <div class="card h-100 shadow-sm asset-card">
                                 <img src="../img/assets/<?= htmlspecialchars($row['image'] ?: 'default.png') ?>" class="card-img-top" alt="<?= htmlspecialchars($row['asset_name']) ?>" style="height: 200px; object-fit: cover;">
                                 <div class="card-body">
                                     <h5 class="card-title"><?= htmlspecialchars($row['asset_name']) ?></h5>
-                                    <p class="card-text text-muted small"><?= htmlspecialchars($row['description']) ?></p>
-                                    <p class="card-text">
-                                        <span class="badge bg-secondary"><?= htmlspecialchars($row['category']) ?></span>
-                                        <span class="badge bg-info">Available: <?= $row['quantity'] ?></span>
-                                    </p>
-                                </div>
-                                <div class="card-footer bg-white border-top-0">
-                                    <form class="add-to-cart-form">
-                                        <input type="hidden" name="asset_id" value="<?= $row['id'] ?>">
-                                        <input type="hidden" name="asset_name" value="<?= htmlspecialchars($row['asset_name']) ?>">
-                                        <input type="hidden" name="max_quantity" value="<?= $row['quantity'] ?>">
-                                        <div class="input-group">
-                                            <input type="number" name="quantity" class="form-control" value="1" min="1" max="<?= $row['quantity'] ?>">
-                                            <button type="submit" class="btn btn-outline-primary">Add to Cart</button>
-                                        </div>
+{{ ... }}
                                     </form>
                                 </div>
                             </div>
                         </div>
                     <?php endwhile; ?>
-                <?php else: ?>
+            <?php 
+                // Log if no assets were found
+                if ($available_assets->num_rows === 0) {
+                    error_log("No assets found matching the criteria");
+                    
+                    // Check if there are any assets in the database at all
+                    $check_assets = $conn->query("SELECT COUNT(*) as total FROM assets");
+                    $total_assets = $check_assets->fetch_assoc()['total'];
+                    error_log("Total assets in database: " . $total_assets);
+                    
+                    // Check how many have status = 'available' and quantity > 0
+                    $check_available = $conn->query("SELECT COUNT(*) as available FROM assets WHERE status = 'available' AND quantity > 0");
+                    $available_count = $check_available->fetch_assoc()['available'];
+                    error_log("Available assets (status='available' AND quantity>0): " . $available_count);
+                }
+            ?>
+            <?php else: ?>
                     <div class="col-12">
                         <div class="text-center py-5">
                             <i class="bi bi-search" style="font-size: 4rem; color: #6c757d;"></i>
                             <h4 class="mt-3">No Assets Found</h4>
                             <p class="text-muted">No available assets match your search criteria.</p>
-                            <a href="borrow.php" class="btn btn-primary">Clear Filters</a>
+{{ ... }}
                         </div>
                     </div>
                 <?php endif; ?>
