@@ -28,16 +28,16 @@ $asset_data = [];
 $office_name = '';
 $asset_details = [];
 
-// Fetch categories for dropdown
+// Fetch categories for dropdown (include category_code)
 $categories = [];
-$res_cats = $conn->query("SELECT id, category_name FROM categories ORDER BY category_name");
+$res_cats = $conn->query("SELECT id, category_name, category_code FROM categories ORDER BY category_name");
 if ($res_cats && $res_cats->num_rows > 0) {
     while ($cr = $res_cats->fetch_assoc()) { $categories[] = $cr; }
 }
 
-// Dedicated query: fetch ALL categories independently for the Category dropdown
+// Dedicated query: fetch ALL categories independently for the Category dropdown (include category_code)
 $all_categories = [];
-$res_all_categories = $conn->query("SELECT id, category_name FROM categories ORDER BY category_name");
+$res_all_categories = $conn->query("SELECT id, category_name, category_code FROM categories ORDER BY category_name");
 if ($res_all_categories && $res_all_categories->num_rows > 0) {
     while ($rowc = $res_all_categories->fetch_assoc()) { $all_categories[] = $rowc; }
 }
@@ -129,15 +129,15 @@ if ($fmt_row = $fmt_res->fetch_assoc()) {
 }
 $fmt_stmt->close();
 
-// Fetch format prefixes for Property No and Code from tag_formats
-$property_no_prefix = '';
-$code_prefix = '';
+// Fetch format patterns for Property No and Code from tag_formats
+$property_no_format = '';
+$code_format = '';
 if ($stmt_tf = $conn->prepare("SELECT tag_type, format_code FROM tag_formats WHERE tag_type IN ('Property No','Code')")) {
     $stmt_tf->execute();
     $res_tf = $stmt_tf->get_result();
     while ($r = $res_tf->fetch_assoc()) {
-        if ($r['tag_type'] === 'Property No') { $property_no_prefix = trim((string)$r['format_code']); }
-        if ($r['tag_type'] === 'Code') { $code_prefix = trim((string)$r['format_code']); }
+        if ($r['tag_type'] === 'Property No') { $property_no_format = trim((string)$r['format_code']); }
+        if ($r['tag_type'] === 'Code') { $code_format = trim((string)$r['format_code']); }
     }
     $stmt_tf->close();
 }
@@ -242,65 +242,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Property tags are stored on the item-level assets table now
 
-    // If property_no wasn't posted for some reason, compute using tag_formats 'Property No' pattern PREFIX-YEAR-SEQ
-    if (trim((string)$property_no) === '') {
-        $basePropPost = isset($asset_details['property_no']) ? trim((string)$asset_details['property_no']) : '';
-        if ($basePropPost !== '') {
-            $property_no = $basePropPost;
-        } elseif (!empty($auto_property_no)) {
-            $property_no = $auto_property_no;
-        } else {
-            $yr = date('Y');
-            $pn_prefix = $property_no_prefix !== '' ? $property_no_prefix : 'MR';
-            $like = $pn_prefix . '-' . $yr . '-%';
-            $stmt_seq = $conn->prepare("SELECT property_no FROM assets WHERE property_no LIKE ? ORDER BY property_no DESC LIMIT 1");
-            $stmt_seq->bind_param('s', $like);
-            $next = 1;
-            if ($stmt_seq->execute()) {
-                $res_seq = $stmt_seq->get_result();
-                if ($res_seq && ($rowSeq = $res_seq->fetch_assoc())) {
-                    if (preg_match('/(\d+)$/', $rowSeq['property_no'], $m)) {
-                        $next = (int)$m[1] + 1;
-                    }
-                }
-            }
-            $stmt_seq->close();
-            $property_no = sprintf('%s-%s-%05d', $pn_prefix, $yr, $next);
-        }
-    }
+    // No auto-generation of property_no; keep whatever user posted
 
-    // Auto-generate Code if empty using category_code and optional tag_formats 'Code' prefix
-    if (trim((string)$code) === '' && $category_id !== null) {
-        $cat_code = '';
-        if ($stmt_cat = $conn->prepare("SELECT category_code FROM categories WHERE id = ?")) {
-            $stmt_cat->bind_param('i', $category_id);
-            $stmt_cat->execute();
-            $res_cat = $stmt_cat->get_result();
-            if ($res_cat && ($rc = $res_cat->fetch_assoc())) {
-                $cat_code = trim((string)($rc['category_code'] ?? ''));
-            }
-            $stmt_cat->close();
-        }
-        if ($cat_code !== '') {
-            $yr = date('Y');
-            $base_prefix = $cat_code;
-            if ($code_prefix !== '') { $base_prefix = $code_prefix . '-' . $cat_code; }
-            $like = $base_prefix . '-' . $yr . '-%';
-            $stmt_cseq = $conn->prepare("SELECT code FROM assets WHERE code LIKE ? ORDER BY code DESC LIMIT 1");
-            $stmt_cseq->bind_param('s', $like);
-            $next = 1;
-            if ($stmt_cseq->execute()) {
-                $res_cseq = $stmt_cseq->get_result();
-                if ($res_cseq && ($rowC = $res_cseq->fetch_assoc())) {
-                    if (preg_match('/(\d+)$/', $rowC['code'], $m2)) {
-                        $next = (int)$m2[1] + 1;
-                    }
-                }
-            }
-            $stmt_cseq->close();
-            $code = sprintf('%s-%s-%05d', $base_prefix, $yr, $next);
-        }
-    }
+    // No backend auto-generation of code; UI will propose a pattern which user can edit
 
     // --- NEW: Update other asset details to complete the asset record ---
     if ($asset_id) {
@@ -607,29 +551,12 @@ if ($asset_id && $existing_mr_check) {
     $mr_unserviceable = 0;
 }
 
-// Compute system-generated Property No for the form (display)
+// Determine default property number for display: use existing, else the configured Property No format
 $baseProp = isset($asset_details['property_no']) ? trim((string)$asset_details['property_no']) : '';
 if ($baseProp !== '') {
     $generated_property_no = $baseProp;
-} elseif (!empty($auto_property_no)) {
-    $generated_property_no = $auto_property_no;
 } else {
-    $yr = date('Y');
-    $pn_prefix = $property_no_prefix !== '' ? $property_no_prefix : 'MR';
-    $like = $pn_prefix . '-' . $yr . '-%';
-    $stmt_seq2 = $conn->prepare("SELECT property_no FROM assets WHERE property_no LIKE ? ORDER BY property_no DESC LIMIT 1");
-    $stmt_seq2->bind_param('s', $like);
-    $next2 = 1;
-    if ($stmt_seq2->execute()) {
-        $res_seq2 = $stmt_seq2->get_result();
-        if ($res_seq2 && ($rowS2 = $res_seq2->fetch_assoc())) {
-            if (preg_match('/(\d+)$/', $rowS2['property_no'], $m3)) {
-                $next2 = (int)$m3[1] + 1;
-            }
-        }
-    }
-    $stmt_seq2->close();
-    $generated_property_no = sprintf('%s-%s-%05d', $pn_prefix, $yr, $next2);
+    $generated_property_no = $property_no_format; // fetched from tag_formats
 }
 
 ?>
@@ -744,12 +671,13 @@ if ($baseProp !== '') {
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="code" class="form-label">Code</label>
-                                <input type="text" class="form-control" name="code"
+                                <input type="text" class="form-control" name="code" id="code"
                                        value="<?= isset($asset_details['code']) ? htmlspecialchars($asset_details['code']) : '' ?>">
                             </div>
                             <div class="col-md-6">
                                 <label for="property_no" class="form-label">Property No</label>
-                                <input type="text" class="form-control" name="property_no" readonly
+                                <input type="text" class="form-control" name="property_no" id="property_no"
+                                       placeholder="<?= htmlspecialchars($property_no_format ?: 'YYYY-CODE-0001') ?>"
                                        value="<?= htmlspecialchars($generated_property_no) ?>">
                             </div>
                         </div>
@@ -766,7 +694,7 @@ if ($baseProp !== '') {
                                 <select name="category_id" id="category_id" class="form-select" required>
                                     <option value="">Select Category</option>
                                     <?php foreach ($all_categories as $cat): ?>
-                                        <option value="<?= (int)$cat['id'] ?>" <?= (isset($asset_details['category']) && (int)$asset_details['category'] === (int)$cat['id']) ? 'selected' : '' ?>>
+                                        <option value="<?= (int)$cat['id'] ?>" data-code="<?= htmlspecialchars($cat['category_code'] ?? '') ?>" <?= (isset($asset_details['category']) && (int)$asset_details['category'] === (int)$cat['id']) ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($cat['category_name']) ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -1118,9 +1046,65 @@ if ($baseProp !== '') {
                 img.style.transform = 'scale(2)';
                 img.style.cursor = 'zoom-out';
                 zoomIcon.className = 'bi bi-zoom-out';
+
+<script>
+    (function() {
+        const categorySelect = document.getElementById('category_id');
+        const codeInput = document.getElementById('code');
+        // PHP-provided format for Code tag type
+        const codeFormatTemplate = <?= json_encode($code_format ?? '') ?>;
+
+        function buildCodeFromCategory(catCode) {
+            if (!catCode) return '';
+            const year = new Date().getFullYear().toString();
+            // Default sequence placeholder
+            const seq = '0001';
+
+            let template = (codeFormatTemplate || '').trim();
+            let output = '';
+            const hasBarePlaceholders = template.includes('YYYY') || template.includes('CODE') || template.includes('XXXX');
+            const hasCurlyPlaceholders = template.includes('{YYYY}') || template.includes('{CODE}') || template.includes('{XXXX}');
+            if (hasBarePlaceholders || hasCurlyPlaceholders) {
+                // Replace both bare and curly-braced placeholders
+                output = template
+                    .replace(/\{YYYY\}|YYYY/g, year)
+                    .replace(/\{CODE\}|CODE/g, catCode)
+                    .replace(/\{XXXX\}|XXXX/g, seq);
+            } else if (template.length > 0) {
+                // Treat as static prefix between year and code
+                // Result: YYYY-PREFIX-CODE-XXXX
+                output = `${year}-${template}-${catCode}-${seq}`;
+            } else {
+                // Fallback default
+                output = `${year}-${catCode}-${seq}`;
+            }
+            return output;
+        }
+
+        function maybePrefillCode() {
+            const selected = categorySelect.options[categorySelect.selectedIndex];
+            if (!selected) return;
+            const catCode = selected.getAttribute('data-code') || '';
+            if ((codeInput.value || '').trim() === '' && catCode) {
+                codeInput.value = buildCodeFromCategory(catCode);
             }
         }
-    </script>
+
+        if (categorySelect && codeInput) {
+            categorySelect.addEventListener('change', function() {
+                const selected = this.options[this.selectedIndex];
+                const catCode = selected ? (selected.getAttribute('data-code') || '') : '';
+                if (catCode) {
+                    codeInput.value = buildCodeFromCategory(catCode);
+                }
+            });
+            // Prefill on first load if empty
+            document.addEventListener('DOMContentLoaded', maybePrefillCode);
+            // Also attempt immediately in case DOMContentLoaded has fired
+            maybePrefillCode();
+        }
+    })();
+</script>
 
 </body>
 
