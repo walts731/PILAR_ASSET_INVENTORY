@@ -22,6 +22,7 @@ $custom_titles = [
   "forms" => "Forms",
   "borrow" => "Borrowing Management",
   "about" => "About",
+  "simple_backup" => "Backup",
 ];
 
 if (array_key_exists($current_page, $custom_titles)) {

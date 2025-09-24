@@ -118,11 +118,12 @@ try {
 // Last backup info if a backups table exists
 try {
   if (table_exists($conn, 'backups')) {
-    $res = $conn->query("SELECT created_at AS last_backup, status AS last_backup_status, filename FROM backups ORDER BY created_at DESC LIMIT 1");
+    $res = $conn->query("SELECT created_at AS last_backup, status AS last_backup_status, filename, storage FROM backups ORDER BY created_at DESC LIMIT 1");
     if ($res && ($row = $res->fetch_assoc())) {
       $metrics['last_backup'] = $row['last_backup'];
       $metrics['last_backup_status'] = $row['last_backup_status'] ?? null;
       $metrics['last_backup_filename'] = $row['filename'] ?? null;
+      $metrics['last_backup_storage'] = $row['storage'] ?? null;
     }
   }
 } catch (Exception $e) {}
@@ -214,6 +215,19 @@ if (!empty($metrics['last_backup'])) {
               <?php endif; ?>
               <div class="small text-muted">Next Scheduled Backup</div>
               <div class="fw-semibold mb-2" id="nextBackupText"><?php echo $metrics['next_backup'] ? date('M d, Y h:i A', strtotime($metrics['next_backup'])) : 'Not available'; ?></div>
+              <?php if (!empty($metrics['last_backup_storage'])): ?>
+                <div class="small text-muted">Cloud Sync</div>
+                <div class="mb-2" id="cloudSyncText">
+                  <?php if ($metrics['last_backup_storage'] === 'both'): ?>
+                    <span class="badge text-bg-success">Uploaded</span>
+                  <?php else: ?>
+                    <span class="badge text-bg-secondary">Local only</span>
+                  <?php endif; ?>
+                </div>
+              <?php else: ?>
+                <div class="small text-muted">Cloud Sync</div>
+                <div class="mb-2" id="cloudSyncText"><span class="badge text-bg-secondary">Local only</span></div>
+              <?php endif; ?>
               <div class="small text-muted">Errors (24h)</div>
               <div class="fw-semibold text-<?php echo ((int)$metrics['errors_24h'] > 0) ? 'danger' : 'success'; ?>"><?php echo (int)$metrics['errors_24h']; ?></div>
               <hr class="my-3" />
@@ -321,6 +335,16 @@ if (!empty($metrics['last_backup'])) {
               if (data.next_backup && nextEl){
                 const d2 = new Date(data.next_backup.replace(' ', 'T'));
                 nextEl.textContent = d2.toLocaleString();
+              }
+              const cloudEl = document.getElementById('cloudSyncText');
+              if (cloudEl){
+                if (data.cloud_sync === 'success') {
+                  cloudEl.innerHTML = '<span class="badge text-bg-success">Uploaded</span>';
+                } else if (data.cloud_sync === 'failed') {
+                  cloudEl.innerHTML = '<span class="badge text-bg-danger">Upload failed</span>';
+                } else {
+                  cloudEl.innerHTML = '<span class="badge text-bg-secondary">Local only</span>';
+                }
               }
             } else {
               if (statusEl) statusEl.textContent = 'Backup failed: ' + (data.message || 'Unknown error');

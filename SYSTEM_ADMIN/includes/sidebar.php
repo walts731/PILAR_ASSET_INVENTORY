@@ -90,6 +90,9 @@ $page = basename($_SERVER['PHP_SELF'], ".php");
             <a href="../SYSTEM_ADMIN/simple_backup.php" class="<?= ($page == 'simple_backup') ? 'active' : '' ?>">
                 <i class="bi bi-hdd"></i> Backup
             </a>
+            <a href="../SYSTEM_ADMIN/drive_settings.php" class="<?= ($page == 'drive_settings') ? 'active' : '' ?>">
+                <i class="bi bi-google"></i> Drive Backup
+            </a>
             <?php endif; ?>
 
             <a href="../SYSTEM_ADMIN/edit_system.php" class="<?= ($page == 'System') ? 'active' : '' ?>">

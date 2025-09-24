@@ -8,6 +8,7 @@ require_once __DIR__ . '/../connect.php';
 require_once __DIR__ . '/../includes/simple_backup_helper.php';
 require_once __DIR__ . '/../includes/backup_helper.php'; // for ensure_backups_table
 require_once __DIR__ . '/../includes/audit_helper.php';
+require_once __DIR__ . '/../includes/google_drive_helper.php';
 
 header('Content-Type: application/json');
 
@@ -85,7 +86,48 @@ $stmt = $conn->prepare("INSERT INTO backups (filename, path, size_bytes, storage
 $storage = 'local';
 $stmt->bind_param('ssisss', $filename, $filePath, $size, $storage, $status, $trigger);
 $stmt->execute();
+$insertId = $conn->insert_id;
 $stmt->close();
+
+// Attempt Google Drive upload if configured and connected
+$cloudSync = null;
+if ($status === 'success') {
+    gdrive_ensure_tables($conn);
+    if (gdrive_is_configured($conn) && gdrive_is_connected($conn)) {
+        $settings = gdrive_get_settings($conn);
+        $tokens = gdrive_get_tokens($conn);
+        // Refresh access token if absent or expired
+        $needRefresh = empty($tokens['access_token']) || empty($tokens['expires_at']) || ((int)$tokens['expires_at'] < time()+60);
+        if ($needRefresh && !empty($tokens['refresh_token'])) {
+            $newTok = gdrive_refresh_access($settings, $tokens['refresh_token']);
+            if ($newTok && !empty($newTok['access_token'])) {
+                $tokens['access_token'] = $newTok['access_token'];
+                $tokens['expires_at'] = time() + (int)($newTok['expires_in'] ?? 3600) - 60;
+                gdrive_save_tokens($conn, [
+                    'access_token' => $tokens['access_token'],
+                    'expires_at' => $tokens['expires_at'],
+                ]);
+            }
+        }
+        if (!empty($tokens['access_token'])) {
+            $okUp = gdrive_upload_file($tokens['access_token'], $filePath, $filename, $settings['folder_id'] ?? null);
+            $cloudSync = $okUp ? 'success' : 'failed';
+            if ($okUp) {
+                // Update storage to both
+                if ($insertId) {
+                    $conn->query('UPDATE backups SET storage=\'both\' WHERE id='.(int)$insertId);
+                }
+                if (function_exists('isAuditLoggingAvailable') && isAuditLoggingAvailable()) {
+                    logUserActivity('BACKUP_SYNC_SUCCESS', 'System', 'Uploaded backup to Google Drive: ' . $filename, 'backups', $insertId ?: null);
+                }
+            } else {
+                if (function_exists('isAuditLoggingAvailable') && isAuditLoggingAvailable()) {
+                    logUserActivity('BACKUP_SYNC_FAILED', 'System', 'Failed to upload backup to Google Drive: ' . $filename, 'backups', $insertId ?: null);
+                }
+            }
+        }
+    }
+}
 
 $lastBackupNew = null; $nextBackup = null;
 try {
@@ -110,4 +152,5 @@ echo json_encode([
     'filename' => $filename,
     'last_backup' => $lastBackupNew,
     'next_backup' => $nextBackup,
+    'cloud_sync' => $cloudSync,
 ]);
