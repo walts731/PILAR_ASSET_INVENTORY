@@ -654,13 +654,6 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
           });
       });
 
-      // Bind datalist selection to hidden employee_id for transfer modal
-      $(document).on('input', '#new_employee', function() {
-        const val = $(this).val();
-        const match = $('#employeesList option').filter(function() { return $(this).val() === val; }).first();
-        const empId = match.data('emp-id') || '';
-        $('#new_employee_id').val(empId);
-      });
     });
 
     // Open Edit Employee Modal and populate fields
@@ -689,23 +682,35 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
     });
 
     $(document).on('click', '.transfer-asset', function () {
-  // pass hidden values
-  $('#transfer_asset_id').val($(this).data('asset-id'));
-  $('#transfer_inventory_tag').val($(this).data('inventory-tag'));
-  $('#transfer_current_employee_id').val($(this).data('current-employee-id'));
-
-  // reset datalist (reload from PHP, avoid duplicates)
-  let currentEmpId = $(this).data('current-employee-id');
-  $('#new_employee').val('');
-  $('#new_employee_id').val('');
-  $('#employeesList option').each(function () {
-    if ($(this).data('emp-id') == currentEmpId) {
-      $(this).remove();
+  // Get asset data
+  const assetId = $(this).data('asset-id');
+  const inventoryTag = $(this).data('inventory-tag');
+  const currentEmployeeId = $(this).data('current-employee-id');
+  
+  // Option 1: Use hardcoded ITR form ID (change this to your actual ITR form ID)
+  const ITR_FORM_ID = 9; // Change this to the actual ITR form ID from your forms table
+  
+  // Redirect to forms.php with ITR form ID and asset parameters
+  window.location.href = `forms.php?id=${ITR_FORM_ID}&asset_id=${assetId}&inventory_tag=${inventoryTag}&current_employee_id=${currentEmployeeId}`;
+  
+  // Option 2: Dynamic fetch from database (uncomment below and comment above if you prefer dynamic)
+  /*
+  $.ajax({
+    url: 'get_itr_form_id.php',
+    type: 'GET',
+    dataType: 'json',
+    success: function(response) {
+      if (response.success && response.form_id) {
+        window.location.href = `forms.php?id=${response.form_id}&asset_id=${assetId}&inventory_tag=${inventoryTag}&current_employee_id=${currentEmployeeId}`;
+      } else {
+        window.location.href = `itr_form.php?asset_id=${assetId}&inventory_tag=${inventoryTag}&current_employee_id=${currentEmployeeId}`;
+      }
+    },
+    error: function() {
+      window.location.href = `itr_form.php?asset_id=${assetId}&inventory_tag=${inventoryTag}&current_employee_id=${currentEmployeeId}`;
     }
   });
-
-  // show modal
-  $('#transferModal').modal('show');
+  */
 });
 
   </script>
@@ -718,48 +723,6 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
 <?php include 'modals/import_employee_modal.php'; ?>
 <?php include 'modals/employee_duplicate_modal.php'; ?>
 <?php include 'modals/add_employee_duplicate_modal.php'; ?>
-<!-- Transfer Asset Modal -->
-<div class="modal fade" id="transferModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="transferForm" method="POST" action="transfer_asset.php">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Transfer Asset</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-
-        <div class="modal-body">
-          <!-- hidden fields -->
-          <input type="hidden" name="asset_id" id="transfer_asset_id">
-          <input type="hidden" name="inventory_tag" id="transfer_inventory_tag">
-          <input type="hidden" name="current_employee_id" id="transfer_current_employee_id">
-          <input type="hidden" name="new_employee_id" id="new_employee_id">
-
-          <label for="new_employee" class="form-label">Select New Employee</label>
-          <input class="form-control" list="employeesList" name="new_employee" id="new_employee"
-                 placeholder="Type to search employee..." required>
-
-          <datalist id="employeesList">
-            <?php
-              // load all employees (exclude current in JS); show only name and employee_no
-              $empRes = $conn->query("SELECT employee_id, employee_no, name FROM employees");
-              while ($emp = $empRes->fetch_assoc()) {
-                $display = htmlspecialchars($emp['name'] . ' - ' . $emp['employee_no']);
-                $empId = (int)$emp['employee_id'];
-                echo "<option value=\"{$display}\" data-emp-id=\"{$empId}\"></option>";
-              }
-            ?>
-          </datalist>
-        </div>
-
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Confirm Transfer</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
 
 
 

@@ -54,6 +54,33 @@ while ($row = $items_res->fetch_assoc()) {
 }
 $stmt->close();
 
+// Handle asset pre-selection from URL parameters (from employee transfer)
+$preselected_asset = null;
+if (isset($_GET['asset_id']) && !empty($_GET['asset_id'])) {
+  $asset_id = intval($_GET['asset_id']);
+  $stmt = $conn->prepare("SELECT id, description, property_no, value, acquisition_date FROM assets WHERE id = ? LIMIT 1");
+  $stmt->bind_param('i', $asset_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  if ($row = $result->fetch_assoc()) {
+    $preselected_asset = $row;
+    // If no existing items, add the preselected asset as first item
+    if (empty($items)) {
+      $items[] = [
+        'item_id' => 0,
+        'itr_id' => $itr_id,
+        'date_acquired' => $row['acquisition_date'] ?? '',
+        'property_no' => $row['property_no'] ?? '',
+        'asset_id' => $row['id'],
+        'description' => $row['description'] . ' (' . $row['property_no'] . ')',
+        'amount' => $row['value'] ?? '',
+        'condition_of_PPE' => ''
+      ];
+    }
+  }
+  $stmt->close();
+}
+
 // Build assets list for description datalist (for auto-fill)
 $assets = [];
 $assets_q = $conn->query("SELECT a.id, a.description, a.property_no, a.value, a.acquisition_date FROM assets a WHERE a.type='asset' ORDER BY a.description ASC");
@@ -292,6 +319,32 @@ if (!empty($_SESSION['flash'])) {
   document.addEventListener('DOMContentLoaded', function() {
     const table = document.getElementById('itrItemsTable').querySelector('tbody');
     const selectedAssetIds = new Set(); // Track selected assets to prevent duplicates
+
+    // Handle preselected asset from URL parameters
+    <?php if ($preselected_asset): ?>
+    const preselectedAssetId = '<?= $preselected_asset['id'] ?>';
+    selectedAssetIds.add(preselectedAssetId);
+    
+    // Hide preselected asset from datalist and show remove button
+    const preselectedOption = document.querySelector(`#assetsList option[data-id="${preselectedAssetId}"]`);
+    if (preselectedOption) {
+      preselectedOption.style.display = 'none';
+    }
+    
+    // Set up the first row with preselected asset data
+    const firstRow = table.querySelector('tr');
+    if (firstRow) {
+      const descriptionInput = firstRow.querySelector('input[name="description[]"]');
+      const removeBtn = firstRow.querySelector('.remove-asset-btn');
+      
+      if (descriptionInput) {
+        descriptionInput.dataset.selectedAssetId = preselectedAssetId;
+      }
+      if (removeBtn) {
+        removeBtn.style.display = 'inline-block';
+      }
+    }
+    <?php endif; ?>
 
     // Function to clear asset row
     function clearAssetRow(row) {
