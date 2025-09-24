@@ -63,9 +63,11 @@ $html = '<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <style>
+  @page { margin: 12mm; }
   body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
   h2 { text-align: center; margin: 0; font-size: 16px; }
   .meta { margin: 10px 0; font-size: 12px; }
+  .uline { display: inline-block; border-bottom: 1px solid #000; min-width: 220px; padding: 0 4px; }
 
   table { 
     width: 100%; 
@@ -104,13 +106,14 @@ if (!empty($par['header_image'])) {
     }
 }
 
-// Meta section
+// Meta section (underlined fields; Office excluded)
 $html .= '
 <div class="meta">
-  <p><strong>Entity Name:</strong> ' . htmlspecialchars($par['entity_name']) . '<br>
-  <strong>Fund Cluster:</strong> ' . htmlspecialchars($par['fund_cluster']) . '
-  <span style="float:right;">PAR No: ' . htmlspecialchars($par['par_no']) . '</span></p>
-  <p><strong>Office/Location:</strong> ' . htmlspecialchars($par['office_name'] ?? 'N/A') . '</p>
+  <p>
+    <strong>Entity Name:</strong> <span class="uline">' . htmlspecialchars($par['entity_name']) . '</span>
+    <span style="float:right;"><strong>PAR No.:</strong> <span class="uline">' . htmlspecialchars($par['par_no']) . '</span></span>
+  </p>
+  <p><strong>Fund Cluster:</strong> <span class="uline">' . htmlspecialchars($par['fund_cluster']) . '</span></p>
 </div>
 
 <table>
@@ -148,32 +151,64 @@ for ($i = count($par['items']); $i < 10; $i++) {
     $html .= '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
 }
 
-// Grand total row
+// (Total row moved below to sit at the top of the footer section)
+
+// Dynamic spacer height to push footer close to page bottom (bounds-safe)
+$itemsCount = is_array($par['items']) ? count($par['items']) : 0;
+$spacerHeight = 0;
+if ($itemsCount <= 5) {
+    $spacerHeight = 260; // px
+} elseif ($itemsCount <= 10) {
+    $spacerHeight = 180; // px
+} elseif ($itemsCount <= 15) {
+    $spacerHeight = 100; // px
+} else {
+    $spacerHeight = 20; // px minimal when many items
+}
+
+// Spacer row to push footer down while keeping vertical column lines
+$html .= '<tr>
+  <td style="height:' . (int)$spacerHeight . 'px;"></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+</tr>';
+
+// Horizontal separator line across full width (connects to vertical lines)
+$html .= '<tr>
+  <td style="padding:0; border-top:1px solid #000;"></td>
+  <td style="padding:0; border-top:1px solid #000;"></td>
+  <td style="padding:0; border-top:1px solid #000;"></td>
+  <td style="padding:0; border-top:1px solid #000;"></td>
+  <td style="padding:0; border-top:1px solid #000;"></td>
+  <td style="padding:0; border-top:1px solid #000;"></td>
+  <td style="padding:0; border-top:1px solid #000;"></td>
+</tr>';
+
+// Grand total row (now at the top of the footer section). Vertical lines continue via table cell borders.
 $html .= '<tr>
   <td colspan="5"></td>
   <td><strong>Total</strong></td>
   <td class="grand-total">' . number_format($grandTotal, 2) . '</td>
 </tr>';
 
-// Footer/signatories
+// Footer/signatories inside main table to keep vertical lines
 $html .= '<tr>
-  <td colspan="7" style="padding:0; border-top:1px solid #000;">
-    <table style="width:100%; border-collapse:collapse;">
-      <tr>
-        <td style="width:50%; border-right:1px solid #000; height:80px; vertical-align:bottom; text-align:center;">
-          <strong>Received by:</strong><br><br>
-          <u>' . strtoupper(htmlspecialchars($par['received_by_name'] ?? '')) . '</u><br>
-          <span class="designation">' . htmlspecialchars($par['position_office_left'] ?? '') . '</span><br>
-          Date: ' . (!empty($par['date_received_left']) ? htmlspecialchars(date('Y-m-d', strtotime($par['date_received_left']))) : '____________') . '
-        </td>
-        <td style="width:50%; height:80px; vertical-align:bottom; text-align:center;">
-          <strong>Issued by:</strong><br><br>
-          <u>' . strtoupper(htmlspecialchars($par['issued_by_name'] ?? '')) . '</u><br>
-          <span class="designation">' . htmlspecialchars($par['position_office_right'] ?? '') . '</span><br>
-          Date: ' . (!empty($par['date_received_right']) ? htmlspecialchars(date('Y-m-d', strtotime($par['date_received_right']))) : '____________') . '
-        </td>
-      </tr>
-    </table>
+  <td colspan="3" style="height:80px; vertical-align:bottom; text-align:center;">
+    <strong>Received by:</strong><br><br>
+    <u>' . strtoupper(htmlspecialchars($par['received_by_name'] ?? '')) . '</u><br>
+    <span class="designation">' . htmlspecialchars($par['position_office_left'] ?? '') . '</span><br>
+    Date: ' . (!empty($par['date_received_left']) ? htmlspecialchars(date('Y-m-d', strtotime($par['date_received_left']))) : '____________') . '
+  </td>
+  <td></td>
+  <td colspan="3" style="height:80px; vertical-align:bottom; text-align:center;">
+    <strong>Issued by:</strong><br><br>
+    <u>' . strtoupper(htmlspecialchars($par['issued_by_name'] ?? '')) . '</u><br>
+    <span class="designation">' . htmlspecialchars($par['position_office_right'] ?? '') . '</span><br>
+    Date: ' . (!empty($par['date_received_right']) ? htmlspecialchars(date('Y-m-d', strtotime($par['date_received_right']))) : '____________') . '
   </td>
 </tr>';
 
