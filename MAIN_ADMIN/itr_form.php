@@ -60,9 +60,9 @@ $assets_q = $conn->query("SELECT a.id, a.description, a.property_no, a.value, a.
 while ($r = $assets_q->fetch_assoc()) {
   $assets[] = $r;
 }
-// Build employees list for To Accountable Officer datalist
+// Build employees list for To Accountable Officer datalist (only permanent employees)
 $employees = [];
-$emp_q = $conn->query("SELECT name FROM employees ORDER BY name ASC");
+$emp_q = $conn->query("SELECT name FROM employees WHERE status = 'permanent' ORDER BY name ASC");
 if ($emp_q) {
   while ($er = $emp_q->fetch_assoc()) {
     $employees[] = $er['name'];
@@ -171,6 +171,13 @@ if (!empty($_SESSION['flash'])) {
         <div class="col-md-6">
           <label for="itr_no" class="form-label">ITR No.</label>
           <input type="text" id="itr_no" name="itr_no" class="form-control" value="<?= htmlspecialchars($itr['itr_no']) ?>">
+        </div>
+        
+        <!-- End User Field -->
+        <div class="col-md-12">
+          <label for="end_user" class="form-label">End User</label>
+          <input type="text" id="end_user" name="end_user" class="form-control" placeholder="Enter end user name..." value="">
+          <div class="form-text">This will update the end user for all assets being transferred in this ITR.</div>
         </div>
       </div>
     </div>

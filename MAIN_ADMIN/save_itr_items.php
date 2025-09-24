@@ -44,9 +44,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $received_by = $_POST['received_by'] ?? '';
     $received_designation = $_POST['received_designation'] ?? '';
     $received_date = $_POST['received_date'] ?? '';
+    $end_user = $_POST['end_user'] ?? '';
 
     // Handle header image (existing or new upload)
     $header_image = $_POST['header_image'] ?? ''; // Get existing header image from hidden input
+    
+    // Ensure database column for End User exists in mr_details table
+    try {
+        if ($chk = $conn->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mr_details' AND COLUMN_NAME = 'end_user'")) {
+            $chk->execute(); $chk->bind_result($cnt); $chk->fetch(); $chk->close();
+            if ((int)$cnt === 0) { $conn->query("ALTER TABLE mr_details ADD COLUMN end_user VARCHAR(255) NULL AFTER person_accountable"); }
+        }
+    } catch (Throwable $e) { /* non-fatal */ }
     
     // Handle optional header image file upload (overrides existing when provided)
     if (isset($_FILES['header_image_file']) && $_FILES['header_image_file']['error'] === UPLOAD_ERR_OK) {
@@ -120,43 +129,114 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $emp_stmt->close();
     }
 
-    // Insert new ITR form (always create new)
-    if (!empty($header_image)) {
-        $stmt = $conn->prepare("INSERT INTO itr_form 
-            (header_image, entity_name, fund_cluster, from_accountable_officer, 
-            to_accountable_officer, itr_no, `date`, transfer_type, 
-            reason_for_transfer, approved_by, approved_designation, approved_date, 
-            released_by, released_designation, released_date, received_by, 
-            received_designation, received_date) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param(
-            "ssssssssssssssssss",
-            $header_image, $entity_name, $fund_cluster, $from_accountable_officer,
-            $to_accountable_officer, $itr_no, $date, $transfer_type,
-            $reason_for_transfer, $approved_by, $approved_designation, $approved_date,
-            $released_by, $released_designation, $released_date, $received_by,
-            $received_designation, $received_date
-        );
-    } else {
-        $stmt = $conn->prepare("INSERT INTO itr_form 
-            (entity_name, fund_cluster, from_accountable_officer, 
-            to_accountable_officer, itr_no, `date`, transfer_type, 
-            reason_for_transfer, approved_by, approved_designation, approved_date, 
-            released_by, released_designation, released_date, received_by, 
-            received_designation, received_date) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param(
-            "sssssssssssssssss",
-            $entity_name, $fund_cluster, $from_accountable_officer,
-            $to_accountable_officer, $itr_no, $date, $transfer_type,
-            $reason_for_transfer, $approved_by, $approved_designation, $approved_date,
-            $released_by, $released_designation, $released_date, $received_by,
-            $received_designation, $received_date
-        );
+    // Generate unique ITR number if empty
+    if (empty($itr_no)) {
+        $year = date('Y');
+        $stmt_count = $conn->prepare("SELECT COUNT(*) FROM itr_form WHERE itr_no LIKE ?");
+        $pattern = "ITR-{$year}-%";
+        $stmt_count->bind_param("s", $pattern);
+        $stmt_count->execute();
+        $stmt_count->bind_result($count);
+        $stmt_count->fetch();
+        $stmt_count->close();
+        
+        $next_num = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+        $itr_no = "ITR-{$year}-{$next_num}";
     }
-    $stmt->execute();
-    $new_itr_id = $conn->insert_id;
-    $stmt->close();
+
+    // Check if ITR form with this ID exists (for updates) or if we need to create new
+    $new_itr_id = null;
+    if ($itr_id > 0) {
+        // Check if ITR exists
+        $check_stmt = $conn->prepare("SELECT itr_id FROM itr_form WHERE itr_id = ?");
+        $check_stmt->bind_param("i", $itr_id);
+        $check_stmt->execute();
+        $check_result = $check_stmt->get_result();
+        
+        if ($check_result->num_rows > 0) {
+            // Update existing ITR form
+            if (!empty($header_image)) {
+                $stmt = $conn->prepare("UPDATE itr_form SET 
+                    header_image = ?, entity_name = ?, fund_cluster = ?, from_accountable_officer = ?, 
+                    to_accountable_officer = ?, itr_no = ?, `date` = ?, transfer_type = ?, 
+                    reason_for_transfer = ?, approved_by = ?, approved_designation = ?, approved_date = ?, 
+                    released_by = ?, released_designation = ?, released_date = ?, received_by = ?, 
+                    received_designation = ?, received_date = ? 
+                    WHERE itr_id = ?");
+                $stmt->bind_param(
+                    "ssssssssssssssssssi",
+                    $header_image, $entity_name, $fund_cluster, $from_accountable_officer,
+                    $to_accountable_officer, $itr_no, $date, $transfer_type,
+                    $reason_for_transfer, $approved_by, $approved_designation, $approved_date,
+                    $released_by, $released_designation, $released_date, $received_by,
+                    $received_designation, $received_date, $itr_id
+                );
+            } else {
+                $stmt = $conn->prepare("UPDATE itr_form SET 
+                    entity_name = ?, fund_cluster = ?, from_accountable_officer = ?, 
+                    to_accountable_officer = ?, itr_no = ?, `date` = ?, transfer_type = ?, 
+                    reason_for_transfer = ?, approved_by = ?, approved_designation = ?, approved_date = ?, 
+                    released_by = ?, released_designation = ?, released_date = ?, received_by = ?, 
+                    received_designation = ?, received_date = ? 
+                    WHERE itr_id = ?");
+                $stmt->bind_param(
+                    "sssssssssssssssssi",
+                    $entity_name, $fund_cluster, $from_accountable_officer,
+                    $to_accountable_officer, $itr_no, $date, $transfer_type,
+                    $reason_for_transfer, $approved_by, $approved_designation, $approved_date,
+                    $released_by, $released_designation, $released_date, $received_by,
+                    $received_designation, $received_date, $itr_id
+                );
+            }
+            $stmt->execute();
+            $stmt->close();
+            $new_itr_id = $itr_id;
+        } else {
+            // ITR ID doesn't exist, create new
+            $new_itr_id = null;
+        }
+        $check_stmt->close();
+    }
+    
+    // Insert new ITR form if not updating existing
+    if ($new_itr_id === null) {
+        if (!empty($header_image)) {
+            $stmt = $conn->prepare("INSERT INTO itr_form 
+                (header_image, entity_name, fund_cluster, from_accountable_officer, 
+                to_accountable_officer, itr_no, `date`, transfer_type, 
+                reason_for_transfer, approved_by, approved_designation, approved_date, 
+                released_by, released_designation, released_date, received_by, 
+                received_designation, received_date) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param(
+                "ssssssssssssssssss",
+                $header_image, $entity_name, $fund_cluster, $from_accountable_officer,
+                $to_accountable_officer, $itr_no, $date, $transfer_type,
+                $reason_for_transfer, $approved_by, $approved_designation, $approved_date,
+                $released_by, $released_designation, $released_date, $received_by,
+                $received_designation, $received_date
+            );
+        } else {
+            $stmt = $conn->prepare("INSERT INTO itr_form 
+                (entity_name, fund_cluster, from_accountable_officer, 
+                to_accountable_officer, itr_no, `date`, transfer_type, 
+                reason_for_transfer, approved_by, approved_designation, approved_date, 
+                released_by, released_designation, released_date, received_by, 
+                received_designation, received_date) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param(
+                "sssssssssssssssss",
+                $entity_name, $fund_cluster, $from_accountable_officer,
+                $to_accountable_officer, $itr_no, $date, $transfer_type,
+                $reason_for_transfer, $approved_by, $approved_designation, $approved_date,
+                $released_by, $released_designation, $released_date, $received_by,
+                $received_designation, $received_date
+            );
+        }
+        $stmt->execute();
+        $new_itr_id = $conn->insert_id;
+        $stmt->close();
+    }
 
     // Log ITR form creation
     $logger = new AuditLogger($conn);
@@ -248,6 +328,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $logger->log($_SESSION['user_id'], $username, 'UPDATE', 'Assets', 
                 "Transferred asset ID {$asset_id} to employee: {$to_accountable_officer} via ITR {$itr_no}", 
                 'assets', $asset_id);
+        }
+    }
+
+    // Update mr_details for transferred assets (person_accountable and end_user)
+    if (!empty($assets_to_update)) {
+        $placeholders = str_repeat('?,', count($assets_to_update) - 1) . '?';
+        
+        // Prepare UPDATE query for both person_accountable and end_user
+        if (!empty($end_user)) {
+            // Update both person_accountable and end_user
+            $update_mr_stmt = $conn->prepare("UPDATE mr_details SET person_accountable = ?, end_user = ? WHERE asset_id IN ($placeholders)");
+            $types = 'ss' . str_repeat('i', count($assets_to_update));
+            $params = array_merge([$to_accountable_officer, $end_user], $assets_to_update);
+        } else {
+            // Update only person_accountable
+            $update_mr_stmt = $conn->prepare("UPDATE mr_details SET person_accountable = ? WHERE asset_id IN ($placeholders)");
+            $types = 's' . str_repeat('i', count($assets_to_update));
+            $params = array_merge([$to_accountable_officer], $assets_to_update);
+        }
+        
+        $update_mr_stmt->bind_param($types, ...$params);
+        $update_mr_stmt->execute();
+        $affected_rows = $update_mr_stmt->affected_rows;
+        $update_mr_stmt->close();
+
+        // Log mr_details updates
+        if ($affected_rows > 0) {
+            foreach ($assets_to_update as $asset_id) {
+                $log_details = "Updated person_accountable to '{$to_accountable_officer}'";
+                if (!empty($end_user)) {
+                    $log_details .= " and end_user to '{$end_user}'";
+                }
+                $log_details .= " for asset ID {$asset_id} via ITR {$itr_no}";
+                
+                $logger->log($_SESSION['user_id'], $username, 'UPDATE', 'MR Details', 
+                    $log_details, 'mr_details', $asset_id);
+            }
         }
     }
 
