@@ -548,8 +548,8 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
         }
       });
 
-      // Load assets for employee
-      $('.view-assets').click(function() {
+      // Load assets for employee (delegated binding for DataTables pagination)
+      $(document).on('click', '.view-assets', function() {
         let empId = $(this).data('id');
         let empName = $(this).data('name');
         let empNo = $(this).data('no');
