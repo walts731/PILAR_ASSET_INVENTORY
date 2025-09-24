@@ -84,6 +84,9 @@ $page = basename($_SERVER['PHP_SELF'], ".php");
             </a>
 
             <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'super_admin'): ?>
+            <a href="../SYSTEM_ADMIN/manage_categories.php" class="<?= ($page == 'manage_categories') ? 'active' : '' ?>">
+                <i class="bi bi-tags"></i> Categories
+            </a>
             <a href="../SYSTEM_ADMIN/tag_formats.php" class="<?= ($page == 'tag_formats') ? 'active' : '' ?>">
                 <i class="bi bi-tags"></i> Tag Formats
             </a>

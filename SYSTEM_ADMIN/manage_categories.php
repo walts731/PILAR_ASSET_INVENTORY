@@ -2,18 +2,45 @@
 require_once '../connect.php';
 session_start();
 
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'super_admin') {
     header("Location: ../index.php");
     exit();
 }
 
+// Ensure new columns exist: category_code (VARCHAR) and status (TINYINT)
+// Use INFORMATION_SCHEMA to avoid errors across MySQL/MariaDB versions
+try {
+    // category_code
+    $colCheck = $conn->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'categories' AND COLUMN_NAME = 'category_code'");
+    $colCheck->execute();
+    $colCheck->bind_result($hasCode);
+    $colCheck->fetch();
+    $colCheck->close();
+    if (intval($hasCode) === 0) {
+        $conn->query("ALTER TABLE categories ADD COLUMN category_code VARCHAR(50) NULL AFTER category_name");
+    }
+
+    // status
+    $colCheck2 = $conn->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'categories' AND COLUMN_NAME = 'status'");
+    $colCheck2->execute();
+    $colCheck2->bind_result($hasStatus);
+    $colCheck2->fetch();
+    $colCheck2->close();
+    if (intval($hasStatus) === 0) {
+        $conn->query("ALTER TABLE categories ADD COLUMN status TINYINT(1) NOT NULL DEFAULT 1 AFTER category_code");
+    }
+} catch (Throwable $e) {
+    // Non-fatal; page should still render. Consider logging in audit table if available.
+}
+
 // Fetch all categories with asset counts
 $categories = [];
-$sql = "SELECT c.id, c.category_name, COUNT(a.id) AS asset_count
+$sql = "SELECT c.id, c.category_name, COALESCE(c.category_code,'') AS category_code, COALESCE(c.status,1) AS status,
+               COUNT(a.id) AS asset_count
         FROM categories c
         LEFT JOIN assets a ON a.category = c.id
-        GROUP BY c.id, c.category_name
-        ORDER BY c.id ASC";
+        GROUP BY c.id, c.category_name, c.category_code, c.status
+        ORDER BY c.category_name ASC";
 $result = $conn->query($sql);
 
 if ($result && $result->num_rows > 0) {
@@ -64,6 +91,8 @@ if ($result && $result->num_rows > 0) {
                         <thead class="table-light">
                             <tr>
                                 <th class="text-center">Category Name</th>
+                                <th class="text-center">Category Code</th>
+                                <th class="text-center">Status</th>
                                 <th class="text-center">Assets</th>
                                 <th class="text-center">Action</th>
                             </tr>
@@ -72,30 +101,47 @@ if ($result && $result->num_rows > 0) {
                             <?php foreach ($categories as $category): ?>
                                 <tr>
                                     <td class="text-center"><?= htmlspecialchars($category['category_name']) ?></td>
+                                    <td class="text-center"><code><?= htmlspecialchars($category['category_code'] ?? '') ?></code></td>
+                                    <td class="text-center">
+                                        <?php if (intval($category['status']) === 1): ?>
+                                            <span class="badge bg-success">Active</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="text-center"><?= $category['asset_count'] ?></td>
                                     <td class="text-center">
                                         <!-- Edit Button -->
                                         <button class="btn btn-sm btn-outline-primary editBtn"
                                             data-id="<?= $category['id'] ?>"
-                                            data-name="<?= htmlspecialchars($category['category_name']) ?>">
+                                            data-name="<?= htmlspecialchars($category['category_name']) ?>"
+                                            data-code="<?= htmlspecialchars($category['category_code'] ?? '') ?>">
                                             <i class="bi bi-pencil"></i> Edit
                                         </button>
 
+                                        <!-- Activate/Deactivate Button -->
+                                        <form method="POST" action="category_status.php" class="d-inline">
+                                            <input type="hidden" name="id" value="<?= $category['id'] ?>">
+                                            <input type="hidden" name="status" value="<?= intval($category['status']) === 1 ? 0 : 1 ?>">
+                                            <?php if (intval($category['status']) === 1): ?>
+                                                <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                    <i class="bi bi-slash-circle"></i> Deactivate
+                                                </button>
+                                            <?php else: ?>
+                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                    <i class="bi bi-check-circle"></i> Activate
+                                                </button>
+                                            <?php endif; ?>
+                                        </form>
+
                                         <!-- Delete Button -->
-                                        <?php if ($category['asset_count'] > 0): ?>
-                                            <button class="btn btn-outline-danger btn-sm" disabled
-                                                title="Cannot delete. Category has assets.">
-                                                <i class="bi bi-trash"></i> Delete
-                                            </button>
-                                        <?php else: ?>
-                                            <button class="btn btn-outline-danger btn-sm"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#deleteModal"
-                                                data-id="<?= $category['id'] ?>"
-                                                data-name="<?= htmlspecialchars($category['category_name']) ?>">
-                                                <i class="bi bi-trash"></i> Delete
-                                            </button>
-                                        <?php endif; ?>
+                                        <button class="btn btn-outline-danger btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal"
+                                            data-id="<?= $category['id'] ?>"
+                                            data-name="<?= htmlspecialchars($category['category_name']) ?>">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -116,12 +162,13 @@ if ($result && $result->num_rows > 0) {
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Are you sure you want to delete the category <strong id="categoryName"></strong>?</p>
+                        <p>Are you sure you want to delete the category <strong id="categoryName"></strong>?<br>
+                        <small class="text-muted">If this category is in use, it will be marked Inactive instead of deleted.</small></p>
                         <input type="hidden" name="id" id="deleteCategoryId">
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                        <button type="submit" class="btn btn-danger">Yes, Proceed</button>
                     </div>
                 </form>
             </div>
@@ -141,6 +188,10 @@ if ($result && $result->num_rows > 0) {
                         <div class="mb-3">
                             <label class="form-label">Category Name</label>
                             <input type="text" class="form-control" name="category_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category Code</label>
+                            <input type="text" class="form-control" name="category_code" placeholder="e.g., ICT" required>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -167,6 +218,10 @@ if ($result && $result->num_rows > 0) {
                             <label class="form-label">Category Name</label>
                             <input type="text" class="form-control" name="category_name" id="editCategoryName" required>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category Code</label>
+                            <input type="text" class="form-control" name="category_code" id="editCategoryCode" required>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -184,8 +239,8 @@ if ($result && $result->num_rows > 0) {
     <script>
         $(document).ready(function() {
             $('#categoriesTable').DataTable({
-                pageLength: 5,
-                lengthMenu: [5, 10, 20],
+                pageLength: 10,
+                lengthMenu: [5, 10, 20, 50],
                 order: [[0, 'asc']]
             });
 
@@ -193,6 +248,7 @@ if ($result && $result->num_rows > 0) {
             $(document).on('click', '.editBtn', function() {
                 $('#editCategoryId').val($(this).data('id'));
                 $('#editCategoryName').val($(this).data('name'));
+                $('#editCategoryCode').val($(this).data('code'));
                 $('#editModal').modal('show');
             });
 

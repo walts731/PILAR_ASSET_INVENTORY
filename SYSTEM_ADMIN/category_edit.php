@@ -2,13 +2,19 @@
 require_once '../connect.php';
 session_start();
 
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'super_admin') {
+    header('Location: ../index.php');
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = intval($_POST['id']);
-    $name = trim($_POST['category_name']);
+    $name = trim($_POST['category_name'] ?? '');
+    $code = trim($_POST['category_code'] ?? '');
 
-    if (!empty($id) && !empty($name)) {
-        $stmt = $conn->prepare("UPDATE categories SET category_name=? WHERE id=?");
-        $stmt->bind_param("si", $name, $id);
+    if (!empty($id) && !empty($name) && !empty($code)) {
+        $stmt = $conn->prepare("UPDATE categories SET category_name=?, category_code=? WHERE id=?");
+        $stmt->bind_param("ssi", $name, $code, $id);
 
         if ($stmt->execute()) {
             $_SESSION['message'] = "Category updated successfully!";
@@ -20,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $stmt->close();
     } else {
-        $_SESSION['message'] = "Invalid category data.";
+        $_SESSION['message'] = "Invalid category data. Name and code are required.";
         $_SESSION['message_type'] = "warning";
     }
 }

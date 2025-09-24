@@ -2,12 +2,18 @@
 require_once '../connect.php';
 session_start();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['category_name']);
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'super_admin') {
+    header('Location: ../index.php');
+    exit();
+}
 
-    if (!empty($name)) {
-        $stmt = $conn->prepare("INSERT INTO categories (category_name) VALUES (?)");
-        $stmt->bind_param("s", $name);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = trim($_POST['category_name'] ?? '');
+    $code = trim($_POST['category_code'] ?? '');
+
+    if (!empty($name) && !empty($code)) {
+        $stmt = $conn->prepare("INSERT INTO categories (category_name, category_code, status) VALUES (?, ?, 1)");
+        $stmt->bind_param("ss", $name, $code);
 
         if ($stmt->execute()) {
             $_SESSION['message'] = "Category added successfully!";
@@ -19,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $stmt->close();
     } else {
-        $_SESSION['message'] = "Category name cannot be empty.";
+        $_SESSION['message'] = "Category name and code are required.";
         $_SESSION['message_type'] = "warning";
     }
 }
