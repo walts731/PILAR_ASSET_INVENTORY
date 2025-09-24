@@ -193,11 +193,9 @@ $stmt->close();
                         <input type="hidden" name="items[<?= (int)$item['item_id'] ?>][asset_id]" value="<?= htmlspecialchars($item['asset_id']) ?>">
                       </td>
                       <td class="text-nowrap no-print">
-                        <?php if (!empty($par['office_id']) && intval($par['office_id']) > 0 && !empty($par['office_name']) && strtoupper(trim($par['office_name'])) !== 'N/A'): ?>
-                          <a href="create_mr.php?asset_id=<?= htmlspecialchars($item['asset_id']) ?>&par_id=<?= htmlspecialchars($par['par_id']) ?>&form_id=<?= htmlspecialchars($par_form_id) ?>" class="btn btn-primary btn-sm">
-                            Create Property Tag
-                          </a>
-                        <?php endif; ?>
+                        <a href="create_mr.php?asset_id=<?= htmlspecialchars($item['asset_id']) ?>&par_id=<?= htmlspecialchars($par['par_id']) ?>&form_id=<?= htmlspecialchars($par_form_id) ?>" class="btn btn-primary btn-sm">
+                          Create Property Tag
+                        </a>
                       </td>
                     </tr>
                   <?php endforeach; ?>
