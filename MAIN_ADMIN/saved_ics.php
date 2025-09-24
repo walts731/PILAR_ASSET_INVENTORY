@@ -77,9 +77,7 @@ if ($result && $result->num_rows > 0) {
                 <thead class="text-center">
                   <tr>
                     <th>ICS No</th>
-                    <th>Entity</th>
                     <th>Office</th>
-                    <th>Fund Cluster</th>
                     <th>Date Created</th>
                     <th>Received From</th>
                     <th>Received By</th>
@@ -90,18 +88,10 @@ if ($result && $result->num_rows > 0) {
                   <?php foreach ($ics_forms as $ics): ?>
                     <tr>
                       <td class="text-center"><?= htmlspecialchars($ics['ics_no']) ?></td>
-                      <td><?= htmlspecialchars($ics['entity_name']) ?></td>
                       <td><?= htmlspecialchars($ics['office_name'] ?? 'N/A') ?></td>
-                      <td class="text-center"><?= htmlspecialchars($ics['fund_cluster']) ?></td>
                       <td class="text-center"><?= date('F d, Y', strtotime($ics['created_at'])) ?></td>
-                      <td>
-                        <?= htmlspecialchars($ics['received_from_name']) ?><br>
-                        <small class="text-muted"><?= htmlspecialchars($ics['received_from_position']) ?></small>
-                      </td>
-                      <td>
-                        <?= htmlspecialchars($ics['received_by_name']) ?><br>
-                        <small class="text-muted"><?= htmlspecialchars($ics['received_by_position']) ?></small>
-                      </td>
+                      <td><?= htmlspecialchars($ics['received_from_name']) ?></td>
+                      <td><?= htmlspecialchars($ics['received_by_name']) ?></td>
                       <td class="text-center">
                         <a href="view_ics.php?id=<?= $ics['ics_id'] ?>&form_id=<?php echo $form_id ?>" class="btn btn-sm btn-primary">
                           <i class="bi bi-eye"></i> View
@@ -129,7 +119,7 @@ if ($result && $result->num_rows > 0) {
   <script>
     $(document).ready(function () {
       $('#icsTable').DataTable({
-        order: [[4, 'desc']] // sort by Date Created column
+        order: [[2, 'desc']] // sort by Date Created column (index adjusted after column removals)
       });
     });
   </script>
