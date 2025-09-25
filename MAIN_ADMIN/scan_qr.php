@@ -252,6 +252,7 @@ $stmt->close();
             $stmt = $conn->prepare("
               SELECT a.*, c.category_name, o.office_name, e.name as employee_name,
                      CASE WHEN rt.id IS NOT NULL THEN 1 ELSE 0 END as has_red_tag,
+                     rt.iirup_id,
                      md.end_user
               FROM assets a
               LEFT JOIN categories c ON a.category = c.id
@@ -510,7 +511,7 @@ $stmt->close();
                           <i class="bi bi-tag me-2"></i>Red Tagged
                         </span>
                       <?php elseif ($row['status'] === 'unserviceable'): ?>
-                        <a href="create_red_tag.php?asset_id=<?= $asset_id ?>" class="btn btn-danger btn-lg px-4">
+                        <a href="create_red_tag.php?asset_id=<?= $asset_id ?><?= !empty($row['iirup_id']) ? '&iirup_id=' . $row['iirup_id'] : '' ?>" class="btn btn-danger btn-lg px-4">
                           <i class="bi bi-tag me-2"></i>Red Tag
                         </a>
                       <?php endif; ?>
