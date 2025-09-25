@@ -55,11 +55,6 @@ $darkModeClass = isDarkMode() ? 'dark-mode' : '';
     </style>
 </head>
 <body class="<?php echo $darkModeClass; ?>">
-    <!-- Dark Mode Toggle -->
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
-        <?php echo getDarkModeToggle(); ?>
-    </div>
-    
     <script>
     // Initialize dark mode from session
     document.addEventListener('DOMContentLoaded', function() {

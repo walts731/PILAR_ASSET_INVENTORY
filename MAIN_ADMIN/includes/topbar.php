@@ -307,25 +307,76 @@ $low_stock_count = count($low_stock_items);
     });
   })();
 
-  // Scroll to low stock item
-  document.addEventListener("DOMContentLoaded", function() {
-    const lowStockCard = document.getElementById("lowStockCard");
-    const consumablesTab = new bootstrap.Tab(document.querySelector('#consumables-tab'));
-    lowStockCard?.addEventListener("click", function() {
-      consumablesTab.show();
-      setTimeout(() => {
-        const lowStockRow = document.querySelector('#consumablesTable tbody tr[data-stock="low"]');
-        if (lowStockRow) {
-          lowStockRow.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-          });
-          lowStockRow.classList.add("highlight-row");
-          setTimeout(() => {
-            lowStockRow.classList.remove("highlight-row");
-          }, 2000);
-        }
-      }, 300);
-    });
+  // Theme Toggle Functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    // Theme Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+
+    if (themeToggle && themeIcon) {
+      // Handle theme toggle click
+      themeToggle.addEventListener('click', function() {
+        fetch('../includes/dark_mode_helper.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'toggle_dark_mode=1'
+        })
+        .then(response => response.json())
+        .then(data => {
+          // Toggle dark mode class on body and html
+          document.body.classList.toggle('dark-mode', data.dark_mode);
+          document.documentElement.classList.toggle('dark-mode', data.dark_mode);
+          
+          // Update the icon and title
+          updateThemeIcon(themeToggle, themeIcon, data.dark_mode);
+        })
+        .catch(error => {
+          console.error('Error toggling dark mode:', error);
+        });
+      });
+
+      // Initialize theme icon based on current mode
+      const isDarkMode = document.body.classList.contains('dark-mode');
+      updateThemeIcon(themeToggle, themeIcon, isDarkMode);
+    }
+
+    // Low stock notification
+    const lowStockCard = document.getElementById('lowStockCard');
+    const consumablesTab = document.querySelector('#consumables-tab');
+    
+    if (lowStockCard && consumablesTab) {
+      const tab = new bootstrap.Tab(consumablesTab);
+      lowStockCard.addEventListener('click', function() {
+        tab.show();
+        setTimeout(() => {
+          const lowStockRow = document.querySelector('#consumablesTable tbody tr[data-stock="low"]');
+          if (lowStockRow) {
+            lowStockRow.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center'
+            });
+            lowStockRow.classList.add('highlight-row');
+            setTimeout(() => {
+              lowStockRow.classList.remove('highlight-row');
+            }, 2000);
+          }
+        }, 300);
+      });
+    }
+
+    // Helper function to update theme icon and title
+    function updateThemeIcon(toggle, icon, isDark) {
+      if (isDark) {
+        icon.classList.remove('bi-moon-fill');
+        icon.classList.add('bi-sun-fill');
+        toggle.title = 'Switch to Light Mode';
+      } else {
+        icon.classList.remove('bi-sun-fill');
+        icon.classList.add('bi-moon-fill');
+        toggle.title = 'Switch to Dark Mode';
+      }
+    }
   });
 </script>
