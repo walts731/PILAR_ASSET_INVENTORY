@@ -43,16 +43,10 @@ if ($res && $res->num_rows > 0) {
 
 $itr_id = (int)$itr['itr_id'];
 
-// Fetch existing ITR items
+// Always start with a BLANK items table for new ITR entries.
+// Do NOT load items from the most recent ITR submission.
+// If an asset_id is provided via GET (from Transfer), preselection logic below will add a single row.
 $items = [];
-$stmt = $conn->prepare("SELECT item_id, itr_id, date_acquired, property_no, asset_id, description, amount, condition_of_PPE FROM itr_items WHERE itr_id = ? ORDER BY item_id ASC");
-$stmt->bind_param('i', $itr_id);
-$stmt->execute();
-$items_res = $stmt->get_result();
-while ($row = $items_res->fetch_assoc()) {
-  $items[] = $row;
-}
-$stmt->close();
 
 // Handle asset pre-selection from URL parameters (from employee transfer)
 $preselected_asset = null;

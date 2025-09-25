@@ -787,19 +787,8 @@ $stmt->close();
       }
     });
 
-    // Transfer Asset functionality (similar to employees.php)
-    $(document).on('click', '.transfer-asset', function () {
-      // Get asset data
-      const assetId = $(this).data('asset-id');
-      const inventoryTag = $(this).data('inventory-tag');
-      const currentEmployeeId = $(this).data('current-employee-id');
-      
-      // Option 1: Use hardcoded ITR form ID (change this to your actual ITR form ID)
-      const ITR_FORM_ID = 9; // Change this to the actual ITR form ID from your forms table
-      
-      // Redirect to forms.php with ITR form ID and asset parameters
-      window.location.href = `forms.php?id=${ITR_FORM_ID}&asset_id=${assetId}&inventory_tag=${inventoryTag}&current_employee_id=${currentEmployeeId}`;
-    });
+    // NOTE: Transfer Asset click handler is initialized after jQuery is loaded below.
+    // We intentionally do not bind here to avoid referencing $ before it is available.
 
     // Image Modal functionality
     function showImageModal(imageSrc, imageTitle) {
@@ -839,5 +828,33 @@ $stmt->close();
   <!-- Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+  <script>
+    // Transfer Asset functionality
+    $(document).ready(function() {
+      $(document).on('click', '.transfer-asset', function (e) {
+        e.preventDefault();
+        console.log('Transfer button clicked'); // Debug log
+        
+        // Get asset data
+        const assetId = $(this).data('asset-id');
+        const inventoryTag = $(this).data('inventory-tag');
+        const currentEmployeeId = $(this).data('current-employee-id');
+        
+        console.log('Asset data:', { assetId, inventoryTag, currentEmployeeId }); // Debug log
+        
+        // Redirect to forms.php with ITR form ID 9 and asset parameters
+        // URL-encode values to be safe
+        const ITR_FORM_ID = 9;
+        const url = `forms.php?id=${ITR_FORM_ID}`
+          + `&asset_id=${encodeURIComponent(assetId)}`
+          + `&inventory_tag=${encodeURIComponent(inventoryTag || '')}`
+          + `&current_employee_id=${encodeURIComponent(currentEmployeeId || '')}`;
+        console.log('Redirecting to:', url); // Debug log
+        
+        window.location.href = url;
+      });
+    });
+  </script>
 </body>
 </html>
