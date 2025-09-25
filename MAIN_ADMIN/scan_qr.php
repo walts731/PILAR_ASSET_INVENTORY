@@ -499,8 +499,8 @@ $stmt->close();
                         </button>
                       <?php endif; ?>
 
-                      <?php if ($row['status'] === 'unserviceable' && !$row['has_red_tag']): ?>
-                        <a href="iirup_form.php?asset_id=<?= $asset_id ?>" class="btn btn-warning btn-lg px-4">
+                      <?php if ($row['status'] === 'available' && !$row['has_red_tag']): ?>
+                        <a href="forms.php?id=7&asset_id=<?= $asset_id ?>" class="btn btn-warning btn-lg px-4">
                           <i class="bi bi-exclamation-triangle me-2"></i>Create IIRUP
                         </a>
                       <?php endif; ?>
