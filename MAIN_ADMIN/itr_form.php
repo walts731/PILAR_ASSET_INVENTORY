@@ -152,7 +152,12 @@ if (!empty($_SESSION['flash'])) {
         </div>
         <div class="col-md-6">
           <label for="to_accountable_officer" class="form-label">To Accountable Officer</label>
-          <input type="text" id="to_accountable_officer" name="to_accountable_officer" class="form-control" list="employeesList" placeholder="Type to search employees..." value="<?= htmlspecialchars($itr['to_accountable_officer']) ?>">
+          <div class="input-group">
+            <input type="text" id="to_accountable_officer" name="to_accountable_officer" class="form-control" list="employeesList" placeholder="Type to search employees..." value="<?= htmlspecialchars($itr['to_accountable_officer']) ?>">
+            <button type="button" class="btn btn-outline-secondary" id="clear_to_accountable" title="Clear field" aria-label="Clear To Accountable Officer">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
           <datalist id="employeesList">
             <?php foreach ($employees as $ename): ?>
               <option value="<?= htmlspecialchars($ename) ?>"></option>
@@ -160,31 +165,32 @@ if (!empty($_SESSION['flash'])) {
           </datalist>
         </div>
 
-        <!-- Transfer type checkboxes -->
+        <!-- Transfer type radios -->
         <div class="col-md-6">
           <label class="form-label d-block">Transfer Type</label>
           <?php
-          $transfer_selected = array_map('trim', array_filter(explode(',', (string)$itr['transfer_type'])));
+          // Determine selected transfer type; legacy values may be comma-separated, use first
+          $raw_transfer = (string)$itr['transfer_type'];
+          $parts = array_map('trim', array_filter(explode(',', $raw_transfer)));
+          $selectedType = $parts[0] ?? '';
           $known = ['Donation', 'Reassignment', 'Relocation'];
           $otherValue = '';
-          foreach ($transfer_selected as $t) {
-            if (!in_array($t, $known, true) && $t !== '') {
-              $otherValue = $t;
-              break;
-            }
+          if ($selectedType !== '' && !in_array($selectedType, $known, true)) {
+            $otherValue = $selectedType; // Legacy/custom value
+            $selectedType = 'Others';
           }
           ?>
           <?php foreach ($known as $k): ?>
             <div class="form-check form-check-inline">
-              <input class="form-check-input transfer-type" type="checkbox" name="transfer_type[]" value="<?= $k ?>" <?= in_array($k, $transfer_selected, true) ? 'checked' : '' ?>>
-              <label class="form-check-label"><?= $k ?></label>
+              <input class="form-check-input transfer-type" type="radio" name="transfer_type" id="tt_<?= strtolower($k) ?>" value="<?= $k ?>" <?= ($selectedType === $k) ? 'checked' : '' ?>>
+              <label class="form-check-label" for="tt_<?= strtolower($k) ?>"><?= $k ?></label>
             </div>
           <?php endforeach; ?>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="checkbox" id="tt_others" name="transfer_type[]" value="Others" <?= $otherValue !== '' ? 'checked' : '' ?>>
+            <input class="form-check-input" type="radio" id="tt_others" name="transfer_type" value="Others" <?= ($selectedType === 'Others') ? 'checked' : '' ?>>
             <label class="form-check-label" for="tt_others">Others</label>
           </div>
-          <div id="transfer_type_other_wrap" class="mt-2" style="display: <?= $otherValue !== '' ? 'block' : 'none' ?>;">
+          <div id="transfer_type_other_wrap" class="mt-2" style="display: <?= ($selectedType === 'Others') ? 'block' : 'none' ?>;">
             <input type="text" id="transfer_type_other" name="transfer_type_other" class="form-control" placeholder="Specify other transfer type" value="<?= htmlspecialchars($otherValue) ?>">
           </div>
         </div>
@@ -298,19 +304,35 @@ if (!empty($_SESSION['flash'])) {
 </form>
 
 <script>
-  // Toggle other transfer type field
-  const ttOthers = document.getElementById('tt_others');
-  const ttOtherWrap = document.getElementById('transfer_type_other_wrap');
-  if (ttOthers) {
-    ttOthers.addEventListener('change', function() {
-      ttOtherWrap.style.display = this.checked ? 'block' : 'none';
-      if (!this.checked) {
-        document.getElementById('transfer_type_other').value = '';
-      }
-    });
-  }
-
   document.addEventListener('DOMContentLoaded', function() {
+    // Toggle other transfer type field (radio-based)
+    const ttOthers = document.getElementById('tt_others');
+    const ttOtherWrap = document.getElementById('transfer_type_other_wrap');
+    const ttOtherInput = document.getElementById('transfer_type_other');
+    function updateOtherVisibility() {
+      if (!ttOthers || !ttOtherWrap) return;
+      const show = ttOthers.checked;
+      ttOtherWrap.style.display = show ? 'block' : 'none';
+      if (!show && ttOtherInput) ttOtherInput.value = '';
+    }
+    if (ttOthers) {
+      document.querySelectorAll('input[name="transfer_type"]').forEach(r => r.addEventListener('change', updateOtherVisibility));
+      updateOtherVisibility();
+    }
+
+    // Clear function for To Accountable Officer
+    const clearBtn = document.getElementById('clear_to_accountable');
+    const toOfficerInput = document.getElementById('to_accountable_officer');
+    if (clearBtn && toOfficerInput) {
+      clearBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        toOfficerInput.value = '';
+        toOfficerInput.focus();
+      });
+    }
+
+    // Table logic
     const table = document.getElementById('itrItemsTable').querySelector('tbody');
     const selectedAssetIds = new Set(); // Track selected assets to prevent duplicates
 
@@ -318,125 +340,79 @@ if (!empty($_SESSION['flash'])) {
     <?php if ($preselected_asset): ?>
     const preselectedAssetId = '<?= $preselected_asset['id'] ?>';
     selectedAssetIds.add(preselectedAssetId);
-    
-    // Hide preselected asset from datalist and show remove button
     const preselectedOption = document.querySelector(`#assetsList option[data-id="${preselectedAssetId}"]`);
-    if (preselectedOption) {
-      preselectedOption.style.display = 'none';
-    }
-    
-    // Set up the first row with preselected asset data
+    if (preselectedOption) preselectedOption.style.display = 'none';
     const firstRow = table.querySelector('tr');
     if (firstRow) {
       const descriptionInput = firstRow.querySelector('input[name="description[]"]');
       const removeBtn = firstRow.querySelector('.remove-asset-btn');
-      
-      if (descriptionInput) {
-        descriptionInput.dataset.selectedAssetId = preselectedAssetId;
-      }
-      if (removeBtn) {
-        removeBtn.style.display = 'inline-block';
-      }
+      if (descriptionInput) descriptionInput.dataset.selectedAssetId = preselectedAssetId;
+      if (removeBtn) removeBtn.style.display = 'inline-block';
     }
     <?php endif; ?>
 
-    // Function to clear asset row
     function clearAssetRow(row) {
       const descriptionInput = row.querySelector('input[name="description[]"]');
-      const propertyInput = row.querySelector('input[name="property_no[]"]');
       const removeBtn = row.querySelector('.remove-asset-btn');
-      
-      // Get asset ID from data attribute to remove from selected set
-      const assetId = descriptionInput.dataset.selectedAssetId;
+      const assetId = descriptionInput && descriptionInput.dataset.selectedAssetId;
       if (assetId) {
         selectedAssetIds.delete(assetId);
-        // Make asset available in datalist again
         const option = document.querySelector(`#assetsList option[data-id="${assetId}"]`);
-        if (option) {
-          option.style.display = '';
-        }
+        if (option) option.style.display = '';
         delete descriptionInput.dataset.selectedAssetId;
       }
-      
-      // Clear all inputs in the row
       row.querySelectorAll('input').forEach(input => input.value = '');
-      
-      // Hide remove button
-      if (removeBtn) {
-        removeBtn.style.display = 'none';
-      }
+      if (removeBtn) removeBtn.style.display = 'none';
     }
 
-    // Function to handle asset selection
     function onDescriptionSelected(input) {
       const val = input.value;
-      const option = Array.from(document.getElementById('assetsList').options)
-        .find(opt => opt.value === val);
-      
+      const option = Array.from(document.getElementById('assetsList').options).find(opt => opt.value === val);
       if (option) {
         const assetId = option.dataset.id;
-        
-        // Check for duplicates
         if (selectedAssetIds.has(assetId)) {
           alert('This asset has already been selected in another row.');
           input.value = '';
           return;
         }
-        
-        // Clear previous selection from this row
         const previousAssetId = input.dataset.selectedAssetId;
         if (previousAssetId && previousAssetId !== assetId) {
           selectedAssetIds.delete(previousAssetId);
           const prevOption = document.querySelector(`#assetsList option[data-id="${previousAssetId}"]`);
-          if (prevOption) {
-            prevOption.style.display = '';
-          }
+          if (prevOption) prevOption.style.display = '';
         }
-        
-        // Add new selection
         selectedAssetIds.add(assetId);
         input.dataset.selectedAssetId = assetId;
-        
-        // Hide this option from datalist
         option.style.display = 'none';
-        
-        // Auto-fill other fields
         const row = input.closest('tr');
         row.querySelector('input[name="date_acquired[]"]').value = option.dataset.acquisition_date || '';
         row.querySelector('input[name="property_no[]"]').value = option.dataset.property_no || '';
         row.querySelector('input[name="amount[]"]').value = option.dataset.value || '';
-        
-        // Show remove button
         const removeBtn = row.querySelector('.remove-asset-btn');
-        if (removeBtn) {
-          removeBtn.style.display = 'inline-block';
-        }
+        if (removeBtn) removeBtn.style.display = 'inline-block';
       }
     }
 
-    // Add new row function
     document.getElementById('addRow').addEventListener('click', function() {
       const newRow = document.createElement('tr');
       newRow.innerHTML = `
-      <td><input type="date" name="date_acquired[]" class="form-control"></td>
-      <td><input type="text" name="property_no[]" class="form-control property-search"></td>
-      <td><input type="text" name="description[]" class="form-control asset-search" list="assetsList" placeholder="Search description or property no"></td>
-      <td><input type="number" step="0.01" name="amount[]" class="form-control"></td>
-      <td><input type="text" name="condition_of_PPE[]" class="form-control"></td>
-      <td>
-        <button type="button" class="btn btn-sm btn-danger clear-row">Clear</button>
-        <button type="button" class="btn btn-sm btn-danger remove-asset-btn ms-1" style="display: none;" title="Remove Asset">
-          <i class="bi bi-x"></i>
-        </button>
-      </td>
-    `;
+        <td><input type="date" name="date_acquired[]" class="form-control"></td>
+        <td><input type="text" name="property_no[]" class="form-control property-search"></td>
+        <td><input type="text" name="description[]" class="form-control asset-search" list="assetsList" placeholder="Search description or property no"></td>
+        <td><input type="number" step="0.01" name="amount[]" class="form-control"></td>
+        <td><input type="text" name="condition_of_PPE[]" class="form-control"></td>
+        <td>
+          <button type="button" class="btn btn-sm btn-danger clear-row">Clear</button>
+          <button type="button" class="btn btn-sm btn-danger remove-asset-btn ms-1" style="display: none;" title="Remove Asset">
+            <i class="bi bi-x"></i>
+          </button>
+        </td>
+      `;
       table.appendChild(newRow);
     });
 
-    // Event delegation for table interactions
     table.addEventListener('click', function(e) {
       const row = e.target.closest('tr');
-      
       if (e.target.classList.contains('clear-row')) {
         clearAssetRow(row);
       } else if (e.target.classList.contains('remove-asset-btn') || e.target.closest('.remove-asset-btn')) {
@@ -444,7 +420,6 @@ if (!empty($_SESSION['flash'])) {
       }
     });
 
-    // Auto-fill on asset selection
     table.addEventListener('input', function(e) {
       if (e.target.classList.contains('asset-search')) {
         onDescriptionSelected(e.target);

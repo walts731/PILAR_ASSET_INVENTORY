@@ -21,17 +21,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $date = $_POST['date'] ?? '';
     $reason_for_transfer = $_POST['reason_for_transfer'] ?? '';
     
-    // Handle transfer type checkboxes
+    // Handle transfer type (now radio). Remains backward compatible with legacy checkbox array.
     $transfer_type = '';
-    if (isset($_POST['transfer_type']) && is_array($_POST['transfer_type'])) {
-        $transfer_types = $_POST['transfer_type'];
-        // Handle "Other" custom input
-        if (in_array('Others', $transfer_types) && !empty($_POST['transfer_type_other'])) {
-            // Replace "Others" with the custom value
-            $key = array_search('Others', $transfer_types);
-            $transfer_types[$key] = $_POST['transfer_type_other'];
+    if (isset($_POST['transfer_type'])) {
+        if (is_array($_POST['transfer_type'])) {
+            // Legacy checkbox array
+            $transfer_types = $_POST['transfer_type'];
+            if (in_array('Others', $transfer_types) && !empty($_POST['transfer_type_other'])) {
+                $key = array_search('Others', $transfer_types);
+                $transfer_types[$key] = $_POST['transfer_type_other'];
+            }
+            $transfer_type = implode(', ', $transfer_types);
+        } else {
+            // New radio string
+            $selected = trim((string)$_POST['transfer_type']);
+            if (strcasecmp($selected, 'Others') === 0) {
+                $transfer_type = trim((string)($_POST['transfer_type_other'] ?? ''));
+            } else {
+                $transfer_type = $selected;
+            }
         }
-        $transfer_type = implode(', ', $transfer_types);
     }
     
     // Footer fields
