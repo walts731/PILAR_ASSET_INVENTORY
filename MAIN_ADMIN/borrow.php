@@ -7,6 +7,12 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Set page title
+$pageTitle = 'Borrow Assets - PILAR Asset Inventory';
+
+// Include header with dark mode support
+require_once '../includes/header.php';
+
 // Initialize cart if it doesn't exist
 if (!isset($_SESSION['borrow_cart'])) {
     $_SESSION['borrow_cart'] = [];
@@ -114,28 +120,177 @@ $available_assets = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="<?php echo $darkModeClass; ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Borrow Assets</title>
+    <title>Borrow Assets - PILAR Asset Inventory</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/dashboard.css">
     <style>
+        /* Layout styles */
+        .wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+            position: relative;
+        }
+        
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            transition: all 0.3s;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+            min-height: 100vh;
+            transition: all 0.3s;
+            background-color: #f8f9fa;
+        }
+        
+        /* Page-specific dark mode styles */
+        .dark-mode .asset-card {
+            background-color: var(--dark-card);
+            border-color: var(--dark-border);
+        }
+        
+        .dark-mode .asset-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Dark mode layout styles */
+        .dark-mode .sidebar {
+            background-color: #1a1a1a;
+            border-right: 1px solid #333;
+        }
+        
+        .dark-mode .main-content {
+            background-color: #121212;
+        }
+        
+        .dark-mode .sidebar a {
+            color: #e0e0e0;
+        }
+        
+        .dark-mode .sidebar a:hover,
+        .dark-mode .sidebar a.active {
+            background-color: #333;
+            color: #fff;
+        }
+        
+        .dark-mode .card {
+            background-color: var(--dark-card);
+            border-color: var(--dark-border);
+        }
+        
+        .dark-mode .card-header {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-bottom-color: var(--dark-border);
+        }
+        
+        .dark-mode .form-control,
+        .dark-mode .form-select {
+            background-color: var(--dark-input-bg);
+            border-color: var(--dark-border);
+            color: var(--dark-input-text);
+        }
+        
+        .dark-mode .btn-outline-secondary {
+            color: var(--dark-text);
+            border-color: var(--dark-border);
+        }
+        
+        .dark-mode .btn-outline-secondary:hover {
+            background-color: var(--dark-hover);
+            color: var(--dark-text);
+        }
+        
+        .dark-mode .text-muted {
+            color: #adb5bd !important;
+        }
+        
+        /* Original styles */
         .asset-card {
             transition: transform 0.2s;
+            height: 100%;
         }
+        
         .asset-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+        }
+        
+        /* Ensure proper spacing in dark mode */
+        .dark-mode .card-body {
+            background-color: var(--dark-card);
+        }
+        
+        /* Fix for dropdown menus */
+        .dark-mode .dropdown-menu {
+            background-color: var(--dark-dropdown);
+            border-color: var(--dark-border);
+        }
+        
+        .dark-mode .dropdown-item {
+            color: var(--dark-text);
+        }
+        
+        .dark-mode .dropdown-item:hover,
+        .dark-mode .dropdown-item:focus {
+            background-color: var(--dark-hover);
+            color: var(--dark-text);
+        }
+        
+        /* Fix for alerts */
+        .dark-mode .alert {
+            background-color: var(--dark-card);
+            border-color: var(--dark-border);
+            color: var(--dark-text);
         }
     </style>
 </head>
-<body>
-    <?php include 'includes/sidebar.php'; ?>
+<body class="<?php echo $darkModeClass; ?>">
+    <div class="wrapper d-flex">
+        <?php 
+        // Set active page for sidebar highlighting
+        $sidebarActive = 'borrow';
+        include 'includes/sidebar.php'; 
+        ?>
 
-    <div class="main">
-        <?php include 'includes/topbar.php'; ?>
+        <div class="main-content" style="flex: 1; margin-left: 250px;">
+        <?php 
+        include 'includes/topbar.php';
+        
+        // Display success/error messages if any
+        if (isset($_SESSION['success'])) {
+            echo '<div class="alert alert-success alert-dismissible fade show m-3" role="alert">';
+            echo $_SESSION['success'];
+            echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+            echo '</div>';
+            unset($_SESSION['success']);
+        }
+        
+        if (isset($_SESSION['error'])) {
+            echo '<div class="alert alert-danger alert-dismissible fade show m-3" role="alert">';
+            echo $_SESSION['error'];
+            echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+            echo '</div>';
+            unset($_SESSION['error']);
+        }
+        ?>
 
         <div class="container mt-4">
             <div id="alert-placeholder"></div>
@@ -200,60 +355,85 @@ $available_assets = $stmt->get_result();
             <!-- Asset Grid -->
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
                 <?php 
-            error_log("Rendering assets - Found " . $available_assets->num_rows . " assets to display");
-            if ($available_assets->num_rows > 0): 
-                while ($row = $available_assets->fetch_assoc()): 
-                    error_log(sprintf(
-                        "Rendering Asset ID %d: %s (Qty: %d, Category: %s)",
-                        $row['id'],
-                        $row['asset_name'],
-                        $row['quantity'],
-                        $row['category'] ?? 'NULL'
-                    ));
-            ?>
-                        <div class="col">
-                            <div class="card h-100 shadow-sm asset-card">
-                                <img src="../img/assets/<?= htmlspecialchars($row['image'] ?: 'default.png') ?>" class="card-img-top" alt="<?= htmlspecialchars($row['asset_name']) ?>" style="height: 200px; object-fit: cover;">
-                                <div class="card-body">
-                                    <h5 class="card-title"><?= htmlspecialchars($row['asset_name']) ?></h5>
-{{ ... }}
-                                    </form>
+                error_log("Rendering assets - Found " . $available_assets->num_rows . " assets to display");
+                if ($available_assets->num_rows > 0): 
+                    while ($row = $available_assets->fetch_assoc()): 
+                        error_log(sprintf(
+                            "Rendering Asset ID %d: %s (Qty: %d, Category: %s)",
+                            $row['id'],
+                            $row['asset_name'],
+                            $row['quantity'],
+                            $row['category'] ?? 'NULL'
+                        ));
+                ?>
+                <div class="col">
+                    <div class="card h-100 shadow-sm asset-card">
+                        <img src="../img/assets/<?= htmlspecialchars($row['image'] ?: 'default.png') ?>" 
+                             class="card-img-top" 
+                             alt="<?= htmlspecialchars($row['asset_name']) ?>" 
+                             style="height: 200px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title"><?= htmlspecialchars($row['asset_name']) ?></h5>
+                            <p class="card-text text-muted">
+                                <i class="bi bi-tag"></i> <?= htmlspecialchars($row['category'] ?? 'Uncategorized') ?><br>
+                                <i class="bi bi-box"></i> Qty: <?= (int)$row['quantity'] ?>
+                            </p>
+                            <form class="add-to-cart-form" method="post">
+                                <input type="hidden" name="asset_id" value="<?= (int)$row['id'] ?>">
+                                <input type="hidden" name="asset_name" value="<?= htmlspecialchars($row['asset_name']) ?>">
+                                <input type="hidden" name="max_quantity" value="<?= (int)$row['quantity'] ?>">
+                                <div class="input-group mb-2">
+                                    <input type="number" 
+                                           name="quantity" 
+                                           class="form-control" 
+                                           value="1" 
+                                           min="1" 
+                                           max="<?= (int)$row['quantity'] ?>">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-cart-plus"></i> Add to Cart
+                                    </button>
                                 </div>
-                            </div>
+                            </form>
                         </div>
-                    <?php endwhile; ?>
-            <?php 
-                // Log if no assets were found
-                if ($available_assets->num_rows === 0) {
+                    </div>
+                </div>
+                <?php 
+                    endwhile; 
+                else: 
+                    // Log if no assets were found
                     error_log("No assets found matching the criteria");
                     
                     // Check if there are any assets in the database at all
                     $check_assets = $conn->query("SELECT COUNT(*) as total FROM assets");
-                    $total_assets = $check_assets->fetch_assoc()['total'];
+                    $total_assets = $check_assets ? $check_assets->fetch_assoc()['total'] : 0;
                     error_log("Total assets in database: " . $total_assets);
                     
                     // Check how many have status = 'available' and quantity > 0
                     $check_available = $conn->query("SELECT COUNT(*) as available FROM assets WHERE status = 'available' AND quantity > 0");
-                    $available_count = $check_available->fetch_assoc()['available'];
+                    $available_count = $check_available ? $check_available->fetch_assoc()['available'] : 0;
                     error_log("Available assets (status='available' AND quantity>0): " . $available_count);
-                }
-            ?>
-            <?php else: ?>
-                    <div class="col-12">
-                        <div class="text-center py-5">
-                            <i class="bi bi-search" style="font-size: 4rem; color: #6c757d;"></i>
-                            <h4 class="mt-3">No Assets Found</h4>
-                            <p class="text-muted">No available assets match your search criteria.</p>
-{{ ... }}
-                        </div>
+                ?>
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="bi bi-search" style="font-size: 4rem; color: #6c757d;"></i>
+                        <h4 class="mt-3">No Assets Found</h4>
+                        <p class="text-muted">No available assets match your search criteria.</p>
+                        <?php if ($total_assets === 0): ?>
+                            <p class="text-muted">There are currently no assets in the system.</p>
+                        <?php elseif ($available_count === 0): ?>
+                            <p class="text-muted">All assets are currently unavailable or out of stock.</p>
+                        <?php endif; ?>
+                        <a href="borrow.php" class="btn btn-primary mt-3">
+                            <i class="bi bi-arrow-left"></i> Back to All Assets
+                        </a>
                     </div>
+                </div>
                 <?php endif; ?>
+            </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script>
     $(document).ready(function() {
         // Handle Add to Cart form submission
@@ -271,7 +451,9 @@ $available_assets = $stmt->get_result();
                 } else {
                     showAlert(response.message, 'danger');
                 }
-            }, 'json');
+            }, 'json').fail(function(xhr, status, error) {
+                showAlert('Error: ' + error, 'danger');
+            });
         });
 
         // Function to show dynamic alerts
@@ -294,5 +476,8 @@ $available_assets = $stmt->get_result();
         }
     });
     </script>
-</body>
-</html>
+
+    <?php 
+    // Include the footer with dark mode support and necessary scripts
+    require_once '../includes/footer.php'; 
+    ?>
