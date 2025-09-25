@@ -80,8 +80,6 @@ while ($y = $years_result->fetch_assoc()) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <title>Usage Reports - Inventory</title>
@@ -89,6 +87,14 @@ while ($y = $years_result->fetch_assoc()) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
     <link rel="stylesheet" href="css/dashboard.css" />
+    <style>
+        .page-header { background: linear-gradient(135deg, #f8f9fa 0%, #eef3ff 100%); border: 1px solid #e9ecef; border-radius: .75rem; }
+        .page-header .title { font-weight: 600; }
+        .toolbar .btn { transition: transform .08s ease-in; }
+        .toolbar .btn:hover { transform: translateY(-1px); }
+        .card-hover:hover { box-shadow: 0 .25rem .75rem rgba(0,0,0,.06) !important; }
+        .table thead th { position: sticky; top: 0; background: #f8f9fa; z-index: 1; }
+    </style>
 </head>
 
 <body>
@@ -96,8 +102,24 @@ while ($y = $years_result->fetch_assoc()) {
     <?php include 'includes/sidebar.php'; ?>
     <div class="main">
         <?php include 'includes/topbar.php'; ?>
-
         <div class="container-fluid mt-4">
+            <!-- Page Header -->
+            <div class="page-header p-3 p-sm-4 d-flex flex-wrap gap-3 align-items-center justify-content-between mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center bg-white border" style="width:48px;height:48px;">
+                        <i class="bi bi-activity text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="h4 mb-0 title">Usage Reports</div>
+                        <div class="text-muted small">Track consumables usage by office and time</div>
+                    </div>
+                </div>
+                <div class="toolbar d-flex align-items-center gap-2">
+                    <button id="toggleDensityUsage" class="btn btn-outline-secondary btn-sm rounded-pill" title="Toggle compact density">
+                        <i class="bi bi-arrows-vertical me-1"></i> Density
+                    </button>
+                </div>
+            </div>
 
             <div class="row g-3 mb-4 align-items-end">
                 <!-- Filters Form -->
@@ -154,34 +176,37 @@ while ($y = $years_result->fetch_assoc()) {
                         <input type="hidden" name="year" value="<?= $selected_year ?>">
                         <input type="hidden" name="month" value="<?= $selected_month ?>">
                         <input type="hidden" name="day" value="<?= $selected_day ?>">
-                        <button type="submit" class="btn btn-primary w-100 align-self-end">
+                        <button type="submit" id="generateReportBtn" class="btn btn-primary w-100 align-self-end">
                             <i class="bi bi-bar-chart-line"></i> Generate Report
                         </button>
                     </form>
                 </div>
-
             </div>
 
             <!-- Chart -->
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header"><strong><?= $selected_office ? "Consumption for Selected Office" : "Consumption by Office (All)" ?></strong></div>
+            <div class="card mb-4 shadow-sm card-hover">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong><i class="bi bi-bar-chart-line me-1"></i> <?= $selected_office ? "Consumption for Selected Office" : "Consumption by Office (All)" ?></strong>
+                </div>
                 <div class="card-body"><canvas id="consumptionChart" height="100"></canvas></div>
             </div>
 
             <!-- Detailed Table -->
-            <div class="card shadow-sm">
-                <div class="card-header"><strong>Detailed Consumption Log</strong></div>
+            <div class="card shadow-sm card-hover">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong><i class="bi bi-list-check me-1"></i> Detailed Consumption Log</strong>
+                </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="consumptionTable" class="table">
+                        <table id="consumptionTable" class="table table-sm table-striped table-hover align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Asset</th>
-                                    <th>Office</th>
-                                    <th>Quantity</th>
-                                    <th>Dispensed By</th>
-                                    <th>Date</th>
-                                    <th>Remarks</th>
+                                    <th title="Asset name">Asset</th>
+                                    <th title="Office">Office</th>
+                                    <th title="Quantity consumed">Quantity</th>
+                                    <th title="Dispensed by">Dispensed By</th>
+                                    <th title="Consumption date">Date</th>
+                                    <th title="Remarks">Remarks</th>
                                 </tr>
                             </thead>
                             <tbody>

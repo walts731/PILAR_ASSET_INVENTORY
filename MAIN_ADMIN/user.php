@@ -43,6 +43,7 @@ $userStmt = $conn->prepare("
 $userStmt->bind_param("i", $selected_office);
 $userStmt->execute();
 $userResult = $userStmt->get_result();
+$user_total = $userResult->num_rows;
 
 // Set office_id if not set
 if (!isset($_SESSION['office_id'])) {
@@ -79,6 +80,18 @@ $stmt->close();
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/dashboard.css" />
+  <style>
+    .page-header {
+      background: linear-gradient(135deg, #f8f9fa 0%, #eef3ff 100%);
+      border: 1px solid #e9ecef;
+      border-radius: .75rem;
+    }
+    .page-header .title { font-weight: 600; }
+    .toolbar .btn { transition: transform .08s ease-in; }
+    .toolbar .btn:hover { transform: translateY(-1px); }
+    .card-hover:hover { box-shadow: 0 .25rem .75rem rgba(0,0,0,.06) !important; }
+    .table thead th { position: sticky; top: 0; background: #f8f9fa; z-index: 1; }
+  </style>
 </head>
 
 <body>
@@ -99,10 +112,37 @@ $stmt->close();
       </div>
     <?php endif; ?>
 
+    <!-- Page Header -->
+    <div class="container-fluid mt-3">
+      <div class="page-header p-3 p-sm-4 d-flex flex-wrap gap-3 align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center bg-white border" style="width:48px;height:48px;">
+            <i class="bi bi-people text-primary fs-4"></i>
+          </div>
+          <div>
+            <div class="h4 mb-0 title">User Management</div>
+            <div class="text-muted small">Manage users and offices</div>
+          </div>
+        </div>
+        <div class="toolbar d-flex align-items-center gap-2">
+          <span class="badge text-bg-secondary" title="Total users listed">
+            <?= (int)$user_total ?> user<?= $user_total == 1 ? '' : 's' ?>
+          </span>
+          <button id="toggleDensity" class="btn btn-outline-secondary btn-sm rounded-pill" title="Toggle compact density">
+            <i class="bi bi-arrows-vertical me-1"></i> Density
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- User Management Card with Office Filter -->
-    <div class="card shadow-sm mb-4 mt-4">
+    <div class="card shadow-sm mb-4 mt-3 card-hover">
       <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h5 class="mb-0">User Management</h5>
+        <h5 class="mb-0 d-flex align-items-center gap-2">
+          <i class="bi bi-person-lines-fill"></i>
+          <span>Listing</span>
+          <span class="badge text-bg-secondary d-none d-sm-inline"><?= (int)$user_total ?></span>
+        </h5>
 
         <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
           <form method="GET" class="d-flex align-items-center gap-2 mb-0">
@@ -127,7 +167,7 @@ $stmt->close();
       </div>
 
       <div class="card-body table-responsive">
-        <table id="userTable" class="table">
+        <table id="userTable" class="table table-sm table-striped table-hover align-middle">
           <thead class="table-light">
             <tr>
               <th>Full Name</th>

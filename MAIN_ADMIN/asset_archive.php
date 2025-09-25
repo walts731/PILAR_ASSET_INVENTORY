@@ -163,6 +163,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+      .page-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #eef3ff 100%);
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+      }
+      .page-header .title { font-weight: 600; }
+      .toolbar .btn { transition: transform .08s ease-in; }
+      .toolbar .btn:hover { transform: translateY(-1px); }
+      .card-hover:hover { box-shadow: 0 .25rem .75rem rgba(0,0,0,.06) !important; }
+      .table thead th { position: sticky; top: 0; background: #f8f9fa; z-index: 1; }
+    </style>
 </head>
 <body>
 <?php include 'includes/sidebar.php'; ?>
@@ -170,6 +182,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php include 'includes/topbar.php'; ?>
 
     <div class="container py-4">
+        <?php
+          // Build counts per type for badges
+          $archiveCounts = ['consumable' => 0, 'asset' => 0];
+          $cntRes = $conn->query("SELECT type, COUNT(*) AS cnt FROM assets_archive GROUP BY type");
+          if ($cntRes) {
+            while ($cr = $cntRes->fetch_assoc()) {
+              $t = $cr['type'];
+              if (isset($archiveCounts[$t])) $archiveCounts[$t] = (int)$cr['cnt'];
+            }
+          }
+          $archiveTotal = array_sum($archiveCounts);
+        ?>
+
+        <!-- Page Header -->
+        <div class="page-header p-3 p-sm-4 d-flex flex-wrap gap-3 align-items-center justify-content-between mb-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center bg-white border" style="width:48px;height:48px;">
+              <i class="bi bi-archive text-primary fs-4"></i>
+            </div>
+            <div>
+              <div class="h4 mb-0 title">Archived Assets</div>
+              <div class="text-muted small">Restore, delete permanently, or review archived records</div>
+            </div>
+          </div>
+          <div class="toolbar d-flex align-items-center gap-2">
+            <span class="badge text-bg-secondary" title="Total archived items"><?= (int)$archiveTotal ?> total</span>
+            <button id="toggleDensityArchive" class="btn btn-outline-secondary btn-sm rounded-pill" title="Toggle compact density">
+              <i class="bi bi-arrows-vertical me-1"></i> Density
+            </button>
+          </div>
+        </div>
         <?php if (isset($_GET['restore'])): ?>
             <div class="alert alert-success">Asset restored successfully!</div>
         <?php endif; ?>
@@ -186,10 +229,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Tabs -->
         <ul class="nav nav-tabs" id="archiveTabs" role="tablist">
             <li class="nav-item">
-                <button class="nav-link active" id="consumables-tab" data-bs-toggle="tab" data-bs-target="#consumables" type="button" role="tab">Consumables</button>
+                <button class="nav-link active" id="consumables-tab" data-bs-toggle="tab" data-bs-target="#consumables" type="button" role="tab">
+                  <i class="bi bi-box-seam me-1"></i> Consumables
+                  <span class="badge text-bg-secondary ms-1 align-middle"><?= (int)$archiveCounts['consumable'] ?></span>
+                </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link" id="assets-tab" data-bs-toggle="tab" data-bs-target="#assets" type="button" role="tab">Assets</button>
+                <button class="nav-link" id="assets-tab" data-bs-toggle="tab" data-bs-target="#assets" type="button" role="tab">
+                  <i class="bi bi-hdd-stack me-1"></i> Assets
+                  <span class="badge text-bg-secondary ms-1 align-middle"><?= (int)$archiveCounts['asset'] ?></span>
+                </button>
             </li>
         </ul>
 
@@ -201,26 +250,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $isActive = $type === 'consumable' ? 'show active' : '';
             ?>
             <div class="tab-pane fade <?= $isActive ?>" id="<?= $tabId ?>" role="tabpanel">
-                <div class="card shadow-sm">
+                <div class="card shadow-sm card-hover">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5><?= $label ?> Archive</h5>
+                        <h5 class="mb-0 d-flex align-items-center gap-2">
+                          <i class="bi bi-collection"></i>
+                          <span><?= $label ?> Archive</span>
+                          <span class="badge text-bg-secondary d-none d-sm-inline"><?= (int)$archiveCounts[$type] ?></span>
+                        </h5>
                         <div>
-                            <button class="btn btn-sm btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#deleteAllModal<?= $type ?>"><i class="bi bi-trash3"></i> Delete All</button>
-                            <button class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#restoreAllModal<?= $type ?>"><i class="bi bi-arrow-clockwise"></i> Restore All</button>
+                            <button class="btn btn-sm btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#deleteAllModal<?= $type ?>" title="Delete all archived <?= strtolower($label) ?>"><i class="bi bi-trash3"></i> Delete All</button>
+                            <button class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#restoreAllModal<?= $type ?>" title="Restore all archived <?= strtolower($label) ?>"><i class="bi bi-arrow-clockwise"></i> Restore All</button>
                         </div>
                     </div>
                     <div class="card-body table-responsive">
-                        <table class="table table-hover align-middle archiveTable" id="table_<?= $type ?>">
+                        <table class="table table-sm table-striped table-hover align-middle archiveTable" id="table_<?= $type ?>">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Category</th>
-                                    <th>Description</th>
-                                    <th>Qty</th>
-                                    <th>Unit</th>
-                                    <th>Status</th>
-                                    <th>Archived At</th>
-                                    <th>Actions</th>
+                                    <th title="Asset name">Name</th>
+                                    <th title="Category">Category</th>
+                                    <th title="Description">Description</th>
+                                    <th title="Quantity">Qty</th>
+                                    <th title="Unit">Unit</th>
+                                    <th title="Status">Status</th>
+                                    <th title="Date archived">Archived At</th>
+                                    <th title="Actions">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
