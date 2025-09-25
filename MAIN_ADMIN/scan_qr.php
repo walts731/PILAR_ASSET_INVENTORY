@@ -251,12 +251,15 @@ $stmt->close();
 
             $stmt = $conn->prepare("
               SELECT a.*, c.category_name, o.office_name, e.name as employee_name,
-                     CASE WHEN rt.id IS NOT NULL THEN 1 ELSE 0 END as has_red_tag
+                     CASE WHEN rt.id IS NOT NULL THEN 1 ELSE 0 END as has_red_tag,
+                     rt.iirup_id,
+                     md.end_user
               FROM assets a
               LEFT JOIN categories c ON a.category = c.id
               LEFT JOIN offices o ON a.office_id = o.id
               LEFT JOIN employees e ON a.employee_id = e.employee_id
               LEFT JOIN red_tags rt ON rt.asset_id = a.id
+              LEFT JOIN mr_details md ON a.id = md.asset_id
               WHERE a.id = ?
             ");
             $stmt->bind_param("i", $asset_id);
@@ -265,69 +268,263 @@ $stmt->close();
 
             if ($row = $result->fetch_assoc()):
           ?>
-            <div class="asset-card">
-              <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                  <i class="bi bi-box-seam me-2"></i>
-                  Asset Details - ID: <?= htmlspecialchars($asset_id) ?>
-                </h5>
-              </div>
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-md-6">
-                    <p><strong>Asset Name:</strong> <?= htmlspecialchars($row['asset_name']) ?></p>
-                    <p><strong>Category:</strong> <?= htmlspecialchars($row['category_name']) ?></p>
-                    <p><strong>Description:</strong> <?= htmlspecialchars($row['description']) ?></p>
-                    <p><strong>Property Number:</strong> <?= htmlspecialchars($row['property_no'] ?? 'Not Assigned') ?></p>
-                    <p><strong>Inventory Tag:</strong> <?= htmlspecialchars($row['inventory_tag'] ?? 'Not Assigned') ?></p>
+            <!-- Professional Asset Details Card -->
+            <div class="row justify-content-center mt-4">
+              <div class="col-lg-10">
+                <div class="card shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
+                  <!-- Header with Gradient -->
+                  <div class="card-header text-white position-relative" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 2rem;">
+                    <div class="row align-items-center">
+                      <div class="col">
+                        <h4 class="mb-1 fw-bold">
+                          <i class="bi bi-box-seam me-2"></i>
+                          Asset Information
+                        </h4>
+                        <p class="mb-0 opacity-75">Complete asset details and specifications</p>
+                      </div>
+                      <div class="col-auto">
+                        <div class="badge bg-white text-primary px-3 py-2 fs-6">
+                          <i class="bi bi-qr-code me-1"></i>
+                          ID: <?= htmlspecialchars($asset_id) ?>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="col-md-6">
-                    <p><strong>Quantity:</strong> <?= $row['quantity'] ?> <?= htmlspecialchars($row['unit']) ?></p>
-                    <p><strong>Status:</strong>
-                      <span class="badge bg-<?= $row['status'] === 'available' ? 'success' : ($row['status'] === 'borrowed' ? 'warning' : ($row['status'] === 'unserviceable' ? 'danger' : 'secondary')) ?>">
-                        <?= $row['has_red_tag'] ? 'Red-Tagged' : ucfirst($row['status']) ?>
-                      </span>
-                    </p>
-                    <p><strong>Value:</strong> ₱<?= number_format($row['value'], 2) ?></p>
-                    <p><strong>Acquired On:</strong> <?= date('F j, Y', strtotime($row['acquisition_date'])) ?></p>
-                    <p><strong>Office:</strong> <?= htmlspecialchars($row['office_name']) ?></p>
-                    <p><strong>Person Accountable:</strong> <?= htmlspecialchars($row['employee_name'] ?? 'Not Assigned') ?></p>
+
+                  <div class="card-body p-4">
+                    <div class="row g-4">
+                      <!-- Asset Images Section -->
+                      <div class="col-lg-4">
+                        <div class="card border-0 bg-light h-100" style="border-radius: 15px;">
+                          <div class="card-header bg-transparent border-0 pb-2">
+                            <h6 class="mb-0 text-primary fw-semibold">
+                              <i class="bi bi-images me-2"></i>Asset Gallery
+                            </h6>
+                          </div>
+                          <div class="card-body pt-0">
+                            <?php if (!empty($row['image'])): ?>
+                              <div class="mb-3">
+                                <div class="position-relative">
+                                  <img src="../img/assets/<?= htmlspecialchars($row['image']) ?>" 
+                                       alt="Asset Image" 
+                                       class="img-fluid rounded shadow-sm w-100" 
+                                       style="height: 200px; object-fit: cover; cursor: pointer;"
+                                       onclick="showImageModal('../img/assets/<?= htmlspecialchars($row['image']) ?>', 'Main Asset Image')">
+                                  <div class="position-absolute top-0 start-0 m-2">
+                                    <span class="badge bg-primary shadow-sm">
+                                      <i class="bi bi-image me-1"></i>Main
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            <?php endif; ?>
+
+                            <?php 
+                            // Process additional images (stored as JSON)
+                            $additional_images = [];
+                            if (!empty($row['additional_images'])) {
+                                $additional_images = json_decode($row['additional_images'], true);
+                                if (!is_array($additional_images)) {
+                                    $additional_images = [];
+                                }
+                            }
+                            ?>
+                            
+                            <?php if (!empty($additional_images)): ?>
+                              <div class="row g-2">
+                                <?php foreach ($additional_images as $index => $imageName): ?>
+                                  <div class="col-6">
+                                    <div class="position-relative">
+                                      <img src="../img/assets/<?= htmlspecialchars($imageName) ?>" 
+                                           alt="Additional Image <?= $index + 1 ?>" 
+                                           class="img-fluid rounded shadow-sm w-100" 
+                                           style="height: 80px; object-fit: cover; cursor: pointer;"
+                                           onclick="showImageModal('../img/assets/<?= htmlspecialchars($imageName) ?>', 'Additional Image <?= $index + 1 ?>')">
+                                      <div class="position-absolute top-0 start-0 m-1">
+                                        <span class="badge bg-info shadow-sm" style="font-size: 0.7rem;">
+                                          <?= $index + 1 ?>
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                <?php endforeach; ?>
+                              </div>
+                            <?php endif; ?>
+
+                            <?php if (empty($row['image']) && empty($additional_images)): ?>
+                              <div class="text-center py-4">
+                                <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2 mb-0">No images available</p>
+                              </div>
+                            <?php endif; ?>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Asset Details Section -->
+                      <div class="col-lg-8">
+                        <div class="row g-4">
+                          <!-- Basic Information -->
+                          <div class="col-md-6">
+                            <div class="card border-0 bg-light h-100" style="border-radius: 15px;">
+                              <div class="card-header bg-transparent border-0 pb-2">
+                                <h6 class="mb-0 text-primary fw-semibold">
+                                  <i class="bi bi-info-circle me-2"></i>Basic Information
+                                </h6>
+                              </div>
+                              <div class="card-body pt-0">
+                                <div class="row g-2">
+                                  <div class="col-12">
+                                    <small class="text-muted">Category</small>
+                                    <p class="mb-2 fw-semibold"><?= htmlspecialchars($row['category_name']) ?></p>
+                                  </div>
+                                  <div class="col-12">
+                                    <small class="text-muted">Description</small>
+                                    <p class="mb-2"><?= htmlspecialchars($row['description']) ?></p>
+                                  </div>
+                                  <div class="col-6">
+                                    <small class="text-muted">Brand</small>
+                                    <p class="mb-2 fw-semibold"><?= htmlspecialchars($row['brand'] ?? 'Not Specified') ?></p>
+                                  </div>
+                                  <div class="col-6">
+                                    <small class="text-muted">Model</small>
+                                    <p class="mb-2 fw-semibold"><?= htmlspecialchars($row['model'] ?? 'Not Specified') ?></p>
+                                  </div>
+                                  <div class="col-6">
+                                    <small class="text-muted">Serial Number</small>
+                                    <p class="mb-2"><?= htmlspecialchars($row['serial_no'] ?? 'Not Specified') ?></p>
+                                  </div>
+                                  <div class="col-6">
+                                    <small class="text-muted">Code</small>
+                                    <p class="mb-2"><?= htmlspecialchars($row['code'] ?? 'Not Specified') ?></p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Asset Status & Details -->
+                          <div class="col-md-6">
+                            <div class="card border-0 bg-light h-100" style="border-radius: 15px;">
+                              <div class="card-header bg-transparent border-0 pb-2">
+                                <h6 class="mb-0 text-primary fw-semibold">
+                                  <i class="bi bi-gear me-2"></i>Asset Status & Details
+                                </h6>
+                              </div>
+                              <div class="card-body pt-0">
+                                <div class="row g-2">
+                                  <div class="col-12">
+                                    <small class="text-muted">Status</small>
+                                    <p class="mb-2">
+                                      <span class="badge bg-<?= $row['status'] === 'available' ? 'success' : ($row['status'] === 'borrowed' ? 'warning' : ($row['status'] === 'unserviceable' ? 'danger' : 'secondary')) ?> px-3 py-2">
+                                        <i class="bi bi-<?= $row['status'] === 'available' ? 'check-circle' : ($row['status'] === 'borrowed' ? 'clock' : ($row['status'] === 'unserviceable' ? 'x-circle' : 'question-circle')) ?> me-1"></i>
+                                        <?= $row['has_red_tag'] ? 'Red-Tagged' : ucfirst($row['status']) ?>
+                                      </span>
+                                    </p>
+                                  </div>
+                                  <div class="col-6">
+                                    <small class="text-muted">Quantity</small>
+                                    <p class="mb-2 fw-semibold"><?= $row['quantity'] ?> <?= htmlspecialchars($row['unit']) ?></p>
+                                  </div>
+                                  <div class="col-6">
+                                    <small class="text-muted">Value</small>
+                                    <p class="mb-2 fw-semibold text-success">₱<?= number_format($row['value'], 2) ?></p>
+                                  </div>
+                                  <div class="col-12">
+                                    <small class="text-muted">Property Number</small>
+                                    <p class="mb-2"><?= htmlspecialchars($row['property_no'] ?? 'Not Assigned') ?></p>
+                                  </div>
+                                  <div class="col-12">
+                                    <small class="text-muted">Inventory Tag</small>
+                                    <p class="mb-2"><?= htmlspecialchars($row['inventory_tag'] ?? 'Not Assigned') ?></p>
+                                  </div>
+                                  <div class="col-12">
+                                    <small class="text-muted">Acquired On</small>
+                                    <p class="mb-2"><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Assignment Information -->
+                          <div class="col-12">
+                            <div class="card border-0 bg-light" style="border-radius: 15px;">
+                              <div class="card-header bg-transparent border-0 pb-2">
+                                <h6 class="mb-0 text-primary fw-semibold">
+                                  <i class="bi bi-people me-2"></i>Assignment Information
+                                </h6>
+                              </div>
+                              <div class="card-body pt-0">
+                                <div class="row g-3">
+                                  <div class="col-md-4">
+                                    <small class="text-muted">Office</small>
+                                    <p class="mb-0 fw-semibold"><?= htmlspecialchars($row['office_name']) ?></p>
+                                  </div>
+                                  <div class="col-md-4">
+                                    <small class="text-muted">Person Accountable</small>
+                                    <p class="mb-0 fw-semibold"><?= htmlspecialchars($row['employee_name'] ?? 'Not Assigned') ?></p>
+                                  </div>
+                                  <div class="col-md-4">
+                                    <small class="text-muted">End User</small>
+                                    <p class="mb-0 fw-semibold"><?= htmlspecialchars($row['end_user'] ?? 'Not Assigned') ?></p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="card-footer bg-white border-0 pt-0">
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                      <!-- Primary Actions -->
+                      <a href="inventory.php" class="btn btn-outline-primary btn-lg px-4">
+                        <i class="bi bi-list-ul me-2"></i>View in Inventory
+                      </a>
+                      
+                      <?php if ($row['status'] === 'available'): ?>
+                        <a href="create_mr.php?asset_id=<?= $asset_id ?>" class="btn btn-success btn-lg px-4">
+                          <i class="bi bi-file-earmark-plus me-2"></i>Create MR
+                        </a>
+                        
+                        <!-- Transfer Button -->
+                        <button class="btn btn-info btn-lg px-4 transfer-asset" 
+                                data-asset-id="<?= $asset_id ?>" 
+                                data-inventory-tag="<?= htmlspecialchars($row['inventory_tag'] ?? '') ?>" 
+                                data-current-employee-id="<?= $row['employee_id'] ?? '' ?>">
+                          <i class="bi bi-arrow-left-right me-2"></i>Transfer Asset
+                        </button>
+                      <?php endif; ?>
+
+                      <?php if ($row['status'] === 'available' && !$row['has_red_tag']): ?>
+                        <a href="forms.php?id=7&asset_id=<?= $asset_id ?>" class="btn btn-warning btn-lg px-4">
+                          <i class="bi bi-exclamation-triangle me-2"></i>Create IIRUP
+                        </a>
+                      <?php endif; ?>
+
+                      <?php if ($row['has_red_tag']): ?>
+                        <span class="btn btn-danger btn-lg px-4 disabled">
+                          <i class="bi bi-tag me-2"></i>Red Tagged
+                        </span>
+                      <?php elseif ($row['status'] === 'unserviceable'): ?>
+                        <a href="create_red_tag.php?asset_id=<?= $asset_id ?><?= !empty($row['iirup_id']) ? '&iirup_id=' . $row['iirup_id'] : '' ?>" class="btn btn-danger btn-lg px-4">
+                          <i class="bi bi-tag me-2"></i>Red Tag
+                        </a>
+                      <?php endif; ?>
+
+                      <!-- Secondary Actions -->
+                      <a href="scan_qr.php" class="btn btn-outline-secondary btn-lg px-4">
+                        <i class="bi bi-qr-code-scan me-2"></i>Scan Another
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              <!-- Action Buttons -->
-              <div class="asset-actions">
-                <a href="inventory.php" class="btn btn-primary btn-action">
-                  <i class="bi bi-list-ul me-1"></i>View in Inventory
-                </a>
-                
-                <?php if ($row['status'] === 'available'): ?>
-                  <a href="create_mr.php?asset_id=<?= $asset_id ?>" class="btn btn-success btn-action">
-                    <i class="bi bi-file-earmark-plus me-1"></i>Create MR
-                  </a>
-                <?php endif; ?>
-
-                <?php if ($row['status'] === 'unserviceable' && !$row['has_red_tag']): ?>
-                  <a href="iirup_form.php?asset_id=<?= $asset_id ?>" class="btn btn-warning btn-action">
-                    <i class="bi bi-exclamation-triangle me-1"></i>Create IIRUP
-                  </a>
-                <?php endif; ?>
-
-                <?php if ($row['has_red_tag']): ?>
-                  <span class="btn btn-danger btn-action disabled">
-                    <i class="bi bi-tag me-1"></i>Red Tagged
-                  </span>
-                <?php elseif ($row['status'] === 'unserviceable'): ?>
-                  <a href="create_red_tag.php?asset_id=<?= $asset_id ?>" class="btn btn-danger btn-action">
-                    <i class="bi bi-tag me-1"></i>Red Tag
-                  </a>
-                <?php endif; ?>
-
-                <a href="scan_qr.php" class="btn btn-secondary btn-action">
-                  <i class="bi bi-qr-code-scan me-1"></i>Scan Another
-                </a>
-              </div>
+            </div>
             </div>
 
           <?php else: ?>
@@ -588,6 +785,54 @@ $stmt->close();
         window.qrScanner.stopScanning();
       }
     });
+
+    // Transfer Asset functionality (similar to employees.php)
+    $(document).on('click', '.transfer-asset', function () {
+      // Get asset data
+      const assetId = $(this).data('asset-id');
+      const inventoryTag = $(this).data('inventory-tag');
+      const currentEmployeeId = $(this).data('current-employee-id');
+      
+      // Option 1: Use hardcoded ITR form ID (change this to your actual ITR form ID)
+      const ITR_FORM_ID = 9; // Change this to the actual ITR form ID from your forms table
+      
+      // Redirect to forms.php with ITR form ID and asset parameters
+      window.location.href = `forms.php?id=${ITR_FORM_ID}&asset_id=${assetId}&inventory_tag=${inventoryTag}&current_employee_id=${currentEmployeeId}`;
+    });
+
+    // Image Modal functionality
+    function showImageModal(imageSrc, imageTitle) {
+      // Create modal if it doesn't exist
+      if (!document.getElementById('imageModal')) {
+        const modalHTML = `
+          <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="imageModalTitle">Asset Image</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                  <img id="modalImage" src="" alt="Asset Image" class="img-fluid rounded shadow">
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+      }
+      
+      // Update modal content
+      document.getElementById('imageModalTitle').textContent = imageTitle;
+      document.getElementById('modalImage').src = imageSrc;
+      
+      // Show modal
+      const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+      modal.show();
+    }
+
+    // Make showImageModal globally available
+    window.showImageModal = showImageModal;
   </script>
 
   <!-- Dependencies -->
