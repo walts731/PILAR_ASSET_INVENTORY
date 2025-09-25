@@ -9,36 +9,91 @@ if (isset($_GET['id'])) {
     $result = $stmt->get_result();
 
     if ($row = $result->fetch_assoc()) {
-        echo "<table class='table table-bordered'>";
-        echo "<tr><th>Classification/Type</th><td>" . htmlspecialchars($row['classification_type']) . "</td></tr>";
-        echo "<tr><th>Item Description</th><td>" . htmlspecialchars($row['item_description']) . "</td></tr>";
-        echo "<tr><th>Nature Occupancy</th><td>" . htmlspecialchars($row['nature_occupancy']) . "</td></tr>";
-        echo "<tr><th>Location</th><td>" . htmlspecialchars($row['location']) . "</td></tr>";
-        echo "<tr><th>Date Constructed/Acquired/Manufactured</th><td>"
-            . (!empty($row['date_constructed_acquired_manufactured'])
-                ? date("M-Y", strtotime($row['date_constructed_acquired_manufactured']))
-                : '')
-            . "</td></tr>";
-        echo "<tr><th>Property No./Other Reference</th><td>" . htmlspecialchars($row['property_no_or_reference']) . "</td></tr>";
-        echo "<tr><th>Acquisition Cost</th><td>" . htmlspecialchars($row['acquisition_cost']) . "</td></tr>";
-        echo "<tr><th>Market/Appraisal Value</th><td>" . htmlspecialchars($row['market_appraisal_insurable_interest']) . "</td></tr>";
-        echo "<tr><th>Date of Appraisal</th><td>" . (!empty($row['date_of_appraisal']) ? date("Y", strtotime($row['date_of_appraisal'])) : '') . "</td></tr>";
-        echo "<tr><th>Remarks</th><td>" . htmlspecialchars($row['remarks']) . "</td></tr>";
-        echo "</table>";
+        // Summary header
+        echo "<div class='d-flex align-items-start justify-content-between mb-2'>";
+        echo "  <div>";
+        echo "    <div class='h6 mb-1'><i class='bi bi-building me-1 text-primary'></i> Infrastructure Details</div>";
+        echo "    <div class='text-muted small'>Comprehensive information and attributes</div>";
+        echo "  </div>";
+        echo "</div>";
 
-        // Display images if available
-        echo "<h6 class='mt-3'>Images</h6>";
-        echo "<div class='row'>";
+        // Layout container
+        echo "<div class='row g-3'>";
+
+        // Left column: Details
+        echo "  <div class='col-12 col-lg-7'>";
+        echo "    <div class='border rounded-3 p-3 h-100'>";
+        echo "      <div class='row g-2'>";
+        echo "        <div class='col-12'>";
+        echo "          <div class='small text-muted'>Classification/Type</div>";
+        echo "          <div class='fw-semibold'>" . htmlspecialchars($row['classification_type']) . "</div>";
+        echo "        </div>";
+        echo "        <div class='col-12'>";
+        echo "          <div class='small text-muted'>Item Description</div>";
+        echo "          <div>" . htmlspecialchars($row['item_description']) . "</div>";
+        echo "        </div>";
+        echo "        <div class='col-md-6'>";
+        echo "          <div class='small text-muted'>Nature of Occupancy</div>";
+        echo "          <div>" . htmlspecialchars($row['nature_occupancy']) . "</div>";
+        echo "        </div>";
+        echo "        <div class='col-md-6'>";
+        echo "          <div class='small text-muted'>Location</div>";
+        echo "          <div>" . htmlspecialchars($row['location']) . "</div>";
+        echo "        </div>";
+        $d_cam = !empty($row['date_constructed_acquired_manufactured']) ? date('M Y', strtotime($row['date_constructed_acquired_manufactured'])) : '';
+        echo "        <div class='col-md-6'>";
+        echo "          <div class='small text-muted'>Constructed/Acquired/Manufactured</div>";
+        echo "          <div>" . ($d_cam !== '' ? htmlspecialchars($d_cam) : "<span class='text-muted'>N/A</span>") . "</div>";
+        echo "        </div>";
+        echo "        <div class='col-md-6'>";
+        echo "          <div class='small text-muted'>Property No. / Reference</div>";
+        echo "          <div>" . (!empty($row['property_no_or_reference']) ? htmlspecialchars($row['property_no_or_reference']) : "<span class='text-muted'>N/A</span>") . "</div>";
+        echo "        </div>";
+        $acq_cost = is_numeric($row['acquisition_cost']) ? '₱ ' . number_format((float)$row['acquisition_cost'], 2) : htmlspecialchars($row['acquisition_cost']);
+        echo "        <div class='col-md-6'>";
+        echo "          <div class='small text-muted'>Acquisition Cost</div>";
+        echo "          <div>" . (!empty($acq_cost) ? $acq_cost : "<span class='text-muted'>N/A</span>") . "</div>";
+        echo "        </div>";
+        $app_val = is_numeric($row['market_appraisal_insurable_interest']) ? '₱ ' . number_format((float)$row['market_appraisal_insurable_interest'], 2) : htmlspecialchars($row['market_appraisal_insurable_interest']);
+        echo "        <div class='col-md-6'>";
+        echo "          <div class='small text-muted'>Market/Appraisal Value</div>";
+        echo "          <div>" . (!empty($app_val) ? $app_val : "<span class='text-muted'>N/A</span>") . "</div>";
+        echo "        </div>";
+        $d_app = !empty($row['date_of_appraisal']) ? date('Y', strtotime($row['date_of_appraisal'])) : '';
+        echo "        <div class='col-md-6'>";
+        echo "          <div class='small text-muted'>Date of Appraisal</div>";
+        echo "          <div>" . ($d_app !== '' ? htmlspecialchars($d_app) : "<span class='text-muted'>N/A</span>") . "</div>";
+        echo "        </div>";
+        echo "        <div class='col-12'>";
+        echo "          <div class='small text-muted'>Remarks</div>";
+        echo "          <div>" . (!empty($row['remarks']) ? nl2br(htmlspecialchars($row['remarks'])) : "<span class='text-muted'>N/A</span>") . "</div>";
+        echo "        </div>";
+        echo "      </div>";
+        echo "    </div>";
+        echo "  </div>";
+
+        // Right column: Images card
+        echo "  <div class='col-12 col-lg-5'>";
+        echo "    <div class='border rounded-3 p-3 h-100'>";
+        echo "      <div class='d-flex align-items-center justify-content-between mb-2'>";
+        echo "        <h6 class='mb-0'><i class='bi bi-images me-1 text-secondary'></i> Images</h6>";
+        echo "      </div>";
+        echo "      <div class='row g-3'>";
         for ($i = 1; $i <= 4; $i++) {
             if (!empty($row["image_$i"])) {
-                echo "<div class='col-md-3 mb-3'>";
-                echo "<a href='" . htmlspecialchars($row["image_$i"]) . "' target='_blank'>";
-                echo "<img src='" . htmlspecialchars($row["image_$i"]) . "' class='img-fluid rounded border' alt='Image $i'>";
-                echo "</a>";
-                echo "</div>";
+                $src = htmlspecialchars($row["image_$i"]);
+                echo "        <div class='col-6'>";
+                echo "          <a href='" . $src . "' target='_blank' class='d-block' title='Open image $i in new tab'>";
+                echo "            <img src='" . $src . "' class='img-fluid rounded border' alt='Image $i' style='object-fit:cover;width:100%;height:150px;'>";
+                echo "          </a>";
+                echo "        </div>";
             }
         }
-        echo "</div>";
+        echo "      </div>";
+        echo "    </div>";
+        echo "  </div>";
+
+        echo "</div>"; // end row
     } else {
         echo "<div class='text-danger'>No record found.</div>";
     }

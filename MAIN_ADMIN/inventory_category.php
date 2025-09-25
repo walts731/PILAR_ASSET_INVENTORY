@@ -98,6 +98,19 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
   <link rel="stylesheet" href="css/dashboard.css" />
+  <style>
+    :root { --inv-accent: #0d6efd; }
+    .page-header {
+      background: linear-gradient(135deg, #f8f9fa 0%, #eef3ff 100%);
+      border: 1px solid #e9ecef;
+      border-radius: .75rem;
+    }
+    .page-header .title { font-weight: 600; }
+    .toolbar .btn { transition: transform .08s ease-in; }
+    .toolbar .btn:hover { transform: translateY(-1px); }
+    .card-hover:hover { box-shadow: 0 .25rem .75rem rgba(0,0,0,.06) !important; }
+    .table thead th { position: sticky; top: 0; background: #f8f9fa; z-index: 1; }
+  </style>
 </head>
 
 <body>
@@ -110,19 +123,37 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
 
     <div class="container-fluid mt-4">
       <?php if ($category): ?>
+      <!-- Page Header -->
+      <div class="page-header p-3 p-sm-4 d-flex flex-wrap gap-3 align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center bg-white border" style="width:48px;height:48px;">
+            <i class="bi bi-tags text-primary fs-4"></i>
+          </div>
+          <div>
+            <div class="h4 mb-0 title"><?= htmlspecialchars($category['category_name'] ?? 'Category') ?></div>
+            <div class="text-muted small">Category Inventory</div>
+          </div>
+        </div>
+        <?php if (!empty($systemLogo)): ?>
+        <img src="<?= htmlspecialchars($systemLogo) ?>" alt="Logo" class="rounded border bg-white p-1" style="height:42px;object-fit:contain;">
+        <?php endif; ?>
+      </div>
+      <?php endif; ?>
+
+      <?php if ($category): ?>
 
         <?php if (count($an_rows) > 0): ?>
-          <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
+          <div class="card shadow-sm card-hover">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
               <h5 class="mb-0">
                 <i class="bi bi-list-ul"></i> <?= htmlspecialchars($category['category_name'] ?? 'Unknown Category') ?> Assets
               </h5>
               <div class="d-flex gap-2">
-                <button type="button" id="selectAllBtn" class="btn btn-sm btn-outline-secondary">
-                  <i class="bi bi-check-square"></i> Select All
+                <button type="button" id="selectAllBtn" class="btn btn-sm btn-outline-secondary rounded-pill" title="Select/Deselect all items">
+                  <i class="bi bi-check-square me-1"></i> Select All
                 </button>
-                <button type="button" id="generateReportBtn" class="btn btn-sm btn-primary" disabled>
-                  <i class="bi bi-file-earmark-text"></i> Generate Report (<span id="selectedCount">0</span>)
+                <button type="button" id="generateReportBtn" class="btn btn-sm btn-primary rounded-pill" title="Generate a report for selected items" disabled>
+                  <i class="bi bi-file-earmark-text me-1"></i> Generate Report (<span id="selectedCount">0</span>)
                 </button>
               </div>
             </div>
@@ -137,7 +168,7 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
                 <form id="reportForm" method="POST" action="generate_selected_report.php" target="_blank">
                   
                   <div class="table-responsive">
-                  <table id="inventoryTable" class="table table-hover align-middle">
+                  <table id="inventoryTable" class="table table-striped table-hover align-middle">
                     <thead class="table-light">
                       <tr>
                         <th><input type="checkbox" id="selectAllAssetsCat" /></th>
@@ -164,8 +195,9 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
                               data-source="assets_new"
                               data-id="<?= (int)$row['an_id'] ?>"
                               data-bs-toggle="modal"
-                              data-bs-target="#viewAssetModal">
-                              <i class="bi bi-eye"></i>View
+                              data-bs-target="#viewAssetModal"
+                              title="View asset details">
+                              <i class="bi bi-eye me-1"></i> View
                             </button>
                           </td>
                         </tr>

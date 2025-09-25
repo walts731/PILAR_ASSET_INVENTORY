@@ -47,6 +47,30 @@ $stmt->close();
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/dashboard.css" />
+  <style>
+    :root {
+      --inv-accent: #0d6efd;
+      --inv-muted: #6c757d;
+    }
+    .page-header {
+      background: linear-gradient(135deg, #f8f9fa 0%, #eef3ff 100%);
+      border: 1px solid #e9ecef;
+      border-radius: .75rem;
+    }
+    .page-header .title {
+      font-weight: 600;
+    }
+    .toolbar .btn {
+      transition: transform .08s ease-in;
+    }
+    .toolbar .btn:hover { transform: translateY(-1px); }
+    .card-hover:hover {
+      box-shadow: 0 .25rem .75rem rgba(0,0,0,.06) !important;
+    }
+    .table thead th { position: sticky; top: 0; background: #f8f9fa; z-index: 1; }
+    .status-badge { font-weight: 500; }
+    .badge-soft { background: rgba(13,110,253,.1); color: var(--inv-accent); }
+  </style>
 </head>
 
 <body>
@@ -68,16 +92,13 @@ $stmt->close();
     $selected_office = $_GET['office'] ?? $_SESSION['office_id'];
     ?>
     <div class="card card-filter shadow-sm mb-3">
-      <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h5 class="mb-0 me-3">Filter Assets and Consumables</h5>
-
-        <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
+      <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <h5 class="mb-0">Inventory Controls</h5>
           <form method="GET" class="d-flex align-items-center gap-2 mb-0">
             <label for="officeFilter" class="form-label mb-0">Office</label>
             <select name="office" id="officeFilter" class="form-select form-select-sm" onchange="this.form.submit()">
-              <!-- Add "All" option -->
               <option value="all" <?= $selected_office === "all" ? 'selected' : '' ?>>All</option>
-
               <?php while ($office = $offices->fetch_assoc()): ?>
                 <option value="<?= $office['id'] ?>" <?= $office['id'] == $selected_office ? 'selected' : '' ?>>
                   <?= htmlspecialchars($office['office_name']) ?>
@@ -85,21 +106,14 @@ $stmt->close();
               <?php endwhile; ?>
             </select>
           </form>
-
-          <!-- Add Asset and Import Asset buttons - visible for all offices -->
-          <div class="d-flex flex-wrap gap-2">
-            <!-- Add Asset Button -->
-            <button class="btn btn-outline-primary rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
-              <i class="bi bi-plus-circle"></i> Add Asset
-            </button>
-
-            <!-- Import CSV Button -->
-            <button class="btn btn-outline-success rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#importCSVModal">
-              <i class="bi bi-upload"></i> Import CSV
-            </button>
-          </div>
-
-
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-outline-primary rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal" title="Add a new asset">
+            <i class="bi bi-plus-circle me-1"></i> Add Asset
+          </button>
+          <button class="btn btn-outline-success rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#importCSVModal" title="Import assets from CSV">
+            <i class="bi bi-upload me-1"></i> Import CSV
+          </button>
         </div>
       </div>
     </div>
@@ -115,16 +129,39 @@ $stmt->close();
         $stmtCnt->close();
       }
     ?>
+    <!-- Page Header -->
+    <div class="container-fluid px-0 mb-3">
+      <div class="page-header p-3 p-sm-4 d-flex flex-wrap gap-3 align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center bg-white border" style="width:48px;height:48px;">
+            <i class="bi bi-archive text-primary fs-4"></i>
+          </div>
+          <div>
+            <div class="h4 mb-0 title">Inventory</div>
+            <div class="text-muted small">Manage assets and consumables across offices</div>
+          </div>
+        </div>
+        <!-- Note: Primary actions are placed with the filter card below to avoid duplication -->
+      </div>
+    </div>
+
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="assets-tab" data-bs-toggle="tab" data-bs-target="#assets" type="button" role="tab">Assets</button>
+        <button class="nav-link active" id="assets-tab" data-bs-toggle="tab" data-bs-target="#assets" type="button" role="tab">
+          <i class="bi bi-hdd-stack me-1"></i> Assets
+        </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="consumables-tab" data-bs-toggle="tab" data-bs-target="#consumables" type="button" role="tab">Consumables</button>
+        <button class="nav-link" id="consumables-tab" data-bs-toggle="tab" data-bs-target="#consumables" type="button" role="tab">
+          <i class="bi bi-box-seam me-1"></i> Consumables
+        </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="no-property-tab" data-bs-toggle="tab" data-bs-target="#no_property" type="button" role="tab">No Inventory Tag <sub class="text-muted">(<?= $noPropCount ?>)</sub></button>
+        <button class="nav-link" id="no-property-tab" data-bs-toggle="tab" data-bs-target="#no_property" type="button" role="tab">
+          <i class="bi bi-tag me-1"></i> No Inventory Tag
+          <span class="badge rounded-pill text-bg-secondary ms-1 align-middle"><?= $noPropCount ?></span>
+        </button>
       </li>
       <?php
   // Count unserviceable assets without red tags (system-wide)
@@ -144,10 +181,16 @@ $stmt->close();
   $stmtAllUnserv->close();
 ?>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="no-red-tag-tab" data-bs-toggle="tab" data-bs-target="#no_red_tag" type="button" role="tab">No Red Tag Only <sub class="text-muted">(<?= $noRedTagCount ?>)</sub></button>
+        <button class="nav-link" id="no-red-tag-tab" data-bs-toggle="tab" data-bs-target="#no_red_tag" type="button" role="tab">
+          <i class="bi bi-exclamation-octagon me-1"></i> No Red Tag Only
+          <span class="badge rounded-pill text-bg-warning ms-1 align-middle"><?= $noRedTagCount ?></span>
+        </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="unserviceable-tab" data-bs-toggle="tab" data-bs-target="#unserviceable" type="button" role="tab">Unserviceable <sub class="text-muted">(<?= $allUnserviceableCount ?>)</sub></button>
+        <button class="nav-link" id="unserviceable-tab" data-bs-toggle="tab" data-bs-target="#unserviceable" type="button" role="tab">
+          <i class="bi bi-tools me-1"></i> Unserviceable
+          <span class="badge rounded-pill text-bg-danger ms-1 align-middle"><?= $allUnserviceableCount ?></span>
+        </button>
       </li>
     </ul>
 
@@ -275,7 +318,7 @@ $stmt->close();
             <?php endif; ?>
 
             <div class="card-body table-responsive">
-              <table id="assetTable" class="table table-hover align-middle">
+              <table id="assetTable" class="table table-striped table-hover align-middle">
                 <thead class="table-light">
                   <tr>
                     <th><input type="checkbox" id="selectAllAssets" /></th>
@@ -476,7 +519,7 @@ $stmt->close();
             <?php endif; ?>
 
             <div class="card-body table-responsive">
-              <table id="consumablesTable" class="table table-hover align-middle">
+              <table id="consumablesTable" class="table table-striped table-hover align-middle">
                 <thead class="table-light">
                   <tr>
                     <th><input type="checkbox" id="selectAllConsumables" /></th>
@@ -601,7 +644,7 @@ $stmt->close();
             <h5 class="mb-0">Assets Without Inventory Tag</h5>
           </div>
           <div class="card-body table-responsive">
-            <table id="noPropertyTable" class="table table-hover align-middle">
+            <table id="noPropertyTable" class="table table-striped table-hover align-middle">
               <thead class="table-light">
                 <tr>
                   <th>ICS/PAR No.</th>
