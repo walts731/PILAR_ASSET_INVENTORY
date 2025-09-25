@@ -32,14 +32,18 @@ $asset_details = [];
 $categories = [];
 $res_cats = $conn->query("SELECT id, category_name, category_code FROM categories ORDER BY category_name");
 if ($res_cats && $res_cats->num_rows > 0) {
-    while ($cr = $res_cats->fetch_assoc()) { $categories[] = $cr; }
+    while ($cr = $res_cats->fetch_assoc()) {
+        $categories[] = $cr;
+    }
 }
 
 // Dedicated query: fetch ALL categories independently for the Category dropdown (include category_code)
 $all_categories = [];
 $res_all_categories = $conn->query("SELECT id, category_name, category_code FROM categories ORDER BY category_name");
 if ($res_all_categories && $res_all_categories->num_rows > 0) {
-    while ($rowc = $res_all_categories->fetch_assoc()) { $all_categories[] = $rowc; }
+    while ($rowc = $res_all_categories->fetch_assoc()) {
+        $all_categories[] = $rowc;
+    }
 }
 
 // Determine document origin (ICS or PAR) and map to a source item id (ics_items.item_id or par_items.item_id)
@@ -136,8 +140,12 @@ if ($stmt_tf = $conn->prepare("SELECT tag_type, format_code FROM tag_formats WHE
     $stmt_tf->execute();
     $res_tf = $stmt_tf->get_result();
     while ($r = $res_tf->fetch_assoc()) {
-        if ($r['tag_type'] === 'Property No') { $property_no_format = trim((string)$r['format_code']); }
-        if ($r['tag_type'] === 'Code') { $code_format = trim((string)$r['format_code']); }
+        if ($r['tag_type'] === 'Property No') {
+            $property_no_format = trim((string)$r['format_code']);
+        }
+        if ($r['tag_type'] === 'Code') {
+            $code_format = trim((string)$r['format_code']);
+        }
     }
     $stmt_tf->close();
 }
@@ -145,14 +153,25 @@ if ($stmt_tf = $conn->prepare("SELECT tag_type, format_code FROM tag_formats WHE
 // Ensure database columns for End User exist (assets.end_user, mr_details.end_user)
 try {
     if ($chk = $conn->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'assets' AND COLUMN_NAME = 'end_user'")) {
-        $chk->execute(); $chk->bind_result($cnt); $chk->fetch(); $chk->close();
-        if ((int)$cnt === 0) { $conn->query("ALTER TABLE assets ADD COLUMN end_user VARCHAR(255) NULL AFTER employee_id"); }
+        $chk->execute();
+        $chk->bind_result($cnt);
+        $chk->fetch();
+        $chk->close();
+        if ((int)$cnt === 0) {
+            $conn->query("ALTER TABLE assets ADD COLUMN end_user VARCHAR(255) NULL AFTER employee_id");
+        }
     }
     if ($chk2 = $conn->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mr_details' AND COLUMN_NAME = 'end_user'")) {
-        $chk2->execute(); $chk2->bind_result($cnt2); $chk2->fetch(); $chk2->close();
-        if ((int)$cnt2 === 0) { $conn->query("ALTER TABLE mr_details ADD COLUMN end_user VARCHAR(255) NULL AFTER person_accountable"); }
+        $chk2->execute();
+        $chk2->bind_result($cnt2);
+        $chk2->fetch();
+        $chk2->close();
+        if ((int)$cnt2 === 0) {
+            $conn->query("ALTER TABLE mr_details ADD COLUMN end_user VARCHAR(255) NULL AFTER person_accountable");
+        }
     }
-} catch (Throwable $e) { /* non-fatal */ }
+} catch (Throwable $e) { /* non-fatal */
+}
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Collect form data
@@ -166,8 +185,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $brand = $_POST['brand'] ?? '';
     $category_id = isset($_POST['category_id']) && $_POST['category_id'] !== '' ? (int)$_POST['category_id'] : null;
 
-    $serviceable = isset($_POST['serviceable']) ? 1 : 0;
-    $unserviceable = isset($_POST['unserviceable']) ? 1 : 0;
+    $asset_status = $_POST['asset_status'] ?? 'serviceable';
+    $serviceable = ($asset_status === 'serviceable') ? 1 : 0;
+    $unserviceable = ($asset_status === 'unserviceable') ? 1 : 0;
     $unit_quantity = $_POST['unit_quantity'];
     $unit = $_POST['unit'];
     $acquisition_date = $_POST['acquisition_date'];
@@ -176,8 +196,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Use the fetched format_code as the inventory_tag for saving as well
     $inventory_tag_gen = $inventory_tag;
 
-    $person_accountable_name = $_POST['person_accountable_name']; 
-    $employee_id = $_POST['employee_id']; 
+    $person_accountable_name = $_POST['person_accountable_name'];
+    $employee_id = $_POST['employee_id'];
     $end_user = trim($_POST['end_user'] ?? '');
     $acquired_date = $_POST['acquired_date'];
     $counted_date = $_POST['counted_date'];
@@ -240,18 +260,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
-    // --- Update employee_id in assets table ---
-    if ($employee_id) {
-        $stmt_update_employee = $conn->prepare("UPDATE assets SET employee_id = ? WHERE id = ?");
-        $stmt_update_employee->bind_param("ii", $employee_id, $asset_id);
-        if (!$stmt_update_employee->execute()) {
-            $_SESSION['error_message'] = "Error updating employee_id in assets: " . $stmt_update_employee->error;
-            $stmt_update_employee->close();
-            header("Location: create_mr.php?asset_id=" . $asset_id_form);
-            exit();
-        }
-        $stmt_update_employee->close();
-    }
 
     // Property tags are stored on the item-level assets table now
 
@@ -260,13 +268,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // No backend auto-generation of code; UI will propose a pattern which user can edit
 
     // --- NEW: Update other asset details to complete the asset record ---
-    if ($asset_id) {
+    if ($asset_id_form) {
         if ($category_id === null) {
             $stmt_update_asset = $conn->prepare("UPDATE assets 
-                SET description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ?, end_user = ? 
+                SET description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ?, end_user = ?, employee_id = ? 
                 WHERE id = ?");
             $stmt_update_asset->bind_param(
-                "ssssssdssi",
+                "ssssssdssii",
                 $description,
                 $model_no,
                 $serial_no,
@@ -276,14 +284,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $acquisition_cost,
                 $acquisition_date,
                 $end_user,
-                $asset_id
+                $employee_id,
+                $asset_id_form
             );
         } else {
             $stmt_update_asset = $conn->prepare("UPDATE assets 
-                SET category = ?, description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ?, end_user = ? 
+                SET category = ?, description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ?, end_user = ?, employee_id = ? 
                 WHERE id = ?");
             $stmt_update_asset->bind_param(
-                "issssssdssi",
+                "issssssdssii",
                 $category_id,
                 $description,
                 $model_no,
@@ -294,7 +303,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $acquisition_cost,
                 $acquisition_date,
                 $end_user,
-                $asset_id
+                $employee_id,
+                $asset_id_form
             );
         }
         if (!$stmt_update_asset->execute()) {
@@ -366,7 +376,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $stmt_items_ins->close();
                 }
             }
-            if (isset($stmt_mrmap2)) { $stmt_mrmap2->close(); }
+            if (isset($stmt_mrmap2)) {
+                $stmt_mrmap2->close();
+            }
         } elseif ($row_origin2 && !empty($row_origin2['par_id'])) {
             $doc_origin = 'PAR';
             // Do not derive item_id from par_items due to FK to ics_items; keep NULL
@@ -406,14 +418,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $inventory_tag,
             $mr_item_id,
             $mr_item_id,
-            $asset_id
+            $asset_id_form
         );
         if ($stmt_upd->execute()) {
-            // Persist Property No. and Inventory Tag to the item-level asset record
-            $stmt_ai = $conn->prepare("UPDATE assets SET property_no = ?, inventory_tag = ? WHERE id = ?");
-            $stmt_ai->bind_param("ssi", $property_no, $inventory_tag_gen, $asset_id_form);
+            // Persist Property No., Inventory Tag, and Employee ID to the item-level asset record
+            $stmt_ai = $conn->prepare("UPDATE assets SET property_no = ?, inventory_tag = ?, employee_id = ? WHERE id = ?");
+            $stmt_ai->bind_param("ssii", $property_no, $inventory_tag_gen, $employee_id, $asset_id_form);
             if (!$stmt_ai->execute()) {
-                $_SESSION['error_message'] = "Failed to update asset Property No./Inventory Tag: " . $stmt_ai->error;
+                $_SESSION['error_message'] = "Failed to update asset details: " . $stmt_ai->error;
             }
             $stmt_ai->close();
             $_SESSION['success_message'] = "MR Details successfully updated!";
@@ -432,7 +444,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt_insert->bind_param(
             "iissssiiissssssss",
             $mr_item_id,
-            $asset_id,
+            $asset_id_form,
             $office_location,
             $description,
             $model_no,
@@ -451,11 +463,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         );
 
         if ($stmt_insert->execute()) {
-            // Persist Property No. and Inventory Tag to the item-level asset record
-            $stmt_ai = $conn->prepare("UPDATE assets SET property_no = ?, inventory_tag = ? WHERE id = ?");
-            $stmt_ai->bind_param("ssi", $property_no, $inventory_tag_gen, $asset_id_form);
+            // Persist Property No., Inventory Tag, and Employee ID to the item-level asset record
+            $stmt_ai = $conn->prepare("UPDATE assets SET property_no = ?, inventory_tag = ?, employee_id = ? WHERE id = ?");
+            $stmt_ai->bind_param("ssii", $property_no, $inventory_tag_gen, $employee_id, $asset_id_form);
             if (!$stmt_ai->execute()) {
-                $_SESSION['error_message'] = "Failed to update asset Property No./Inventory Tag: " . $stmt_ai->error;
+                $_SESSION['error_message'] = "Failed to update asset details: " . $stmt_ai->error;
             }
             $stmt_ai->close();
             $_SESSION['success_message'] = "MR has been successfully created!";
@@ -544,7 +556,7 @@ if (!empty($asset_id) && !empty($employee_id)) {
     $stmt_assets->close();
 }
 
-// Fetch existing MR details to populate serviceable/unserviceable checkboxes
+// Fetch existing MR details to populate serviceable/unserviceable radio buttons
 $mr_serviceable = 0;
 $mr_unserviceable = 0;
 if ($asset_id && $existing_mr_check) {
@@ -621,513 +633,922 @@ if ($baseProp !== '') {
             }
             ?>
 
-            <!-- Card wrapper -->
-            <div class="card shadow">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="m-0">Create Property Tag</h5>
-                    <!-- Top-right button (optional) -->
-                    <a href="saved_mr.php" class="btn btn-info btn-sm">
-                        <i class="bi bi-folder-check"></i> View Saved Property Tags
-                    </a>
-                </div>
-                <!-- Header: Logo, QR, and GOV LABEL -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <!-- Municipal Logo -->
-                    <img id="municipalLogoImg" src="<?= $logo_path ?>" alt="Municipal Logo" style="height: 70px;">
-
-                    <!-- Government Label -->
-                    <div class="text-center flex-grow-1">
-                        <h6 class="m-0 text-uppercase fw-bold">Government Property</h6>
+            <!-- Professional Header Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-lg bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="card-body text-white p-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-white bg-opacity-20 rounded-circle p-3 me-3">
+                                            <i class="bi bi-clipboard-data fs-2"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="mb-1 fw-bold">
+                                                <?= $existing_mr_check ? 'Edit Property Tag' : 'Create Property Tag' ?>
+                                            </h3>
+                                            <p class="mb-0 opacity-90">
+                                                <?= $existing_mr_check ? 'Update existing asset property information' : 'Generate new government property documentation' ?>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <a href="saved_mr.php" class="btn btn-light btn-lg shadow-sm">
+                                        <i class="bi bi-folder-check me-2"></i>View Saved Tags
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-
-                    <!-- Inventory Tag Display -->
-                    <div class="text-center">
-                        <p class="fw-bold">Inventory Tag: <?= $inventory_tag ?></p> <!-- Display the inventory tag here -->
-                    </div>
-
-                    <!-- QR Code -->
-                    <img id="viewQrCode" src="../img/<?= isset($asset_details['qr_code']) ? $asset_details['qr_code'] : '' ?>" alt="QR Code" style="height: 70px;">
                 </div>
-                <div class="card-body">
-                    <form method="post" action="" enctype="multipart/form-data">
+            </div>
+
+            <!-- Government Property Header -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body bg-light">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <img id="municipalLogoImg" src="<?= $logo_path ?>" alt="Municipal Logo" 
+                                 class="img-fluid rounded shadow-sm" style="max-height: 80px;">
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <h4 class="mb-1 text-uppercase fw-bold text-primary">Government Property</h4>
+                            <p class="mb-0 text-muted">Official Asset Documentation</p>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <div class="bg-primary bg-opacity-10 rounded p-3">
+                                <h6 class="mb-1 text-primary fw-bold">Inventory Tag</h6>
+                                <span class="badge bg-primary fs-6"><?= $inventory_tag ?></span>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <?php if (isset($asset_details['qr_code']) && !empty($asset_details['qr_code'])): ?>
+                                <img id="viewQrCode" src="../img/<?= $asset_details['qr_code'] ?>" alt="QR Code" 
+                                     class="img-fluid rounded shadow-sm" style="max-height: 80px;">
+                            <?php else: ?>
+                                <div class="bg-secondary bg-opacity-10 rounded p-3">
+                                    <i class="bi bi-qr-code fs-2 text-muted"></i>
+                                    <p class="mb-0 small text-muted">QR Code</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Form Card -->
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                    <div class="row">
+                        <div class="col-12">
+                            <!-- Progress Steps -->
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="step-indicator active me-3">
+                                        <span class="step-number">1</span>
+                                    </div>
+                                    <span class="text-primary fw-semibold">Asset Information</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="step-indicator me-3">
+                                        <span class="step-number">2</span>
+                                    </div>
+                                    <span class="text-muted">Property Details</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="step-indicator me-3">
+                                        <span class="step-number">3</span>
+                                    </div>
+                                    <span class="text-muted">Accountability</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="step-indicator">
+                                        <span class="step-number">4</span>
+                                    </div>
+                                    <span class="text-muted">Review & Submit</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <form method="post" action="" enctype="multipart/form-data" id="propertyTagForm">
                         <input type="hidden" name="asset_id" value="<?= htmlspecialchars($asset_id) ?>">
 
-                        <!-- Office Location -->
-                        <div class="row mb-3">
-                            <div class="col-md-6 offset-md-3">
-                                <label for="office_location" class="form-label">Office Location</label>
-                                <input type="text" class="form-control" name="office_location"
-                                    value="<?= isset($office_name) ? htmlspecialchars($office_name) : '' ?>" required>
+                        <!-- Step 1: Basic Asset Information -->
+                        <div class="form-step active" id="step1">
+                            <div class="step-header bg-primary bg-opacity-10 p-4 border-bottom">
+                                <h5 class="mb-1 text-primary">
+                                    <i class="bi bi-info-circle me-2"></i>Basic Asset Information
+                                </h5>
+                                <p class="mb-0 text-muted">Enter the fundamental details about this asset</p>
                             </div>
-                        </div>
-
-                        <!-- Description -->
-                        <div class="row mb-3">
-                            <div class="col-md-12">
-                                <label for="description" class="form-label">Description</label>
-                                <input type="text" class="form-control" name="description"
-                                    value="<?= isset($asset_details['description']) ? htmlspecialchars($asset_details['description']) : '' ?>" required>
-                            </div>
-                        </div>
-
-                        <!-- Model No and Serial No -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="model_no" class="form-label">Model No</label>
-                                <input type="text" class="form-control" name="model_no"
-                                    value="<?= isset($asset_details['model']) ? htmlspecialchars($asset_details['model']) : '' ?>">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="serial_no" class="form-label">Serial No</label>
-                                <input type="text" class="form-control" name="serial_no"
-                                    value="<?= isset($asset_details['serial_no']) ? htmlspecialchars($asset_details['serial_no']) : '' ?>">
-                            </div>
-                        </div>
-
-                        <!-- Code and Property No -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="code" class="form-label">Code</label>
-                                <input type="text" class="form-control" name="code" id="code"
-                                       value="<?= isset($asset_details['code']) ? htmlspecialchars($asset_details['code']) : '' ?>">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="property_no" class="form-label">Property No</label>
-                                <input type="text" class="form-control" name="property_no" id="property_no"
-                                       placeholder="<?= htmlspecialchars($property_no_format ?: 'YYYY-CODE-0001') ?>"
-                                       value="<?= htmlspecialchars($generated_property_no) ?>">
-                            </div>
-                        </div>
-
-                        <!-- Brand and Category -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="brand" class="form-label">Brand</label>
-                                <input type="text" class="form-control" name="brand"
-                                       value="<?= isset($asset_details['brand']) ? htmlspecialchars($asset_details['brand']) : '' ?>">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="category_id" class="form-label">Category <span class="text-danger">*</span></label>
-                                <select name="category_id" id="category_id" class="form-select" required>
-                                    <option value="">Select Category</option>
-                                    <?php foreach ($all_categories as $cat): ?>
-                                        <option value="<?= (int)$cat['id'] ?>" data-code="<?= htmlspecialchars($cat['category_code'] ?? '') ?>" <?= (isset($asset_details['category']) && (int)$asset_details['category'] === (int)$cat['id']) ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($cat['category_name']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Upload Asset Photo -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="asset_image" class="form-label">Upload Asset Photo</label>
-                                <input type="file" class="form-control" name="asset_image" id="asset_image" accept="image/*">
-                                <div class="form-text">Accepted: JPG, JPEG, PNG, GIF. Max 5MB.</div>
-                            </div>
-                            <div class="col-md-6 text-center">
-                                <label class="form-label d-block">Preview</label>
-                                <img id="asset_image_preview" src="<?= !empty($asset_details['image']) ? '../img/assets/' . htmlspecialchars($asset_details['image']) : '' ?>" alt="Asset Image Preview" class="img-fluid border rounded" style="max-height: 180px; object-fit: contain;">
-                            </div>
-                        </div>
-
-                        <!-- Additional Asset Images -->
-                        <?php
-                        $additional_images = [];
-                        if (!empty($asset_details['additional_images'])) {
-                            $additional_images = json_decode($asset_details['additional_images'], true);
-                            if (!is_array($additional_images)) {
-                                $additional_images = [];
-                            }
-                        }
-                        ?>
-                        <?php if (!empty($asset_details['image']) || !empty($additional_images)): ?>
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <div class="card border-0 bg-light">
-                                    <div class="card-header bg-transparent border-0 pb-0">
-                                        <h6 class="mb-0 text-primary">
-                                            <i class="bi bi-images me-2"></i>Asset Image Gallery
-                                            <small class="text-muted ms-2">
-                                                (<?= (!empty($asset_details['image']) ? 1 : 0) + count($additional_images) ?> image<?= ((!empty($asset_details['image']) ? 1 : 0) + count($additional_images)) > 1 ? 's' : '' ?>)
-                                            </small>
-                                        </h6>
+                            <div class="p-4">
+                                <!-- Office Location -->
+                                <div class="row mb-4">
+                                    <div class="col-md-8">
+                                        <label for="office_location" class="form-label fw-semibold">
+                                            <i class="bi bi-building me-1 text-primary"></i>Office Location
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control form-control-lg" name="office_location"
+                                            value="<?= isset($office_name) ? htmlspecialchars($office_name) : '' ?>" 
+                                            required placeholder="Enter office or department location">
+                                        <div class="form-text">Specify the office, department, or location where this asset is assigned</div>
                                     </div>
-                                    <div class="card-body pt-3">
-                                        <div class="row g-3">
-                                            <?php if (!empty($asset_details['image'])): ?>
-                                            <!-- Main Image -->
-                                            <div class="col-6 col-md-4 col-lg-3">
-                                                <div class="card shadow-sm border-primary" style="transition: transform 0.2s;">
-                                                    <div class="position-relative overflow-hidden rounded-top">
-                                                        <img src="../img/assets/<?= htmlspecialchars($asset_details['image']) ?>" 
-                                                             class="card-img-top" 
-                                                             style="height: 160px; object-fit: cover; cursor: pointer; transition: transform 0.3s;"
-                                                             onclick="showImageModal('../img/assets/<?= htmlspecialchars($asset_details['image']) ?>', 'Main Asset Image')"
-                                                             onmouseover="this.style.transform='scale(1.05)'"
-                                                             onmouseout="this.style.transform='scale(1)'"
-                                                             alt="Main Asset Image">
-                                                        <div class="position-absolute top-0 start-0 m-2">
-                                                            <span class="badge bg-primary shadow-sm">
-                                                                <i class="bi bi-star-fill me-1"></i>Main
-                                                            </span>
-                                                        </div>
-                                                        <div class="position-absolute bottom-0 end-0 m-2">
-                                                            <span class="badge bg-dark bg-opacity-75">
-                                                                <i class="bi bi-zoom-in"></i>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="card-body p-2 text-center bg-primary bg-opacity-10">
-                                                        <small class="text-primary fw-medium">Primary Image</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <?php endif; ?>
+                                </div>
 
-                                            <?php if (!empty($additional_images)): ?>
-                                            <!-- Additional Images -->
-                                            <?php foreach ($additional_images as $index => $imageName): ?>
-                                            <div class="col-6 col-md-4 col-lg-3">
-                                                <div class="card shadow-sm border-info" style="transition: transform 0.2s;">
-                                                    <div class="position-relative overflow-hidden rounded-top">
-                                                        <img src="../img/assets/<?= htmlspecialchars($imageName) ?>" 
-                                                             class="card-img-top" 
-                                                             style="height: 160px; object-fit: cover; cursor: pointer; transition: transform 0.3s;"
-                                                             onclick="showImageModal('../img/assets/<?= htmlspecialchars($imageName) ?>', 'Additional Image <?= $index + 1 ?>')"
-                                                             onmouseover="this.style.transform='scale(1.05)'"
-                                                             onmouseout="this.style.transform='scale(1)'"
-                                                             alt="Additional Asset Image <?= $index + 1 ?>">
-                                                        <div class="position-absolute top-0 start-0 m-2">
-                                                            <span class="badge bg-info shadow-sm">
-                                                                <i class="bi bi-image me-1"></i><?= $index + 1 ?>
-                                                            </span>
-                                                        </div>
-                                                        <div class="position-absolute bottom-0 end-0 m-2">
-                                                            <span class="badge bg-dark bg-opacity-75">
-                                                                <i class="bi bi-zoom-in"></i>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="card-body p-2 text-center bg-info bg-opacity-10">
-                                                        <small class="text-info fw-medium">Additional Image <?= $index + 1 ?></small>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                <!-- Description -->
+                                <div class="row mb-4">
+                                    <div class="col-md-12">
+                                        <label for="description" class="form-label fw-semibold">
+                                            <i class="bi bi-card-text me-1 text-primary"></i>Asset Description
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <textarea class="form-control form-control-lg" name="description" rows="3"
+                                            required placeholder="Provide a detailed description of the asset"><?= isset($asset_details['description']) ? htmlspecialchars($asset_details['description']) : '' ?></textarea>
+                                        <div class="form-text">Include make, model, specifications, and any distinguishing features</div>
+                                    </div>
+                                </div>
+
+                                <!-- Category Selection -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label for="category_id" class="form-label fw-semibold">
+                                            <i class="bi bi-tags me-1 text-primary"></i>Asset Category
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <select name="category_id" id="category_id" class="form-select form-select-lg" required>
+                                            <option value="">Choose asset category...</option>
+                                            <?php foreach ($all_categories as $cat): ?>
+                                                <option value="<?= (int)$cat['id'] ?>" data-code="<?= htmlspecialchars($cat['category_code'] ?? '') ?>" 
+                                                    <?= (isset($asset_details['category']) && (int)$asset_details['category'] === (int)$cat['id']) ? 'selected' : '' ?>>
+                                                    <?= htmlspecialchars($cat['category_name']) ?>
+                                                </option>
                                             <?php endforeach; ?>
-                                            <?php endif; ?>
-                                        </div>
-                                        
-                                        <!-- Gallery Instructions -->
-                                        <div class="mt-3 text-center">
-                                            <small class="text-muted">
-                                                <i class="bi bi-info-circle me-1"></i>
-                                                Click on any image to view in full size
-                                            </small>
+                                        </select>
+                                        <div class="form-text">Select the appropriate category for classification</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="brand" class="form-label fw-semibold">
+                                            <i class="bi bi-award me-1 text-primary"></i>Brand/Manufacturer
+                                        </label>
+                                        <input type="text" class="form-control form-control-lg" name="brand"
+                                            value="<?= isset($asset_details['brand']) ? htmlspecialchars($asset_details['brand']) : '' ?>"
+                                            placeholder="Enter brand or manufacturer name">
+                                        <div class="form-text">Brand name or manufacturer of the asset</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Property Details -->
+                        <div class="form-step" id="step2">
+                            <div class="step-header bg-success bg-opacity-10 p-4 border-bottom">
+                                <h5 class="mb-1 text-success">
+                                    <i class="bi bi-gear me-2"></i>Technical Specifications
+                                </h5>
+                                <p class="mb-0 text-muted">Define technical details and property identifiers</p>
+                            </div>
+                            <div class="p-4">
+                                <!-- Model and Serial Numbers -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label for="model_no" class="form-label fw-semibold">
+                                            <i class="bi bi-cpu me-1 text-success"></i>Model Number
+                                        </label>
+                                        <input type="text" class="form-control form-control-lg" name="model_no"
+                                            value="<?= isset($asset_details['model']) ? htmlspecialchars($asset_details['model']) : '' ?>"
+                                            placeholder="Enter model number or identifier">
+                                        <div class="form-text">Manufacturer's model number or product identifier</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="serial_no" class="form-label fw-semibold">
+                                            <i class="bi bi-hash me-1 text-success"></i>Serial Number
+                                        </label>
+                                        <input type="text" class="form-control form-control-lg" name="serial_no"
+                                            value="<?= isset($asset_details['serial_no']) ? htmlspecialchars($asset_details['serial_no']) : '' ?>"
+                                            placeholder="Enter unique serial number">
+                                        <div class="form-text">Unique serial number from manufacturer</div>
+                                    </div>
+                                </div>
+
+                                <!-- Property Codes -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label for="code" class="form-label fw-semibold">
+                                            <i class="bi bi-upc me-1 text-success"></i>Asset Code
+                                        </label>
+                                        <input type="text" class="form-control form-control-lg" name="code" id="code"
+                                            value="<?= isset($asset_details['code']) ? htmlspecialchars($asset_details['code']) : '' ?>"
+                                            placeholder="Auto-generated based on category">
+                                        <div class="form-text">Internal asset classification code</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="property_no" class="form-label fw-semibold">
+                                            <i class="bi bi-card-heading me-1 text-success"></i>Property Number
+                                        </label>
+                                        <input type="text" class="form-control form-control-lg" name="property_no" id="property_no"
+                                            placeholder="<?= htmlspecialchars($property_no_format ?: 'YYYY-CODE-0001') ?>"
+                                            value="<?= htmlspecialchars($generated_property_no) ?>">
+                                        <div class="form-text">Official government property number</div>
+                                    </div>
+                                </div>
+
+                                <!-- Asset Status -->
+                                <div class="row mb-4">
+                                    <div class="col-md-12">
+                                        <label class="form-label fw-semibold">
+                                            <i class="bi bi-check-circle me-1 text-success"></i>Asset Condition Status
+                                        </label>
+                                        <div class="card border-0 bg-light">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-check form-check-lg">
+                                                            <input class="form-check-input" type="radio" name="asset_status" value="serviceable" id="serviceable"
+                                                                <?= $mr_serviceable == 1 ? 'checked' : '' ?>>
+                                                            <label class="form-check-label fw-semibold text-success" for="serviceable">
+                                                                <i class="bi bi-check-circle-fill me-2"></i>Serviceable
+                                                            </label>
+                                                            <div class="form-text">Asset is in good working condition</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-check form-check-lg">
+                                                            <input class="form-check-input" type="radio" name="asset_status" value="unserviceable" id="unserviceable"
+                                                                <?= $mr_unserviceable == 1 ? 'checked' : '' ?>>
+                                                            <label class="form-check-label fw-semibold text-warning" for="unserviceable">
+                                                                <i class="bi bi-exclamation-triangle-fill me-2"></i>Unserviceable
+                                                            </label>
+                                                            <div class="form-text">Asset requires repair or replacement</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Step 3: Financial & Accountability Information -->
+                        <div class="form-step" id="step3">
+                            <div class="step-header bg-warning bg-opacity-10 p-4 border-bottom">
+                                <h5 class="mb-1 text-warning">
+                                    <i class="bi bi-people me-2"></i>Financial & Accountability
+                                </h5>
+                                <p class="mb-0 text-muted">Set acquisition details and assign responsibility</p>
+                            </div>
+                            <div class="p-4">
+                                <!-- Quantity, Unit, and Financial Information -->
+                                <div class="row mb-4">
+                                    <div class="col-md-3">
+                                        <label for="unit_quantity" class="form-label fw-semibold">
+                                            <i class="bi bi-123 me-1 text-warning"></i>Quantity
+                                        </label>
+                                        <input type="number" class="form-control form-control-lg" name="unit_quantity"
+                                            value="1" min="1" required readonly style="background-color: #f8f9fa;"
+                                            title="Quantity is fixed at 1 for individual asset records">
+                                        <div class="form-text">Fixed at 1 for individual assets</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="unit" class="form-label fw-semibold">
+                                            <i class="bi bi-box me-1 text-warning"></i>Unit
+                                        </label>
+                                        <select name="unit" class="form-select form-select-lg" required>
+                                            <?php
+                                            $unit_rows = [];
+                                            $res_units = $conn->query("SELECT unit_name FROM unit");
+                                            if ($res_units && $res_units->num_rows > 0) {
+                                                while ($ur = $res_units->fetch_assoc()) {
+                                                    $unit_rows[] = $ur['unit_name'];
+                                                }
+                                            } else {
+                                                $unit_rows = ['kg', 'pcs', 'liter'];
+                                            }
+                                            foreach ($unit_rows as $u) {
+                                                $sel = (isset($asset_details['unit']) && $asset_details['unit'] == $u) ? 'selected' : '';
+                                                echo '<option value="' . htmlspecialchars($u) . '" ' . $sel . '>' . htmlspecialchars($u) . '</option>';
+                                            }
+                                            ?>
+                                        </select>
+                                        <div class="form-text">Unit of measurement</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="acquisition_date" class="form-label fw-semibold">
+                                            <i class="bi bi-calendar me-1 text-warning"></i>Acquisition Date
+                                        </label>
+                                        <input type="date" class="form-control form-control-lg" name="acquisition_date"
+                                            value="<?= isset($asset_details['acquisition_date']) ? htmlspecialchars($asset_details['acquisition_date']) : '' ?>" required>
+                                        <div class="form-text">Date when asset was acquired</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="acquisition_cost" class="form-label fw-semibold">
+                                            <i class="bi bi-currency-dollar me-1 text-warning"></i>Acquisition Cost
+                                        </label>
+                                        <input type="number" class="form-control form-control-lg" name="acquisition_cost" step="0.01"
+                                            value="<?= isset($asset_details['value']) ? htmlspecialchars($asset_details['value']) : '' ?>" required>
+                                        <div class="form-text">Total cost of acquisition</div>
+                                    </div>
+                                </div>
+
+                                <!-- Person Accountable & End User -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label for="person_accountable" class="form-label fw-semibold">
+                                            <i class="bi bi-person-check me-1 text-warning"></i>Person Accountable
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control form-control-lg" name="person_accountable_name" id="person_accountable" required
+                                            list="employeeList" placeholder="Type to search employee" autocomplete="off"
+                                            value="<?= htmlspecialchars($person_accountable_name) ?>">
+                                        <input type="hidden" name="employee_id" id="employee_id" value="<?= isset($employee_id) ? htmlspecialchars($employee_id) : '' ?>">
+                                        <datalist id="employeeList">
+                                            <?php foreach ($employees as $emp): ?>
+                                                <option data-id="<?= $emp['employee_id'] ?>" value="<?= htmlspecialchars($emp['name']) ?>"></option>
+                                            <?php endforeach; ?>
+                                        </datalist>
+                                        <div class="form-text">Employee responsible for this asset</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="end_user" class="form-label fw-semibold">
+                                            <i class="bi bi-person me-1 text-warning"></i>End User
+                                        </label>
+                                        <input type="text" class="form-control form-control-lg" name="end_user" id="end_user"
+                                            placeholder="Enter end user name"
+                                            value="<?= isset($asset_details['end_user']) ? htmlspecialchars($asset_details['end_user']) : '' ?>">
+                                        <div class="form-text">Person who will actually use this asset</div>
+                                    </div>
+                                </div>
+
+                                <!-- Acquired Date & Counted Date -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label for="acquired_date" class="form-label fw-semibold">
+                                            <i class="bi bi-calendar-check me-1 text-warning"></i>Date Acquired
+                                        </label>
+                                        <input type="date" class="form-control form-control-lg" name="acquired_date"
+                                            value="<?= isset($asset_details['last_updated']) ? htmlspecialchars($asset_details['last_updated']) : '' ?>">
+                                        <div class="form-text">Date when asset was officially acquired</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="counted_date" class="form-label fw-semibold">
+                                            <i class="bi bi-calendar-event me-1 text-warning"></i>Date Counted
+                                        </label>
+                                        <input type="date" class="form-control form-control-lg" name="counted_date">
+                                        <div class="form-text">Date when asset was physically counted</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Asset Documentation -->
+                        <div class="form-step" id="step4">
+                            <div class="step-header bg-info bg-opacity-10 p-4 border-bottom">
+                                <h5 class="mb-1 text-info">
+                                    <i class="bi bi-camera me-2"></i>Asset Documentation
+                                </h5>
+                                <p class="mb-0 text-muted">Upload photos and review information before submission</p>
+                            </div>
+                            <div class="p-4">
+                                <!-- Upload Asset Photo -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label for="asset_image" class="form-label fw-semibold">
+                                            <i class="bi bi-camera me-1 text-info"></i>Upload Asset Photo
+                                        </label>
+                                        <input type="file" class="form-control form-control-lg" name="asset_image" id="asset_image" accept="image/*">
+                                        <div class="form-text">Accepted: JPG, JPEG, PNG, GIF. Maximum size: 5MB</div>
+                                    </div>
+                                    <div class="col-md-6 text-center">
+                                        <label class="form-label fw-semibold d-block">
+                                            <i class="bi bi-eye me-1 text-info"></i>Photo Preview
+                                        </label>
+                                        <div class="border rounded p-3 bg-light" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+                                            <img id="asset_image_preview" 
+                                                src="<?= !empty($asset_details['image']) ? '../img/assets/' . htmlspecialchars($asset_details['image']) : '' ?>" 
+                                                alt="Asset Image Preview" 
+                                                class="img-fluid rounded shadow-sm" 
+                                                style="max-height: 180px; object-fit: contain; <?= empty($asset_details['image']) ? 'display: none;' : '' ?>">
+                                            <div id="preview_placeholder" class="text-center text-muted <?= !empty($asset_details['image']) ? 'd-none' : '' ?>">
+                                                <i class="bi bi-image fs-1 mb-2"></i>
+                                                <p class="mb-0">Photo preview will appear here</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Existing Asset Images Gallery -->
+                                <?php
+                                $additional_images = [];
+                                if (!empty($asset_details['additional_images'])) {
+                                    $additional_images = json_decode($asset_details['additional_images'], true);
+                                    if (!is_array($additional_images)) {
+                                        $additional_images = [];
+                                    }
+                                }
+                                ?>
+                                <?php if (!empty($asset_details['image']) || !empty($additional_images)): ?>
+                                    <div class="row mb-4">
+                                        <div class="col-12">
+                                            <div class="card border-0 bg-light">
+                                                <div class="card-header bg-transparent border-0 pb-0">
+                                                    <h6 class="mb-0 text-info fw-semibold">
+                                                        <i class="bi bi-images me-2"></i>Existing Asset Images
+                                                        <small class="text-muted ms-2">
+                                                            (<?= (!empty($asset_details['image']) ? 1 : 0) + count($additional_images) ?> image<?= ((!empty($asset_details['image']) ? 1 : 0) + count($additional_images)) > 1 ? 's' : '' ?>)
+                                                        </small>
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body pt-3">
+                                                    <div class="row g-3">
+                                                        <?php if (!empty($asset_details['image'])): ?>
+                                                            <!-- Main Image -->
+                                                            <div class="col-6 col-md-4 col-lg-3">
+                                                                <div class="card shadow-sm border-primary" style="transition: transform 0.2s;">
+                                                                    <div class="position-relative overflow-hidden rounded-top">
+                                                                        <img src="../img/assets/<?= htmlspecialchars($asset_details['image']) ?>"
+                                                                            class="card-img-top"
+                                                                            style="height: 160px; object-fit: cover; cursor: pointer; transition: transform 0.3s;"
+                                                                            onclick="showImageModal('../img/assets/<?= htmlspecialchars($asset_details['image']) ?>', 'Main Asset Image')"
+                                                                            onmouseover="this.style.transform='scale(1.05)'"
+                                                                            onmouseout="this.style.transform='scale(1)'"
+                                                                            alt="Main Asset Image">
+                                                                        <div class="position-absolute top-0 start-0 m-2">
+                                                                            <span class="badge bg-primary shadow-sm">
+                                                                                <i class="bi bi-star-fill me-1"></i>Main
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="position-absolute bottom-0 end-0 m-2">
+                                                                            <span class="badge bg-dark bg-opacity-75">
+                                                                                <i class="bi bi-zoom-in"></i>
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="card-body p-2 text-center bg-primary bg-opacity-10">
+                                                                        <small class="text-primary fw-medium">Primary Image</small>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        <?php endif; ?>
+
+                                                        <?php if (!empty($additional_images)): ?>
+                                                            <!-- Additional Images -->
+                                                            <?php foreach ($additional_images as $index => $imageName): ?>
+                                                                <div class="col-6 col-md-4 col-lg-3">
+                                                                    <div class="card shadow-sm border-info" style="transition: transform 0.2s;">
+                                                                        <div class="position-relative overflow-hidden rounded-top">
+                                                                            <img src="../img/assets/<?= htmlspecialchars($imageName) ?>"
+                                                                                class="card-img-top"
+                                                                                style="height: 160px; object-fit: cover; cursor: pointer; transition: transform 0.3s;"
+                                                                                onclick="showImageModal('../img/assets/<?= htmlspecialchars($imageName) ?>', 'Additional Image <?= $index + 1 ?>')"
+                                                                                onmouseover="this.style.transform='scale(1.05)'"
+                                                                                onmouseout="this.style.transform='scale(1)'"
+                                                                                alt="Additional Asset Image <?= $index + 1 ?>">
+                                                                            <div class="position-absolute top-0 start-0 m-2">
+                                                                                <span class="badge bg-info shadow-sm">
+                                                                                    <i class="bi bi-image me-1"></i><?= $index + 1 ?>
+                                                                                </span>
+                                                                            </div>
+                                                                            <div class="position-absolute bottom-0 end-0 m-2">
+                                                                                <span class="badge bg-dark bg-opacity-75">
+                                                                                    <i class="bi bi-zoom-in"></i>
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="card-body p-2 text-center bg-info bg-opacity-10">
+                                                                            <small class="text-info fw-medium">Additional Image <?= $index + 1 ?></small>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        <?php endif; ?>
+                                                    </div>
+
+                                                    <!-- Gallery Instructions -->
+                                                    <div class="mt-3 text-center">
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-info-circle me-1"></i>
+                                                            Click on any image to view in full size
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                </div>
+                            </div>
                         <?php else: ?>
-                        <!-- No Images Available -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <div class="card border-0 bg-light">
-                                    <div class="card-body text-center py-4">
-                                        <div class="text-muted">
-                                            <i class="bi bi-image display-6 d-block mb-2 opacity-50"></i>
-                                            <h6 class="text-muted">No Images Available</h6>
-                                            <p class="mb-0 small">No images have been uploaded for this asset yet.</p>
+                            <!-- No Images Available -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body text-center py-4">
+                                            <div class="text-muted">
+                                                <i class="bi bi-image display-6 d-block mb-2 opacity-50"></i>
+                                                <h6 class="text-muted">No Images Available</h6>
+                                                <p class="mb-0 small">No images have been uploaded for this asset yet.</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
                         <?php endif; ?>
+                            </div>
+                        </div>
 
-                        <!-- Serviceable and Unserviceable -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="serviceable" value="1" 
-                                           <?= $mr_serviceable == 1 ? 'checked' : '' ?>>
-                                    <label class="form-check-label">Serviceable</label>
+                        <!-- Form Navigation and Submission -->
+                        <div class="card-footer bg-white border-top p-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-outline-secondary" id="prevBtn" onclick="changeStep(-1)" style="display: none;">
+                                            <i class="bi bi-arrow-left me-1"></i>Previous
+                                        </button>
+                                        <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">
+                                            Next<i class="bi bi-arrow-right ms-1"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button type="submit" class="btn btn-success btn-lg shadow-sm" id="submitBtn" style="display: none;">
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        <?= $existing_mr_check ? 'Update Property Tag' : 'Create Property Tag' ?>
+                                    </button>
+                                    <?php if ($existing_mr_check): ?>
+                                        <a href="print_mr.php?asset_id=<?= htmlspecialchars($asset_id) ?>" class="btn btn-info btn-lg ms-2 shadow-sm">
+                                            <i class="bi bi-printer me-2"></i>Print Tag
+                                        </a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="unserviceable" value="1"
-                                           <?= $mr_unserviceable == 1 ? 'checked' : '' ?>>
-                                    <label class="form-check-label">Unserviceable</label>
-                                </div>
-                            </div>
                         </div>
-
-                        <!-- Quantity, Unit, Acquisition Date & Cost -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="unit_quantity" class="form-label">Unit Quantity</label>
-                                <div class="d-flex">
-                                    <input type="number" class="form-control" name="unit_quantity"
-                                        value="1" min="1" required readonly style="background-color: #f8f9fa;"
-                                        title="Quantity is fixed at 1 for individual asset records">
-                                    <select name="unit" class="form-select" required>
-                                        <?php
-                                        // Populate units from unit table if available
-                                        $unit_rows = [];
-                                        $res_units = $conn->query("SELECT unit_name FROM unit");
-                                        if ($res_units && $res_units->num_rows > 0) {
-                                            while ($ur = $res_units->fetch_assoc()) { $unit_rows[] = $ur['unit_name']; }
-                                        } else {
-                                            $unit_rows = ['kg', 'pcs', 'liter'];
-                                        }
-                                        foreach ($unit_rows as $u) {
-                                            $sel = (isset($asset_details['unit']) && $asset_details['unit'] == $u) ? 'selected' : '';
-                                            echo '<option value="' . htmlspecialchars($u) . '" ' . $sel . '>' . htmlspecialchars($u) . '</option>';
-                                        }
-                                        ?>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <label for="acquisition_date" class="form-label">Acquisition Date</label>
-                                <input type="date" class="form-control" name="acquisition_date"
-                                    value="<?= isset($asset_details['acquisition_date']) ? htmlspecialchars($asset_details['acquisition_date']) : '' ?>" required>
-                            </div>
-                            <div class="col-md-3">
-                                <label for="acquisition_cost" class="form-label">Acquisition Cost</label>
-                                <input type="number" class="form-control" name="acquisition_cost" step="0.01"
-                                    value="<?= isset($asset_details['value']) ? htmlspecialchars($asset_details['value']) : '' ?>" required>
-                            </div>
-                        </div>
-
-                        <!-- Person Accountable & End User -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="person_accountable" class="form-label">Person Accountable <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="person_accountable_name" id="person_accountable" required
-                                    list="employeeList" placeholder="Type to search employee" autocomplete="off"
-                                    value="<?= htmlspecialchars($person_accountable_name) ?>">
-                                <input type="hidden" name="employee_id" id="employee_id" value="<?= isset($employee_id) ? htmlspecialchars($employee_id) : '' ?>">
-                                <datalist id="employeeList">
-                                    <?php foreach ($employees as $emp): ?>
-                                        <option data-id="<?= $emp['employee_id'] ?>" value="<?= htmlspecialchars($emp['name']) ?>"></option>
-                                    <?php endforeach; ?>
-                                </datalist>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="end_user" class="form-label">End User</label>
-                                <input type="text" class="form-control" name="end_user" id="end_user"
-                                       placeholder="Enter end user"
-                                       value="<?= isset($asset_details['end_user']) ? htmlspecialchars($asset_details['end_user']) : '' ?>">
-                            </div>
-                        </div>
-
-                        <!-- Acquired Date & Counted Date -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="acquired_date" class="form-label">Acquired Date</label>
-                                <input type="date" class="form-control" name="acquired_date"
-                                    value="<?= isset($asset_details['last_updated']) ? htmlspecialchars($asset_details['last_updated']) : '' ?>">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="counted_date" class="form-label">Counted Date</label>
-                                <input type="date" class="form-control" name="counted_date">
-                            </div>
-                        </div>
-                        <!-- Submit Button -->
-                        <button type="submit" class="btn btn-primary">
-                            <?= $existing_mr_check ? 'Edit' : 'Submit' ?>
-                        </button>
-
-                        <?php if ($existing_mr_check): ?>
-                            <a href="print_mr.php?asset_id=<?= htmlspecialchars($asset_id) ?>" class="btn btn-info ms-2">Print</a>
-                        <?php endif; ?>
                     </form>
                 </div>
             </div>
         </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script>
-        document.getElementById('person_accountable').addEventListener('input', function() {
-            const inputVal = this.value;
-            const options = document.querySelectorAll('#employeeList option');
-            let selectedId = '';
+        <!-- Custom CSS for Step Indicators and Form Steps -->
+        <style>
+            .step-indicator {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background-color: #e9ecef;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid #dee2e6;
+                transition: all 0.3s ease;
+            }
+            
+            .step-indicator.active {
+                background-color: #0d6efd;
+                border-color: #0d6efd;
+                color: white;
+                transform: scale(1.1);
+            }
+            
+            .step-indicator.completed {
+                background-color: #198754;
+                border-color: #198754;
+                color: white;
+            }
+            
+            .step-number {
+                font-weight: bold;
+                font-size: 14px;
+            }
+            
+            .form-step {
+                display: none;
+            }
+            
+            .form-step.active {
+                display: block;
+                animation: fadeIn 0.3s ease-in;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            
+            .form-control-lg, .form-select-lg {
+                border-radius: 8px;
+                border: 2px solid #e9ecef;
+                transition: all 0.3s ease;
+            }
+            
+            .form-control-lg:focus, .form-select-lg:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+                transform: translateY(-1px);
+            }
+            
+            .step-header {
+                border-left: 4px solid;
+            }
+            
+            .step-header h5 {
+                font-size: 1.25rem;
+            }
+            
+            .form-text {
+                font-size: 0.875rem;
+                margin-top: 0.5rem;
+            }
+            
+            .card {
+                transition: all 0.3s ease;
+            }
+            
+            .card:hover {
+                transform: translateY(-2px);
+            }
+        </style>
 
-            options.forEach(option => {
-                if (option.value === inputVal) {
-                    selectedId = option.getAttribute('data-id');
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+        <script src="js/dashboard.js"></script>
+        
+        <script>
+            // Multi-step form functionality
+            let currentStep = 1;
+            const totalSteps = 4;
+
+            function showStep(step) {
+                // Hide all steps
+                document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
+                
+                // Show current step
+                document.getElementById('step' + step).classList.add('active');
+                
+                // Update step indicators
+                document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+                    indicator.classList.remove('active', 'completed');
+                    if (index + 1 < step) {
+                        indicator.classList.add('completed');
+                        indicator.innerHTML = '<i class="bi bi-check-lg"></i>';
+                    } else if (index + 1 === step) {
+                        indicator.classList.add('active');
+                        indicator.innerHTML = '<span class="step-number">' + (index + 1) + '</span>';
+                    } else {
+                        indicator.innerHTML = '<span class="step-number">' + (index + 1) + '</span>';
+                    }
+                });
+                
+                // Update step labels
+                document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+                    const label = indicator.nextElementSibling;
+                    if (index + 1 <= step) {
+                        label.classList.remove('text-muted');
+                        label.classList.add(index + 1 === step ? 'text-primary' : 'text-success');
+                        label.classList.add('fw-semibold');
+                    } else {
+                        label.classList.add('text-muted');
+                        label.classList.remove('text-primary', 'text-success', 'fw-semibold');
+                    }
+                });
+                
+                // Update navigation buttons
+                document.getElementById('prevBtn').style.display = step === 1 ? 'none' : 'inline-block';
+                document.getElementById('nextBtn').style.display = step === totalSteps ? 'none' : 'inline-block';
+                document.getElementById('submitBtn').style.display = step === totalSteps ? 'inline-block' : 'none';
+            }
+
+            function changeStep(direction) {
+                const newStep = currentStep + direction;
+                if (newStep >= 1 && newStep <= totalSteps) {
+                    // Validate current step before proceeding
+                    if (direction > 0 && !validateStep(currentStep)) {
+                        return;
+                    }
+                    currentStep = newStep;
+                    showStep(currentStep);
                 }
+            }
+
+            function validateStep(step) {
+                const stepElement = document.getElementById('step' + step);
+                const requiredFields = stepElement.querySelectorAll('[required]');
+                let isValid = true;
+                
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        field.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+                
+                if (!isValid) {
+                    // Show error message
+                    const alertHtml = `
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Please fill in all required fields before proceeding.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `;
+                    stepElement.insertAdjacentHTML('afterbegin', alertHtml);
+                    
+                    // Auto-remove alert after 5 seconds
+                    setTimeout(() => {
+                        const alert = stepElement.querySelector('.alert');
+                        if (alert) alert.remove();
+                    }, 5000);
+                }
+                
+                return isValid;
+            }
+
+            // Initialize form
+            document.addEventListener('DOMContentLoaded', function() {
+                showStep(1);
+                
+                // Remove validation classes on input
+                document.querySelectorAll('[required]').forEach(field => {
+                    field.addEventListener('input', function() {
+                        this.classList.remove('is-invalid');
+                    });
+                });
             });
 
-            document.getElementById('employee_id').value = selectedId;
-        });
+            // Employee selection functionality
+            document.getElementById('person_accountable').addEventListener('input', function() {
+                const inputVal = this.value;
+                const options = document.querySelectorAll('#employeeList option');
+                let selectedId = '';
 
-        // Preview uploaded asset image
-        const imageInput = document.getElementById('asset_image');
-        const imagePreview = document.getElementById('asset_image_preview');
-        if (imageInput && imagePreview) {
-            imageInput.addEventListener('change', function() {
-                const file = this.files && this.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreview.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
+                options.forEach(option => {
+                    if (option.value === inputVal) {
+                        selectedId = option.getAttribute('data-id');
+                    }
+                });
+
+                document.getElementById('employee_id').value = selectedId;
             });
-        }
 
-        // Function to show image in modal with enhanced features
-        function showImageModal(imageSrc, imageTitle) {
-            // Create modal if it doesn't exist
-            let imageModal = document.getElementById('imageViewModal');
-            if (!imageModal) {
-                const modalHTML = `
-                    <div class="modal fade" id="imageViewModal" tabindex="-1" aria-labelledby="imageViewModalLabel" aria-hidden="true">
-                        <div class="modal-dialog modal-xl modal-dialog-centered">
-                            <div class="modal-content">
-                                <div class="modal-header bg-primary text-white">
-                                    <h5 class="modal-title" id="imageViewModalLabel">
-                                        <i class="bi bi-image me-2"></i>Asset Image Viewer
-                                    </h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body text-center p-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
-                                    <div class="mb-3">
-                                        <h6 id="imageTitle" class="text-primary mb-2"></h6>
+            // Preview uploaded asset image
+            const imageInput = document.getElementById('asset_image');
+            const imagePreview = document.getElementById('asset_image_preview');
+            const previewPlaceholder = document.getElementById('preview_placeholder');
+            
+            if (imageInput && imagePreview) {
+                imageInput.addEventListener('change', function() {
+                    const file = this.files && this.files[0];
+                    if (!file) return;
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                        previewPlaceholder.classList.add('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // Category code builder
+            (function() {
+                const categorySelect = document.getElementById('category_id');
+                const codeInput = document.getElementById('code');
+                // PHP-provided format for Code tag type
+                const codeFormatTemplate = <?= json_encode($code_format ?? '') ?>;
+
+                function buildCodeFromCategory(catCode) {
+                    if (!catCode) return '';
+                    const year = new Date().getFullYear().toString();
+                    const seq = '0001'; // Default sequence placeholder
+
+                    let template = (codeFormatTemplate || '').trim();
+                    let output = '';
+                    const hasBarePlaceholders = template.includes('YYYY') || template.includes('CODE') || template.includes('XXXX');
+                    const hasCurlyPlaceholders = template.includes('{YYYY}') || template.includes('{CODE}') || template.includes('{XXXX}');
+                    if (hasBarePlaceholders || hasCurlyPlaceholders) {
+                        output = template
+                            .replace(/\{YYYY\}|YYYY/g, year)
+                            .replace(/\{CODE\}|CODE/g, catCode)
+                            .replace(/\{XXXX\}|XXXX/g, seq);
+                    } else if (template.length > 0) {
+                        output = `${year}-${template}-${catCode}-${seq}`;
+                    } else {
+                        output = `${year}-${catCode}-${seq}`;
+                    }
+                    return output;
+                }
+
+                function maybePrefillCode() {
+                    const selected = categorySelect.options[categorySelect.selectedIndex];
+                    if (!selected) return;
+                    const catCode = selected.getAttribute('data-code') || '';
+                    if ((codeInput.value || '').trim() === '' && catCode) {
+                        codeInput.value = buildCodeFromCategory(catCode);
+                    }
+                }
+
+                if (categorySelect && codeInput) {
+                    categorySelect.addEventListener('change', function() {
+                        const selected = this.options[this.selectedIndex];
+                        const catCode = selected ? (selected.getAttribute('data-code') || '') : '';
+                        if (catCode) {
+                            codeInput.value = buildCodeFromCategory(catCode);
+                        }
+                    });
+                    document.addEventListener('DOMContentLoaded', maybePrefillCode);
+                    maybePrefillCode();
+                }
+            })();
+
+            // Function to show image in modal with enhanced features
+            function showImageModal(imageSrc, imageTitle) {
+                // Create modal if it doesn't exist
+                let imageModal = document.getElementById('imageViewModal');
+                if (!imageModal) {
+                    const modalHTML = `
+                        <div class="modal fade" id="imageViewModal" tabindex="-1" aria-labelledby="imageViewModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-xl modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-primary text-white">
+                                        <h5 class="modal-title" id="imageViewModalLabel">
+                                            <i class="bi bi-image me-2"></i>Asset Image Viewer
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
-                                    <div class="position-relative d-inline-block">
-                                        <img id="modalImage" src="" alt="Asset Image" 
-                                             class="img-fluid rounded shadow-lg" 
-                                             style="max-height: 75vh; max-width: 100%; object-fit: contain; transition: transform 0.3s;">
-                                        <div class="position-absolute top-0 end-0 m-2">
-                                            <button class="btn btn-sm btn-dark bg-opacity-75 border-0" 
-                                                    onclick="toggleImageZoom()" 
-                                                    title="Toggle Zoom">
-                                                <i class="bi bi-zoom-in" id="zoomIcon"></i>
-                                            </button>
+                                    <div class="modal-body text-center p-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                                        <div class="mb-3">
+                                            <h6 id="imageTitle" class="text-primary mb-2"></h6>
+                                        </div>
+                                        <div class="position-relative d-inline-block">
+                                            <img id="modalImage" src="" alt="Asset Image" 
+                                                 class="img-fluid rounded shadow-lg" 
+                                                 style="max-height: 75vh; max-width: 100%; object-fit: contain; transition: transform 0.3s;">
+                                            <div class="position-absolute top-0 end-0 m-2">
+                                                <button class="btn btn-sm btn-dark bg-opacity-75 border-0" 
+                                                        onclick="toggleImageZoom()" 
+                                                        title="Toggle Zoom">
+                                                    <i class="bi bi-zoom-in" id="zoomIcon"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="modal-footer bg-light">
-                                    <small class="text-muted me-auto">
-                                        <i class="bi bi-info-circle me-1"></i>
-                                        Click the zoom button or double-click the image to zoom
-                                    </small>
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                        <i class="bi bi-x-lg me-1"></i>Close
-                                    </button>
+                                    <div class="modal-footer bg-light">
+                                        <small class="text-muted me-auto">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Click the zoom button or double-click the image to zoom
+                                        </small>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            <i class="bi bi-x-lg me-1"></i>Close
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                `;
-                document.body.insertAdjacentHTML('beforeend', modalHTML);
-                imageModal = document.getElementById('imageViewModal');
+                    `;
+                    document.body.insertAdjacentHTML('beforeend', modalHTML);
+                    imageModal = document.getElementById('imageViewModal');
+                    
+                    // Add double-click zoom functionality
+                    document.getElementById('modalImage').addEventListener('dblclick', toggleImageZoom);
+                }
                 
-                // Add double-click zoom functionality
-                document.getElementById('modalImage').addEventListener('dblclick', toggleImageZoom);
-            }
-            
-            // Update modal content
-            document.getElementById('imageViewModalLabel').innerHTML = '<i class="bi bi-image me-2"></i>Asset Image Viewer';
-            document.getElementById('imageTitle').textContent = imageTitle;
-            document.getElementById('modalImage').src = imageSrc;
-            
-            // Reset zoom state
-            const img = document.getElementById('modalImage');
-            img.style.transform = 'scale(1)';
-            img.style.cursor = 'zoom-in';
-            document.getElementById('zoomIcon').className = 'bi bi-zoom-in';
-            
-            // Show modal
-            const modal = new bootstrap.Modal(imageModal);
-            modal.show();
-        }
-
-        // Function to toggle image zoom
-        function toggleImageZoom() {
-            const img = document.getElementById('modalImage');
-            const zoomIcon = document.getElementById('zoomIcon');
-            
-            if (img.style.transform === 'scale(2)') {
-                // Zoom out
+                // Update modal content
+                document.getElementById('imageTitle').textContent = imageTitle;
+                document.getElementById('modalImage').src = imageSrc;
+                
+                // Reset zoom state
+                const img = document.getElementById('modalImage');
                 img.style.transform = 'scale(1)';
                 img.style.cursor = 'zoom-in';
-                zoomIcon.className = 'bi bi-zoom-in';
-            } else {
-                // Zoom in
-                img.style.transform = 'scale(2)';
-                img.style.cursor = 'zoom-out';
-                zoomIcon.className = 'bi bi-zoom-out';
-
-<script>
-    (function() {
-        const categorySelect = document.getElementById('category_id');
-        const codeInput = document.getElementById('code');
-        // PHP-provided format for Code tag type
-        const codeFormatTemplate = <?= json_encode($code_format ?? '') ?>;
-
-        function buildCodeFromCategory(catCode) {
-            if (!catCode) return '';
-            const year = new Date().getFullYear().toString();
-            // Default sequence placeholder
-            const seq = '0001';
-
-            let template = (codeFormatTemplate || '').trim();
-            let output = '';
-            const hasBarePlaceholders = template.includes('YYYY') || template.includes('CODE') || template.includes('XXXX');
-            const hasCurlyPlaceholders = template.includes('{YYYY}') || template.includes('{CODE}') || template.includes('{XXXX}');
-            if (hasBarePlaceholders || hasCurlyPlaceholders) {
-                // Replace both bare and curly-braced placeholders
-                output = template
-                    .replace(/\{YYYY\}|YYYY/g, year)
-                    .replace(/\{CODE\}|CODE/g, catCode)
-                    .replace(/\{XXXX\}|XXXX/g, seq);
-            } else if (template.length > 0) {
-                // Treat as static prefix between year and code
-                // Result: YYYY-PREFIX-CODE-XXXX
-                output = `${year}-${template}-${catCode}-${seq}`;
-            } else {
-                // Fallback default
-                output = `${year}-${catCode}-${seq}`;
+                document.getElementById('zoomIcon').className = 'bi bi-zoom-in';
+                
+                // Show modal
+                const modal = new bootstrap.Modal(imageModal);
+                modal.show();
             }
-            return output;
-        }
 
-        function maybePrefillCode() {
-            const selected = categorySelect.options[categorySelect.selectedIndex];
-            if (!selected) return;
-            const catCode = selected.getAttribute('data-code') || '';
-            if ((codeInput.value || '').trim() === '' && catCode) {
-                codeInput.value = buildCodeFromCategory(catCode);
-            }
-        }
-
-        if (categorySelect && codeInput) {
-            categorySelect.addEventListener('change', function() {
-                const selected = this.options[this.selectedIndex];
-                const catCode = selected ? (selected.getAttribute('data-code') || '') : '';
-                if (catCode) {
-                    codeInput.value = buildCodeFromCategory(catCode);
+            // Function to toggle image zoom
+            function toggleImageZoom() {
+                const img = document.getElementById('modalImage');
+                const zoomIcon = document.getElementById('zoomIcon');
+                
+                if (img.style.transform === 'scale(2)') {
+                    // Zoom out
+                    img.style.transform = 'scale(1)';
+                    img.style.cursor = 'zoom-in';
+                    zoomIcon.className = 'bi bi-zoom-in';
+                } else {
+                    // Zoom in
+                    img.style.transform = 'scale(2)';
+                    img.style.cursor = 'zoom-out';
+                    zoomIcon.className = 'bi bi-zoom-out';
                 }
-            });
-            // Prefill on first load if empty
-            document.addEventListener('DOMContentLoaded', maybePrefillCode);
-            // Also attempt immediately in case DOMContentLoaded has fired
-            maybePrefillCode();
-        }
-    })();
-</script>
-
-</body>
-
+            }
+        </script>
+    </body>
 </html>
