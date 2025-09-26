@@ -7,15 +7,14 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <div class="modal-body">
                 <div class="mb-3">
                     <label for="csvFile" class="form-label">Choose CSV File</label>
                     <input type="file" class="form-control" id="csvFile" name="csv_file" accept=".csv,.xlsx" required>
                 </div>
 
                 <div class="mb-3">
-                    <strong>CSV Format Instructions:</strong>
-                    <p class="mb-1">Your CSV file must follow the format below:</p>
+                    <strong>CSV/Excel Format Instructions:</strong>
+                    <p class="mb-1">Your file must include the headers below (case-insensitive). Items are created individually based on <code>quantity</code>.</p>
 
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm text-nowrap small align-middle">
@@ -28,49 +27,56 @@
                                     <th>value</th>
                                     <th>office_name</th>
                                     <th>type</th>
+                                    <th>status</th>
+                                    <th>acquisition_date</th>
+                                    <th>employee_name</th>
+                                    <th>end_user</th>
+                                    <th>red_tagged</th>
+                                    <th>serial_no</th>
+                                    <th>code</th>
+                                    <th>property_no</th>
+                                    <th>model</th>
+                                    <th>brand</th>
+                                    <th>inventory_tag</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>Electric Drill</td>
-                                    <td>Tools</td>
-                                    <td>5</td>
-                                    <td>pcs</td>
-                                    <td>1200.50</td>
-                                    <td>Maintenance Department</td>
-                                    <td>Asset</td>
-                                </tr>
-                                <tr>
                                     <td>Laptop</td>
                                     <td>Office Equipment</td>
-                                    <td>10</td>
-                                    <td>pcs</td>
-                                    <td>45000.00</td>
+                                    <td>3</td>
+                                    <td>unit</td>
+                                    <td>45000</td>
                                     <td>IT Department</td>
-                                    <td>Asset</td>
-                                </tr>
-                                <tr>
-                                    <td>Ballpen Black</td>
-                                    <td>Consumables</td>
-                                    <td>100</td>
-                                    <td>pcs</td>
-                                    <td>10.50</td>
-                                    <td>Admin Office</td>
-                                    <td>Consumable</td>
+                                    <td>asset</td>
+                                    <td>available</td>
+                                    <td>2025-09-01</td>
+                                    <td>Juan Dela Cruz</td>
+                                    <td>Jane Smith</td>
+                                    <td>0</td>
+                                    <td>SN-ABC123</td>
+                                    <td>CODE-01</td>
+                                    <td>PROP-123</td>
+                                    <td>XPS 15</td>
+                                    <td>Dell</td>
+                                    <td>INV-0001</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
                     <em class="text-muted">
-                        <strong>Note:</strong> <code>status</code> is automatically set to <code>Available</code>.<br>
-                        Column headers must be present in the first row of your CSV.
+                        <strong>Notes:</strong><br>
+                        1) <code>employee_name</code> must match an existing name in <code>employees</code> to be linked; otherwise it will be left empty.<br>
+                        2) <code>red_tagged</code> accepts 1/0, yes/no, true/false.<br>
+                        3) Each row creates a parent entry in <code>assets_new</code> and then individual items in <code>assets</code> (quantity = 1 each).<br>
+                        4) Column headers must be present in the first row of your file.
                     </em>
                 </div>
-            </div>
-
             <div class="modal-footer">
-                <button type="submit" class="btn btn-success">Import</button>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-upload me-1"></i> Import
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             </div>
         </form>
