@@ -394,3 +394,18 @@ body, .container, .card, .navbar, .table, input, select, textarea, .dropdown-men
   /* Subtle separator line for improved structure */
   body:not(.dark-mode) .topbar { backdrop-filter: saturate(130%); }
 
+  /* Layout: make footer stay at bottom on short pages (non-sticky) */
+  html, body { height: 100%; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Common wrappers grow to fill remaining space so footer sits at bottom */
+  main,
+  .main,
+  .container-fluid,
+  .content,
+  .page-wrapper {
+    flex: 1 0 auto;
+  }
