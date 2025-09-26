@@ -48,39 +48,92 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
 
 <!-- SIDEBAR STYLES -->
 <style>
+    /* Container */
     .sidebar {
         height: 100vh;
         overflow: hidden;
+        background: linear-gradient(180deg, #0b5ed7 0%, #0a58ca 45%, #0948a6 100%);
+        color: #eaf2ff;
+        border-right: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     }
 
+    /* Scrollable area */
     .sidebar .scrollable-nav {
         overflow-y: auto;
-        height: calc(100vh - 60px);
+        height: calc(100vh - 64px);
         padding-right: 8px;
         scrollbar-width: none;
     }
 
-    .sidebar .scrollable-nav::-webkit-scrollbar {
-        display: none;
+    .sidebar .scrollable-nav::-webkit-scrollbar { display: none; }
+
+    /* Header */
+    .sidebar h5 {
+        color: #fff;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
 
+    .sidebar hr {
+        border-color: rgba(255, 255, 255, 0.2);
+        opacity: 1;
+        margin: 0.75rem 0 1rem;
+    }
+
+    /* Links */
     .sidebar a {
         width: 100%;
         text-align: left;
-        padding: 10px 15px;
+        padding: 10px 14px;
         border-radius: 10px;
-        margin: 5px 0;
-        transition: all 0.3s ease;
-        display: block;
-        color: #000;
+        margin: 4px 0;
+        transition: background-color 0.2s ease, color 0.2s ease, transform 0.08s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #eaf2ff;
         text-decoration: none;
     }
 
-    .sidebar a:hover,
-    .sidebar a.active {
-        background-color: #e0e0e0;
-        color: #000;
+    .sidebar a .bi { opacity: 0.95; font-size: 1.05rem; }
+
+    .sidebar a:hover {
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
     }
+
+    .sidebar a:active { transform: scale(0.995); }
+
+    .sidebar a.active {
+        background: rgba(255, 255, 255, 0.22);
+        color: #ffffff;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+    }
+
+    /* Submenu */
+    .sidebar .collapse { border-left: 2px solid rgba(255, 255, 255, 0.18); margin-left: 6px; }
+    .sidebar .collapse .nav-link {
+        padding: 8px 12px;
+        border-radius: 8px;
+        color: #e9f2ff;
+        margin: 3px 0;
+    }
+    .sidebar .collapse .nav-link:hover { background: rgba(255, 255, 255, 0.12); }
+    .sidebar .collapse .nav-link.active { background: rgba(255, 255, 255, 0.22); }
+
+    /* Dropdown caret rotation */
+    .sidebar a[aria-expanded="true"] .bi-caret-down-fill { transform: rotate(180deg); }
+    .sidebar .bi-caret-down-fill { transition: transform 0.2s ease; }
+
+    /* Logout area */
+    .sidebar .border-top { border-top: 1px solid rgba(255, 255, 255, 0.2) !important; background: rgba(0, 0, 0, 0.05); }
+    .sidebar .border-top .nav-link { color: #ffd9d9; }
+    .sidebar .border-top .nav-link:hover { background: rgba(255, 255, 255, 0.12); color: #ffffff; border-radius: 8px; }
+
+    /* Focus visibility */
+    .sidebar a:focus { outline: 2px solid rgba(255, 255, 255, 0.35); outline-offset: 2px; }
 </style>
 
 <!-- SIDEBAR HTML -->
