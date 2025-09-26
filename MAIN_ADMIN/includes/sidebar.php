@@ -69,17 +69,62 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
     .sidebar .scrollable-nav::-webkit-scrollbar { display: none; }
 
     /* Header */
-    .sidebar h5 {
+    .sidebar .sidebar-brand {
+        text-align: center;
+        padding: 16px 10px 6px;
+    }
+
+    .sidebar .brand-logo-wrap {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        background: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18), inset 0 0 0 6px rgba(255, 255, 255, 0.4);
+        margin-bottom: 8px;
+    }
+
+    .sidebar .brand-logo-wrap img {
+        width: 38px; height: 38px; object-fit: contain;
+        filter: none;
+    }
+
+    .sidebar .brand-title {
         color: #fff;
-        font-weight: 600;
-        letter-spacing: 0.2px;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        line-height: 1.1;
+    }
+    .sidebar .brand-title strong {
+        font-weight: 700;
+        font-size: 0.98rem;
+        letter-spacing: 0.3px;
+        display: block;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    }
+    .sidebar .brand-title span {
+        display: block;
+        font-size: 0.72rem;
+        opacity: 0.9;
+        color: #dfeaff;
+        margin-top: 2px;
     }
 
     .sidebar hr {
         border-color: rgba(255, 255, 255, 0.2);
         opacity: 1;
         margin: 0.75rem 0 1rem;
+    }
+
+    /* Section label */
+    .sidebar .nav-section {
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.75);
+        padding: 4px 6px;
+        margin: 8px 4px 4px;
+        opacity: 0.9;
     }
 
     /* Links */
@@ -140,12 +185,16 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
 <div class="sidebar d-flex flex-column justify-content-between">
     <!-- Scrollable top part -->
     <div class="scrollable-nav px-3">
-        <!-- Logo and title -->
-        <h5 class="text-center d-flex align-items-center justify-content-center mt-3">
-            <img src="../img/<?= htmlspecialchars($system['logo']) ?>" alt="Logo"
-                style="width: 30px; height: 30px; margin-right: 10px;" />
-            <?= htmlspecialchars($system['system_title']) ?>
-        </h5>
+        <!-- Brand header -->
+        <div class="sidebar-brand" aria-label="Application brand">
+            <div class="brand-logo-wrap">
+                <img src="../img/<?= htmlspecialchars($system['logo']) ?>" alt="Logo">
+            </div>
+            <div class="brand-title">
+                <strong><?= htmlspecialchars($system['system_title']) ?></strong>
+                <span>Main Admin</span>
+            </div>
+        </div>
         <hr>
 
         <!-- Sidebar Navigation -->
@@ -154,6 +203,7 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
 
+            <div class="nav-section">Inventory</div>
             <!-- Inventory dropdown -->
             <a class="<?= ($page == 'inventory' || $page == 'inventory_category' || $page == 'infrastructure_inventory') ? 'active' : '' ?>"
                 data-bs-toggle="collapse" href="#inventorySubMenu" role="button"
@@ -179,6 +229,7 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
                 </a>
             </div>
 
+            <div class="nav-section">Forms</div>
             <!-- Forms dropdown -->
             <a class="<?= $formActive ? 'active' : '' ?>"
                 data-bs-toggle="collapse" href="#formsSubMenu" role="button"
@@ -202,6 +253,7 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
                 </a>
             </div>
 
+            <div class="nav-section">Operations</div>
             <a href="borrow.php" class="<?= ($page == 'borrow') ? 'active' : '' ?>">
                 <i class="bi bi-arrow-left-right"></i> Borrow
             </a>
@@ -211,6 +263,7 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
             <a href="usage.php" class="<?= ($page == 'usage') ? 'active' : '' ?>">
                 <i class="bi bi-clock-history"></i> Usage
             </a>
+            <div class="nav-section">Administration</div>
             <a href="logs.php" class="<?= ($page == 'logs') ? 'active' : '' ?>">
                 <i class="bi bi-journal-text"></i> Audit Trail
             </a>
