@@ -38,16 +38,24 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
                     <label for="description" class="form-label">Description</label> <span class="text-danger">*</span>
                     <textarea name="description" id="description" class="form-control" rows="2" required></textarea>
                 </div>
-
                 <!-- Optional Fields -->
-                <div class="col-md-4">
-                    <label for="serial_no" class="form-label">Serial No.</label>
-                    <input type="text" name="serial_no" id="serial_no" class="form-control">
+                <div class="col-12">
+                    <h6 class="text-muted fw-semibold mt-2 mb-1"><i class="bi bi-box-seam me-1"></i> Asset Details (Optional)</h6>
+                    <hr class="mt-1 mb-3">
                 </div>
+                <div class="col-md-12">
+                    <h6 class="text-muted fw-semibold mt-2 mb-1"><i class="bi bi-tag me-1"></i> Brand/Model</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="model" class="form-label">Model</label>
+                            <input type="text" name="model" id="model" class="form-control" placeholder="Enter model">
+                        </div>
 
-                <div class="col-md-4">
-                    <label for="code" class="form-label">Code</label>
-                    <input type="text" name="code" id="code" class="form-control">
+                        <div class="col-md-6">
+                            <label for="brand" class="form-label">Brand</label>
+                            <input type="text" name="brand" id="brand" class="form-control" placeholder="Enter brand">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Property / Stock No. -->
@@ -154,7 +162,7 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
 
                 <div class="col-md-4">
                     <label for="acquisition_date" class="form-label">Acquisition Date</label>
-                    <input type="date" name="acquisition_date" id="acquisition_date" class="form-control">
+                    <input type="date" name="acquisition_date" id="acquisition_date" class="form-control" value="<?= date('Y-m-d') ?>">
                 </div>
             </div>
 
