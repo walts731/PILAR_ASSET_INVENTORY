@@ -209,4 +209,16 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
             document.getElementById('property_no').disabled = false;
         }
     });
+
+    // Default Unit selection to 'unit' if available
+    (function () {
+        const unitSelect = document.getElementById('unit');
+        if (!unitSelect) return;
+        for (const opt of unitSelect.options) {
+            if ((opt.value || '').toLowerCase() === 'unit') {
+                unitSelect.value = opt.value;
+                break;
+            }
+        }
+    })();
 </script>

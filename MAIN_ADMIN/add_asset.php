@@ -116,7 +116,7 @@ $created_count = 0;
 for ($i = 0; $i < $quantity; $i++) {
     $asset_name = $description;
     $stmtInsAsset->bind_param(
-        'sssssiiidsssssssi',
+        'sssssiiidssssssssi',
         $asset_name,         // s
         $description,        // s
         $unit,               // s
