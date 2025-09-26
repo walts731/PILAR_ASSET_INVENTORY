@@ -86,6 +86,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
         (asset_name, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, inventory_tag, asset_new_id)
         VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, NOW(), ?, '', ?, '', ?, ?, ?, ?, ?, ?, ?)");
 
+    // Detect if mr_details table has end_user column (once) and prepare MR statements
+    $hasMrEndUserCol = false;
+    if ($resCol2 = $conn->query("SHOW COLUMNS FROM mr_details LIKE 'end_user'")) {
+        $hasMrEndUserCol = ($resCol2->num_rows > 0);
+        $resCol2->close();
+    }
+
+    // Existence check to avoid duplicate MR for same asset
+    $stmtMrExists = $conn->prepare("SELECT 1 FROM mr_details WHERE asset_id = ? LIMIT 1");
+    // Insert MR (item_id nullable)
+    $stmtMrInsert = $conn->prepare("INSERT INTO mr_details 
+        (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, end_user, acquired_date, counted_date, inventory_tag)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
     // Detect if assets table has end_user column (once)
     $hasEndUserCol = false;
     if ($resCol = $conn->query("SHOW COLUMNS FROM assets LIKE 'end_user'")) {
@@ -206,6 +220,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                 }
                 $stmtUpd->execute();
                 $stmtUpd->close();
+
+                // Conditionally create MR record when both inventory_tag and employee_name are provided
+                if (!empty($inventory_tag) && !empty($employee_name)) {
+                    // Avoid duplicates
+                    $stmtMrExists->bind_param('i', $new_item_id);
+                    $stmtMrExists->execute();
+                    $resExists = $stmtMrExists->get_result();
+                    $exists = $resExists && $resExists->num_rows > 0;
+                    if (!$exists) {
+                        // Derive MR fields
+                        $item_id_null = null; // CSV import has no ICS mapping
+                        $office_location = $office_name; // use provided office_name
+                        $model_no = $model;
+                        $serviceable = (strtolower($status) === 'unserviceable') ? 0 : 1;
+                        $unserviceable = (strtolower($status) === 'unserviceable') ? 1 : 0;
+                        $unit_quantity = 1;
+                        $acquisition_cost = (string)$value; // keep as string to match existing bind pattern
+                        $person_accountable = $employee_name;
+                        $acquired_date = $acq_date;
+                        $counted_date = $acq_date;
+
+                        $stmtMrInsert->bind_param(
+                            'iissssiiissssssss',
+                            $item_id_null,           // i (NULL)
+                            $new_item_id,            // i
+                            $office_location,        // s
+                            $description,            // s
+                            $model_no,               // s
+                            $serial_no,              // s
+                            $serviceable,            // i
+                            $unserviceable,          // i
+                            $unit_quantity,          // i
+                            $unit,                   // s
+                            $acq_date,               // s
+                            $acquisition_cost,       // s
+                            $person_accountable,     // s
+                            $end_user,               // s (allowed empty)
+                            $acquired_date,          // s
+                            $counted_date,           // s
+                            $inventory_tag           // s
+                        );
+                        $stmtMrInsert->execute();
+                    }
+                }
             }
         }
 
