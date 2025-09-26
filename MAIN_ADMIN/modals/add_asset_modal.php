@@ -53,8 +53,7 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
                 <!-- Property / Stock No. -->
                 <div class="col-md-4" id="propertyNoGroup">
                     <label for="property_no" class="form-label">Property No.</label>
-                    <input type="text" name="property_no" id="property_no" class="form-control"
-                        value="<?= $property_no ?>" readonly>
+                    <input type="text" name="property_no" id="property_no" class="form-control" placeholder="Enter Property No.">
                 </div>
 
                 <div class="col-md-4 d-none" id="stockNoGroup">
@@ -63,22 +62,35 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
                         value="<?= $stock_no ?>" readonly>
                 </div>
 
-                <div class="col-md-6">
-                    <label for="model" class="form-label">Model</label>
-                    <input type="text" name="model" id="model" class="form-control">
+                <div class="col-md-4">
+                    <label for="inventory_tag" class="form-label">Inventory Tag (optional)</label>
+                    <input type="text" name="inventory_tag" id="inventory_tag" class="form-control" placeholder="e.g., INV-0001">
+                    <small class="text-muted">Providing Inventory Tag and Employee will auto-create MR details.</small>
                 </div>
 
-                <div class="col-md-6">
-                    <label for="brand" class="form-label">Brand</label>
-                    <input type="text" name="brand" id="brand" class="form-control">
+                <div class="col-md-4">
+                    <label for="employee_name" class="form-label">Employee (Person Accountable)</label>
+                    <input list="employeesList" name="employee_name" id="employee_name" class="form-control" placeholder="Type to search…">
+                    <datalist id="employeesList">
+                        <?php
+                        $emp_rs = $conn->query("SELECT name FROM employees ORDER BY name ASC");
+                        if ($emp_rs) {
+                            while ($er = $emp_rs->fetch_assoc()) {
+                                echo '<option value="' . htmlspecialchars($er['name']) . '"></option>';
+                            }
+                        }
+                        ?>
+                    </datalist>
                 </div>
-                <!-- End Optional Fields -->
 
+                <div class="col-md-4">
+                    <label for="end_user" class="form-label">End User (optional)</label>
+                    <input type="text" name="end_user" id="end_user" class="form-control" placeholder="End user name">
+                </div>
                 <div class="col-md-12">
                     <div class="row align-items-center">
                         <!-- Upload Input (Left) -->
                         <div class="col-md-6">
-                            <label for="asset_image" class="form-label">Asset Image</label>
                             <input type="file" name="asset_image" id="asset_image" class="form-control" accept="image/*" onchange="previewImage(event)">
                         </div>
 
@@ -115,8 +127,8 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
                 <div class="col-md-3">
                     <label for="status" class="form-label">Status</label> <span class="text-danger">*</span>
                     <select name="status" id="status" class="form-select" required>
-                        <option value="available">Available</option>
-                        <option value="unavailable">Not Available</option>
+                        <option value="serviceable">Serviceable</option>
+                        <option value="unserviceable">Unserviceable</option>
                     </select>
                 </div>
 
@@ -138,6 +150,11 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
                             <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['category_name']) ?></option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="acquisition_date" class="form-label">Acquisition Date</label>
+                    <input type="date" name="acquisition_date" id="acquisition_date" class="form-control">
                 </div>
             </div>
 
