@@ -371,6 +371,9 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
 
         <!-- Main Inventory Tab -->
         <div class="tab-pane fade" id="fuel-main" role="tabpanel">
+          <!-- Stock Alerts Container -->
+          <div id="stockAlertsContainer"></div>
+          
           <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
               <strong><i class="bi bi-collection me-1"></i> Fuel Stock</strong>
@@ -842,17 +845,88 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
         const data = await res.json();
         if (!data.success) throw new Error(data.error || 'Failed to load stock');
         fuelStockTbody.innerHTML = '';
+        
+        let outOfStockItems = [];
+        let lowStockItems = [];
+        
         data.stock.forEach(s => {
+          const quantity = Number(s.quantity);
           const tr = document.createElement('tr');
+          
+          // Determine stock status and styling
+          let stockStatus = '';
+          let rowClass = '';
+          
+          if (quantity <= 0) {
+            stockStatus = '<span class="badge bg-danger ms-2">OUT OF STOCK</span>';
+            rowClass = 'table-danger';
+            outOfStockItems.push(s.name);
+          } else if (quantity <= 50) { // Low stock threshold
+            stockStatus = '<span class="badge bg-warning ms-2">LOW STOCK</span>';
+            rowClass = 'table-warning';
+            lowStockItems.push(s.name);
+          }
+          
+          tr.className = rowClass;
           tr.innerHTML = `
-            <td>${s.name}</td>
-            <td>${Number(s.quantity).toFixed(2)}</td>
+            <td>${s.name}${stockStatus}</td>
+            <td>${quantity.toFixed(2)}</td>
             <td>${s.updated_at ? new Date(s.updated_at).toLocaleString() : ''}</td>
           `;
           fuelStockTbody.appendChild(tr);
         });
+        
+        // Update stock alerts
+        updateStockAlerts(outOfStockItems, lowStockItems);
+        
       } catch (e) {
         console.error(e);
+      }
+    }
+
+    // Function to update stock alerts
+    function updateStockAlerts(outOfStockItems, lowStockItems) {
+      const container = document.getElementById('stockAlertsContainer');
+      if (!container) return;
+      
+      container.innerHTML = ''; // Clear existing alerts
+      
+      // Out of stock alert
+      if (outOfStockItems.length > 0) {
+        const outOfStockAlert = document.createElement('div');
+        outOfStockAlert.className = 'alert alert-danger alert-dismissible fade show mb-3';
+        outOfStockAlert.innerHTML = `
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <strong>Out of Stock Alert!</strong> The following fuel types are completely out of stock: 
+          <strong>${outOfStockItems.join(', ')}</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        container.appendChild(outOfStockAlert);
+      }
+      
+      // Low stock alert
+      if (lowStockItems.length > 0) {
+        const lowStockAlert = document.createElement('div');
+        lowStockAlert.className = 'alert alert-warning alert-dismissible fade show mb-3';
+        lowStockAlert.innerHTML = `
+          <i class="bi bi-exclamation-circle-fill me-2"></i>
+          <strong>Low Stock Warning!</strong> The following fuel types are running low (≤50L): 
+          <strong>${lowStockItems.join(', ')}</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        container.appendChild(lowStockAlert);
+      }
+      
+      // All good message
+      if (outOfStockItems.length === 0 && lowStockItems.length === 0) {
+        const goodStockAlert = document.createElement('div');
+        goodStockAlert.className = 'alert alert-success alert-dismissible fade show mb-3';
+        goodStockAlert.innerHTML = `
+          <i class="bi bi-check-circle-fill me-2"></i>
+          <strong>All fuel types are adequately stocked!</strong> No immediate restocking required.
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        container.appendChild(goodStockAlert);
       }
     }
 
