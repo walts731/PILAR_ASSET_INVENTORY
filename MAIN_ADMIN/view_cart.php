@@ -45,51 +45,38 @@ $cart_items = $_SESSION['borrow_cart'];
                             <p class="text-muted">Add items from the borrow page to get started.</p>
                         </div>
                     <?php else: ?>
-                        <form action="process_borrow_request.php" method="POST">
-                            <div class="mb-3">
-                                <label for="purpose" class="form-label">Purpose of Borrowing</label>
-                                <textarea name="purpose" id="purpose" class="form-control" rows="3" required></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label for="due_date" class="form-label">Proposed Return Date</label>
-                                <input type="date" name="due_date" id="due_date" class="form-control" required min="<?= date('Y-m-d') ?>">
-                            </div>
-
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Asset Name</th>
+                                    <th style="width: 150px;">Quantity</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($cart_items as $asset_id => $item): ?>
                                     <tr>
-                                        <th>Asset Name</th>
-                                        <th style="width: 150px;">Quantity</th>
-                                        <th class="text-end">Action</th>
+                                        <td><?= htmlspecialchars($item['asset_name']) ?></td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm quantity-input" 
+                                                   value="<?= $item['quantity'] ?>" 
+                                                   min="1" 
+                                                   max="<?= $item['max_quantity'] ?>" 
+                                                   data-asset-id="<?= $asset_id ?>">
+                                        </td>
+                                        <td class="text-end">
+                                            <button type="button" class="btn btn-sm btn-outline-danger remove-btn" data-asset-id="<?= $asset_id ?>">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($cart_items as $asset_id => $item): ?>
-                                        <tr>
-                                            <td><?= htmlspecialchars($item['asset_name']) ?></td>
-                                            <td>
-                                                <input type="number" class="form-control form-control-sm quantity-input" 
-                                                       name="quantities[<?= $asset_id ?>]" 
-                                                       value="<?= $item['quantity'] ?>" 
-                                                       min="1" 
-                                                       max="<?= $item['max_quantity'] ?>" 
-                                                       data-asset-id="<?= $asset_id ?>">
-                                            </td>
-                                            <td class="text-end">
-                                                <button type="button" class="btn btn-sm btn-outline-danger remove-btn" data-asset-id="<?= $asset_id ?>">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                            
-                            <div class="d-flex justify-content-between mt-4">
-                                <button type="button" id="clearCartBtn" class="btn btn-outline-danger"><i class="bi bi-x-lg"></i> Clear Cart</button>
-                                <button type="submit" class="btn btn-primary"><i class="bi bi-check2-square"></i> Submit Borrow Request</button>
-                            </div>
-                        </form>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" id="clearCartBtn" class="btn btn-outline-danger"><i class="bi bi-x-lg"></i> Clear Cart</button>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
