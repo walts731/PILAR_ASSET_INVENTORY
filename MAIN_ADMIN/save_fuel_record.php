@@ -9,6 +9,34 @@ if (!isset($_SESSION['user_id'])) {
   exit;
 }
 
+// Permission guard: admin/office_admin or explicit fuel_inventory permission
+function user_has_fuel_permission(mysqli $conn, int $user_id): bool {
+  $role = null;
+  if ($stmt = $conn->prepare("SELECT role FROM users WHERE id = ? LIMIT 1")) {
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) { $role = $row['role'] ?? null; }
+    $stmt->close();
+  }
+  if ($role === 'admin' || $role === 'user') return true;
+  if ($stmt2 = $conn->prepare("SELECT 1 FROM user_permissions WHERE user_id = ? AND permission = 'fuel_inventory' LIMIT 1")) {
+    $stmt2->bind_param('i', $user_id);
+    $stmt2->execute();
+    $stmt2->store_result();
+    $ok = $stmt2->num_rows > 0;
+    $stmt2->close();
+    return $ok;
+  }
+  return false;
+}
+
+if (!user_has_fuel_permission($conn, (int)$_SESSION['user_id'])) {
+  http_response_code(403);
+  echo json_encode(['error' => 'Forbidden: insufficient permission']);
+  exit;
+}
+
 // Ensure table exists
 $createSql = "CREATE TABLE IF NOT EXISTS fuel_records (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -27,6 +55,20 @@ $createSql = "CREATE TABLE IF NOT EXISTS fuel_records (
   INDEX(date_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 $conn->query($createSql);
+
+// Ensure fuel_types and fuel_stock tables exist
+$conn->query("CREATE TABLE IF NOT EXISTS fuel_types (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  is_active TINYINT(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+$conn->query("CREATE TABLE IF NOT EXISTS fuel_stock (
+  fuel_type_id INT NOT NULL UNIQUE,
+  quantity DECIMAL(14,2) NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (fuel_type_id) REFERENCES fuel_types(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
 // Validate required fields
 $required = ['date_time','fuel_type','quantity','unit_price','total_cost','storage_location','supplier_name','received_by'];
@@ -61,6 +103,23 @@ $received_by = trim($_POST['received_by']);
 $remarks = isset($_POST['remarks']) ? trim($_POST['remarks']) : null;
 $created_by = (int)$_SESSION['user_id'];
 
+// Begin transaction
+$conn->begin_transaction();
+
+// Resolve or create fuel_type id
+$fuel_type_id = null;
+$insType = $conn->prepare("INSERT INTO fuel_types (name) VALUES (?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)");
+$insType->bind_param('s', $fuel_type);
+if (!$insType->execute()) {
+  $conn->rollback();
+  http_response_code(500);
+  echo json_encode(['error' => 'Failed to resolve fuel type']);
+  exit;
+}
+$fuel_type_id = $conn->insert_id; // existing id if duplicate
+$insType->close();
+
+// Insert fuel record
 $stmt = $conn->prepare("INSERT INTO fuel_records (date_time, fuel_type, quantity, unit_price, total_cost, storage_location, delivery_receipt, supplier_name, received_by, remarks, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
 if (!$stmt) {
   http_response_code(500);
@@ -70,12 +129,27 @@ if (!$stmt) {
 $stmt->bind_param('ssdddsssssi', $date_time, $fuel_type, $quantity, $unit_price, $total_cost, $storage_location, $delivery_receipt, $supplier_name, $received_by, $remarks, $created_by);
 $ok = $stmt->execute();
 if (!$ok) {
+  $conn->rollback();
   http_response_code(500);
   echo json_encode(['error' => 'Failed to save record']);
   exit;
 }
 $id = $stmt->insert_id;
 $stmt->close();
+
+// Upsert stock increment
+$upsertStock = $conn->prepare("INSERT INTO fuel_stock (fuel_type_id, quantity) VALUES (?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)");
+$upsertStock->bind_param('id', $fuel_type_id, $quantity);
+if (!$upsertStock->execute()) {
+  $conn->rollback();
+  http_response_code(500);
+  echo json_encode(['error' => 'Failed to update stock']);
+  exit;
+}
+$upsertStock->close();
+
+// Commit transaction
+$conn->commit();
 
 // Return the inserted row
 echo json_encode([

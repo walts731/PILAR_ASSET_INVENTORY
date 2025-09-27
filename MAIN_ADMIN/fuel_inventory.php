@@ -7,6 +7,34 @@ if (!isset($_SESSION['user_id'])) {
   exit();
 }
 
+// Permission guard: allow admin/office_admin or explicit fuel_inventory permission
+function user_has_fuel_permission(mysqli $conn, int $user_id): bool {
+  $role = null;
+  if ($stmt = $conn->prepare("SELECT role FROM users WHERE id = ? LIMIT 1")) {
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) { $role = $row['role'] ?? null; }
+    $stmt->close();
+  }
+  if ($role === 'admin' || $role === 'user') return true;
+  if ($stmt2 = $conn->prepare("SELECT 1 FROM user_permissions WHERE user_id = ? AND permission = 'fuel_inventory' LIMIT 1")) {
+    $stmt2->bind_param('i', $user_id);
+    $stmt2->execute();
+    $stmt2->store_result();
+    $ok = $stmt2->num_rows > 0;
+    $stmt2->close();
+    return $ok;
+  }
+  return false;
+}
+
+if (!user_has_fuel_permission($conn, (int)$_SESSION['user_id'])) {
+  // Redirect unauthorized users away
+  header("Location: admin_dashboard.php?error=forbidden");
+  exit();
+}
+
 // Fetch system settings for title/logo if needed
 $system = [
   'logo' => '../img/default-logo.png',
@@ -44,6 +72,93 @@ if ($result && $result->num_rows > 0) {
           <div class="rounded-circle d-flex align-items-center justify-content-center bg-white border" style="width:48px;height:48px;">
             <i class="bi bi-fuel-pump text-primary fs-4"></i>
           </div>
+
+  <!-- Add Fuel Out Modal -->
+  <div class="modal fade" id="addFuelOutModal" tabindex="-1" aria-labelledby="addFuelOutModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addFuelOutModalLabel"><i class="bi bi-truck me-2"></i>Add Fuel Out Record</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="fuelOutForm" novalidate>
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <label for="fo_fuel_type" class="form-label">Fuel Type</label>
+                <select id="fo_fuel_type" name="fo_fuel_type" class="form-select" required>
+                  <option value="" selected disabled>Loading...</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="fo_date" class="form-label">Date</label>
+                <input type="date" id="fo_date" name="fo_date" class="form-control" required />
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="fo_time_in" class="form-label">Time In</label>
+                <input type="time" id="fo_time_in" name="fo_time_in" class="form-control" required />
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="fo_fuel_no" class="form-label">Fuel No</label>
+                <input type="text" id="fo_fuel_no" name="fo_fuel_no" class="form-control" />
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="fo_plate_no" class="form-label">Plate No</label>
+                <input type="text" id="fo_plate_no" name="fo_plate_no" class="form-control" />
+              </div>
+              <div class="col-12 col-md-8">
+                <label for="fo_request" class="form-label">Request</label>
+                <input type="text" id="fo_request" name="fo_request" class="form-control" />
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="fo_liters" class="form-label">No. of Liters</label>
+                <input type="number" step="0.01" min="0" id="fo_liters" name="fo_liters" class="form-control" required />
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="fo_vehicle_type" class="form-label">Vehicle Type</label>
+                <input type="text" id="fo_vehicle_type" name="fo_vehicle_type" class="form-control" />
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="fo_receiver" class="form-label">Receiver Name</label>
+                <input type="text" id="fo_receiver" name="fo_receiver" class="form-control" required />
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="fo_time_out" class="form-label">Time Out</label>
+                <input type="time" id="fo_time_out" name="fo_time_out" class="form-control" />
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" id="saveFuelOutBtn" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Fuel Type Modal -->
+  <div class="modal fade" id="addFuelTypeModal" tabindex="-1" aria-labelledby="addFuelTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addFuelTypeModalLabel"><i class="bi bi-gear me-2"></i>Add Fuel Type</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="new_fuel_type" class="form-label">Fuel Type Name</label>
+            <input type="text" id="new_fuel_type" class="form-control" placeholder="e.g., Diesel" required />
+            <div class="form-text">This will appear in the Fuel Type dropdown.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" id="saveFuelTypeBtn" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save Type</button>
+        </div>
+      </div>
+    </div>
+  </div>
           <div>
             <div class="h4 mb-0 title">Fuel Inventory</div>
             <div class="text-muted small">Manage fuel stocks, receipts, and usage</div>
@@ -57,6 +172,16 @@ if ($result && $result->num_rows > 0) {
         <li class="nav-item" role="presentation">
           <button class="nav-link active" id="fuel-log-tab" data-bs-toggle="tab" data-bs-target="#fuel-log" type="button" role="tab">
             <i class="bi bi-journal-plus me-1"></i> Fuel Log
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="fuel-out-tab" data-bs-toggle="tab" data-bs-target="#fuel-out" type="button" role="tab">
+            <i class="bi bi-truck me-1"></i> Fuel Out
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="fuel-main-tab" data-bs-toggle="tab" data-bs-target="#fuel-main" type="button" role="tab">
+            <i class="bi bi-collection me-1"></i> Main Inventory
           </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -94,6 +219,7 @@ if ($result && $result->num_rows > 0) {
                     <th>Supplier</th>
                     <th>Received By</th>
                     <th>Remarks</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -104,11 +230,69 @@ if ($result && $result->num_rows > 0) {
           </div>
         </div>
 
+        <!-- Fuel Out Tab -->
+        <div class="tab-pane fade" id="fuel-out" role="tabpanel">
+          <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <strong><i class="bi bi-truck me-1"></i> Fuel Out Records</strong>
+              <div class="d-flex gap-2 align-items-center">
+                <input type="text" id="fuelOutSearch" class="form-control form-control-sm" placeholder="Search..." />
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addFuelOutModal">
+                  <i class="bi bi-plus-circle me-1"></i> Add Fuel Out
+                </button>
+              </div>
+            </div>
+            <div class="card-body table-responsive">
+              <table class="table table-striped align-middle" id="fuelOutTable">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Time In</th>
+                    <th>Fuel Type</th>
+                    <th>Fuel No</th>
+                    <th>Plate No</th>
+                    <th>Request</th>
+                    <th>No. of Liters</th>
+                    <th>Vehicle Type</th>
+                    <th>Receiver</th>
+                    <th>Time Out</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <!-- Reports Placeholder -->
         <div class="tab-pane fade" id="fuel-report" role="tabpanel">
           <div class="card shadow-sm">
             <div class="card-body">
               <p class="text-muted mb-0">Reports and analytics coming soon.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Inventory Tab -->
+        <div class="tab-pane fade" id="fuel-main" role="tabpanel">
+          <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <strong><i class="bi bi-collection me-1"></i> Fuel Stock</strong>
+              <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addFuelTypeModal">
+                <i class="bi bi-plus-circle me-1"></i> Add Fuel Type
+              </button>
+            </div>
+            <div class="card-body table-responsive">
+              <table class="table table-striped align-middle" id="fuelStockTable">
+                <thead class="table-light">
+                  <tr>
+                    <th>Fuel Type</th>
+                    <th>Quantity (L)</th>
+                    <th>Last Updated</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -138,14 +322,12 @@ if ($result && $result->num_rows > 0) {
               </div>
               <div class="col-12 col-md-6">
                 <label for="fuel_type" class="form-label">Fuel Type</label>
-                <select id="fuel_type" name="fuel_type" class="form-select" required>
-                  <option value="" selected disabled>Choose type...</option>
-                  <option>Diesel</option>
-                  <option>Gasoline 91</option>
-                  <option>Gasoline 95</option>
-                  <option>Gasoline 97</option>
-                  <option>Other</option>
-                </select>
+                <div class="input-group">
+                  <select id="fuel_type" name="fuel_type" class="form-select" required>
+                    <option value="" selected disabled>Loading...</option>
+                  </select>
+                  <button class="btn btn-outline-secondary" type="button" id="manageTypesBtn" title="Add Fuel Type" data-bs-toggle="modal" data-bs-target="#addFuelTypeModal"><i class="bi bi-gear"></i></button>
+                </div>
               </div>
               <div class="col-12 col-md-4">
                 <label for="quantity" class="form-label">Quantity (Liters)</label>
@@ -210,12 +392,151 @@ if ($result && $result->num_rows > 0) {
       }
     });
 
+    // Fuel Out helpers and handlers
+    const fuelOutTbody = document.querySelector('#fuelOutTable tbody');
+    const fuelOutSearch = document.getElementById('fuelOutSearch');
+    const addFuelOutModalEl = document.getElementById('addFuelOutModal');
+    const addFuelOutModal = addFuelOutModalEl ? new bootstrap.Modal(addFuelOutModalEl) : null;
+
+    function setFuelOutDefaults() {
+      const d = document.getElementById('fo_date');
+      const ti = document.getElementById('fo_time_in');
+      if (d) {
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        d.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      }
+      if (ti) {
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        ti.value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      }
+    }
+
+    function renderFuelOutRow(r) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.fo_date || ''}</td>
+        <td>${r.fo_time_in || ''}</td>
+        <td>${r.fo_fuel_type || ''}</td>
+        <td>${r.fo_fuel_no || ''}</td>
+        <td>${r.fo_plate_no || ''}</td>
+        <td>${r.fo_request || ''}</td>
+        <td>${Number(r.fo_liters || 0).toFixed(2)}</td>
+        <td>${r.fo_vehicle_type || ''}</td>
+        <td>${r.fo_receiver || ''}</td>
+        <td>${r.fo_time_out || ''}</td>
+      `;
+      return tr;
+    }
+
+    async function loadFuelOutRecords() {
+      try {
+        const res = await fetch('list_fuel_out.php', { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('Failed to load fuel out');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed to load');
+        fuelOutTbody.innerHTML = '';
+        data.records.forEach(r => fuelOutTbody.appendChild(renderFuelOutRow(r)));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    if (addFuelOutModalEl) {
+      addFuelOutModalEl.addEventListener('show.bs.modal', setFuelOutDefaults);
+    }
+
+    document.getElementById('saveFuelOutBtn').addEventListener('click', async function() {
+      const form = document.getElementById('fuelOutForm');
+      if (!form.checkValidity()) { form.classList.add('was-validated'); return; }
+      const btn = this;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+      try {
+        const formData = new FormData(form);
+        const res = await fetch('save_fuel_out.php', { method: 'POST', body: formData, credentials: 'same-origin' });
+        if (!res.ok) throw new Error('Failed to save');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed to save');
+        fuelOutTbody.prepend(renderFuelOutRow(data.record));
+        await loadFuelStock();
+        form.reset();
+        form.classList.remove('was-validated');
+        if (addFuelOutModal) addFuelOutModal.hide();
+      } catch (err) {
+        alert((err && err.message) ? err.message : 'Unable to save fuel out record.');
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-save me-1"></i> Save';
+      }
+    });
+
+    if (fuelOutSearch) {
+      fuelOutSearch.addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        [...fuelOutTbody.querySelectorAll('tr')].forEach(tr => {
+          tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+      });
+    }
+
+    // Save new fuel type
+    const saveFuelTypeBtn = document.getElementById('saveFuelTypeBtn');
+    if (saveFuelTypeBtn) {
+      saveFuelTypeBtn.addEventListener('click', async () => {
+        const input = document.getElementById('new_fuel_type');
+        const name = (input.value || '').trim();
+        if (!name) { input.focus(); return; }
+        saveFuelTypeBtn.disabled = true;
+        saveFuelTypeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+        try {
+          const res = await fetch('save_fuel_type.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ name }),
+            credentials: 'same-origin'
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || 'Failed to save type');
+          // refresh dropdown and stock table
+          await Promise.all([loadFuelTypes(name), loadFuelStock()]);
+          input.value = '';
+          if (addFuelTypeModal) addFuelTypeModal.hide();
+        } catch (err) {
+          alert('Unable to save fuel type.');
+          console.error(err);
+        } finally {
+          saveFuelTypeBtn.disabled = false;
+          saveFuelTypeBtn.innerHTML = '<i class="bi bi-save me-1"></i> Save Type';
+        }
+      });
+    }
+
     // Helpers
     const fuelTableBody = document.querySelector('#fuelTable tbody');
     const fuelSearch = document.getElementById('fuelSearch');
     const addFuelModalEl = document.getElementById('addFuelModal');
     const addFuelModal = new bootstrap.Modal(addFuelModalEl);
     const peso = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+    const fuelTypeSelect = document.getElementById('fuel_type');
+    const fuelOutTypeSelect = document.getElementById('fo_fuel_type');
+    const fuelStockTbody = document.querySelector('#fuelStockTable tbody');
+    const addFuelTypeModalEl = document.getElementById('addFuelTypeModal');
+    // Guard against missing modal element to avoid script error
+    const addFuelTypeModal = addFuelTypeModalEl ? new bootstrap.Modal(addFuelTypeModalEl) : null;
+
+    // Set default Date & Time to current local datetime (minutes precision)
+    function setTodayDefaultDateTime() {
+      const dt = document.getElementById('date_time');
+      if (!dt) return;
+      const now = new Date();
+      now.setSeconds(0, 0);
+      const pad = (n) => String(n).padStart(2, '0');
+      const value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      dt.value = value;
+    }
 
     function renderRow(rec) {
       const tr = document.createElement('tr');
@@ -231,6 +552,11 @@ if ($result && $result->num_rows > 0) {
         <td>${rec.supplier_name || ''}</td>
         <td>${rec.received_by || ''}</td>
         <td>${rec.remarks || ''}</td>
+        <td>
+          <button type="button" class="btn btn-sm btn-outline-danger deleteFuelBtn" data-id="${rec.id}">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
       `;
       return tr;
     }
@@ -249,8 +575,74 @@ if ($result && $result->num_rows > 0) {
       }
     }
 
+    async function loadFuelTypes(selected = '') {
+      try {
+        const res = await fetch('list_fuel_types.php', { credentials: 'same-origin' });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed to load types');
+        // Populate Add Fuel modal select
+        if (fuelTypeSelect) {
+          fuelTypeSelect.innerHTML = '<option value="" disabled>Choose type...</option>';
+          data.types.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.name;
+            opt.textContent = t.name;
+            if (t.name === selected) opt.selected = true;
+            fuelTypeSelect.appendChild(opt);
+          });
+          if (!fuelTypeSelect.value && fuelTypeSelect.options.length > 1) fuelTypeSelect.selectedIndex = 1;
+        }
+        // Populate Fuel Out modal select
+        if (fuelOutTypeSelect) {
+          fuelOutTypeSelect.innerHTML = '<option value="" disabled>Choose type...</option>';
+          data.types.forEach(t => {
+            const opt2 = document.createElement('option');
+            opt2.value = t.name;
+            opt2.textContent = t.name;
+            fuelOutTypeSelect.appendChild(opt2);
+          });
+          if (!fuelOutTypeSelect.value && fuelOutTypeSelect.options.length > 1) fuelOutTypeSelect.selectedIndex = 1;
+        }
+      } catch (e) {
+        console.error(e);
+        if (fuelTypeSelect) fuelTypeSelect.innerHTML = '<option value="" disabled>Error loading types</option>';
+        if (fuelOutTypeSelect) fuelOutTypeSelect.innerHTML = '<option value="" disabled>Error loading types</option>';
+      }
+    }
+
+    async function loadFuelStock() {
+      try {
+        const res = await fetch('list_fuel_stock.php', { credentials: 'same-origin' });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed to load stock');
+        fuelStockTbody.innerHTML = '';
+        data.stock.forEach(s => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${s.name}</td>
+            <td>${Number(s.quantity).toFixed(2)}</td>
+            <td>${s.updated_at ? new Date(s.updated_at).toLocaleString() : ''}</td>
+          `;
+          fuelStockTbody.appendChild(tr);
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     // initial load
-    document.addEventListener('DOMContentLoaded', loadFuelRecords);
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Ensure date/time defaults to today on first load
+      setTodayDefaultDateTime();
+      await Promise.all([loadFuelTypes(), loadFuelRecords(), loadFuelStock(), loadFuelOutRecords()]);
+    });
+
+    // Whenever the Add Fuel modal is opened, ensure the date defaults to today
+    if (addFuelModalEl) {
+      addFuelModalEl.addEventListener('show.bs.modal', () => {
+        setTodayDefaultDateTime();
+      });
+    }
 
     document.getElementById('saveFuelBtn').addEventListener('click', async function() {
       const fuelForm = document.getElementById('fuelForm');
@@ -265,6 +657,7 @@ if ($result && $result->num_rows > 0) {
         const data = await res.json();
         if (!data.success) throw new Error(data.error || 'Failed to save');
         fuelTableBody.prepend(renderRow(data.record));
+        await loadFuelStock();
         fuelForm.reset();
         document.getElementById('total_cost').value = '';
         fuelForm.classList.remove('was-validated');
@@ -275,6 +668,37 @@ if ($result && $result->num_rows > 0) {
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-save me-1"></i> Save';
+      }
+    });
+
+    // Delete fuel record handler (event delegation)
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.deleteFuelBtn');
+      if (!btn) return;
+      const id = btn.getAttribute('data-id');
+      if (!id) return;
+      if (!confirm('Delete this fuel record? This will adjust stock accordingly.')) return;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+      try {
+        const res = await fetch('delete_fuel_record.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ id }),
+          credentials: 'same-origin'
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to delete');
+        // Remove row
+        const row = btn.closest('tr');
+        if (row) row.remove();
+        await loadFuelStock();
+      } catch (err) {
+        alert('Unable to delete fuel record.');
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-trash"></i>';
       }
     });
 

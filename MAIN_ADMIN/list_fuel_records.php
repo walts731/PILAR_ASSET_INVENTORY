@@ -9,6 +9,45 @@ if (!isset($_SESSION['user_id'])) {
   exit;
 }
 
+// Ensure permissions table exists
+$conn->query("CREATE TABLE IF NOT EXISTS user_permissions (
+  user_id INT NOT NULL,
+  permission VARCHAR(100) NOT NULL,
+  PRIMARY KEY (user_id, permission),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+// Permission guard: allow admin/office_admin or explicit fuel_inventory permission
+function user_has_fuel_permission(mysqli $conn, int $user_id): bool {
+  // Check role
+  $role = null;
+  if ($stmt = $conn->prepare("SELECT role FROM users WHERE id = ? LIMIT 1")) {
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) { $role = $row['role'] ?? null; }
+    $stmt->close();
+  }
+  if ($role === 'admin' || $role === 'user') return true;
+  // Check permission mapping
+  if ($stmt2 = $conn->prepare("SELECT 1 FROM user_permissions WHERE user_id = ? AND permission = 'fuel_inventory' LIMIT 1")) {
+    $stmt2->bind_param('i', $user_id);
+    $stmt2->execute();
+    $stmt2->store_result();
+    $ok = $stmt2->num_rows > 0;
+    $stmt2->close();
+    return $ok;
+  }
+  return false;
+}
+
+$uid = (int)$_SESSION['user_id'];
+if (!user_has_fuel_permission($conn, $uid)) {
+  http_response_code(403);
+  echo json_encode(['error' => 'Forbidden: insufficient permission']);
+  exit;
+}
+
 // Ensure table exists (same structure as save endpoint)
 $createSql = "CREATE TABLE IF NOT EXISTS fuel_records (
   id INT AUTO_INCREMENT PRIMARY KEY,

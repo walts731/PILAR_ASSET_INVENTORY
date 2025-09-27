@@ -11,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $role = $_POST['role'];
   $status = $_POST['status'];
   $office_id = $_POST['office_id'];
+  $permissions = isset($_POST['permissions']) && is_array($_POST['permissions']) ? $_POST['permissions'] : [];
 
   // Check for empty fields
   if (!$fullname || !$username || !$email || !$password || !$role || !$status || !$office_id) {
@@ -30,14 +31,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
   $checkStmt->close();
 
-  // Password validation: at least 8 characters, 1 number, 1 uppercase, 1 lowercase
-  if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/', $password)) {
+  // Password validation: at least 12 chars, 1 number, 1 uppercase, 1 lowercase, 1 special (align with UI generation)
+  if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{12,}$/', $password)) {
     header("Location: user.php?user_add=weak_password");
     exit();
   }
 
   // Hash password
   $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+  // Ensure permissions table exists
+  $conn->query("CREATE TABLE IF NOT EXISTS user_permissions (
+    user_id INT NOT NULL,
+    permission VARCHAR(100) NOT NULL,
+    PRIMARY KEY (user_id, permission),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
   // Insert user
   $stmt = $conn->prepare("INSERT INTO users (fullname, username, email, password, role, status, office_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -59,8 +68,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $office_stmt->close();
     }
     
+    // Insert permissions for non-admin roles
+    if (!in_array($role, ['admin','office_admin'], true) && !empty($permissions)) {
+      $permStmt = $conn->prepare("INSERT IGNORE INTO user_permissions (user_id, permission) VALUES (?, ?)");
+      foreach ($permissions as $perm) {
+        $perm = trim($perm);
+        if ($perm === '') continue;
+        $permStmt->bind_param('is', $new_user_id, $perm);
+        $permStmt->execute();
+      }
+      $permStmt->close();
+    }
+
     // Log user creation
-    $user_context = "Role: {$role}, Office: {$office_name}, Email: {$email}, Status: {$status}";
+    $perm_list = !empty($permissions) ? (implode(',', $permissions)) : 'none';
+    $user_context = "Role: {$role}, Office: {$office_name}, Email: {$email}, Status: {$status}, Perms: {$perm_list}";
     logUserManagementActivity('CREATE', $username, $new_user_id, $user_context);
     
     header("Location: user.php?user_add=success");

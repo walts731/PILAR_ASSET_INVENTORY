@@ -7,6 +7,48 @@ if (!isset($_SESSION['user_id'])) {
   exit();
 }
 
+// Ensure system table has default_user_password column (idempotent)
+// Create system table if it does not exist (minimal schema used here)
+$conn->query("CREATE TABLE IF NOT EXISTS system (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  logo VARCHAR(255) DEFAULT '../img/default-logo.png',
+  system_title VARCHAR(255) DEFAULT 'Inventory System'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+// Add column only if missing
+$colRes = $conn->query("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'system' AND COLUMN_NAME = 'default_user_password'");
+if ($colRes && $colRes->num_rows === 0) {
+  $conn->query("ALTER TABLE system ADD COLUMN default_user_password VARCHAR(255) NULL AFTER system_title");
+}
+
+// Handle default password update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_default_password'])) {
+  $newDefault = isset($_POST['default_user_password']) ? trim($_POST['default_user_password']) : '';
+  // Upsert system row (assumes single-row table)
+  $res = $conn->query("SELECT 1 FROM system LIMIT 1");
+  if ($res && $res->num_rows > 0) {
+    $stmt = $conn->prepare("UPDATE system SET default_user_password = ? LIMIT 1");
+    $stmt->bind_param('s', $newDefault);
+    $stmt->execute();
+    $stmt->close();
+  } else {
+    $stmt = $conn->prepare("INSERT INTO system (logo, system_title, default_user_password) VALUES ('../img/default-logo.png','Inventory System',?)");
+    $stmt->bind_param('s', $newDefault);
+    $stmt->execute();
+    $stmt->close();
+  }
+  header('Location: user.php?default_pwd_saved=1' . (isset($_GET['office']) ? ('&office='.(int)$_GET['office']) : ''));
+  exit();
+}
+
+// Load current default password for display in forms
+$default_user_password = '';
+$sys = $conn->query("SELECT default_user_password FROM system LIMIT 1");
+if ($sys && $sys->num_rows > 0) {
+  $rowSys = $sys->fetch_assoc();
+  $default_user_password = $rowSys['default_user_password'] ?? '';
+}
+
 // Soft-delete handler: mark user as deleted instead of removing
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user_id'])) {
   $deleteUserId = (int)$_POST['delete_user_id'];
@@ -103,6 +145,14 @@ $stmt->close();
 
     <!-- User Alerts -->
     <?php include 'alerts/user_alerts.php' ?>
+    <?php if (isset($_GET['default_pwd_saved'])): ?>
+      <div class="container mt-3">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="bi bi-check-circle"></i> Default password has been updated.
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </div>
+    <?php endif; ?>
     <?php if (isset($_GET['soft_deleted'])): ?>
       <div class="container mt-3">
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -131,6 +181,36 @@ $stmt->close();
           <button id="toggleDensity" class="btn btn-outline-secondary btn-sm rounded-pill" title="Toggle compact density">
             <i class="bi bi-arrows-vertical me-1"></i> Density
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Default Password Settings -->
+    <div class="container mt-3">
+      <div class="card shadow-sm mb-3 card-hover">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <strong><i class="bi bi-key me-2"></i>Default Password</strong>
+        </div>
+        <div class="card-body">
+          <form method="POST" class="row g-3">
+            <input type="hidden" name="set_default_password" value="1" />
+            <div class="col-md-6">
+              <label for="default_user_password" class="form-label">Default Password for New Users</label>
+              <div class="input-group">
+                <input type="password" class="form-control" id="default_user_password" name="default_user_password"
+                  value="<?= htmlspecialchars($default_user_password) ?>"
+                  pattern="^(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{12,}$" required
+                  title="Minimum 12 characters, include uppercase, number and special character">
+                <button type="button" class="btn btn-outline-secondary" onclick="(function(){const f=document.getElementById('default_user_password');f.type=f.type==='password'?'text':'password';})();" title="Show/Hide">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+              <small class="text-muted">This value will auto-fill in the Add User form. You can change it anytime.</small>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Save Default Password</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
