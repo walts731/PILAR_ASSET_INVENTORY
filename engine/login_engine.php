@@ -39,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Log successful login
                 logAuthActivity('LOGIN', "User '{$username}' logged in successfully (Role: {$user['role']})", $user["id"], $username);
 
-                // Redirect based on role
+                // Redirect based on role, with special handling for 'user' + fuel inventory permission
                 switch ($user["role"]) {
                     case "super_admin":
                         header("Location: SYSTEM_ADMIN/system_admin_dashboard.php?office=" . $user["office_id"]);
@@ -49,6 +49,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         break;
                     case "admin":
                         header("Location: MAIN_ADMIN/admin_dashboard.php?office=" . $user["office_id"]);
+                        break;
+                    case "user":
+                        // Check if this user has a specific permission to only access Fuel Inventory
+                        $fuel_only = false;
+                        if ($permStmt = $conn->prepare("SELECT 1 FROM user_permissions WHERE user_id = ? AND permission = 'fuel_inventory' LIMIT 1")) {
+                            $permStmt->bind_param('i', $user["id"]);
+                            $permStmt->execute();
+                            $permStmt->store_result();
+                            $fuel_only = $permStmt->num_rows > 0;
+                            $permStmt->close();
+                        }
+                        if ($fuel_only) {
+                            header("Location: MAIN_ADMIN/fuel_inventory.php");
+                        } else {
+                            header("Location: MAIN_ADMIN/admin_dashboard.php?office=" . $user["office_id"]);
+                        }
                         break;
                     case "office_user":
                         header("Location: USERS/user_dashboard.php?office=" . $user["office_id"]);
@@ -63,7 +79,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 logAuthActivity('LOGIN_FAILED', "Failed login attempt for username '{$username}' - incorrect password", null, $username);
                 
                 $login_error = '<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
-                    Invalid Credentials.
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>';
             }
