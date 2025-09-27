@@ -7,6 +7,29 @@ if (!isset($_SESSION['user_id'])) {
   exit();
 }
 
+// Restrict access: only admins (and optionally office_admin) may access User Management
+$currentRole = $_SESSION['role'] ?? '';
+if (!in_array($currentRole, ['admin', 'user'], true)) {
+  header("Location: admin_dashboard.php");
+  exit();
+}
+
+// If this user has an explicit restriction permission, block access (admins bypass)
+if ($currentRole !== 'admin') {
+  if ($permStmt = $conn->prepare("SELECT 1 FROM user_permissions WHERE user_id = ? AND permission = 'restrict_user_management' LIMIT 1")) {
+    $uid = (int)($_SESSION['user_id'] ?? 0);
+    $permStmt->bind_param('i', $uid);
+    $permStmt->execute();
+    $permStmt->store_result();
+    if ($permStmt->num_rows > 0) {
+      $permStmt->close();
+      header("Location: admin_dashboard.php");
+      exit();
+    }
+    $permStmt->close();
+  }
+}
+
 // Ensure system table has default_user_password column (idempotent)
 // Create system table if it does not exist (minimal schema used here)
 $conn->query("CREATE TABLE IF NOT EXISTS system (

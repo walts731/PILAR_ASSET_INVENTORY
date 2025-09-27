@@ -91,6 +91,13 @@
                   <label class="form-check-label" for="perm_fuel">Fuel Inventory</label>
                 </div>
               </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="permissions[]" id="perm_restrict_user_mgmt" value="restrict_user_management">
+                  <label class="form-check-label" for="perm_restrict_user_mgmt">Restrict access to User Management (user.php)</label>
+                </div>
+                <small class="text-muted">When checked, this user will be blocked from opening the User Management page, even if their role normally allows it.</small>
+              </div>
               <!-- Add more permission checkboxes here as needed -->
             </div>
             <small class="text-muted">Admins and Users implicitly have access by role for Fuel Inventory.</small>
