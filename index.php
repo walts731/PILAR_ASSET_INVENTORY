@@ -1,7 +1,19 @@
 <?php
 session_start();
 require_once "connect.php"; // Include database connection
-require_once "engine/login_engine.php"; // Include login engine
+// Fetch system settings (logo and title)
+$system = [
+    'logo' => 'default-logo.png',
+    'system_title' => 'Inventory System'
+];
+if (isset($conn) && $conn instanceof mysqli) {
+    $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
+    if ($result && $result->num_rows > 0) {
+        $system = $result->fetch_assoc();
+    }
+}
+// Include login engine AFTER fetching system settings to avoid closing the connection prematurely
+require_once "engine/login_engine.php";
 ?>
 
 <!DOCTYPE html>
@@ -10,7 +22,7 @@ require_once "engine/login_engine.php"; // Include login engine
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - Pilar Inventory Management System</title>
+    <title>Login - <?= htmlspecialchars($system['system_title']) ?></title>
 
     <!-- Bootstrap CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -34,7 +46,7 @@ require_once "engine/login_engine.php"; // Include login engine
                             <div class="d-flex align-items-center justify-content-center h-100 z-2 position-relative text-white text-center px-4">
                                 <div>
                                     <h1 class="fw-bold mb-3">Welcome!</h1>
-                                    <p class="fs-5 typing-text" data-text="to Pilar Inventory Management System. Please log in to continue."></p>
+                                    <p class="fs-5 typing-text" data-text="to <?= htmlspecialchars($system['system_title']) ?>. Please log in to continue."></p>
                                 </div>
                             </div>
                         </div>
@@ -65,14 +77,12 @@ require_once "engine/login_engine.php"; // Include login engine
                 </div>
             </div>
 
-
-
             <!-- Right Container (Login Form) -->
             <div class="col-md-6 d-flex align-items-center justify-content-center ">
                 <div class="card shadow-lg p-4 w-100" style="max-width: 400px;">
                     <div class="text-center mb-4">
                         <h3 class="fw-bold">LOGIN</h3>
-                        <img src="img/PILAR LOGO TRANSPARENT.png" alt="Website Logo" class="img-fluid" style="max-width: 100px;" />
+                        <img src="img/<?= htmlspecialchars($system['logo']) ?>" alt="Website Logo" class="img-fluid" style="max-width: 100px;" />
                     </div>
 
                     <?php if (!empty($login_error)) echo $login_error; ?>
