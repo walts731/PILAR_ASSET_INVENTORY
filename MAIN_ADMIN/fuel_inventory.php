@@ -240,6 +240,9 @@ if ($result && $result->num_rows > 0) {
                 <button class="btn btn-sm btn-outline-secondary" id="fuelOutRefreshBtn" title="Refresh">
                   <i class="bi bi-arrow-clockwise"></i>
                 </button>
+                <button class="btn btn-sm btn-outline-secondary" id="fuelOutExportCsvBtn" title="Export CSV">
+                  <i class="bi bi-filetype-csv"></i>
+                </button>
                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addFuelOutModal">
                   <i class="bi bi-plus-circle me-1"></i> Add Fuel Out
                 </button>
@@ -462,7 +465,15 @@ if ($result && $result->num_rows > 0) {
       try {
         const formData = new FormData(form);
         const res = await fetch('save_fuel_out.php', { method: 'POST', body: formData, credentials: 'same-origin' });
-        if (!res.ok) throw new Error('Failed to save');
+        // Try to surface server-provided error (e.g., insufficient stock)
+        if (!res.ok) {
+          let serverMsg = 'Failed to save';
+          try {
+            const errJson = await res.json();
+            if (errJson && errJson.error) serverMsg = errJson.error;
+          } catch (_) { /* ignore parse errors */ }
+          throw new Error(serverMsg);
+        }
         const data = await res.json();
         if (!data.success) throw new Error(data.error || 'Failed to save');
         fuelOutTbody.prepend(renderFuelOutRow(data.record));
@@ -493,6 +504,15 @@ if ($result && $result->num_rows > 0) {
     if (fuelOutRefreshBtn) {
       fuelOutRefreshBtn.addEventListener('click', async () => {
         await loadFuelOutRecords();
+      });
+    }
+
+    // Export CSV for Fuel Out
+    const fuelOutExportBtn = document.getElementById('fuelOutExportCsvBtn');
+    if (fuelOutExportBtn) {
+      fuelOutExportBtn.addEventListener('click', () => {
+        // Direct download of CSV (server will stream the file)
+        window.location.href = 'export_fuel_out_csv.php';
       });
     }
 
