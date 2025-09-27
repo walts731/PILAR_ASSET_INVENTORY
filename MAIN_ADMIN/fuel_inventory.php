@@ -82,6 +82,10 @@ if ($result && $result->num_rows > 0) {
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
+          <div id="fuelOutAlert" class="alert alert-danger alert-dismissible fade show d-none" role="alert">
+            <span class="fuel-out-alert-text">Insufficient stock for the selected fuel type. Please reduce the number of liters or update Main Inventory stock, then try again.</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
           <form id="fuelOutForm" novalidate>
             <div class="row g-3">
               <div class="col-12 col-md-6">
@@ -453,7 +457,26 @@ if ($result && $result->num_rows > 0) {
     }
 
     if (addFuelOutModalEl) {
-      addFuelOutModalEl.addEventListener('show.bs.modal', setFuelOutDefaults);
+      addFuelOutModalEl.addEventListener('show.bs.modal', () => {
+        setFuelOutDefaults();
+        // Clear any previous error alert (preserve close button and default message span)
+        const alertBox = document.getElementById('fuelOutAlert');
+        if (alertBox) {
+          alertBox.classList.add('d-none');
+          const textSpan = alertBox.querySelector('.fuel-out-alert-text');
+          if (textSpan) textSpan.textContent = '';
+        }
+      });
+    }
+
+    function showFuelOutError(msg) {
+      const alertBox = document.getElementById('fuelOutAlert');
+      if (!alertBox) { window.alert(msg); return; }
+      const textSpan = alertBox.querySelector('.fuel-out-alert-text');
+      if (textSpan) textSpan.textContent = msg || 'Unable to save fuel out record.';
+      alertBox.classList.remove('d-none');
+      // Ensure alert is visible in modal viewport
+      alertBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     document.getElementById('saveFuelOutBtn').addEventListener('click', async function() {
@@ -482,7 +505,8 @@ if ($result && $result->num_rows > 0) {
         form.classList.remove('was-validated');
         if (addFuelOutModal) addFuelOutModal.hide();
       } catch (err) {
-        alert((err && err.message) ? err.message : 'Unable to save fuel out record.');
+        // Show error message inside modal as Bootstrap alert
+        showFuelOutError((err && err.message) ? err.message : 'Unable to save fuel out record.');
         console.error(err);
       } finally {
         btn.disabled = false;
