@@ -192,7 +192,7 @@ $stmt = $conn->prepare("
                         }
                     }
                 } else {
-                    // Case 2: No source asset provided -> insert minimal consumable asset into target office
+                    // Case 2: No source asset provided -> merge with existing or insert minimal consumable asset in target office
                     if ($qty > 0) {
                         // Resolve unit name if unit contains an ID
                         $unit_value = $unit;
@@ -206,23 +206,57 @@ $stmt = $conn->prepare("
                             $unit_stmt->close();
                         }
 
-                        $ins_stmt = $conn->prepare("INSERT INTO assets (asset_name, category, description, quantity, added_stock, unit, status, acquisition_date, office_id, employee_id, red_tagged, value, qr_code, type, image, serial_no, code, property_no, model, brand, inventory_tag, last_updated) VALUES (?, NULL, ?, ?, ?, ?, 'available', NOW(), ?, NULL, 0, ?, '', 'consumable', '', '', '', ?, '', '', '', NOW())");
-                        $asset_name_val = $desc;
-                        $added_stock_val = $qty;
-                        $property_no_val = $stock;
-                        $ins_stmt->bind_param(
-                            "ssiisids",
-                            $asset_name_val,   // s asset_name
-                            $desc,            // s description
-                            $qty,             // i quantity
-                            $added_stock_val, // i added_stock
-                            $unit_value,      // s unit
-                            $office_id,       // i office_id
-                            $price,           // d value
-                            $property_no_val  // s property_no
-                        );
-                        $ins_stmt->execute();
-                        $ins_stmt->close();
+                        // Try to find an existing consumable asset in this office that matches by property_no OR by description+unit
+                        $existing_id = null;
+                        $existing_qty = 0;
+
+                        // Prefer exact property_no match when provided
+                        if (!empty($stock)) {
+                            $chk1 = $conn->prepare("SELECT id, quantity FROM assets WHERE office_id = ? AND type = 'consumable' AND property_no = ? LIMIT 1");
+                            $chk1->bind_param("is", $office_id, $stock);
+                            $chk1->execute();
+                            $r1 = $chk1->get_result();
+                            if ($row1 = $r1->fetch_assoc()) { $existing_id = (int)$row1['id']; $existing_qty = (int)$row1['quantity']; }
+                            $chk1->close();
+                        }
+
+                        // If no property_no match, try description + unit match
+                        if ($existing_id === null) {
+                            $chk2 = $conn->prepare("SELECT id, quantity FROM assets WHERE office_id = ? AND type = 'consumable' AND description = ? AND unit = ? LIMIT 1");
+                            $chk2->bind_param("iss", $office_id, $desc, $unit_value);
+                            $chk2->execute();
+                            $r2 = $chk2->get_result();
+                            if ($row2 = $r2->fetch_assoc()) { $existing_id = (int)$row2['id']; $existing_qty = (int)$row2['quantity']; }
+                            $chk2->close();
+                        }
+
+                        if ($existing_id !== null) {
+                            // Merge quantities into existing asset
+                            $new_qty = $existing_qty + $qty;
+                            $upd = $conn->prepare("UPDATE assets SET quantity = ?, added_stock = COALESCE(added_stock,0) + ?, last_updated = NOW() WHERE id = ?");
+                            $upd->bind_param("iii", $new_qty, $qty, $existing_id);
+                            $upd->execute();
+                            $upd->close();
+                        } else {
+                            // Insert as a new consumable asset record
+                            $ins_stmt = $conn->prepare("INSERT INTO assets (asset_name, category, description, quantity, added_stock, unit, status, acquisition_date, office_id, employee_id, red_tagged, value, qr_code, type, image, serial_no, code, property_no, model, brand, inventory_tag, last_updated) VALUES (?, NULL, ?, ?, ?, ?, 'available', NOW(), ?, NULL, 0, ?, '', 'consumable', '', '', '', ?, '', '', '', NOW())");
+                            $asset_name_val = $desc;
+                            $added_stock_val = $qty;
+                            $property_no_val = $stock;
+                            $ins_stmt->bind_param(
+                                "ssiisids",
+                                $asset_name_val,   // s asset_name
+                                $desc,            // s description
+                                $qty,             // i quantity
+                                $added_stock_val, // i added_stock
+                                $unit_value,      // s unit
+                                $office_id,       // i office_id
+                                $price,           // d value
+                                $property_no_val  // s property_no
+                            );
+                            $ins_stmt->execute();
+                            $ins_stmt->close();
+                        }
                     }
                 }
             }
