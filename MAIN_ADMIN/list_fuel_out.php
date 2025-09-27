@@ -19,7 +19,7 @@ function user_has_fuel_permission(mysqli $conn, int $user_id): bool {
     if ($row = $res->fetch_assoc()) { $role = $row['role'] ?? null; }
     $stmt->close();
   }
-  if ($role === 'admin' || $role === 'user') return true;
+  if ($role === 'admin' || $role === 'office_admin' || $role === 'user') return true;
   if ($stmt2 = $conn->prepare("SELECT 1 FROM user_permissions WHERE user_id = ? AND permission = 'fuel_inventory' LIMIT 1")) {
     $stmt2->bind_param('i', $user_id);
     $stmt2->execute();
@@ -54,8 +54,12 @@ $conn->query("CREATE TABLE IF NOT EXISTS fuel_out (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX(fo_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-// Best-effort add column in case table existed before without it
-$conn->query("ALTER TABLE fuel_out ADD COLUMN fo_fuel_type VARCHAR(100) NOT NULL AFTER fo_time_in");
+// Safely add fo_fuel_type column if missing
+$colCheckSql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'fuel_out' AND COLUMN_NAME = 'fo_fuel_type'";
+$colRes = $conn->query($colCheckSql);
+if ($colRes && $colRes->num_rows === 0) {
+  $conn->query("ALTER TABLE fuel_out ADD COLUMN fo_fuel_type VARCHAR(100) NOT NULL AFTER fo_time_in");
+}
 
 $rows = [];
 $sql = "SELECT id, fo_date, fo_time_in, fo_fuel_type, fo_fuel_no, fo_plate_no, fo_request, fo_liters, fo_vehicle_type, fo_receiver, fo_time_out

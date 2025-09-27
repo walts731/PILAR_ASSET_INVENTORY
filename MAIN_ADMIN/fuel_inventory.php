@@ -237,6 +237,9 @@ if ($result && $result->num_rows > 0) {
               <strong><i class="bi bi-truck me-1"></i> Fuel Out Records</strong>
               <div class="d-flex gap-2 align-items-center">
                 <input type="text" id="fuelOutSearch" class="form-control form-control-sm" placeholder="Search..." />
+                <button class="btn btn-sm btn-outline-secondary" id="fuelOutRefreshBtn" title="Refresh">
+                  <i class="bi bi-arrow-clockwise"></i>
+                </button>
                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addFuelOutModal">
                   <i class="bi bi-plus-circle me-1"></i> Add Fuel Out
                 </button>
@@ -438,6 +441,9 @@ if ($result && $result->num_rows > 0) {
         if (!data.success) throw new Error(data.error || 'Failed to load');
         fuelOutTbody.innerHTML = '';
         data.records.forEach(r => fuelOutTbody.appendChild(renderFuelOutRow(r)));
+        // Ensure any previous search filter is reset so all rows are visible
+        const searchInput = document.getElementById('fuelOutSearch');
+        if (searchInput) searchInput.value = '';
       } catch (e) {
         console.error(e);
       }
@@ -481,6 +487,56 @@ if ($result && $result->num_rows > 0) {
         });
       });
     }
+
+    // Refresh button for Fuel Out to always display what's on the table
+    const fuelOutRefreshBtn = document.getElementById('fuelOutRefreshBtn');
+    if (fuelOutRefreshBtn) {
+      fuelOutRefreshBtn.addEventListener('click', async () => {
+        await loadFuelOutRecords();
+      });
+    }
+
+    // Auto-reload Fuel Out list whenever the Fuel Out tab becomes active
+    const fuelOutTabBtn = document.getElementById('fuel-out-tab');
+    if (fuelOutTabBtn) {
+      fuelOutTabBtn.addEventListener('shown.bs.tab', async () => {
+        await loadFuelOutRecords();
+      });
+    }
+
+    // Periodic refresh while Fuel Out tab is active
+    let fuelOutInterval = null;
+    function startFuelOutAutoRefresh() {
+      if (fuelOutInterval) return;
+      fuelOutInterval = setInterval(async () => {
+        // Only refresh if Fuel Out tab is currently active
+        const fuelOutPane = document.getElementById('fuel-out');
+        if (fuelOutPane && fuelOutPane.classList.contains('active')) {
+          await loadFuelOutRecords();
+        }
+      }, 10000); // every 10 seconds
+    }
+    function stopFuelOutAutoRefresh() {
+      if (fuelOutInterval) {
+        clearInterval(fuelOutInterval);
+        fuelOutInterval = null;
+      }
+    }
+
+    // Start auto-refresh once DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      startFuelOutAutoRefresh();
+    });
+
+    // Also refresh when page becomes visible and Fuel Out is active
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'visible') {
+        const fuelOutPane = document.getElementById('fuel-out');
+        if (fuelOutPane && fuelOutPane.classList.contains('active')) {
+          await loadFuelOutRecords();
+        }
+      }
+    });
 
     // Save new fuel type
     const saveFuelTypeBtn = document.getElementById('saveFuelTypeBtn');
