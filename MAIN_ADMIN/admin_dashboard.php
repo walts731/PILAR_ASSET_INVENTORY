@@ -313,10 +313,11 @@ try {
       </div>
     </div>
 
-    <!-- Recent Activity Section -->
+    <!-- Recent Activity + Fuel Inventory Section -->
     <div class="container-fluid mt-1">
       <div class="row">
-        <div class="col-12 mb-4">
+        <!-- Recent Activity (Left) -->
+        <div class="col-lg-8 mb-4">
           <div class="card shadow-sm border-0">
             <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
               <div>
@@ -362,6 +363,27 @@ try {
                 </ul>
               <?php endif; ?>
               </div>
+          </div>
+        </div>
+
+        <!-- Fuel Inventory (Right) -->
+        <div class="col-lg-4 mb-4">
+          <div class="card shadow-sm border-0 overflow-hidden h-100">
+            <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+              <div>
+                <h5 class="mb-1 fw-semibold d-flex align-items-center">
+                  <i class="bi bi-fuel-pump me-2 text-primary"></i>Fuel Inventory
+                </h5>
+                <small class="text-muted">Current stock by fuel type</small>
+              </div>
+              <a href="fuel_inventory.php" class="btn btn-sm btn-outline-primary">Manage</a>
+            </div>
+            <div class="card-body pt-2">
+              <div class="position-relative" style="min-height: 260px;">
+                <canvas id="fuelStockChart" height="220"></canvas>
+              </div>
+              <div id="fuelStockNote" class="mt-2 text-muted-small"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -636,6 +658,84 @@ try {
           animation: { duration: 800, easing: 'easeOutQuart' }
         }
       });
+
+      // Fuel Inventory Chart (Doughnut)
+      (function() {
+        const canvas = document.getElementById('fuelStockChart');
+        if (!canvas) return; // Only on this page
+        const ctx = canvas.getContext('2d');
+        const noteEl = document.getElementById('fuelStockNote');
+
+        function setNote(msg, isError=false) {
+          if (noteEl) {
+            noteEl.className = 'mt-2 ' + (isError ? 'text-danger' : 'text-muted-small');
+            noteEl.innerHTML = msg || '';
+          }
+        }
+
+        fetch('list_fuel_stock.php', { credentials: 'same-origin' })
+          .then(async (res) => {
+            if (!res.ok) {
+              let err = 'Unable to load fuel stock';
+              try { const j = await res.json(); if (j.error) err = j.error; } catch { /* ignore */ }
+              throw new Error(err);
+            }
+            return res.json();
+          })
+          .then((data) => {
+            const rows = (data && data.stock) ? data.stock : [];
+            if (!rows.length) {
+              setNote('<span class="badge rounded-pill bg-light text-secondary border">No fuel types configured</span>');
+              return;
+            }
+
+            const labels = rows.map(r => r.name);
+            const values = rows.map(r => parseFloat(r.quantity || '0'));
+            const total = values.reduce((a,b)=>a+b,0);
+
+            // Nice color palette
+            const palette = [
+              '#0d6efd','#6f42c1','#20c997','#ffc107','#dc3545',
+              '#198754','#fd7e14','#0dcaf0','#6610f2','#6c757d'
+            ];
+            const bg = labels.map((_,i)=> palette[i % palette.length]);
+
+            new Chart(ctx, {
+              type: 'doughnut',
+              data: {
+                labels,
+                datasets: [{
+                  data: values,
+                  backgroundColor: bg,
+                  borderWidth: 0
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { position: 'bottom', labels: { boxWidth: 12 } },
+                  tooltip: {
+                    callbacks: {
+                      label: (ctx) => {
+                        const v = ctx.parsed;
+                        const pct = total ? ((v/total)*100).toFixed(1) : 0;
+                        return `${ctx.label}: ${v.toLocaleString()} L (${pct}%)`;
+                      }
+                    }
+                  }
+                },
+                cutout: '60%'
+              }
+            });
+
+            setNote(`<span class="badge rounded-pill bg-light text-secondary border">Total: ${total.toLocaleString()} L</span>`);
+          })
+          .catch((err) => {
+            console.error(err);
+            setNote('<i class="bi bi-exclamation-triangle me-1"></i>' + (err && err.message ? err.message : 'Unable to load fuel stock'), true);
+          });
+      })();
     </script>
 </body>
 </html>
