@@ -41,9 +41,6 @@ $system = [
   'system_title' => 'Inventory System'
 ];
 $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
-if ($result && $result->num_rows > 0) {
-  $system = $result->fetch_assoc();
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -62,9 +59,9 @@ if ($result && $result->num_rows > 0) {
 <body>
 
   <?php include 'includes/sidebar.php'; ?>
-
   <div class="main">
     <?php include 'includes/topbar.php'; ?>
+
 
     <div class="container-fluid px-0 mb-3">
       <div class="page-header p-3 p-sm-4 d-flex flex-wrap gap-3 align-items-center justify-content-between">
@@ -274,11 +271,90 @@ if ($result && $result->num_rows > 0) {
           </div>
         </div>
 
-        <!-- Reports Placeholder -->
+        <!-- Reports Tab -->
         <div class="tab-pane fade" id="fuel-report" role="tabpanel">
           <div class="card shadow-sm">
+            <div class="card-header d-flex flex-wrap gap-2 align-items-end justify-content-between">
+              <div class="d-flex flex-wrap gap-2 align-items-end">
+                <div>
+                  <label class="form-label mb-1" for="rep_from">From</label>
+                  <input type="date" id="rep_from" class="form-control form-control-sm" />
+                </div>
+                <div>
+                  <label class="form-label mb-1" for="rep_to">To</label>
+                  <input type="date" id="rep_to" class="form-control form-control-sm" />
+                </div>
+                <div>
+                  <label class="form-label mb-1" for="rep_group_by">Group By</label>
+                  <select id="rep_group_by" class="form-select form-select-sm">
+                    <option value="fo_request" selected>Request</option>
+                    <option value="fo_plate_no">Plate No</option>
+                    <option value="fo_fuel_type">Fuel Type</option>
+                    <option value="fo_receiver">Receiver</option>
+                    <option value="fo_vehicle_type">Vehicle Type</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label mb-1" for="rep_search">Search</label>
+                  <input type="text" id="rep_search" class="form-control form-control-sm" placeholder="Filter results..." />
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" id="rep_refresh"><i class="bi bi-arrow-clockwise"></i></button>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary" id="rep_export_csv"><i class="bi bi-filetype-csv"></i> Export</button>
+              </div>
+            </div>
             <div class="card-body">
-              <p class="text-muted mb-0">Reports and analytics coming soon.</p>
+              <!-- Charts Row -->
+              <div class="row g-3 mb-3">
+                <div class="col-12 col-lg-8">
+                  <div class="card h-100">
+                    <div class="card-header py-2">
+                      <strong><i class="bi bi-graph-up-arrow me-1"></i> Top by Total Liters</strong>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="rep_bar_chart" height="140"></canvas>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-lg-4">
+                  <div class="card h-100">
+                    <div class="card-header py-2">
+                      <strong><i class="bi bi-pie-chart me-1"></i> Share by Group</strong>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="rep_pie_chart" height="140"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Timeseries Row -->
+              <div class="row g-3 mb-3">
+                <div class="col-12">
+                  <div class="card">
+                    <div class="card-header py-2">
+                      <strong><i class="bi bi-activity me-1"></i> Daily Liters Over Time</strong>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="rep_line_chart" height="120"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="table-responsive">
+              <table class="table table-striped align-middle" id="fuelReportTable">
+                <thead class="table-light">
+                  <tr>
+                    <th data-sort="group_key" class="rep-sort">Group</th>
+                    <th data-sort="total_liters" class="rep-sort text-end">Total Liters</th>
+                    <th data-sort="trips" class="rep-sort text-end">Trips</th>
+                    <th data-sort="unique_plates" class="rep-sort text-end">Unique Plates</th>
+                    <th>Fuel Types</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              </div>
             </div>
           </div>
         </div>
@@ -314,6 +390,7 @@ if ($result && $result->num_rows > 0) {
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   
   <!-- Add Fuel Modal -->
   <div class="modal fade" id="addFuelModal" tabindex="-1" aria-labelledby="addFuelModalLabel" aria-hidden="true">
@@ -548,6 +625,16 @@ if ($result && $result->num_rows > 0) {
       });
     }
 
+    // Load/refresh Reports when the Reports tab becomes active
+    const fuelReportTabBtn = document.getElementById('fuel-report-tab');
+    if (fuelReportTabBtn) {
+      fuelReportTabBtn.addEventListener('shown.bs.tab', async () => {
+        if (typeof loadFuelConsumption === 'function') {
+          await loadFuelConsumption();
+        }
+      });
+    }
+
     // Periodic refresh while Fuel Out tab is active
     let fuelOutInterval = null;
     function startFuelOutAutoRefresh() {
@@ -735,6 +822,13 @@ if ($result && $result->num_rows > 0) {
       // Ensure date/time defaults to today on first load
       setTodayDefaultDateTime();
       await Promise.all([loadFuelTypes(), loadFuelRecords(), loadFuelStock(), loadFuelOutRecords()]);
+      // Initialize and load Reports (current month by default)
+      if (typeof initReportDefaults === 'function') {
+        initReportDefaults();
+      }
+      if (typeof loadFuelConsumption === 'function') {
+        await loadFuelConsumption();
+      }
     });
 
     // Whenever the Add Fuel modal is opened, ensure the date defaults to today
@@ -826,6 +920,222 @@ if ($result && $result->num_rows > 0) {
       a.click();
       URL.revokeObjectURL(url);
     });
+
+    // =====================
+    // Reports JS
+    // =====================
+    const repFrom = document.getElementById('rep_from');
+    const repTo = document.getElementById('rep_to');
+    const repGroupBy = document.getElementById('rep_group_by');
+    const repSearch = document.getElementById('rep_search');
+    const repRefreshBtn = document.getElementById('rep_refresh');
+    const repExportBtn = document.getElementById('rep_export_csv');
+    const repTbody = document.querySelector('#fuelReportTable tbody');
+
+    let repData = [];
+    let repSort = { key: 'total_liters', dir: 'desc' };
+
+    function initReportDefaults() {
+      const now = new Date();
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const pad = (n) => String(n).padStart(2, '0');
+      if (repFrom) repFrom.value = `${first.getFullYear()}-${pad(first.getMonth()+1)}-${pad(first.getDate())}`;
+      if (repTo) repTo.value = `${last.getFullYear()}-${pad(last.getMonth()+1)}-${pad(last.getDate())}`;
+    }
+
+    function renderReportRow(r) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.group_key || ''}</td>
+        <td class="text-end">${Number(r.total_liters || 0).toFixed(2)}</td>
+        <td class="text-end">${r.trips || 0}</td>
+        <td class="text-end">${r.unique_plates || 0}</td>
+        <td>${r.fuel_types || ''}</td>
+      `;
+      return tr;
+    }
+
+    function applyReportSearch() {
+      const q = (repSearch?.value || '').toLowerCase();
+      [...repTbody.querySelectorAll('tr')].forEach(tr => {
+        tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    }
+
+    function sortReportData() {
+      const { key, dir } = repSort;
+      repData.sort((a,b) => {
+        const av = a[key];
+        const bv = b[key];
+        if (key === 'group_key' || key === 'fuel_types') {
+          const cmp = String(av||'').localeCompare(String(bv||''));
+          return dir === 'asc' ? cmp : -cmp;
+        }
+        const na = Number(av || 0);
+        const nb = Number(bv || 0);
+        return dir === 'asc' ? (na - nb) : (nb - na);
+      });
+    }
+
+    // Charts state
+    let repBarChart = null;
+    let repPieChart = null;
+    let repLineChart = null;
+
+    function getPalette(n) {
+      const base = [
+        '#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc949','#af7aa1','#ff9da7','#9c755f','#bab0ab'
+      ];
+      const colors = [];
+      for (let i = 0; i < n; i++) colors.push(base[i % base.length]);
+      return colors;
+    }
+
+    function updateBarChart(data) {
+      const ctx = document.getElementById('rep_bar_chart');
+      if (!ctx) return;
+      const labels = data.map(d => d.group_key || '(blank)');
+      const values = data.map(d => Number(d.total_liters || 0));
+      if (repBarChart) { repBarChart.destroy(); }
+      repBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Total Liters',
+            data: values,
+            backgroundColor: '#4e79a7'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function updatePieChart(data) {
+      const ctx = document.getElementById('rep_pie_chart');
+      if (!ctx) return;
+      const top = data.slice(0, 10);
+      const labels = top.map(d => d.group_key || '(blank)');
+      const values = top.map(d => Number(d.total_liters || 0));
+      const colors = getPalette(top.length);
+      if (repPieChart) { repPieChart.destroy(); }
+      repPieChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: values, backgroundColor: colors }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    async function loadFuelTimeseries() {
+      try {
+        const params = new URLSearchParams();
+        if (repFrom?.value) params.append('from', repFrom.value);
+        if (repTo?.value) params.append('to', repTo.value);
+        const res = await fetch('list_fuel_timeseries.php?' + params.toString(), { credentials: 'same-origin' });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to load timeseries');
+        const labels = (data.records || []).map(r => r.date);
+        const values = (data.records || []).map(r => Number(r.total_liters || 0));
+        const ctx = document.getElementById('rep_line_chart');
+        if (!ctx) return;
+        if (repLineChart) { repLineChart.destroy(); }
+        repLineChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Liters per Day',
+              data: values,
+              fill: false,
+              borderColor: '#59a14f',
+              tension: 0.2
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadFuelConsumption() {
+      try {
+        const params = new URLSearchParams();
+        if (repFrom?.value) params.append('from', repFrom.value);
+        if (repTo?.value) params.append('to', repTo.value);
+        if (repGroupBy?.value) params.append('group_by', repGroupBy.value);
+        const res = await fetch('list_fuel_consumption.php?' + params.toString(), { credentials: 'same-origin' });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to load report');
+        repData = data.records || [];
+        sortReportData();
+        repTbody.innerHTML = '';
+        repData.forEach(r => repTbody.appendChild(renderReportRow(r)));
+        applyReportSearch();
+        // Update charts
+        updateBarChart(repData.slice(0, 12));
+        updatePieChart(repData);
+        await loadFuelTimeseries();
+      } catch (e) {
+        console.error(e);
+        repTbody.innerHTML = '<tr><td colspan="5" class="text-danger">Unable to load report.</td></tr>';
+      }
+    }
+
+    // Header sort handlers
+    document.querySelectorAll('#fuelReportTable thead th.rep-sort').forEach(th => {
+      th.style.cursor = 'pointer';
+      th.addEventListener('click', () => {
+        const key = th.getAttribute('data-sort');
+        if (repSort.key === key) {
+          repSort.dir = repSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+          repSort.key = key;
+          repSort.dir = key === 'group_key' ? 'asc' : 'desc';
+        }
+        sortReportData();
+        repTbody.innerHTML = '';
+        repData.forEach(r => repTbody.appendChild(renderReportRow(r)));
+        applyReportSearch();
+      });
+    });
+
+    // Filter handlers
+    [repFrom, repTo, repGroupBy].forEach(el => {
+      if (!el) return;
+      el.addEventListener('change', async () => {
+        await loadFuelConsumption();
+      });
+    });
+    if (repSearch) repSearch.addEventListener('input', applyReportSearch);
+    if (repRefreshBtn) repRefreshBtn.addEventListener('click', loadFuelConsumption);
+
+    // Export current report table to CSV (client side)
+    if (repExportBtn) {
+      repExportBtn.addEventListener('click', () => {
+        const rows = [['Group','Total Liters','Trips','Unique Plates','Fuel Types']];
+        // Use filtered DOM rows to reflect current search filter
+        const visibleRows = [...repTbody.querySelectorAll('tr')].filter(tr => tr.style.display !== 'none');
+        visibleRows.forEach(tr => {
+          const cols = [...tr.children].map(td => '"' + td.textContent.replace(/"/g,'""') + '"');
+          rows.push(cols);
+        });
+        const csv = rows.map(r => r.join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'fuel_consumption_report.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
   </script>
 </body>
 </html>
