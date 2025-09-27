@@ -263,6 +263,7 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
                     <th>Vehicle Type</th>
                     <th>Receiver</th>
                     <th>Time Out</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -513,6 +514,11 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
         <td>${r.fo_vehicle_type || ''}</td>
         <td>${r.fo_receiver || ''}</td>
         <td>${r.fo_time_out || ''}</td>
+        <td>
+          <button type="button" class="btn btn-sm btn-outline-danger deleteFuelOutBtn" data-id="${r.id}" title="Delete Record">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
       `;
       return tr;
     }
@@ -896,6 +902,37 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
       }
     });
 
+        // Delete fuel out record handler (event delegation)
+        document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.deleteFuelOutBtn');
+      if (!btn) return;
+      const id = btn.getAttribute('data-id');
+      if (!id) return;
+      if (!confirm('Delete this fuel out record? This will add the fuel quantity back to stock.')) return;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+      try {
+        const res = await fetch('delete_fuel_out.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ id }),
+          credentials: 'same-origin'
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to delete');
+        // Remove row
+        const row = btn.closest('tr');
+        if (row) row.remove();
+        await loadFuelStock(); // Refresh stock display
+      } catch (err) {
+        alert('Unable to delete fuel out record.');
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-trash"></i>';
+      }
+    });
+    
     // Basic search filter
     fuelSearch.addEventListener('input', function() {
       const q = this.value.toLowerCase();
