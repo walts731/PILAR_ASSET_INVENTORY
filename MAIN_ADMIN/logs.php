@@ -212,8 +212,83 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                 </div>
             </div>
 
+            <!-- Statistics Cards -->
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Total Actions Today
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['total_today']) ?></div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="bi bi-activity text-primary" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Active Users Today
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['active_users']) ?></div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="bi bi-people text-success" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Failed Attempts
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['failed_attempts']) ?></div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="bi bi-shield-exclamation text-info" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        System Alerts
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['alerts']) ?></div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Filters Card -->
-            <div class="card shadow-sm mb-4">
+            <div class="card shadow-sm mb-4 mt-4">
                 <div class="card-body">
                     <form method="GET" class="row g-3">
                         <div class="col-md-3">
@@ -407,81 +482,6 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                             </ul>
                         </nav>
                     <?php endif; ?>
-                </div>
-            </div>
-
-            <!-- Statistics Cards -->
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="card border-left-primary shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                        Total Actions Today
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['total_today']) ?></div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="bi bi-activity text-primary" style="font-size: 2rem;"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="card border-left-success shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                        Active Users Today
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['active_users']) ?></div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="bi bi-people text-success" style="font-size: 2rem;"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="card border-left-info shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                        Failed Attempts
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['failed_attempts']) ?></div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="bi bi-shield-exclamation text-info" style="font-size: 2rem;"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="card border-left-warning shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                        System Alerts
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['alerts']) ?></div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 2rem;"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
