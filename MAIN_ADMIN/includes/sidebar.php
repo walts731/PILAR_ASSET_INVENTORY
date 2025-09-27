@@ -33,7 +33,6 @@ if ($categoryResult && $categoryResult->num_rows > 0) {
     }
 }
 
-// Fetch unique form categories WITH id (the first form per category)
 $form_categories = [];
 $formCatResult = $conn->query("SELECT MIN(id) AS id, category FROM forms WHERE category IS NOT NULL AND category != '' GROUP BY category");
 if ($formCatResult && $formCatResult->num_rows > 0) {
@@ -44,6 +43,24 @@ if ($formCatResult && $formCatResult->num_rows > 0) {
 
 // Determine if Forms dropdown should be active
 $formActive = ($page == 'forms' && isset($_GET['id']));
+
+// Session and permission check for Fuel-Only users
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$isFuelOnlyUser = false;
+$role = $_SESSION['role'] ?? null;
+$userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+if ($role === 'user' && $userId > 0) {
+    if ($permStmt = $conn->prepare("SELECT 1 FROM user_permissions WHERE user_id = ? AND permission = 'fuel_inventory' LIMIT 1")) {
+        $permStmt->bind_param('i', $userId);
+        $permStmt->execute();
+        $permStmt->store_result();
+        $isFuelOnlyUser = $permStmt->num_rows > 0;
+        $permStmt->close();
+    }
+}
 ?>
 
 <!-- SIDEBAR STYLES -->
@@ -199,6 +216,12 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
 
         <!-- Sidebar Navigation -->
         <nav class="nav flex-column">
+            <?php if ($isFuelOnlyUser): ?>
+                <div class="nav-section">Fuel</div>
+                <a href="fuel_inventory.php" class="<?= ($page == 'fuel_inventory') ? 'active' : '' ?>">
+                    <i class="bi bi-fuel-pump"></i> Fuel Inventory
+                </a>
+            <?php else: ?>
             <a href="../MAIN_ADMIN/admin_dashboard.php" class="<?= ($page == 'admin_dashboard') ? 'active' : '' ?>">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
@@ -288,6 +311,7 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
             <a href="settings.php" class="<?= ($page == 'settings') ? 'active' : '' ?>">
                 <i class="bi bi-gear"></i> Settings
             </a>
+            <?php endif; ?>
         </nav>
     </div>
 
