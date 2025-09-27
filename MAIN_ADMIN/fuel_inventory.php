@@ -168,6 +168,15 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
       </div>
     </div>
 
+    <!-- Alert Container for Success Messages -->
+    <div id="alertContainer" class="container-fluid mb-3" style="display: none;">
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        <span id="alertMessage"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    </div>
+
     <div class="container-fluid">
       <ul class="nav nav-tabs mb-3" id="fuelTabs" role="tablist">
         <li class="nav-item" role="presentation">
@@ -720,6 +729,30 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
     // Guard against missing modal element to avoid script error
     const addFuelTypeModal = addFuelTypeModalEl ? new bootstrap.Modal(addFuelTypeModalEl) : null;
 
+    // Function to show Bootstrap success alert
+    function showSuccessAlert(message) {
+      const alertContainer = document.getElementById('alertContainer');
+      const alertMessage = document.getElementById('alertMessage');
+      
+      if (alertContainer && alertMessage) {
+        alertMessage.textContent = message;
+        alertContainer.style.display = 'block';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          const alert = alertContainer.querySelector('.alert');
+          if (alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+            alertContainer.style.display = 'none';
+          }
+        }, 5000);
+        
+        // Scroll to top to ensure alert is visible
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
     // Set default Date & Time to current local datetime (minutes precision)
     function setTodayDefaultDateTime() {
       const dt = document.getElementById('date_time');
@@ -924,6 +957,9 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
         const row = btn.closest('tr');
         if (row) row.remove();
         await loadFuelStock(); // Refresh stock display
+        
+        // Show success message with Bootstrap alert
+        showSuccessAlert('Fuel out record deleted successfully! The fuel quantity has been added back to stock.');
       } catch (err) {
         alert('Unable to delete fuel out record.');
         console.error(err);
