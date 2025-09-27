@@ -352,6 +352,28 @@ $available_assets = $stmt->get_result();
                 </div>
             </div>
 
+            <!-- Borrowing Cart -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Borrowing Cart</h5>
+                    <?php if (!empty($_SESSION['borrow_cart'])): ?>
+                        <ul class="list-group mb-3">
+                            <?php foreach ($_SESSION['borrow_cart'] as $asset_id => $item): ?>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <?= htmlspecialchars($item['asset_name']) ?>
+                                    <span class="badge bg-primary rounded-pill"><?= $item['quantity'] ?></span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                        <button class="btn btn-primary w-100" id="checkout-btn" data-bs-toggle="modal" data-bs-target="#checkoutModal">
+                            Proceed to Checkout
+                        </button>
+                    <?php else: ?>
+                        <p class="text-muted">Your cart is empty</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
             <!-- Asset Grid -->
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
                 <?php 
@@ -481,3 +503,96 @@ $available_assets = $stmt->get_result();
     // Include the footer with dark mode support and necessary scripts
     require_once '../includes/footer.php'; 
     ?>
+    <!-- Checkout Modal -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="checkoutModalLabel">Submit Borrow Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="checkoutForm">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] = bin2hex(random_bytes(32)) ?>">
+                    
+                    <div class="mb-3">
+                        <label for="purpose" class="form-label">Purpose of Borrowing</label>
+                        <textarea class="form-control" id="purpose" name="purpose" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="due_date" class="form-label">Expected Return Date</label>
+                        <input type="date" class="form-control" id="due_date" name="due_date" 
+                               min="<?= date('Y-m-d', strtotime('+1 day')) ?>" required>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6>Items to Borrow:</h6>
+                        <ul id="cart-items-list" class="mb-0">
+                            <!-- Cart items will be populated by JavaScript -->
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Add this to your existing script section
+$(document).ready(function() {
+    // Handle checkout button click
+    $('#checkout-btn').on('click', function() {
+        if (Object.keys(<?= json_encode($_SESSION['borrow_cart'] ?? []) ?>).length === 0) {
+            showAlert('Your cart is empty', 'warning');
+            return false;
+        }
+        
+        // Update cart items list in modal
+        const itemsList = $('#cart-items-list');
+        itemsList.empty();
+        
+        <?php foreach ($_SESSION['borrow_cart'] ?? [] as $item): ?>
+            itemsList.append(`<li>${<?= json_encode($item['quantity'] ?? 0) ?>}x ${<?= json_encode($item['asset_name'] ?? '') ?>}</li>`);
+        <?php endforeach; ?>
+    });
+    
+    // Handle form submission
+    $('#checkoutForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = $(this).serialize();
+        
+        // Show loading state
+        const submitBtn = $(this).find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        submitBtn.prop('disabled', true).html(`
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Submitting...
+        `);
+        
+        // Submit the form
+        $.post('submit_borrow_request.php', formData, function(response) {
+            if (response.status === 'success') {
+                // Show success message
+                showAlert('Borrow request submitted successfully!', 'success');
+                
+                // Close modal and redirect or refresh
+                $('#checkoutModal').modal('hide');
+                window.location.href = 'borrow_requests.php?success=' + response.request_id;
+            } else {
+                showAlert(response.message || 'An error occurred', 'danger');
+                submitBtn.prop('disabled', false).html(originalText);
+            }
+        }, 'json').fail(function(xhr, status, error) {
+            showAlert('Error: ' + error, 'danger');
+            submitBtn.prop('disabled', false).html(originalText);
+        });
+    });
+});
+</script>
+</body>

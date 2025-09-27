@@ -256,6 +256,15 @@ if ($row_count > 0) {
                                   data-max="<?= $row['max_quantity'] ?>">
                             <i class="bi bi-pencil"></i> Edit
                           </button>
+                        <?php elseif ($row['status'] === 'borrowed'): ?>
+                          <button type="button"
+                                  class="btn btn-sm btn-outline-success return-btn"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#returnModal"
+                                  data-request-id="<?= $row['id'] ?>"
+                                  data-asset-name="<?= htmlspecialchars($row['asset_name']) ?>">
+                            <i class="bi bi-arrow-return-left"></i> Return
+                          </button>
                         <?php else: ?>
                           <span class="text-muted small">N/A</span>
                         <?php endif; ?>
@@ -306,6 +315,42 @@ if ($row_count > 0) {
   </div>
 </div>
 
+<!-- Return Confirmation Modal -->
+<div class="modal fade" id="returnModal" tabindex="-1" aria-labelledby="returnModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="returnForm" method="POST" action="process_return.php">
+        <div class="modal-header">
+          <h5 class="modal-title" id="returnModalLabel">Return Asset</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="request_id" id="returnRequestId">
+          <p>You are about to return: <strong id="returnAssetName"></strong></p>
+          
+          <div class="mb-3">
+            <label for="returnCondition" class="form-label">Condition</label>
+            <select class="form-select" id="returnCondition" name="condition" required>
+              <option value="good">Good</option>
+              <option value="damaged">Damaged</option>
+              <option value="needs_repair">Needs Repair</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="returnNotes" class="form-label">Notes (Optional)</label>
+            <textarea class="form-control" id="returnNotes" name="notes" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Confirm Return</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -322,7 +367,7 @@ if ($row_count > 0) {
       $('input[name="selected_requests[]"]').prop('checked', this.checked);
     });
 
-    // Fill modal with correct data - only bind if edit buttons exist
+    // Fill edit modal with correct data - only bind if edit buttons exist
     $('.edit-btn').on('click', function () {
       const id = $(this).data('id');
       const quantity = $(this).data('quantity');
@@ -330,6 +375,61 @@ if ($row_count > 0) {
 
       $('#editRequestId').val(id);
       $('#editQuantity').val(quantity).attr('max', max);
+    });
+
+    // Fill return modal with data
+    $('.return-btn').on('click', function() {
+      const requestId = $(this).data('request-id');
+      const assetName = $(this).data('asset-name');
+      
+      $('#returnRequestId').val(requestId);
+      $('#returnAssetName').text(assetName);
+    });
+    
+    // Handle return form submission
+    $('#returnForm').on('submit', function(e) {
+      e.preventDefault();
+      
+      const form = $(this);
+      const submitBtn = form.find('button[type="submit"]');
+      const originalBtnText = submitBtn.html();
+      
+      // Show loading state
+      submitBtn.prop('disabled', true).html(
+        '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...'
+      );
+      
+      // Submit form via AJAX
+      $.ajax({
+        url: 'process_return.php',
+        type: 'POST',
+        data: form.serialize(),
+        dataType: 'json',
+        success: function(response) {
+          if (response.status === 'success') {
+            // Show success message and reload the page
+            const successAlert = `
+              <div class="alert alert-success alert-dismissible fade show" role="alert">
+                ${response.message || 'Item returned successfully'}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>`;
+            $('.container.mt-4').prepend(successAlert);
+            
+            // Close the modal and reload the page after a short delay
+            $('#returnModal').modal('hide');
+            setTimeout(() => window.location.reload(), 1000);
+          } else {
+            // Show error message
+            alert(response.message || 'An error occurred while processing the return');
+            submitBtn.prop('disabled', false).html(originalBtnText);
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error('Error:', error);
+          alert('An error occurred while processing your request. Please try again.');
+          submitBtn.prop('disabled', false).html(originalBtnText);
+        }
+      });
     });
   });
 </script>
