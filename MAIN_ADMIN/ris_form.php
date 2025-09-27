@@ -11,13 +11,8 @@ $ris_data = $result->fetch_assoc() ?? [];
 $stmt->close();
 
 
-// Auto-generate RIS No.
-$ris_prefix = "RIS-" . date("Y") . "-";
-$ris_stmt = $conn->prepare("SELECT COUNT(*) as count FROM ris_form");
-$ris_stmt->execute();
-$ris_result = $ris_stmt->get_result()->fetch_assoc();
-$ris_count = $ris_result['count'] + 1;
-$auto_ris_no = $ris_prefix . str_pad($ris_count, 4, "0", STR_PAD_LEFT);
+// Note: RIS No. should NOT be auto-generated. It will be fetched from the latest record (if any)
+// via $ris_data above and shown as an editable field.
 
 // Auto-generate SAI No.
 $sai_prefix = "SAI-" . date("Y") . "-";
@@ -72,7 +67,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
     <div class="col-md-3">
       <label for="ris_no" class="form-label fw-semibold">RIS No.</label>
       <input type="text" class="form-control" id="ris_no" name="ris_no"
-        value="<?= htmlspecialchars($auto_ris_no) ?>" readonly>
+        value="<?= htmlspecialchars($ris_data['ris_no'] ?? '') ?>" placeholder="Enter RIS No.">
     </div>
     <div class="col-md-3">
       <label for="date" class="form-label fw-semibold">Date</label>

@@ -10,6 +10,14 @@ if ($form_id) {
     $stmt->execute();
     $result = $stmt->get_result();
     $ris_data = $result->fetch_assoc();
+    $stmt->close();
+} else {
+    // Prefill from the latest record when creating a new form (no auto-generation for RIS No.)
+    $stmt = $conn->prepare("SELECT * FROM ris_form ORDER BY id DESC LIMIT 1");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $ris_data = $result->fetch_assoc() ?: [];
+    $stmt->close();
 }
 ?>
 
