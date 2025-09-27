@@ -9,6 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $unit = isset($_POST['unit']) ? $conn->real_escape_string(trim($_POST['unit'])) : '';
     $quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 0;
     $status = isset($_POST['status']) ? $conn->real_escape_string(trim($_POST['status'])) : '';
+    $office = isset($_POST['office']) ? $conn->real_escape_string(trim($_POST['office'])) : '';
 
     // Category removed from the form; do not require it for update
     if ($id > 0 && $description !== '' && $unit !== '' && $status !== '') {
@@ -62,17 +63,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ";
 
         if ($conn->query($sql)) {
-            // Try to update the most recent matching RIS item quantity
-            // Prefer match by stock_no (property_no) and description; fall back to description only
+            // Try to update the most recent matching RIS item (description, quantity, unit)
+            // Prefer match by stock_no (property_no) and PREVIOUS description; fall back to previous description only.
             $ris_item_id = null;
-            if (!empty($property_no)) {
+            if (!empty($property_no) && !empty($old_desc)) {
                 if ($stmt = $conn->prepare("SELECT ri.id
                                              FROM ris_items ri
                                              INNER JOIN ris_form rf ON rf.id = ri.ris_form_id
                                              WHERE ri.stock_no = ? AND ri.description = ?
                                              ORDER BY rf.date DESC, ri.ris_form_id DESC, ri.id DESC
                                              LIMIT 1")) {
-                    $stmt->bind_param("ss", $property_no, $description);
+                    $stmt->bind_param("ss", $property_no, $old_desc);
                     $stmt->execute();
                     $res = $stmt->get_result();
                     if ($row = $res->fetch_assoc()) { $ris_item_id = (int)$row['id']; }
@@ -80,14 +81,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            if (!$ris_item_id) {
+            if (!$ris_item_id && !empty($old_desc)) {
                 if ($stmt = $conn->prepare("SELECT ri.id
                                              FROM ris_items ri
                                              INNER JOIN ris_form rf ON rf.id = ri.ris_form_id
                                              WHERE ri.description = ?
                                              ORDER BY rf.date DESC, ri.ris_form_id DESC, ri.id DESC
                                              LIMIT 1")) {
-                    $stmt->bind_param("s", $description);
+                    $stmt->bind_param("s", $old_desc);
                     $stmt->execute();
                     $res = $stmt->get_result();
                     if ($row = $res->fetch_assoc()) { $ris_item_id = (int)$row['id']; }
@@ -96,14 +97,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($ris_item_id) {
-                if ($u = $conn->prepare("UPDATE ris_items SET quantity = ?, unit = ? WHERE id = ?")) {
-                    $u->bind_param("isi", $quantity, $unit, $ris_item_id);
+                if ($u = $conn->prepare("UPDATE ris_items SET description = ?, quantity = ?, unit = ? WHERE id = ?")) {
+                    $u->bind_param("sisi", $description, $quantity, $unit, $ris_item_id);
                     $u->execute();
                     $u->close();
                 }
             }
 
-            header('Location: http://localhost/pilar_asset_inventory/MAIN_ADMIN/inventory.php?office=3#consumables');
+            // Preserve office filter in redirect and show success toast
+            $officeParam = $office !== '' ? urlencode($office) : 'all';
+            header('Location: http://localhost/pilar_asset_inventory/MAIN_ADMIN/inventory.php?office=' . $officeParam . '&update=success#consumables');
             exit();
         } else {
             echo 'Failed to update: ' . $conn->error;

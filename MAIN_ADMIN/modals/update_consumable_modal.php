@@ -16,6 +16,7 @@
       <div class="modal-body">
         <input type="hidden" name="id" id="consumable_id">
         <input type="hidden" name="existing_image" id="edit_existing_image">
+        <input type="hidden" name="office" id="updateConsumableOffice">
 
         <div class="row g-4">
           <div class="col-12">

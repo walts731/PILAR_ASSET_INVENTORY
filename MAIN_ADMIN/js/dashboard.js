@@ -183,6 +183,11 @@ function updateDateTime() {
     $('#edit_quantity').val($(this).data('qty'));
     $('#edit_status').val($(this).data('status'));
 
+    // Preserve office filter for redirect after update
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentOffice = urlParams.get('office') || $('#officeFilter').val() || 'all';
+    $('#updateConsumableOffice').val(currentOffice);
+
     const imageFile = $(this).data('image');
     const imgPath = imageFile ? '../img/assets/' + imageFile : '../img/1.png';
     $('#edit_consumable_preview').attr('src', imgPath).show();
