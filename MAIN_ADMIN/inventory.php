@@ -680,7 +680,16 @@ $stmt->close();
                         <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetNoTagBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal">
                           <i class="bi bi-eye"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" onclick="forceDeleteAsset(<?= (int)$row['id'] ?>)" title="Delete Asset">
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill deleteNoPropertyTagBtn" 
+                                data-id="<?= (int)$row['id'] ?>"
+                                data-name="<?= htmlspecialchars($row['description']) ?>"
+                                data-category="<?= htmlspecialchars($row['category_name']) ?>"
+                                data-value="<?= number_format($row['value'], 2) ?>"
+                                data-qty="<?= $row['quantity'] ?>"
+                                data-unit="<?= htmlspecialchars($row['unit']) ?>"
+                                data-number="<?= htmlspecialchars($displayNo) ?>"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#deleteNoPropertyTagModal" title="Delete Asset">
                           <i class="bi bi-trash"></i>
                         </button>
                       </div>
@@ -1048,6 +1057,7 @@ $stmt->close();
   <?php include 'modals/delete_consumable_modal.php'; ?>
   <?php include 'modals/update_asset_modal.php'; ?>
   <?php include 'modals/delete_asset_modal.php'; ?>
+  <?php include 'modals/delete_no_property_tag_modal.php'; ?>
   <?php include 'modals/add_asset_modal.php'; ?>
   <?php include 'modals/manage_categories_modal.php'; ?>
   <?php include 'modals/view_asset_modal.php'; ?>
@@ -1836,7 +1846,6 @@ $stmt->close();
           </div>
         </div>
       `;
-
       // Update modal content and show
       document.getElementById('assetDetailsContent').innerHTML = modalContent;
       document.getElementById('assetDetailsModalLabel').textContent = `Asset Details - ${asset.description || 'Unknown Asset'}`;
@@ -1844,9 +1853,100 @@ $stmt->close();
       const modal = new bootstrap.Modal(detailsModal);
       modal.show();
     }
+
+    // No Property Tag Delete Modal Handler
+    $(document).ready(function() {
+      let currentAssetId = null;
+
+      // Handle delete button click to populate modal
+      $(document).on('click', '.deleteNoPropertyTagBtn', function() {
+        currentAssetId = $(this).data('id');
+
+        // Populate modal with asset details
+        $('#deleteNoPropertyAssetName').text($(this).data('name'));
+        $('#deleteNoPropertyAssetCategory').text($(this).data('category'));
+        $('#deleteNoPropertyAssetValue').text($(this).data('value'));
+        $('#deleteNoPropertyAssetQty').text($(this).data('qty'));
+        $('#deleteNoPropertyAssetUnit').text($(this).data('unit'));
+        $('#deleteNoPropertyAssetNumber').text($(this).data('number'));
+      });
+
+      // Handle confirm delete button
+      $('#confirmDeleteNoPropertyTag').on('click', function() {
+        if (!currentAssetId) return;
+
+        const button = $(this);
+        const originalText = button.html();
+
+        // Show loading state
+        button.prop('disabled', true).html('<i class="bi bi-spinner-border spinner-border-sm me-2"></i>Deleting...');
+
+        // Call the existing forceDeleteAsset function
+        fetch('force_delete_asset.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'id=' + encodeURIComponent(currentAssetId)
+        })
+        .then(async (r) => {
+          const txt = await r.text();
+          let data;
+          try {
+            data = JSON.parse(txt);
+          } catch(e) {
+            throw new Error('Invalid server response');
+          }
+          if (!r.ok) {
+            const msg = (data && data.message) ? data.message : 'Failed to delete asset';
+            throw new Error(msg);
+          }
+          return data;
+        })
+        .then(resp => {
+          if (resp && resp.success) {
+            // Hide modal
+            $('#deleteNoPropertyTagModal').modal('hide');
+
+            // Show success message
+            const alerts = document.getElementById('pageAlerts');
+            if (alerts) {
+              alerts.innerHTML = `
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                  <i class="bi bi-check-circle"></i> Asset deleted and archived successfully.
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>`;
+            }
+            
+            // Reload page to refresh the table
+            setTimeout(() => location.reload(), 1000);
+          } else {
+            throw new Error(resp.message || 'Failed to delete asset');
+          }
+        })
+        .catch(err => {
+          // Reset button state
+          button.prop('disabled', false).html(originalText);
+
+          // Show error message
+          const alerts = document.getElementById('pageAlerts');
+          if (alerts) {
+            alerts.innerHTML = `
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-x-circle"></i> ${err.message || 'Unexpected error while deleting asset.'}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>`;
+          } else {
+            alert(err.message || 'Unexpected error while deleting asset.');
+          }
+        });
+      });
+
+      // Reset modal when hidden
+      $('#deleteNoPropertyTagModal').on('hidden.bs.modal', function() {
+        currentAssetId = null;
+        $('#confirmDeleteNoPropertyTag').prop('disabled', false).html('<i class="bi bi-trash me-2"></i>Yes, Delete Asset');
+      });
+    });
   </script>
 
-
 </body>
-
 </html>
