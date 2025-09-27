@@ -21,22 +21,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $restore_id = (int) $_POST['restore_id'];
         $res = $conn->query("SELECT * FROM assets_archive WHERE archive_id = $restore_id");
         if ($asset = $res->fetch_assoc()) {
+            // Build NULL-safe values
+            $asset_name = isset($asset['asset_name']) ? "'" . $conn->real_escape_string($asset['asset_name']) . "'" : 'NULL';
+            $category   = isset($asset['category']) && $asset['category'] !== '' ? (int)$asset['category'] : 'NULL';
+            $description= isset($asset['description']) ? "'" . $conn->real_escape_string($asset['description']) . "'" : 'NULL';
+            $quantity   = isset($asset['quantity']) && $asset['quantity'] !== '' ? (int)$asset['quantity'] : 0;
+            $unit       = isset($asset['unit']) ? "'" . $conn->real_escape_string($asset['unit']) . "'" : 'NULL';
+            $status     = isset($asset['status']) ? "'" . $conn->real_escape_string($asset['status']) . "'" : 'NULL';
+            $acq_date   = isset($asset['acquisition_date']) && $asset['acquisition_date'] !== '' ? "'" . $conn->real_escape_string($asset['acquisition_date']) . "'" : 'NULL';
+            $office_id  = isset($asset['office_id']) && $asset['office_id'] !== '' ? (int)$asset['office_id'] : 'NULL';
+            $red_tagged = isset($asset['red_tagged']) && $asset['red_tagged'] !== '' ? (int)$asset['red_tagged'] : 0;
+            $last_updated = isset($asset['last_updated']) && $asset['last_updated'] !== '' ? "'" . $conn->real_escape_string($asset['last_updated']) . "'" : 'NULL';
+            $value      = isset($asset['value']) && $asset['value'] !== '' ? (float)$asset['value'] : 0;
+            $qr_code    = isset($asset['qr_code']) ? "'" . $conn->real_escape_string($asset['qr_code']) . "'" : 'NULL';
+            $type       = isset($asset['type']) ? "'" . $conn->real_escape_string($asset['type']) . "'" : "'asset'";
+
             $insert = "INSERT INTO assets (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, red_tagged, last_updated, value, qr_code, type)
-                VALUES (
-                    '{$conn->real_escape_string($asset['asset_name'])}',
-                    {$asset['category']},
-                    '{$conn->real_escape_string($asset['description'])}',
-                    {$asset['quantity']},
-                    '{$conn->real_escape_string($asset['unit'])}',
-                    '{$conn->real_escape_string($asset['status'])}',
-                    '{$asset['acquisition_date']}',
-                    {$asset['office_id']},
-                    {$asset['red_tagged']},
-                    '{$asset['last_updated']}',
-                    {$asset['value']},
-                    '{$conn->real_escape_string($asset['qr_code'])}',
-                    '{$conn->real_escape_string($asset['type'])}'
-                )";
+                VALUES ($asset_name, $category, $description, $quantity, $unit, $status, $acq_date, $office_id, $red_tagged, $last_updated, $value, $qr_code, $type)";
             if ($conn->query($insert)) {
                 $conn->query("DELETE FROM assets_archive WHERE archive_id = $restore_id");
                 header("Location: asset_archive.php?restore=success");
@@ -49,22 +50,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $type = $conn->real_escape_string($_POST['type']);
         $result = $conn->query("SELECT * FROM assets_archive WHERE type = '$type'");
         while ($asset = $result->fetch_assoc()) {
+            $asset_name = isset($asset['asset_name']) ? "'" . $conn->real_escape_string($asset['asset_name']) . "'" : 'NULL';
+            $category   = isset($asset['category']) && $asset['category'] !== '' ? (int)$asset['category'] : 'NULL';
+            $description= isset($asset['description']) ? "'" . $conn->real_escape_string($asset['description']) . "'" : 'NULL';
+            $quantity   = isset($asset['quantity']) && $asset['quantity'] !== '' ? (int)$asset['quantity'] : 0;
+            $unit       = isset($asset['unit']) ? "'" . $conn->real_escape_string($asset['unit']) . "'" : 'NULL';
+            $status     = isset($asset['status']) ? "'" . $conn->real_escape_string($asset['status']) . "'" : 'NULL';
+            $acq_date   = isset($asset['acquisition_date']) && $asset['acquisition_date'] !== '' ? "'" . $conn->real_escape_string($asset['acquisition_date']) . "'" : 'NULL';
+            $office_id  = isset($asset['office_id']) && $asset['office_id'] !== '' ? (int)$asset['office_id'] : 'NULL';
+            $red_tagged = isset($asset['red_tagged']) && $asset['red_tagged'] !== '' ? (int)$asset['red_tagged'] : 0;
+            $last_updated = isset($asset['last_updated']) && $asset['last_updated'] !== '' ? "'" . $conn->real_escape_string($asset['last_updated']) . "'" : 'NULL';
+            $value      = isset($asset['value']) && $asset['value'] !== '' ? (float)$asset['value'] : 0;
+            $qr_code    = isset($asset['qr_code']) ? "'" . $conn->real_escape_string($asset['qr_code']) . "'" : 'NULL';
+            $type       = isset($asset['type']) ? "'" . $conn->real_escape_string($asset['type']) . "'" : "'asset'";
+
             $conn->query("INSERT INTO assets (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, red_tagged, last_updated, value, qr_code, type)
-                VALUES (
-                    '{$conn->real_escape_string($asset['asset_name'])}',
-                    {$asset['category']},
-                    '{$conn->real_escape_string($asset['description'])}',
-                    {$asset['quantity']},
-                    '{$conn->real_escape_string($asset['unit'])}',
-                    '{$conn->real_escape_string($asset['status'])}',
-                    '{$asset['acquisition_date']}',
-                    {$asset['office_id']},
-                    {$asset['red_tagged']},
-                    '{$asset['last_updated']}',
-                    {$asset['value']},
-                    '{$conn->real_escape_string($asset['qr_code'])}',
-                    '{$conn->real_escape_string($asset['type'])}'
-                )");
+                VALUES ($asset_name, $category, $description, $quantity, $unit, $status, $acq_date, $office_id, $red_tagged, $last_updated, $value, $qr_code, $type)");
         }
         $conn->query("DELETE FROM assets_archive WHERE type = '$type'");
         header("Location: asset_archive.php?restore_all=success");
@@ -376,8 +377,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const button = event.relatedTarget;
             const id = button.getAttribute('data-id');
             const name = button.getAttribute('data-name');
-            restoreModal.querySelector('input[name="restore_id"]').value = id;
-            restoreModal.querySelector('.asset-name').textContent = name;
+            // Set hidden input for archive_id
+            const idInput = restoreModal.querySelector('input[name="restore_id"]');
+            if (idInput) idInput.value = id;
+            // Show asset name in the confirmation modal
+            const nameEl = restoreModal.querySelector('#restoreAssetName');
+            if (nameEl) nameEl.textContent = name;
         });
 
         // Delete Single
