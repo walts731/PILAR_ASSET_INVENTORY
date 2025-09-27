@@ -1,7 +1,7 @@
 <!-- Add User Modal -->
 <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
-    <form method="POST" action="add_user.php" class="modal-content" onsubmit="return validatePasswordMatch();">
+    <form method="POST" action="../MAIN_ADMIN/add_user.php" class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="addUserLabel">
           <i class="bi bi-person-plus me-2"></i>Add New User
@@ -37,28 +37,29 @@
           </div>
 
           <div class="col-md-6">
-            <label for="password" class="form-label">Password</label>
+            <label for="password" class="form-label">Password (default from settings)</label>
             <div class="input-group">
+              <?php
+                $defPwd = '';
+                $sysRes = $conn->query("SELECT default_user_password FROM system LIMIT 1");
+                if ($sysRes && $sysRes->num_rows > 0) {
+                  $sysRow = $sysRes->fetch_assoc();
+                  $defPwd = $sysRow['default_user_password'] ?? '';
+                }
+              ?>
               <input type="password" class="form-control" name="password" id="password"
-                pattern="^(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{8,}$"
-                title="Must be at least 8 characters, with 1 uppercase letter, 1 number, and 1 special character"
+                value="<?= htmlspecialchars($defPwd) ?>"
+                pattern="^(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{12,}$"
+                title="Strong password: min 12 chars, 1 uppercase, 1 number, 1 special character"
                 required>
-              <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password', this)">
+              <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password', this)" title="Show/Hide">
                 <i class="bi bi-eye-slash"></i>
               </button>
-            </div>
-            <small class="text-muted">Min. 8 chars, 1 uppercase, 1 number, 1 special character</small>
-          </div>
-
-          <div class="col-md-6">
-            <label for="confirm_password" class="form-label">Confirm Password</label>
-            <div class="input-group">
-              <input type="password" class="form-control" id="confirm_password" required>
-              <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('confirm_password', this)">
-                <i class="bi bi-eye-slash"></i>
+              <button type="button" class="btn btn-outline-success" id="copyPasswordBtn" title="Copy to clipboard">
+                <i class="bi bi-clipboard"></i>
               </button>
             </div>
-            <small id="passwordMatchMsg" class="text-danger d-none">Passwords do not match</small>
+            <small class="text-muted">This defaults to the value set in User Management → Default Password. You may change it per user.</small>
           </div>
 
           <div class="col-md-6">
@@ -80,6 +81,18 @@
               <?php endwhile; ?>
             </select>
           </div>
+          <div class="col-12">
+            <label class="form-label">Permissions</label>
+            <div class="row g-2">
+              <div class="col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="permissions[]" id="perm_fuel" value="fuel_inventory">
+                  <label class="form-check-label" for="perm_fuel">Fuel Inventory</label>
+                </div>
+              </div>
+            </div>
+            <small class="text-muted">Admins and Users implicitly have access by role for Fuel Inventory.</small>
+          </div>
         </div>
       </div>
 
@@ -89,24 +102,10 @@
       </div>
     </form>
   </div>
+
 </div>
 
 <script>
-  function validatePasswordMatch() {
-    const password = document.getElementById('password');
-    const confirm = document.getElementById('confirm_password');
-    const message = document.getElementById('passwordMatchMsg');
-
-    if (password.value !== confirm.value) {
-      message.classList.remove('d-none');
-      confirm.focus();
-      return false;
-    } else {
-      message.classList.add('d-none');
-      return true;
-    }
-  }
-
   function togglePassword(fieldId, btn) {
     const field = document.getElementById(fieldId);
     const icon = btn.querySelector('i');
@@ -120,4 +119,16 @@
       icon.classList.add("bi-eye-slash");
     }
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const copyBtn = document.getElementById('copyPasswordBtn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async function(){
+        const el = document.getElementById('password');
+        if (el && el.value) {
+          try { await navigator.clipboard.writeText(el.value); } catch(e) {}
+        }
+      });
+    }
+  });
 </script>
