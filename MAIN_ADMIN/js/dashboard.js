@@ -158,23 +158,6 @@ function updateDateTime() {
     });
   });
 
-  // Delete Consumable Modal population (delegated) + preserve office filter
-  $(document).on('click', '.deleteConsumableBtn', function () {
-    const id = $(this).data('id');
-    const name = $(this).data('name');
-    $('#deleteConsumableId').val(id);
-    $('#deleteConsumableName').text(name);
-
-    // Preserve office filter
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentOffice = urlParams.get('office') || $('#officeFilter').val() || 'all';
-    $('#deleteConsumableOffice').val(currentOffice);
-
-    // Debugging
-    console.log('[DeleteConsumable] Opening modal for ID:', id, 'Name:', name);
-    console.log('[DeleteConsumable] Office detected:', currentOffice);
-  });
-
   // Enhanced Update Consumable Modal behaviors
   $(document).on('click', '.updateConsumableBtn', function () {
     $('#consumable_id').val($(this).data('id'));
