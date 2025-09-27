@@ -253,6 +253,11 @@ $formActive = ($page == 'forms' && isset($_GET['id']));
                 </a>
             </div>
 
+            <div class="nav-section">Fuel</div>
+            <a href="fuel_inventory.php" class="<?= ($page == 'fuel_inventory') ? 'active' : '' ?>">
+                <i class="bi bi-fuel-pump"></i> Fuel Inventory
+            </a>
+
             <div class="nav-section">Operations</div>
             <a href="borrow.php" class="<?= ($page == 'borrow') ? 'active' : '' ?>">
                 <i class="bi bi-arrow-left-right"></i> Borrow
