@@ -137,59 +137,114 @@ function updateDateTime() {
   });
 
   document.querySelectorAll("form").forEach(form => {
-  // Skip validation if form does not contain any 'selected_assets[]' checkboxes
-  const checkboxes = form.querySelectorAll("input[type='checkbox'][name='selected_assets[]']");
-  if (checkboxes.length === 0) return; // Skip this form
+    // Skip validation if form does not contain any 'selected_assets[]' checkboxes
+    const checkboxes = form.querySelectorAll("input[type='checkbox'][name='selected_assets[]']");
+    if (checkboxes.length === 0) return; // Skip this form
 
-  const alertBox = form.querySelector("#checkboxAlert");
+    const alertBox = form.querySelector("#checkboxAlert");
 
-  form.addEventListener("submit", function (e) {
-    const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+    form.addEventListener("submit", function (e) {
+      const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
 
-    if (!anyChecked) {
-      e.preventDefault();
-      if (alertBox) {
-        alertBox.classList.add("show");
-        setTimeout(() => alertBox.classList.remove("show"), 3000);
-      } else {
-        alert("Please select at least one item.");
+      if (!anyChecked) {
+        e.preventDefault();
+        if (alertBox) {
+          alertBox.classList.add("show");
+          setTimeout(() => alertBox.classList.remove("show"), 3000);
+        } else {
+          alert("Please select at least one item.");
+        }
       }
-    }
+    });
   });
-});
 
-$(document).ready(function () {
-  $('.updateConsumableBtn').on('click', function () {
+  // Delete Consumable Modal population (delegated) + preserve office filter
+  $(document).on('click', '.deleteConsumableBtn', function () {
+    const id = $(this).data('id');
+    const name = $(this).data('name');
+    $('#deleteConsumableId').val(id);
+    $('#deleteConsumableName').text(name);
+
+    // Preserve office filter
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentOffice = urlParams.get('office') || $('#officeFilter').val() || 'all';
+    $('#deleteConsumableOffice').val(currentOffice);
+
+    // Debugging
+    console.log('[DeleteConsumable] Opening modal for ID:', id, 'Name:', name);
+    console.log('[DeleteConsumable] Office detected:', currentOffice);
+  });
+
+  // Enhanced Update Consumable Modal behaviors
+  $(document).on('click', '.updateConsumableBtn', function () {
     $('#consumable_id').val($(this).data('id'));
-    $('#edit_category').val($(this).data('category'));
     $('#edit_description').val($(this).data('description'));
     $('#edit_unit').val($(this).data('unit'));
     $('#edit_quantity').val($(this).data('qty'));
     $('#edit_status').val($(this).data('status'));
 
-    // Show current image
     const imageFile = $(this).data('image');
-    const imgPath = imageFile ? '../img/assets/' + imageFile : 'path/to/placeholder.jpg';
+    const imgPath = imageFile ? '../img/assets/' + imageFile : '../img/1.png';
     $('#edit_consumable_preview').attr('src', imgPath).show();
+    $('#edit_existing_image').val(imageFile || '');
+    $('#edit_consumable_image').val('');
+    $('#remove_consumable_image').prop('checked', false);
   });
 
-  // Live preview of new selected image
-  $('#edit_consumable_image').on('change', function () {
+  // Live preview and validation for selected image (Update Consumable)
+  $(document).on('change', '#edit_consumable_image', function () {
     const [file] = this.files;
-    if (file) {
-      $('#edit_consumable_preview').attr('src', URL.createObjectURL(file)).show();
+    if (!file) return;
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    const maxBytes = 3 * 1024 * 1024; // 3 MB
+    if (!allowed.includes(file.type)) {
+      alert('Invalid image type. Please upload JPG, PNG, or WebP.');
+      $(this).val('');
+      return;
+    }
+    if (file.size > maxBytes) {
+      alert('File too large. Maximum size allowed is 3 MB.');
+      $(this).val('');
+      return;
+    }
+    $('#remove_consumable_image').prop('checked', false);
+    $('#edit_consumable_preview').attr('src', URL.createObjectURL(file)).show();
+  });
+
+  // Remove current image toggle
+  $(document).on('change', '#remove_consumable_image', function () {
+    if (this.checked) {
+      $('#edit_consumable_image').val('');
+      $('#edit_consumable_preview').attr('src', '../img/1.png').show();
     }
   });
-});
 
+  // HTML5 validation and spinner on submit for Update Consumable form
+  const updateConsumableForm = document.querySelector('#updateConsumableModal form');
+  if (updateConsumableForm) {
+    updateConsumableForm.addEventListener('submit', function (e) {
+      if (!this.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+      } else {
+        const spinner = document.getElementById('updateConsumableSpinner');
+        if (spinner) spinner.classList.remove('d-none');
+      }
+      this.classList.add('was-validated');
+    });
+  }
 
-// Delete Consumable Modal
-$(document).ready(function () {
-  $('.deleteConsumableBtn').on('click', function () {
-    $('#deleteConsumableId').val($(this).data('id'));
-    $('#deleteConsumableName').text($(this).data('name'));
+  // Reset state when Update Consumable modal closes
+  $('#updateConsumableModal').on('hidden.bs.modal', function () {
+    const form = this.querySelector('form');
+    if (form) {
+      form.classList.remove('was-validated');
+      const spinner = document.getElementById('updateConsumableSpinner');
+      if (spinner) spinner.classList.add('d-none');
+    }
+    $('#edit_consumable_image').val('');
+    $('#remove_consumable_image').prop('checked', false);
   });
-});
 
 // Initialize DataTable for the archive table
 $(document).ready(function() {
