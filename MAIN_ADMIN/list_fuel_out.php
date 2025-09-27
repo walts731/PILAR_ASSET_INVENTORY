@@ -9,11 +9,12 @@ if (!isset($_SESSION['user_id'])) {
   exit;
 }
 
-// Ensure table exists
+// Ensure table exists with fo_fuel_type column
 $conn->query("CREATE TABLE IF NOT EXISTS fuel_out (
   id INT AUTO_INCREMENT PRIMARY KEY,
   fo_date DATE NOT NULL,
   fo_time_in TIME NOT NULL,
+  fo_fuel_type VARCHAR(100) NOT NULL,
   fo_fuel_no VARCHAR(100) DEFAULT NULL,
   fo_plate_no VARCHAR(100) DEFAULT NULL,
   fo_request VARCHAR(255) DEFAULT NULL,
@@ -25,9 +26,11 @@ $conn->query("CREATE TABLE IF NOT EXISTS fuel_out (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX(fo_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+// Best-effort add column in case table existed before without it
+$conn->query("ALTER TABLE fuel_out ADD COLUMN fo_fuel_type VARCHAR(100) NOT NULL AFTER fo_time_in");
 
 $rows = [];
-$sql = "SELECT id, fo_date, fo_time_in, fo_fuel_no, fo_plate_no, fo_request, fo_liters, fo_vehicle_type, fo_receiver, fo_time_out
+$sql = "SELECT id, fo_date, fo_time_in, fo_fuel_type, fo_fuel_no, fo_plate_no, fo_request, fo_liters, fo_vehicle_type, fo_receiver, fo_time_out
         FROM fuel_out
         ORDER BY fo_date DESC, id DESC";
 $res = $conn->query($sql);

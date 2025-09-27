@@ -56,6 +56,12 @@ if ($result && $result->num_rows > 0) {
         <div class="modal-body">
           <form id="fuelOutForm" novalidate>
             <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <label for="fo_fuel_type" class="form-label">Fuel Type</label>
+                <select id="fo_fuel_type" name="fo_fuel_type" class="form-select" required>
+                  <option value="" selected disabled>Loading...</option>
+                </select>
+              </div>
               <div class="col-12 col-md-4">
                 <label for="fo_date" class="form-label">Date</label>
                 <input type="date" id="fo_date" name="fo_date" class="form-control" required />
@@ -214,6 +220,7 @@ if ($result && $result->num_rows > 0) {
                   <tr>
                     <th>Date</th>
                     <th>Time In</th>
+                    <th>Fuel Type</th>
                     <th>Fuel No</th>
                     <th>Plate No</th>
                     <th>Request</th>
@@ -383,6 +390,7 @@ if ($result && $result->num_rows > 0) {
       tr.innerHTML = `
         <td>${r.fo_date || ''}</td>
         <td>${r.fo_time_in || ''}</td>
+        <td>${r.fo_fuel_type || ''}</td>
         <td>${r.fo_fuel_no || ''}</td>
         <td>${r.fo_plate_no || ''}</td>
         <td>${r.fo_request || ''}</td>
@@ -424,11 +432,12 @@ if ($result && $result->num_rows > 0) {
         const data = await res.json();
         if (!data.success) throw new Error(data.error || 'Failed to save');
         fuelOutTbody.prepend(renderFuelOutRow(data.record));
+        await loadFuelStock();
         form.reset();
         form.classList.remove('was-validated');
         if (addFuelOutModal) addFuelOutModal.hide();
       } catch (err) {
-        alert('Unable to save fuel out record.');
+        alert((err && err.message) ? err.message : 'Unable to save fuel out record.');
         console.error(err);
       } finally {
         btn.disabled = false;
@@ -484,6 +493,7 @@ if ($result && $result->num_rows > 0) {
     const addFuelModal = new bootstrap.Modal(addFuelModalEl);
     const peso = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
     const fuelTypeSelect = document.getElementById('fuel_type');
+    const fuelOutTypeSelect = document.getElementById('fo_fuel_type');
     const fuelStockTbody = document.querySelector('#fuelStockTable tbody');
     const addFuelTypeModalEl = document.getElementById('addFuelTypeModal');
     // Guard against missing modal element to avoid script error
@@ -542,19 +552,33 @@ if ($result && $result->num_rows > 0) {
         const res = await fetch('list_fuel_types.php', { credentials: 'same-origin' });
         const data = await res.json();
         if (!data.success) throw new Error(data.error || 'Failed to load types');
-        fuelTypeSelect.innerHTML = '<option value="" disabled>Choose type...</option>';
-        data.types.forEach(t => {
-          const opt = document.createElement('option');
-          opt.value = t.name;
-          opt.textContent = t.name;
-          if (t.name === selected) opt.selected = true;
-          fuelTypeSelect.appendChild(opt);
-        });
-        // If no selection yet, select first
-        if (!fuelTypeSelect.value && fuelTypeSelect.options.length > 1) fuelTypeSelect.selectedIndex = 1;
+        // Populate Add Fuel modal select
+        if (fuelTypeSelect) {
+          fuelTypeSelect.innerHTML = '<option value="" disabled>Choose type...</option>';
+          data.types.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.name;
+            opt.textContent = t.name;
+            if (t.name === selected) opt.selected = true;
+            fuelTypeSelect.appendChild(opt);
+          });
+          if (!fuelTypeSelect.value && fuelTypeSelect.options.length > 1) fuelTypeSelect.selectedIndex = 1;
+        }
+        // Populate Fuel Out modal select
+        if (fuelOutTypeSelect) {
+          fuelOutTypeSelect.innerHTML = '<option value="" disabled>Choose type...</option>';
+          data.types.forEach(t => {
+            const opt2 = document.createElement('option');
+            opt2.value = t.name;
+            opt2.textContent = t.name;
+            fuelOutTypeSelect.appendChild(opt2);
+          });
+          if (!fuelOutTypeSelect.value && fuelOutTypeSelect.options.length > 1) fuelOutTypeSelect.selectedIndex = 1;
+        }
       } catch (e) {
         console.error(e);
-        fuelTypeSelect.innerHTML = '<option value="" disabled>Error loading types</option>';
+        if (fuelTypeSelect) fuelTypeSelect.innerHTML = '<option value="" disabled>Error loading types</option>';
+        if (fuelOutTypeSelect) fuelOutTypeSelect.innerHTML = '<option value="" disabled>Error loading types</option>';
       }
     }
 
