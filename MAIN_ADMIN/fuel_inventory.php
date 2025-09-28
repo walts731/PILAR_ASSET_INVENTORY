@@ -205,14 +205,47 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
         <!-- Fuel Log Tab -->
         <div class="tab-pane fade show active" id="fuel-log" role="tabpanel">
           <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <strong><i class="bi bi-fuel-pump me-1"></i> Fuel Records</strong>
-              <div class="d-flex gap-2 align-items-center">
-                <input type="text" id="fuelSearch" class="form-control form-control-sm" placeholder="Search..." />
-                <button class="btn btn-sm btn-outline-secondary" id="exportCsvBtn" title="Export CSV"><i class="bi bi-filetype-csv"></i></button>
-                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addFuelModal">
-                  <i class="bi bi-plus-circle me-1"></i> Add Fuel
-                </button>
+            <div class="card-header">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <strong><i class="bi bi-fuel-pump me-1"></i> Fuel Records</strong>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                  <div class="d-flex align-items-center gap-2">
+                    <label for="fuelLogDateFilter" class="form-label mb-0 small">Filter:</label>
+                    <select id="fuelLogDateFilter" class="form-select form-select-sm" style="min-width: 120px;">
+                      <option value="all">All Records</option>
+                      <option value="current_month">Current Month</option>
+                      <option value="current_quarter">Current Quarter</option>
+                      <option value="current_year">Current Year</option>
+                      <option value="last_month">Last Month</option>
+                      <option value="last_quarter">Last Quarter</option>
+                      <option value="last_year">Last Year</option>
+                      <option value="custom">Custom Range</option>
+                    </select>
+                  </div>
+                  <div id="customDateRangeLog" class="d-flex align-items-center gap-2" style="display: none;">
+                    <input type="date" id="fuelLogFromDate" class="form-control form-control-sm" />
+                    <span class="small">to</span>
+                    <input type="date" id="fuelLogToDate" class="form-control form-control-sm" />
+                    <button class="btn btn-sm btn-outline-primary" id="applyCustomFilterLog" title="Apply Filter">
+                      <i class="bi bi-funnel"></i>
+                    </button>
+                  </div>
+                  <input type="text" id="fuelSearch" class="form-control form-control-sm" placeholder="Search..." />
+                  <button class="btn btn-sm btn-outline-secondary" id="fuelLogRefreshBtn" title="Refresh">
+                    <i class="bi bi-arrow-clockwise"></i>
+                  </button>
+                  <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-secondary" id="fuelLogExportCsvBtn" title="Export CSV">
+                      <i class="bi bi-filetype-csv"></i> CSV
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="fuelLogExportPdfBtn" title="Export PDF">
+                      <i class="bi bi-filetype-pdf"></i> PDF
+                    </button>
+                  </div>
+                  <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addFuelModal">
+                    <i class="bi bi-plus-circle me-1"></i> Add Fuel
+                  </button>
+                </div>
               </div>
             </div>
             <div class="card-body table-responsive">
@@ -1213,6 +1246,114 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
       }
     });
     
+    // Date filter functionality for Fuel Log
+    const fuelLogDateFilter = document.getElementById('fuelLogDateFilter');
+    const customDateRangeLog = document.getElementById('customDateRangeLog');
+    const fuelLogFromDate = document.getElementById('fuelLogFromDate');
+    const fuelLogToDate = document.getElementById('fuelLogToDate');
+    const applyCustomFilterLog = document.getElementById('applyCustomFilterLog');
+
+    // Show/hide custom date range inputs for fuel log
+    if (fuelLogDateFilter) {
+      fuelLogDateFilter.addEventListener('change', function() {
+        if (this.value === 'custom') {
+          customDateRangeLog.style.display = 'flex';
+        } else {
+          customDateRangeLog.style.display = 'none';
+          // Auto-apply filter for predefined ranges
+          applyDateFilterLog();
+        }
+      });
+    }
+
+    // Apply custom date filter for fuel log
+    if (applyCustomFilterLog) {
+      applyCustomFilterLog.addEventListener('click', applyDateFilterLog);
+    }
+
+    // Function to get date range based on filter selection (reuse from fuel out)
+    function getDateRangeLog(filterType) {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const currentQuarter = Math.floor(currentMonth / 3);
+      
+      switch (filterType) {
+        case 'current_month':
+          return {
+            from: new Date(currentYear, currentMonth, 1).toISOString().split('T')[0],
+            to: new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0]
+          };
+        case 'current_quarter':
+          const quarterStart = currentQuarter * 3;
+          return {
+            from: new Date(currentYear, quarterStart, 1).toISOString().split('T')[0],
+            to: new Date(currentYear, quarterStart + 3, 0).toISOString().split('T')[0]
+          };
+        case 'current_year':
+          return {
+            from: new Date(currentYear, 0, 1).toISOString().split('T')[0],
+            to: new Date(currentYear, 11, 31).toISOString().split('T')[0]
+          };
+        case 'last_month':
+          const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+          const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+          return {
+            from: new Date(lastMonthYear, lastMonth, 1).toISOString().split('T')[0],
+            to: new Date(lastMonthYear, lastMonth + 1, 0).toISOString().split('T')[0]
+          };
+        case 'last_quarter':
+          const lastQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
+          const lastQuarterYear = currentQuarter === 0 ? currentYear - 1 : currentYear;
+          const lastQuarterStart = lastQuarter * 3;
+          return {
+            from: new Date(lastQuarterYear, lastQuarterStart, 1).toISOString().split('T')[0],
+            to: new Date(lastQuarterYear, lastQuarterStart + 3, 0).toISOString().split('T')[0]
+          };
+        case 'last_year':
+          return {
+            from: new Date(currentYear - 1, 0, 1).toISOString().split('T')[0],
+            to: new Date(currentYear - 1, 11, 31).toISOString().split('T')[0]
+          };
+        case 'custom':
+          return {
+            from: fuelLogFromDate.value,
+            to: fuelLogToDate.value
+          };
+        default:
+          return null;
+      }
+    }
+
+    // Apply date filter to fuel log table
+    function applyDateFilterLog() {
+      const filterType = fuelLogDateFilter.value;
+      const dateRange = getDateRangeLog(filterType);
+      
+      if (!dateRange || filterType === 'all') {
+        // Show all rows
+        [...fuelTableBody.querySelectorAll('tr')].forEach(tr => {
+          tr.style.display = '';
+        });
+        return;
+      }
+
+      const fromDate = new Date(dateRange.from);
+      const toDate = new Date(dateRange.to);
+
+      [...fuelTableBody.querySelectorAll('tr')].forEach(tr => {
+        const dateCell = tr.querySelector('td:first-child');
+        if (dateCell) {
+          // Parse the datetime string (format: YYYY-MM-DD HH:MM:SS)
+          const dateTimeText = dateCell.textContent.trim();
+          const datePart = dateTimeText.split(' ')[0]; // Get just the date part
+          const rowDate = new Date(datePart);
+          const isInRange = rowDate >= fromDate && rowDate <= toDate;
+          tr.style.display = isInRange ? '' : 'none';
+        }
+      });
+    }
+
     // Basic search filter
     fuelSearch.addEventListener('input', function() {
       const q = this.value.toLowerCase();
@@ -1221,22 +1362,59 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
       });
     });
 
-    // Export CSV of current rows
-    document.getElementById('exportCsvBtn').addEventListener('click', function() {
-      const rows = [['Date & Time','Fuel Type','Quantity (L)','Unit Price','Total Cost','Storage','DR No.','Supplier','Received By','Remarks']];
-      fuelTableBody.querySelectorAll('tr').forEach(tr => {
-        const cols = [...tr.children].map(td => '"' + td.textContent.replace(/"/g,'""') + '"');
-        rows.push(cols);
+    // Refresh button for Fuel Log
+    const fuelLogRefreshBtn = document.getElementById('fuelLogRefreshBtn');
+    if (fuelLogRefreshBtn) {
+      fuelLogRefreshBtn.addEventListener('click', async () => {
+        await loadFuelRecords();
       });
-      const csv = rows.map(r => r.join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'fuel_records.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-    });
+    }
+
+    // Export CSV for Fuel Log with date filtering
+    const fuelLogExportCsvBtn = document.getElementById('fuelLogExportCsvBtn');
+    if (fuelLogExportCsvBtn) {
+      fuelLogExportCsvBtn.addEventListener('click', () => {
+        const filterType = fuelLogDateFilter.value;
+        const dateRange = getDateRangeLog(filterType);
+        
+        let exportUrl = 'export_fuel_log_csv.php';
+        
+        if (dateRange && filterType !== 'all') {
+          const params = new URLSearchParams({
+            filter_type: filterType,
+            from_date: dateRange.from,
+            to_date: dateRange.to
+          });
+          exportUrl += '?' + params.toString();
+        }
+        
+        // Direct download of CSV (server will stream the file)
+        window.location.href = exportUrl;
+      });
+    }
+
+    // Export PDF for Fuel Log with date filtering
+    const fuelLogExportPdfBtn = document.getElementById('fuelLogExportPdfBtn');
+    if (fuelLogExportPdfBtn) {
+      fuelLogExportPdfBtn.addEventListener('click', () => {
+        const filterType = fuelLogDateFilter.value;
+        const dateRange = getDateRangeLog(filterType);
+        
+        let exportUrl = 'export_fuel_log_pdf.php';
+        
+        if (dateRange && filterType !== 'all') {
+          const params = new URLSearchParams({
+            filter_type: filterType,
+            from_date: dateRange.from,
+            to_date: dateRange.to
+          });
+          exportUrl += '?' + params.toString();
+        }
+        
+        // Open PDF in new tab for viewing/downloading
+        window.open(exportUrl, '_blank');
+      });
+    }
 
     // =====================
     // Reports JS
