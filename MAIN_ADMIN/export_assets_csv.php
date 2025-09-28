@@ -125,6 +125,20 @@ if (isset($stmt)) {
   $stmt->close();
 }
 
+// Insert record into generated_reports table for tracking
+$user_id = $_SESSION['user_id'];
+$office_id = $_SESSION['office_id'] ?? null;
+
+try {
+  $insert_stmt = $conn->prepare("INSERT INTO generated_reports (user_id, office_id, filename, generated_at) VALUES (?, ?, ?, NOW())");
+  $insert_stmt->bind_param("iis", $user_id, $office_id, $filename);
+  $insert_stmt->execute();
+  $insert_stmt->close();
+} catch (Exception $e) {
+  // Log error but don't interrupt the export
+  error_log("Failed to insert assets CSV export into generated_reports: " . $e->getMessage());
+}
+
 fclose($out);
 exit;
 ?>
