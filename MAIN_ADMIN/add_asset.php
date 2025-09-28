@@ -96,8 +96,8 @@ $stmtAn->close();
 
 // Prepare item-level asset insert
 $stmtInsAsset = $conn->prepare("INSERT INTO assets 
-    (asset_name, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, inventory_tag, asset_new_id)
-    VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, NOW(), ?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    (asset_name, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, inventory_tag, asset_new_id, category)
+    VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, NOW(), ?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 // Prepare MR details insert and existence check
 $stmtMrExists = $conn->prepare("SELECT 1 FROM mr_details WHERE asset_id = ? LIMIT 1");
@@ -116,7 +116,7 @@ $created_count = 0;
 for ($i = 0; $i < $quantity; $i++) {
     $asset_name = $description;
     $stmtInsAsset->bind_param(
-        'sssssiiidssssssssi',
+        'sssssiiidssssssssii',
         $asset_name,         // s
         $description,        // s
         $unit,               // s
@@ -134,7 +134,8 @@ for ($i = 0; $i < $quantity; $i++) {
         $model,              // s
         $brand,              // s
         $inventory_tag,      // s
-        $asset_new_id        // i
+        $asset_new_id,       // i
+        $category            // i
     );
     if ($stmtInsAsset->execute()) {
         $new_id = $conn->insert_id;

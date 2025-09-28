@@ -11,13 +11,11 @@ class AddAssetModal {
     }
 
     init() {
-        console.log('Initializing Add Asset Modal...');
         this.bindEvents();
         this.initializeDefaults();
         this.setupDragAndDrop();
         this.setupFormValidation();
         this.updateSummary();
-        console.log('Add Asset Modal initialized successfully');
     }
 
     bindEvents() {
@@ -37,14 +35,7 @@ class AddAssetModal {
         
         // Tab pills click - work with Bootstrap's native tabs
         document.querySelectorAll('#addAssetModal .nav-pills .nav-link').forEach((tab, index) => {
-            // Allow direct tab clicking without validation for now
-            tab.addEventListener('click', (e) => {
-                console.log(`Tab ${index} clicked`);
-                // Don't prevent default - let Bootstrap handle it
-            });
-            
             tab.addEventListener('shown.bs.tab', (e) => {
-                console.log(`Tab ${index} shown`);
                 this.currentTab = index;
                 this.updateNavigationButtons();
                 this.updateProgressBar();
