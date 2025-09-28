@@ -555,11 +555,21 @@ $stmt->close();
             <input type="hidden" name="office" value="<?= $selected_office ?>">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
               <h5 class="mb-0">Consumable List</h5>
-              <div>
-                <select id="stockFilter" class="form-select form-select-sm d-inline-block w-auto me-2">
+              <div class="d-flex flex-wrap gap-2 align-items-center">
+                <select id="stockFilter" class="form-select form-select-sm d-inline-block w-auto">
                   <option value="">All Items</option>
                   <option value="low">Low Stock</option>
                 </select>
+
+                <!-- Export Buttons -->
+                <div class="btn-group" role="group">
+                  <button type="button" class="btn btn-outline-success btn-sm" onclick="exportConsumables('csv')">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> CSV
+                  </button>
+                  <button type="button" class="btn btn-outline-danger btn-sm" onclick="exportConsumables('pdf')">
+                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                  </button>
+                </div>
 
                 <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm">
                   <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
@@ -1133,6 +1143,7 @@ $stmt->close();
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/delete_consumable_enhanced.js"></script>
+  <script src="js/consumables_export.js"></script>
 
   <script>
     function formatDateFormal(dateStr) {
