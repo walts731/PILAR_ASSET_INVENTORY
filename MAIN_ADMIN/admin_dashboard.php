@@ -111,12 +111,46 @@ try {
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .clickable-card {
+      position: relative;
+      overflow: hidden;
+    }
+    .clickable-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+      border: 1px solid rgba(13, 110, 253, 0.2);
+    }
+    .clickable-card:active {
+      transform: translateY(0);
+    }
+    .clickable-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+      transition: left 0.5s;
+    }
+    .clickable-card:hover::before {
+      left: 100%;
+    }
+    .stat-icon {
+      transition: all 0.3s ease;
+    }
+    .clickable-card:hover .stat-icon {
+      transform: scale(1.1);
+    }
     @media (max-width: 767.98px) {
       .card-header h5 {
         font-size: 1rem;
       }
       .text-truncate-ellipsis {
         max-width: 140px;
+      }
+      .clickable-card:hover {
+        transform: none;
       }
     }
   </style>
@@ -137,57 +171,57 @@ try {
             </div>
             <div class="card-body">
               <?php
-              $total = $active = $borrowed = $red_tagged = 0;
-              $res = $conn->query("SELECT status, red_tagged FROM assets WHERE type = 'asset' AND quantity > 0");
+              $total = $serviceable = $borrowed = $unserviceable = 0;
+              $res = $conn->query("SELECT status FROM assets WHERE type = 'asset' AND quantity > 0");
               while ($r = $res->fetch_assoc()) {
                 $total++;
-                if ($r['status'] === 'available') $active++;
+                if ($r['status'] === 'available') $serviceable++;
                 if ($r['status'] === 'borrowed') $borrowed++;
-                if ($r['red_tagged']) $red_tagged++;
+                if ($r['status'] === 'unserviceable') $unserviceable++;
               }
               ?>
               <div class="row">
                 <div class="col-sm-6 mb-3">
-                  <div class="card shadow-sm h-100 border-0">
+                  <div class="card shadow-sm h-100 border-0 clickable-card" data-filter="all" style="cursor: pointer; transition: all 0.3s ease;">
                     <div class="card-body d-flex justify-content-between align-items-center">
                       <div>
                         <h6>Total</h6>
                         <h4><?= $total ?></h4>
                       </div>
-                      <i class="bi bi-box stat-icon"></i>
+                      <i class="bi bi-box stat-icon text-primary"></i>
                     </div>
                   </div>
                 </div>
                 <div class="col-sm-6 mb-3">
-                  <div class="card shadow-sm h-100 border-0">
+                  <div class="card shadow-sm h-100 border-0 clickable-card" data-filter="available" style="cursor: pointer; transition: all 0.3s ease;">
                     <div class="card-body d-flex justify-content-between align-items-center">
                       <div>
-                        <h6>Available</h6>
-                        <h4><?= $active ?></h4>
+                        <h6>Serviceable</h6>
+                        <h4><?= $serviceable ?></h4>
                       </div>
-                      <i class="bi bi-check-circle stat-icon"></i>
+                      <i class="bi bi-check-circle stat-icon text-success"></i>
                     </div>
                   </div>
                 </div>
                 <div class="col-sm-6 mb-3">
-                  <div class="card shadow-sm h-100 border-0">
+                  <div class="card shadow-sm h-100 border-0 clickable-card" data-filter="borrowed" style="cursor: pointer; transition: all 0.3s ease;">
                     <div class="card-body d-flex justify-content-between align-items-center">
                       <div>
                         <h6>Borrowed</h6>
                         <h4><?= $borrowed ?></h4>
                       </div>
-                      <i class="bi bi-arrow-left-right stat-icon"></i>
+                      <i class="bi bi-arrow-left-right stat-icon text-info"></i>
                     </div>
                   </div>
                 </div>
                 <div class="col-sm-6 mb-3">
-                  <div class="card shadow-sm h-100 border-0">
+                  <div class="card shadow-sm h-100 border-0 clickable-card" data-filter="unserviceable" style="cursor: pointer; transition: all 0.3s ease;">
                     <div class="card-body d-flex justify-content-between align-items-center">
                       <div>
-                        <h6>Red-Tagged</h6>
-                        <h4><?= $red_tagged ?></h4>
+                        <h6>Unserviceable</h6>
+                        <h4><?= $unserviceable ?></h4>
                       </div>
-                      <i class="bi bi-exclamation-triangle stat-icon"></i>
+                      <i class="bi bi-exclamation-triangle stat-icon text-danger"></i>
                     </div>
                   </div>
                 </div>
@@ -736,6 +770,84 @@ try {
             setNote('<i class="bi bi-exclamation-triangle me-1"></i>' + (err && err.message ? err.message : 'Unable to load fuel stock'), true);
           });
       })();
+
+      // Interactive Asset Summary Cards
+      $(document).ready(function() {
+        $('.clickable-card').on('click', function() {
+          const filter = $(this).data('filter');
+          
+          // Add click animation
+          $(this).addClass('animate__animated animate__pulse');
+          setTimeout(() => {
+            $(this).removeClass('animate__animated animate__pulse');
+          }, 600);
+          
+          // Show loading toast
+          showToast('Loading assets...', 'info');
+          
+          // Redirect to inventory page with filter
+          let url = 'inventory.php';
+          if (filter && filter !== 'all') {
+            url += `?status=${filter}`;
+          }
+          
+          // Smooth transition
+          setTimeout(() => {
+            window.location.href = url;
+          }, 300);
+        });
+
+        // Add tooltip functionality
+        $('.clickable-card').each(function() {
+          const filter = $(this).data('filter');
+          let tooltipText = 'View all assets';
+          
+          switch(filter) {
+            case 'available':
+              tooltipText = 'View serviceable assets';
+              break;
+            case 'borrowed':
+              tooltipText = 'View borrowed assets';
+              break;
+            case 'unserviceable':
+              tooltipText = 'View unserviceable assets';
+              break;
+          }
+          
+          $(this).attr('title', tooltipText);
+          $(this).tooltip();
+        });
+      });
+
+      // Toast notification function
+      function showToast(message, type = 'info') {
+        const toastHtml = `
+          <div class="toast align-items-center text-white bg-${type === 'info' ? 'primary' : type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+              <div class="toast-body">
+                <i class="bi bi-${type === 'info' ? 'info-circle' : 'check-circle'} me-2"></i>${message}
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+          </div>
+        `;
+        
+        // Create toast container if it doesn't exist
+        if (!$('#toast-container').length) {
+          $('body').append('<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>');
+        }
+        
+        const $toast = $(toastHtml);
+        $('#toast-container').append($toast);
+        
+        const toast = new bootstrap.Toast($toast[0]);
+        toast.show();
+        
+        // Remove toast element after it's hidden
+        $toast.on('hidden.bs.toast', function() {
+          $(this).remove();
+        });
+      }
     </script>
 </body>
 </html>
