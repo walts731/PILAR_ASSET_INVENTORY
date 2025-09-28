@@ -206,6 +206,7 @@ class AddAssetModal {
 
     previewImage(event) {
         const preview = document.getElementById('assetImagePreview');
+        const placeholder = document.getElementById('previewPlaceholder');
         const file = event.target.files[0];
         
         if (file) {
@@ -233,11 +234,13 @@ class AddAssetModal {
             reader.onload = (e) => {
                 preview.src = e.target.result;
                 preview.classList.remove('d-none');
+                if (placeholder) placeholder.classList.add('d-none');
             };
             reader.readAsDataURL(file);
         } else {
             preview.src = '#';
             preview.classList.add('d-none');
+            if (placeholder) placeholder.classList.remove('d-none');
         }
     }
 
@@ -371,9 +374,13 @@ class AddAssetModal {
         
         // Reset image preview
         const preview = document.getElementById('assetImagePreview');
+        const placeholder = document.getElementById('previewPlaceholder');
         if (preview) {
             preview.src = '#';
             preview.classList.add('d-none');
+        }
+        if (placeholder) {
+            placeholder.classList.remove('d-none');
         }
         
         // Reset validation states

@@ -127,6 +127,25 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
   background-color: #e7f1ff;
 }
 
+.add-asset-modal .preview-placeholder {
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 2rem 1rem;
+  background-color: #f8f9fa;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-asset-modal .preview-container {
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .add-asset-modal .progress-bar {
   background: linear-gradient(90deg, #0d6efd 0%, #0b5ed7 100%);
 }
@@ -353,20 +372,6 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
                 </div>
               </div>
 
-              <div class="col-12">
-                <div class="field-group">
-                  <h6><i class="bi bi-cloud-upload me-1"></i>Asset Image</h6>
-                  <div class="image-upload-area" onclick="document.getElementById('asset_image').click()">
-                    <i class="bi bi-cloud-upload display-4 text-muted mb-2"></i>
-                    <p class="mb-2">Click to upload or drag and drop</p>
-                    <small class="text-muted">JPG, PNG, GIF up to 10MB</small>
-                    <input type="file" name="asset_image" id="asset_image" class="d-none" accept="image/*">
-                  </div>
-                  <div class="mt-3 text-center">
-                    <img id="assetImagePreview" src="#" alt="Image Preview" class="img-thumbnail d-none" style="max-width: 200px; height: auto;">
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -397,6 +402,37 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
                       <div class="form-floating">
                         <input type="text" name="end_user" id="end_user" class="form-control" placeholder="End user name">
                         <label for="end_user">End User</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="field-group">
+                  <h6><i class="bi bi-cloud-upload me-1"></i>Asset Image</h6>
+                  <div class="row g-3">
+                    <!-- Upload Area (Left) -->
+                    <div class="col-md-6">
+                      <div class="image-upload-area" onclick="document.getElementById('asset_image').click()">
+                        <i class="bi bi-cloud-upload display-4 text-muted mb-2"></i>
+                        <p class="mb-2">Click to upload or drag and drop</p>
+                        <small class="text-muted">JPG, PNG, GIF up to 10MB</small>
+                        <input type="file" name="asset_image" id="asset_image" class="d-none" accept="image/*">
+                      </div>
+                    </div>
+                    
+                    <!-- Preview Area (Right) -->
+                    <div class="col-md-6">
+                      <div class="text-center h-100 d-flex flex-column justify-content-center">
+                        <label class="form-label fw-semibold text-muted mb-2">Preview</label>
+                        <div class="preview-container">
+                          <img id="assetImagePreview" src="#" alt="Image Preview" class="img-thumbnail d-none" style="max-width: 100%; max-height: 200px; height: auto;">
+                          <div id="previewPlaceholder" class="preview-placeholder">
+                            <i class="bi bi-image display-4 text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No image selected</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
