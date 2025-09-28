@@ -121,14 +121,12 @@ if ($result && $result->num_rows > 0) {
     </style>
 </head>
 
-<body class="bg-light">
-    <?php include 'includes/topbar.php'; ?>
-    
-    <div class="container-fluid">
-        <div class="row">
-            <?php include 'includes/sidebar.php'; ?>
-            
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+<body>
+    <?php include 'includes/sidebar.php'; ?>
+    <div class="main">
+        <?php include 'includes/topbar.php'; ?>
+        <div class="content">
+            <div class="container-fluid">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">
                         <i class="bi bi-file-text me-2"></i>Manage Legal Documents
@@ -276,7 +274,7 @@ if ($result && $result->num_rows > 0) {
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
         </div>
     </div>
 
