@@ -1,6 +1,7 @@
 <?php
 require_once '../connect.php';
 require_once '../includes/audit_helper.php';
+require_once '../includes/email_helper.php';
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -55,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if ($stmt->execute()) {
     $new_user_id = $conn->insert_id;
     
-    // Get office name for logging
+    // Get office name for logging and email
     $office_name = 'No Office';
     if ($office_id > 0) {
         $office_stmt = $conn->prepare("SELECT office_name FROM offices WHERE id = ?");
@@ -80,12 +81,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $permStmt->close();
     }
 
-    // Log user creation
+    // Send welcome email to the new user
+    $email_result = sendWelcomeEmail($email, $fullname, $username, $password, $role, $office_name);
+    
+    // Log user creation with email status
     $perm_list = !empty($permissions) ? (implode(',', $permissions)) : 'none';
-    $user_context = "Role: {$role}, Office: {$office_name}, Email: {$email}, Status: {$status}, Perms: {$perm_list}";
+    $email_status = $email_result['success'] ? 'Email sent' : 'Email failed';
+    $user_context = "Role: {$role}, Office: {$office_name}, Email: {$email}, Status: {$status}, Perms: {$perm_list}, {$email_status}";
     logUserManagementActivity('CREATE', $username, $new_user_id, $user_context);
     
-    header("Location: user.php?user_add=success");
+    // Redirect with appropriate message
+    if ($email_result['success']) {
+        header("Location: user.php?user_add=success&email=sent");
+    } else {
+        header("Location: user.php?user_add=success&email=failed");
+    }
     exit();
   } else {
     // Log user creation failure

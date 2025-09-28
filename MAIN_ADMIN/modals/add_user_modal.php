@@ -94,7 +94,7 @@
               <div class="col-md-6">
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" name="permissions[]" id="perm_restrict_user_mgmt" value="restrict_user_management">
-                  <label class="form-check-label" for="perm_restrict_user_mgmt">Restrict access to User Management (user.php)</label>
+                  <label class="form-check-label" for="perm_restrict_user_mgmt">Restrict access to User Management</label>
                 </div>
                 <small class="text-muted">When checked, this user will be blocked from opening the User Management page, even if their role normally allows it.</small>
               </div>

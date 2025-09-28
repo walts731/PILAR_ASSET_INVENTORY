@@ -41,10 +41,22 @@
     <?php endif; ?>
 
     <?php if (isset($_GET['user_add']) && $_GET['user_add'] === 'success'): ?>
-      <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i> New user added successfully!
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
+      <?php if (isset($_GET['email']) && $_GET['email'] === 'sent'): ?>
+        <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+          <i class="bi bi-check-circle-fill me-2"></i> New user added successfully! Welcome email sent to user.
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <?php elseif (isset($_GET['email']) && $_GET['email'] === 'failed'): ?>
+        <div class="alert alert-warning alert-dismissible fade show m-3" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i> User added successfully, but welcome email failed to send. Please notify the user manually.
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <?php else: ?>
+        <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+          <i class="bi bi-check-circle-fill me-2"></i> New user added successfully!
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <?php endif; ?>
     <?php elseif (isset($_GET['user_add']) && $_GET['user_add'] === 'error'): ?>
       <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
         <i class="bi bi-x-circle-fill me-2"></i> Failed to add user. Please try again.
