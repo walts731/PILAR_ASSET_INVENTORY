@@ -271,6 +271,31 @@ if ($filter_type !== 'all' && !empty($from_date) && !empty($to_date)) {
 }
 $filename = 'fuel_log_report' . $filter_suffix . '_' . date('Ymd_His') . '.pdf';
 
-// Output PDF
+// Save PDF to generated_reports directory
+$pdfOutput = $dompdf->output();
+$savePath = '../generated_reports/' . $filename;
+
+// Ensure the directory exists
+if (!is_dir('../generated_reports/')) {
+  mkdir('../generated_reports/', 0755, true);
+}
+
+file_put_contents($savePath, $pdfOutput);
+
+// Insert record into generated_reports table for tracking
+$user_id = $_SESSION['user_id'];
+$office_id = $_SESSION['office_id'] ?? null;
+
+try {
+  $insert_stmt = $conn->prepare("INSERT INTO generated_reports (user_id, office_id, filename, generated_at) VALUES (?, ?, ?, NOW())");
+  $insert_stmt->bind_param("iis", $user_id, $office_id, $filename);
+  $insert_stmt->execute();
+  $insert_stmt->close();
+} catch (Exception $e) {
+  // Log error but don't interrupt the export
+  error_log("Failed to insert fuel log PDF export into generated_reports: " . $e->getMessage());
+}
+
+// Output PDF to browser
 $dompdf->stream($filename, array('Attachment' => false)); // false = display in browser, true = force download
 ?>
