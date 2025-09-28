@@ -43,6 +43,37 @@ while ($row = $res->fetch_assoc()) {
     $consumedData['data'][]   = (int)$row['total_consumed'];
 }
 
+// ✅ Fetch Assets by Office Data
+$assetsByOfficeData = ["labels" => [], "data" => []];
+$officeRes = $conn->query("
+    SELECT o.office_name, COUNT(a.id) as asset_count
+    FROM assets a
+    LEFT JOIN offices o ON a.office_id = o.id
+    WHERE a.type = 'asset' AND a.quantity > 0
+    GROUP BY a.office_id, o.office_name
+    ORDER BY asset_count DESC
+");
+while ($row = $officeRes->fetch_assoc()) {
+    $assetsByOfficeData['labels'][] = $row['office_name'] ?? 'Unassigned';
+    $assetsByOfficeData['data'][] = (int)$row['asset_count'];
+}
+
+// ✅ Fetch Assets by Category Data
+$assetsByCategoryData = ["labels" => [], "data" => []];
+$categoryRes = $conn->query("
+    SELECT c.category_name, COUNT(a.id) as asset_count
+    FROM assets a
+    LEFT JOIN categories c ON a.category = c.id
+    WHERE a.type = 'asset' AND a.quantity > 0
+    GROUP BY a.category, c.category_name
+    ORDER BY asset_count DESC
+    LIMIT 8
+");
+while ($row = $categoryRes->fetch_assoc()) {
+    $assetsByCategoryData['labels'][] = $row['category_name'] ?? 'Uncategorized';
+    $assetsByCategoryData['data'][] = (int)$row['asset_count'];
+}
+
 // ✅ Fetch 5 Most Recent Activities with fullname
 $auditRows = [];
 $activityError = '';
@@ -250,46 +281,46 @@ try {
               ?>
               <div class="row">
                 <div class="col-sm-6 mb-3">
-                  <div class="card shadow-sm h-100 border-0">
+                  <div class="card shadow-sm h-100 border-0 clickable-card" data-filter="all" data-type="consumable" style="cursor: pointer; transition: all 0.3s ease;">
                     <div class="card-body d-flex justify-content-between align-items-center">
                       <div>
                         <h6>Total</h6>
                         <h4><?= $ctotal ?></h4>
                       </div>
-                      <i class="bi bi-droplet stat-icon"></i>
+                      <i class="bi bi-droplet stat-icon text-primary"></i>
                     </div>
                   </div>
                 </div>
                 <div class="col-sm-6 mb-3">
-                  <div class="card shadow-sm h-100 border-0">
+                  <div class="card shadow-sm h-100 border-0 clickable-card" data-filter="available" data-type="consumable" style="cursor: pointer; transition: all 0.3s ease;">
                     <div class="card-body d-flex justify-content-between align-items-center">
                       <div>
                         <h6>Available</h6>
                         <h4><?= $cactive ?></h4>
                       </div>
-                      <i class="bi bi-check-circle stat-icon"></i>
+                      <i class="bi bi-check-circle stat-icon text-success"></i>
                     </div>
                   </div>
                 </div>
                 <div class="col-sm-6 mb-3">
-                  <div class="card shadow-sm h-100 border-0">
+                  <div class="card shadow-sm h-100 border-0 clickable-card" data-filter="low_stock" data-type="consumable" style="cursor: pointer; transition: all 0.3s ease;">
                     <div class="card-body d-flex justify-content-between align-items-center">
                       <div>
                         <h6>Low Stock (&le; <?= $threshold ?>)</h6>
                         <h4><?= $clow_stock ?></h4>
                       </div>
-                      <i class="bi bi-exclamation-circle stat-icon"></i>
+                      <i class="bi bi-exclamation-circle stat-icon text-warning"></i>
                     </div>
                   </div>
                 </div>
                 <div class="col-sm-6 mb-3">
-                  <div class="card shadow-sm h-100 border-0">
+                  <div class="card shadow-sm h-100 border-0 clickable-card" data-filter="unavailable" data-type="consumable" style="cursor: pointer; transition: all 0.3s ease;">
                     <div class="card-body d-flex justify-content-between align-items-center">
                       <div>
                         <h6>Unavailable</h6>
                         <h4><?= $cunavailable ?></h4>
                       </div>
-                      <i class="bi bi-slash-circle stat-icon"></i>
+                      <i class="bi bi-slash-circle stat-icon text-danger"></i>
                     </div>
                   </div>
                 </div>
@@ -333,8 +364,52 @@ try {
           </div>
         </div>
 
-        <!-- Most Borrowed Items (Line Chart - still sample) -->
+        <!-- Assets by Office (Doughnut Chart) -->
         <div class="col-md-6 mb-1">
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 py-3">
+              <div>
+                <h5 class="mb-1 fw-semibold d-flex align-items-center">
+                  <i class="bi bi-building me-2 text-primary"></i>Assets by Office
+                </h5>
+                <small class="text-muted">Distribution of assets across offices</small>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="position-relative" style="min-height: 260px;">
+                <canvas id="assetsByOfficeChart" height="220"></canvas>
+              </div>
+              <div id="officeChartNote" class="mt-2 text-muted-small"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assets by Category Section -->
+    <div class="container-fluid mt-1">
+      <div class="row">
+        <!-- Assets by Category (Bar Chart) -->
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 py-3">
+              <div>
+                <h5 class="mb-1 fw-semibold d-flex align-items-center">
+                  <i class="bi bi-tags me-2 text-primary"></i>Assets by Category
+                </h5>
+                <small class="text-muted">Asset distribution across different categories</small>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="position-relative" style="min-height: 260px;">
+                <canvas id="assetsByCategoryChart" height="220"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Most Borrowed Items (Line Chart) -->
+        <div class="col-md-6 mb-4">
           <div class="card shadow-sm border-0">
             <div class="card-header bg-white border-0 py-3">
               <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Most Borrowed Items</h5>
@@ -432,8 +507,10 @@ try {
     <script src="js/dashboard.js"></script>
 
     <script>
-      // ✅ Dynamic Data for Most Consumed Items
+      // ✅ Dynamic Data for Charts
       const consumedData = <?= json_encode($consumedData, JSON_NUMERIC_CHECK); ?>;
+      const assetsByOfficeData = <?= json_encode($assetsByOfficeData, JSON_NUMERIC_CHECK); ?>;
+      const assetsByCategoryData = <?= json_encode($assetsByCategoryData, JSON_NUMERIC_CHECK); ?>;
 
       // Build a processed view with Top N selection (client-side slice)
       const topNSelect = document.getElementById('consumedTopN');
@@ -771,10 +848,166 @@ try {
           });
       })();
 
-      // Interactive Asset Summary Cards
+      // Assets by Office Chart (Doughnut)
+      (function() {
+        const canvas = document.getElementById('assetsByOfficeChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const noteEl = document.getElementById('officeChartNote');
+
+        function setNote(msg) {
+          if (noteEl) {
+            noteEl.innerHTML = msg || '';
+          }
+        }
+
+        const data = assetsByOfficeData;
+        if (!data.labels.length) {
+          setNote('<span class="badge rounded-pill bg-light text-secondary border">No office data available</span>');
+          return;
+        }
+
+        const total = data.data.reduce((a,b)=>a+b,0);
+        
+        // Professional color palette
+        const palette = [
+          '#0d6efd','#198754','#dc3545','#ffc107','#6f42c1',
+          '#20c997','#fd7e14','#0dcaf0','#6610f2','#6c757d'
+        ];
+        const bg = data.labels.map((_,i)=> palette[i % palette.length]);
+
+        new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: data.labels,
+            datasets: [{
+              data: data.data,
+              backgroundColor: bg,
+              borderWidth: 2,
+              borderColor: '#fff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { 
+                position: 'bottom', 
+                labels: { 
+                  boxWidth: 12,
+                  padding: 15,
+                  font: { size: 11 }
+                } 
+              },
+              tooltip: {
+                backgroundColor: 'rgba(33, 37, 41, 0.9)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 12,
+                cornerRadius: 8,
+                callbacks: {
+                  label: (ctx) => {
+                    const v = ctx.parsed;
+                    const pct = total ? ((v/total)*100).toFixed(1) : 0;
+                    return `${ctx.label}: ${v} assets (${pct}%)`;
+                  }
+                }
+              }
+            },
+            cutout: '60%',
+            animation: {
+              duration: 1000,
+              easing: 'easeOutQuart'
+            }
+          }
+        });
+
+        setNote(`<span class="badge rounded-pill bg-light text-secondary border">Total: ${total} assets</span>`);
+      })();
+
+      // Assets by Category Chart (Bar)
+      (function() {
+        const canvas = document.getElementById('assetsByCategoryChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
+        const data = assetsByCategoryData;
+        if (!data.labels.length) {
+          return;
+        }
+
+        // Create gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(25, 135, 84, 0.9)');
+        gradient.addColorStop(1, 'rgba(25, 135, 84, 0.2)');
+
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: data.labels,
+            datasets: [{
+              label: 'Number of Assets',
+              data: data.data,
+              backgroundColor: gradient,
+              borderColor: 'rgba(25, 135, 84, 1)',
+              borderWidth: 1,
+              borderRadius: 8,
+              maxBarThickness: 40,
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: 'rgba(33, 37, 41, 0.9)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 12,
+                cornerRadius: 8,
+                displayColors: false,
+                callbacks: {
+                  title: (items) => items[0]?.label || '',
+                  label: (ctx) => `Assets: ${ctx.parsed.y}`,
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: '#6c757d',
+                  font: { size: 11 },
+                  callback: function(value, index) {
+                    const label = this.getLabelForValue(index);
+                    return label.length > 15 ? label.slice(0, 15) + '…' : label;
+                  }
+                },
+                grid: { display: false }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  color: '#6c757d',
+                  font: { size: 11 },
+                  stepSize: 1
+                },
+                grid: { color: 'rgba(0,0,0,0.05)' }
+              }
+            },
+            animation: {
+              duration: 900,
+              easing: 'easeOutQuart'
+            }
+          }
+        });
+      })();
+
+      // Interactive Summary Cards (Assets & Consumables)
       $(document).ready(function() {
         $('.clickable-card').on('click', function() {
           const filter = $(this).data('filter');
+          const type = $(this).data('type') || 'asset';
           
           // Add click animation
           $(this).addClass('animate__animated animate__pulse');
@@ -783,12 +1016,27 @@ try {
           }, 600);
           
           // Show loading toast
-          showToast('Loading assets...', 'info');
+          const loadingMessage = type === 'consumable' ? 'Loading consumables...' : 'Loading assets...';
+          showToast(loadingMessage, 'info');
           
-          // Redirect to inventory page with filter
+          // Redirect to inventory page with appropriate filter
           let url = 'inventory.php';
-          if (filter && filter !== 'all') {
-            url += `?status=${filter}`;
+          
+          if (type === 'consumable') {
+            // Navigate to consumables tab
+            url += '?tab=consumables';
+            if (filter === 'available') {
+              url += '&status=available';
+            } else if (filter === 'unavailable') {
+              url += '&status=unavailable';
+            } else if (filter === 'low_stock') {
+              url += '&low_stock=1';
+            }
+          } else {
+            // Navigate to assets tab
+            if (filter && filter !== 'all') {
+              url += `?status=${filter}`;
+            }
           }
           
           // Smooth transition
@@ -800,18 +1048,33 @@ try {
         // Add tooltip functionality
         $('.clickable-card').each(function() {
           const filter = $(this).data('filter');
-          let tooltipText = 'View all assets';
+          const type = $(this).data('type') || 'asset';
+          let tooltipText = type === 'consumable' ? 'View all consumables' : 'View all assets';
           
-          switch(filter) {
-            case 'available':
-              tooltipText = 'View serviceable assets';
-              break;
-            case 'borrowed':
-              tooltipText = 'View borrowed assets';
-              break;
-            case 'unserviceable':
-              tooltipText = 'View unserviceable assets';
-              break;
+          if (type === 'consumable') {
+            switch(filter) {
+              case 'available':
+                tooltipText = 'View available consumables';
+                break;
+              case 'unavailable':
+                tooltipText = 'View unavailable consumables';
+                break;
+              case 'low_stock':
+                tooltipText = 'View low stock consumables';
+                break;
+            }
+          } else {
+            switch(filter) {
+              case 'available':
+                tooltipText = 'View serviceable assets';
+                break;
+              case 'borrowed':
+                tooltipText = 'View borrowed assets';
+                break;
+              case 'unserviceable':
+                tooltipText = 'View unserviceable assets';
+                break;
+            }
           }
           
           $(this).attr('title', tooltipText);
