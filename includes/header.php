@@ -27,6 +27,8 @@ $darkModeClass = isDarkMode() ? 'dark-mode' : '';
     <?php if (file_exists(__DIR__ . '/../css/' . basename($_SERVER['PHP_SELF'], '.php') . '.css')): ?>
         <link rel="stylesheet" href="/PILAR_ASSET_INVENTORY/css/<?php echo basename($_SERVER['PHP_SELF'], '.php'); ?>.css">
     <?php endif; ?>
+
+    <link rel="stylesheet" href="../assets/css/notifications.css">
     
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -60,5 +62,18 @@ $darkModeClass = isDarkMode() ? 'dark-mode' : '';
     document.addEventListener('DOMContentLoaded', function() {
         // Set initial dark mode state
         document.body.classList.toggle('dark-mode', <?php echo isDarkMode() ? 'true' : 'false'; ?>);
+    });
+    </script>
+    <script src="../assets/js/notifications.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const notificationManager = new NotificationManager({
+            apiUrl: 'get_notifications.php',
+            actionUrl: 'notification_action.php',
+            enableDesktopNotifications: true,
+            pollInterval: 30000, // 30 seconds
+            userId: <?php echo $_SESSION['user_id'] ?? 0; ?>
+        });
+        notificationManager.startPolling();
     });
     </script>
