@@ -46,16 +46,18 @@ $filter_type = $_GET['filter_type'] ?? 'all';
 $from_date = $_GET['from_date'] ?? '';
 $to_date = $_GET['to_date'] ?? '';
 
-// Get system information
+// Get system information and logo
+$logoPath = '../img/PILAR LOGO TRANSPARENT.png';
+$logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
+
 $system_info = [
   'system_title' => 'PILAR Asset Inventory System',
-  'logo' => '../img/pilar.png'
+  'logo' => $logoBase64
 ];
 
 $system_query = $conn->query("SELECT system_title, logo FROM system LIMIT 1");
 if ($system_query && $system_row = $system_query->fetch_assoc()) {
   $system_info['system_title'] = $system_row['system_title'] ?? $system_info['system_title'];
-  $system_info['logo'] = '../img/' . ($system_row['logo'] ?? 'pilar.png');
 }
 
 // Build SQL query with date filtering
@@ -115,40 +117,21 @@ if ($filter_type !== 'all' && !empty($from_date) && !empty($to_date)) {
 }
 
 // Create HTML content for PDF
+$reportDate = date('F j, Y');
+
 $html = '
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            margin: 0;
-            padding: 20px;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 20px;
-        }
-        .logo {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 10px;
-        }
-        .title {
-            font-size: 18px;
-            font-weight: bold;
-            margin: 10px 0;
-            color: #333;
-        }
-        .subtitle {
-            font-size: 14px;
-            color: #666;
-            margin: 5px 0;
-        }
+        body { font-family: DejaVu Sans, sans-serif; font-size:10px; margin:0; padding:10px;}
+        .header-row { display: table; width:100%; margin-bottom:10px; }
+        .header-col { display: table-cell; vertical-align: top; }
+        .left-col { width: 15%; text-align:left; }
+        .center-col { width: 70%; text-align:center; }
+        .logo { height:50px; }
+        .center-col h4, .center-col h2, .center-col p { margin:1px 0; line-height:1.2; }
         .filter-info {
             background-color: #f8f9fa;
             padding: 10px;
@@ -168,24 +151,9 @@ $html = '
             margin-right: 30px;
             font-weight: bold;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-            font-size: 11px;
-        }
-        td {
-            font-size: 10px;
-        }
+        table { width:100%; border-collapse: collapse; font-size:10px; margin-top:5px;}
+        th, td { border:1px solid #000; padding:4px; text-align:left;}
+        th { background-color:#f2f2f2; }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .no-records {
@@ -202,16 +170,22 @@ $html = '
             border-top: 1px solid #ddd;
             padding-top: 10px;
         }
-        .page-break {
-            page-break-before: always;
-        }
+        .page-break { page-break-before: always; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="title">' . htmlspecialchars($system_info['system_title']) . '</div>
-        <div class="subtitle">Fuel Out Records Report</div>
-        <div class="subtitle">Generated on ' . date('F d, Y \a\t g:i A') . '</div>
+    <div class="header-row">
+        <div class="header-col left-col">';
+if ($system_info['logo']) $html .= '<img src="'.$system_info['logo'].'" class="logo">';
+$html .= '</div>
+        <div class="header-col center-col">
+            <p>Republic of the Philippines</p>
+            <h4>Municipality of Pilar</h4>
+            <p>Province of Sorsogon</p>
+            <h2>FUEL OUT RECORDS REPORT</h2>
+            <p><em>As of '.$reportDate.'</em></p>
+        </div>
+        <div class="header-col"></div>
     </div>
 
     <div class="filter-info">
@@ -275,9 +249,8 @@ $html .= '
 
 // Configure DomPDF
 $options = new Options();
-$options->set('defaultFont', 'Arial');
+$options->set('defaultFont', 'DejaVu Sans');
 $options->set('isRemoteEnabled', true);
-$options->set('isHtml5ParserEnabled', true);
 
 $dompdf = new Dompdf($options);
 $dompdf->loadHtml($html);
