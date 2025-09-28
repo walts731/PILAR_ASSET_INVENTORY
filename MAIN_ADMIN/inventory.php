@@ -1575,7 +1575,7 @@ $stmt->close();
     document.querySelectorAll('.viewConsumableBtn').forEach(btn => {
       btn.addEventListener('click', function() {
         const id = this.getAttribute('data-id');
-        fetch(`get_asset_details.php?id=${id}`)
+        fetch(`get_consumable_details.php?id=${id}`)
           .then(r => r.json())
           .then(data => {
             if (data.error) {
@@ -1595,8 +1595,8 @@ $stmt->close();
             const value = parseFloat(data.value ?? 0) || 0;
             const qty = parseInt(data.quantity ?? 0) || 0;
             document.getElementById('consValue').textContent = value.toFixed(2);
-            document.getElementById('consTotalValue').textContent = (value * qty).toFixed(2);
-            document.getElementById('consLastUpdated').textContent = fmtDate(data.last_updated);
+            document.getElementById('consTotalValue').textContent = data.total_value ? parseFloat(data.total_value).toFixed(2) : (value * qty).toFixed(2);
+            document.getElementById('consLastUpdated').textContent = data.last_updated_formatted ?? '—';
 
             // Image
             const imgEl = document.getElementById('consImage');
