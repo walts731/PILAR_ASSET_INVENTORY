@@ -548,6 +548,17 @@ if ($result_employees && $result_employees->num_rows > 0) {
     }
 }
 
+// Fetch offices for dropdown
+$offices = [];
+$sql_offices = "SELECT id, office_name FROM offices ORDER BY office_name ASC";
+$result_offices_dropdown = $conn->query($sql_offices);
+
+if ($result_offices_dropdown && $result_offices_dropdown->num_rows > 0) {
+    while ($row = $result_offices_dropdown->fetch_assoc()) {
+        $offices[] = $row;
+    }
+}
+
 // Ensure employee assignment persisted (if provided)
 if (!empty($asset_id) && !empty($employee_id)) {
     $stmt_assets = $conn->prepare("UPDATE assets SET employee_id = ? WHERE id = ?");
@@ -753,10 +764,17 @@ if ($baseProp !== '') {
                                             <i class="bi bi-building me-1 text-primary"></i>Office Location
                                             <span class="text-danger">*</span>
                                         </label>
-                                        <input type="text" class="form-control form-control-lg" name="office_location"
-                                            value="<?= isset($office_name) ? htmlspecialchars($office_name) : '' ?>" 
-                                            required placeholder="Enter office or department location">
-                                        <div class="form-text">Specify the office, department, or location where this asset is assigned</div>
+                                        <select class="form-select form-select-lg" name="office_location" required>
+                                            <option value="" disabled <?= empty($office_name) ? 'selected' : '' ?>>Select Office Location</option>
+                                            <?php foreach ($offices as $office): ?>
+                                                <option value="<?= htmlspecialchars($office['office_name']) ?>" 
+                                                    <?= (isset($asset_details['office_id']) && $asset_details['office_id'] == $office['id']) || 
+                                                        (isset($office_name) && $office_name == $office['office_name']) ? 'selected' : '' ?>>
+                                                    <?= htmlspecialchars($office['office_name']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <div class="form-text">Select the office, department, or location where this asset is assigned</div>
                                     </div>
                                 </div>
 
