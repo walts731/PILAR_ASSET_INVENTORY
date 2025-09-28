@@ -52,24 +52,44 @@ $stmt->close();
       --inv-accent: #0d6efd;
       --inv-muted: #6c757d;
     }
+
     .page-header {
       background: linear-gradient(135deg, #f8f9fa 0%, #eef3ff 100%);
       border: 1px solid #e9ecef;
       border-radius: .75rem;
     }
+
     .page-header .title {
       font-weight: 600;
     }
+
     .toolbar .btn {
       transition: transform .08s ease-in;
     }
-    .toolbar .btn:hover { transform: translateY(-1px); }
-    .card-hover:hover {
-      box-shadow: 0 .25rem .75rem rgba(0,0,0,.06) !important;
+
+    .toolbar .btn:hover {
+      transform: translateY(-1px);
     }
-    .table thead th { position: sticky; top: 0; background: #f8f9fa; z-index: 1; }
-    .status-badge { font-weight: 500; }
-    .badge-soft { background: rgba(13,110,253,.1); color: var(--inv-accent); }
+
+    .card-hover:hover {
+      box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .06) !important;
+    }
+
+    .table thead th {
+      position: sticky;
+      top: 0;
+      background: #f8f9fa;
+      z-index: 1;
+    }
+
+    .status-badge {
+      font-weight: 500;
+    }
+
+    .badge-soft {
+      background: rgba(13, 110, 253, .1);
+      color: var(--inv-accent);
+    }
   </style>
 </head>
 
@@ -120,14 +140,16 @@ $stmt->close();
 
 
     <?php
-      // Count of assets without inventory tag (not filtered by office)
-      $noPropCount = 0;
-      if ($stmtCnt = $conn->prepare("SELECT COUNT(*) AS cnt FROM assets WHERE type='asset' AND quantity > 0 AND (inventory_tag IS NULL OR inventory_tag = '')")) {
-        $stmtCnt->execute();
-        $resCnt = $stmtCnt->get_result();
-        if ($resCnt && ($rc = $resCnt->fetch_assoc())) { $noPropCount = (int)$rc['cnt']; }
-        $stmtCnt->close();
+    // Count of assets without inventory tag (not filtered by office)
+    $noPropCount = 0;
+    if ($stmtCnt = $conn->prepare("SELECT COUNT(*) AS cnt FROM assets WHERE type='asset' AND quantity > 0 AND (inventory_tag IS NULL OR inventory_tag = '')")) {
+      $stmtCnt->execute();
+      $resCnt = $stmtCnt->get_result();
+      if ($resCnt && ($rc = $resCnt->fetch_assoc())) {
+        $noPropCount = (int)$rc['cnt'];
       }
+      $stmtCnt->close();
+    }
     ?>
     <!-- Page Header -->
     <div class="container-fluid px-0 mb-3">
@@ -164,22 +186,22 @@ $stmt->close();
         </button>
       </li>
       <?php
-  // Count unserviceable assets without red tags (system-wide)
-  $noRedTagCount = 0;
-  $stmtNoRedTag = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND red_tagged = 0 AND quantity > 0");
-  $stmtNoRedTag->execute();
-  $stmtNoRedTag->bind_result($noRedTagCount);
-  $stmtNoRedTag->fetch();
-  $stmtNoRedTag->close();
+      // Count unserviceable assets without red tags (system-wide)
+      $noRedTagCount = 0;
+      $stmtNoRedTag = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND red_tagged = 0 AND quantity > 0");
+      $stmtNoRedTag->execute();
+      $stmtNoRedTag->bind_result($noRedTagCount);
+      $stmtNoRedTag->fetch();
+      $stmtNoRedTag->close();
 
-  // Count all unserviceable assets (system-wide)
-  $allUnserviceableCount = 0;
-  $stmtAllUnserv = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND quantity > 0");
-  $stmtAllUnserv->execute();
-  $stmtAllUnserv->bind_result($allUnserviceableCount);
-  $stmtAllUnserv->fetch();
-  $stmtAllUnserv->close();
-?>
+      // Count all unserviceable assets (system-wide)
+      $allUnserviceableCount = 0;
+      $stmtAllUnserv = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status = 'unserviceable' AND quantity > 0");
+      $stmtAllUnserv->execute();
+      $stmtAllUnserv->bind_result($allUnserviceableCount);
+      $stmtAllUnserv->fetch();
+      $stmtAllUnserv->close();
+      ?>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="no-red-tag-tab" data-bs-toggle="tab" data-bs-target="#no_red_tag" type="button" role="tab">
           <i class="bi bi-exclamation-octagon me-1"></i> No Red Tag Only
@@ -270,14 +292,47 @@ $stmt->close();
             ?>
 
             <input type="hidden" name="office" value="<?= $selected_office ?>">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <h5 class="mb-0">Asset List</h5>
-
-              <div class="d-flex flex-wrap gap-2">
-                <!-- Existing Generate Report Button -->
-                <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm">
-                  <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
-                </button>
+            <div class="card-header">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h5 class="mb-0">Asset List</h5>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                  <div class="d-flex align-items-center gap-2">
+                    <label for="assetDateFilter" class="form-label mb-0 small">Filter:</label>
+                    <select id="assetDateFilter" class="form-select form-select-sm" style="min-width: 120px;">
+                      <option value="all">All Records</option>
+                      <option value="current_month">Current Month</option>
+                      <option value="current_quarter">Current Quarter</option>
+                      <option value="current_year">Current Year</option>
+                      <option value="last_month">Last Month</option>
+                      <option value="last_quarter">Last Quarter</option>
+                      <option value="last_year">Last Year</option>
+                      <option value="custom">Custom Range</option>
+                    </select>
+                  </div>
+                  <div id="customDateRangeAsset" class="d-flex align-items-center gap-2" style="display: none;">
+                    <input type="date" id="assetFromDate" class="form-control form-control-sm" />
+                    <span class="small">to</span>
+                    <input type="date" id="assetToDate" class="form-control form-control-sm" />
+                    <button class="btn btn-sm btn-outline-primary" id="applyCustomFilterAsset" title="Apply Filter">
+                      <i class="bi bi-funnel"></i>
+                    </button>
+                  </div>
+                  <button class="btn btn-sm btn-outline-secondary" id="assetRefreshBtn" title="Refresh">
+                    <i class="bi bi-arrow-clockwise"></i>
+                  </button>
+                  <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-secondary" id="assetExportCsvBtn" title="Export CSV">
+                      <i class="bi bi-filetype-csv"></i> CSV
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="assetExportPdfBtn" title="Export PDF">
+                      <i class="bi bi-filetype-pdf"></i> PDF
+                    </button>
+                  </div>
+                  <!-- Existing Generate Report Button -->
+                  <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm">
+                    <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
+                  </button>
+                </div>
               </div>
             </div>
             <div class="alert alert-danger" role="alert" id="checkboxAlert">
@@ -296,7 +351,9 @@ $stmt->close();
             if ($stmtMissing) {
               $stmtMissing->execute();
               $resMissing = $stmtMissing->get_result();
-              while ($m = $resMissing->fetch_assoc()) { $missingAssets[] = $m; }
+              while ($m = $resMissing->fetch_assoc()) {
+                $missingAssets[] = $m;
+              }
               $stmtMissing->close();
             }
             if (count($missingAssets) > 0): ?>
@@ -616,7 +673,7 @@ $stmt->close();
         </div>
 
       </div>
-      
+
       <!-- No Property Tag Tab -->
       <div class="tab-pane fade" id="no_property" role="tabpanel">
         <?php
@@ -660,12 +717,12 @@ $stmt->close();
                 <?php while ($row = $npResult->fetch_assoc()): ?>
                   <tr>
                     <td>
-                      <?php 
+                      <?php
                       $displayNo = 'N/A';
                       if (isset($row['value']) && $row['value'] >= 50000) {
-                          $displayNo = htmlspecialchars($row['par_no'] ?? 'N/A (PAR)');
+                        $displayNo = htmlspecialchars($row['par_no'] ?? 'N/A (PAR)');
                       } else {
-                          $displayNo = htmlspecialchars($row['ics_no'] ?? 'N/A (ICS)');
+                        $displayNo = htmlspecialchars($row['ics_no'] ?? 'N/A (ICS)');
                       }
                       echo $displayNo;
                       ?>
@@ -680,16 +737,16 @@ $stmt->close();
                         <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetNoTagBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal">
                           <i class="bi bi-eye"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill deleteNoPropertyTagBtn" 
-                                data-id="<?= (int)$row['id'] ?>"
-                                data-name="<?= htmlspecialchars($row['description']) ?>"
-                                data-category="<?= htmlspecialchars($row['category_name']) ?>"
-                                data-value="<?= number_format($row['value'], 2) ?>"
-                                data-qty="<?= $row['quantity'] ?>"
-                                data-unit="<?= htmlspecialchars($row['unit']) ?>"
-                                data-number="<?= htmlspecialchars($displayNo) ?>"
-                                data-bs-toggle="modal" 
-                                data-bs-target="#deleteNoPropertyTagModal" title="Delete Asset">
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill deleteNoPropertyTagBtn"
+                          data-id="<?= (int)$row['id'] ?>"
+                          data-name="<?= htmlspecialchars($row['description']) ?>"
+                          data-category="<?= htmlspecialchars($row['category_name']) ?>"
+                          data-value="<?= number_format($row['value'], 2) ?>"
+                          data-qty="<?= $row['quantity'] ?>"
+                          data-unit="<?= htmlspecialchars($row['unit']) ?>"
+                          data-number="<?= htmlspecialchars($displayNo) ?>"
+                          data-bs-toggle="modal"
+                          data-bs-target="#deleteNoPropertyTagModal" title="Delete Asset">
                           <i class="bi bi-trash"></i>
                         </button>
                       </div>
@@ -701,12 +758,12 @@ $stmt->close();
           </div>
         </div>
       </div>
-      
+
       <!-- No Red Tag Only Tab -->
       <div class="tab-pane fade" id="no_red_tag" role="tabpanel">
-      <?php
-  // Query for unserviceable assets without red tags, including IIRUP ID (system-wide)
-  $stmtNoRedTag = $conn->prepare("
+        <?php
+        // Query for unserviceable assets without red tags, including IIRUP ID (system-wide)
+        $stmtNoRedTag = $conn->prepare("
     SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
     FROM assets a
     LEFT JOIN categories c ON a.category = c.id
@@ -716,10 +773,10 @@ $stmt->close();
     WHERE a.status = 'unserviceable' AND a.red_tagged = 0 AND a.quantity > 0
     ORDER BY a.last_updated DESC
   ");
-  $stmtNoRedTag->execute();
-  $noRedTagResult = $stmtNoRedTag->get_result();
-?>
-        
+        $stmtNoRedTag->execute();
+        $noRedTagResult = $stmtNoRedTag->get_result();
+        ?>
+
         <div class="row mb-4">
           <div class="col-12">
             <div class="alert alert-warning">
@@ -727,7 +784,7 @@ $stmt->close();
                 <i class="bi bi-exclamation-triangle"></i> Unserviceable Assets Without Red Tags
               </h6>
               <p class="mb-0">
-                These assets are marked as unserviceable but have not been red tagged yet. 
+                These assets are marked as unserviceable but have not been red tagged yet.
                 Consider creating IIRUP forms and red tags for proper documentation.
               </p>
             </div>
@@ -737,10 +794,10 @@ $stmt->close();
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">
-              <i class="bi bi-exclamation-circle text-warning"></i> 
+              <i class="bi bi-exclamation-circle text-warning"></i>
               Unserviceable Assets Without Red Tags (<?= $noRedTagResult->num_rows ?> items)
             </h6>
-            
+
           </div>
           <div class="card-body">
             <div class="table-responsive">
@@ -768,11 +825,11 @@ $stmt->close();
                         <td>
                           <div class="d-flex align-items-center">
                             <?php if (!empty($row['image'])): ?>
-                              <img src="../img/assets/<?= htmlspecialchars($row['image']) ?>" 
-                                   alt="Asset" class="rounded me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                              <img src="../img/assets/<?= htmlspecialchars($row['image']) ?>"
+                                alt="Asset" class="rounded me-2" style="width: 32px; height: 32px; object-fit: cover;">
                             <?php else: ?>
-                              <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center" 
-                                   style="width: 32px; height: 32px;">
+                              <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center"
+                                style="width: 32px; height: 32px;">
                                 <i class="bi bi-image text-muted"></i>
                               </div>
                             <?php endif; ?>
@@ -818,16 +875,16 @@ $stmt->close();
                         </td>
                         <td class="text-nowrap">
                           <?php if (!empty($row['iirup_id'])): ?>
-                            <a href="create_red_tag.php?asset_id=<?= $row['id'] ?>&iirup_id=<?= $row['iirup_id'] ?>" 
-                               class="btn btn-sm btn-danger rounded-pill" 
-                               title="Create Red Tag">
+                            <a href="create_red_tag.php?asset_id=<?= $row['id'] ?>&iirup_id=<?= $row['iirup_id'] ?>"
+                              class="btn btn-sm btn-danger rounded-pill"
+                              title="Create Red Tag">
                               <i class="bi bi-tag-fill"></i> Create Red Tag
                             </a>
                           <?php else: ?>
                             <div class="d-flex gap-1">
-                              <a href="forms.php?id=7&asset_id=<?= $row['id'] ?>&asset_description=<?= urlencode($row['description']) ?>&inventory_tag=<?= urlencode($row['inventory_tag'] ?? $row['property_no'] ?? '') ?>" 
-                                 class="btn btn-sm btn-outline-warning rounded-pill" 
-                                 title="Create IIRUP Form First">
+                              <a href="forms.php?id=7&asset_id=<?= $row['id'] ?>&asset_description=<?= urlencode($row['description']) ?>&inventory_tag=<?= urlencode($row['inventory_tag'] ?? $row['property_no'] ?? '') ?>"
+                                class="btn btn-sm btn-outline-warning rounded-pill"
+                                title="Create IIRUP Form First">
                                 <i class="bi bi-file-earmark-plus"></i>
                               </a>
                               <small class="text-muted align-self-center">IIRUP Required</small>
@@ -852,10 +909,10 @@ $stmt->close();
             </div>
           </div>
         </div>
-        
+
         <?php $stmtNoRedTag->close(); ?>
       </div>
-      
+
       <!-- Unserviceable Tab -->
       <div class="tab-pane fade" id="unserviceable" role="tabpanel">
         <?php
@@ -870,11 +927,11 @@ $stmt->close();
           WHERE a.status = 'unserviceable' AND a.quantity > 0
           ORDER BY a.last_updated DESC
         ");
-        
+
         $stmtAllUnserv->execute();
         $allUnservResult = $stmtAllUnserv->get_result();
         ?>
-        
+
         <div class="row mb-4">
           <div class="col-12">
             <div class="alert alert-info">
@@ -891,7 +948,7 @@ $stmt->close();
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">
-              <i class="bi bi-exclamation-circle text-info"></i> 
+              <i class="bi bi-exclamation-circle text-info"></i>
               All Unserviceable Assets (<?= $allUnservResult->num_rows ?> items)
             </h6>
             <form id="unservReportForm" class="d-flex align-items-center gap-2 flex-wrap" action="generate_unserviceable_report.php" method="POST" target="_blank">
@@ -905,18 +962,19 @@ $stmt->close();
                 <label for="unservMonth" class="mb-0 small">Month:</label>
                 <select id="unservMonth" name="month" class="form-select form-select-sm w-auto">
                   <?php for ($m = 1; $m <= 12; $m++): ?>
-                    <option value="<?= $m ?>" <?= ($m == (int)date('n')) ? 'selected' : '' ?>><?= date('F', mktime(0,0,0,$m,1)) ?></option>
+                    <option value="<?= $m ?>" <?= ($m == (int)date('n')) ? 'selected' : '' ?>><?= date('F', mktime(0, 0, 0, $m, 1)) ?></option>
                   <?php endfor; ?>
                 </select>
               </div>
               <label for="unservYear" class="mb-0 small">Year:</label>
               <select id="unservYear" name="year" class="form-select form-select-sm w-auto">
-                <?php $currentY = (int)date('Y'); for ($y = $currentY; $y >= $currentY - 10; $y--): ?>
+                <?php $currentY = (int)date('Y');
+                for ($y = $currentY; $y >= $currentY - 10; $y--): ?>
                   <option value="<?= $y ?>" <?= ($y === $currentY) ? 'selected' : '' ?>><?= $y ?></option>
                 <?php endfor; ?>
               </select>
               <div class="vr d-none d-md-block"></div>
-              
+
               <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill">
                 <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
               </button>
@@ -955,11 +1013,11 @@ $stmt->close();
                         <td>
                           <div class="d-flex align-items-center">
                             <?php if (!empty($row['image'])): ?>
-                              <img src="../img/assets/<?= htmlspecialchars($row['image']) ?>" 
-                                   alt="Asset" class="rounded me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                              <img src="../img/assets/<?= htmlspecialchars($row['image']) ?>"
+                                alt="Asset" class="rounded me-2" style="width: 32px; height: 32px; object-fit: cover;">
                             <?php else: ?>
-                              <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center" 
-                                   style="width: 32px; height: 32px;">
+                              <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center"
+                                style="width: 32px; height: 32px;">
                                 <i class="bi bi-image text-muted"></i>
                               </div>
                             <?php endif; ?>
@@ -1002,24 +1060,24 @@ $stmt->close();
                         <td class="text-nowrap">
                           <div class="d-flex gap-1 flex-wrap">
                             <!-- View Button -->
-                            <button type="button" 
-                                    class="btn btn-sm btn-outline-info rounded-pill" 
-                                    onclick="viewAssetDetails(<?= $row['id'] ?>)"
-                                    title="View Asset Details">
+                            <button type="button"
+                              class="btn btn-sm btn-outline-info rounded-pill"
+                              onclick="viewAssetDetails(<?= $row['id'] ?>)"
+                              title="View Asset Details">
                               <i class="bi bi-eye"></i> View
                             </button>
-                            
+
                             <?php if ($row['red_tagged'] == 0): ?>
                               <?php if (!empty($row['iirup_id'])): ?>
-                                <a href="create_red_tag.php?asset_id=<?= $row['id'] ?>&iirup_id=<?= $row['iirup_id'] ?>" 
-                                   class="btn btn-sm btn-danger rounded-pill" 
-                                   title="Create Red Tag">
+                                <a href="create_red_tag.php?asset_id=<?= $row['id'] ?>&iirup_id=<?= $row['iirup_id'] ?>"
+                                  class="btn btn-sm btn-danger rounded-pill"
+                                  title="Create Red Tag">
                                   <i class="bi bi-tag-fill"></i> Red Tag
                                 </a>
                               <?php else: ?>
-                                <a href="forms.php?id=7&asset_id=<?= $row['id'] ?>&asset_description=<?= urlencode($row['description']) ?>&inventory_tag=<?= urlencode($row['inventory_tag'] ?? $row['property_no'] ?? '') ?>" 
-                                   class="btn btn-sm btn-outline-warning rounded-pill" 
-                                   title="Create IIRUP Form First">
+                                <a href="forms.php?id=7&asset_id=<?= $row['id'] ?>&asset_description=<?= urlencode($row['description']) ?>&inventory_tag=<?= urlencode($row['inventory_tag'] ?? $row['property_no'] ?? '') ?>"
+                                  class="btn btn-sm btn-outline-warning rounded-pill"
+                                  title="Create IIRUP Form First">
                                   <i class="bi bi-file-earmark-plus"></i> IIRUP
                                 </a>
                               <?php endif; ?>
@@ -1048,7 +1106,7 @@ $stmt->close();
             </div>
           </div>
         </div>
-        
+
         <?php $stmtAllUnserv->close(); ?>
       </div>
     </div>
@@ -1086,9 +1144,9 @@ $stmt->close();
         const assetId = this.getAttribute('data-id');
         const source = this.getAttribute('data-source') || 'assets';
 
-        const url = source === 'assets_new'
-          ? `get_assets_new_details.php?id=${assetId}`
-          : `get_asset_details.php?id=${assetId}`;
+        const url = source === 'assets_new' ?
+          `get_assets_new_details.php?id=${assetId}` :
+          `get_asset_details.php?id=${assetId}`;
 
         fetch(url)
           .then(response => response.json())
@@ -1118,42 +1176,42 @@ $stmt->close();
             // Images (guard elements in case some are removed from modal)
             const logoEl = document.getElementById('municipalLogoImg');
             if (logoEl) logoEl.src = '../img/' + (data.system_logo ?? '');
-            
+
             // Handle main image and additional images
             const imgEl = document.getElementById('viewAssetImage');
             const imagesCard = document.getElementById('viewImagesCard');
             const mainImageContainer = document.getElementById('mainImageContainer');
             const additionalImagesContainer = document.getElementById('additionalImagesContainer');
             const additionalImagesDiv = document.getElementById('viewAdditionalImages');
-            
+
             let hasImages = false;
-            
+
             // Handle main image
             if (data.image && imgEl) {
-                imgEl.src = '../img/assets/' + data.image;
-                mainImageContainer.style.display = 'block';
-                hasImages = true;
+              imgEl.src = '../img/assets/' + data.image;
+              mainImageContainer.style.display = 'block';
+              hasImages = true;
             } else if (mainImageContainer) {
-                mainImageContainer.style.display = 'none';
+              mainImageContainer.style.display = 'none';
             }
-            
+
             // Handle additional images
             if (additionalImagesDiv) {
-                additionalImagesDiv.innerHTML = '';
-                
-                if (data.additional_images) {
-                    let additionalImages = [];
-                    try {
-                        additionalImages = JSON.parse(data.additional_images);
-                    } catch (e) {
-                        console.error('Error parsing additional images:', e);
-                    }
-                    
-                    if (Array.isArray(additionalImages) && additionalImages.length > 0) {
-                        additionalImages.forEach((imageName, index) => {
-                            const imgDiv = document.createElement('div');
-                            imgDiv.className = 'position-relative';
-                            imgDiv.innerHTML = `
+              additionalImagesDiv.innerHTML = '';
+
+              if (data.additional_images) {
+                let additionalImages = [];
+                try {
+                  additionalImages = JSON.parse(data.additional_images);
+                } catch (e) {
+                  console.error('Error parsing additional images:', e);
+                }
+
+                if (Array.isArray(additionalImages) && additionalImages.length > 0) {
+                  additionalImages.forEach((imageName, index) => {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.className = 'position-relative';
+                    imgDiv.innerHTML = `
                                 <img src="../img/assets/${imageName}" 
                                      alt="Additional Image ${index + 1}" 
                                      class="img-thumbnail" 
@@ -1164,21 +1222,21 @@ $stmt->close();
                                     ${index + 1}
                                 </div>
                             `;
-                            additionalImagesDiv.appendChild(imgDiv);
-                        });
-                        additionalImagesContainer.style.display = 'block';
-                        hasImages = true;
-                    } else {
-                        additionalImagesContainer.style.display = 'none';
-                    }
+                    additionalImagesDiv.appendChild(imgDiv);
+                  });
+                  additionalImagesContainer.style.display = 'block';
+                  hasImages = true;
                 } else {
-                    additionalImagesContainer.style.display = 'none';
+                  additionalImagesContainer.style.display = 'none';
                 }
+              } else {
+                additionalImagesContainer.style.display = 'none';
+              }
             }
-            
+
             // Show/hide images card based on whether there are any images
             if (imagesCard) {
-                imagesCard.style.display = hasImages ? 'block' : 'none';
+              imagesCard.style.display = hasImages ? 'block' : 'none';
             }
 
             // Items table (from asset_items)
@@ -1226,15 +1284,24 @@ $stmt->close();
       if ($table.length === 0) return;
 
       // Initialize DataTable (guard against double initialization)
-      const dt = $.fn.DataTable.isDataTable($table) 
-        ? $table.DataTable()
-        : $table.DataTable({
-            order: [[6, 'desc']], // Last Updated column index after adding checkbox
-            columnDefs: [
-              { targets: 0, orderable: false, searchable: false }, // checkbox column
-              { targets: -1, orderable: false, searchable: false } // actions column
-            ]
-          });
+      const dt = $.fn.DataTable.isDataTable($table) ?
+        $table.DataTable() :
+        $table.DataTable({
+          order: [
+            [6, 'desc']
+          ], // Last Updated column index after adding checkbox
+          columnDefs: [{
+              targets: 0,
+              orderable: false,
+              searchable: false
+            }, // checkbox column
+            {
+              targets: -1,
+              orderable: false,
+              searchable: false
+            } // actions column
+          ]
+        });
 
       // Search box hookup
       const $search = $('#unservSearch');
@@ -1274,7 +1341,9 @@ $stmt->close();
 
       // Month visibility toggle (reuse if exists)
       const monthWrap = document.getElementById('unservMonthWrap');
-      const toggleMonth = () => { if (typeSel && monthWrap) monthWrap.style.display = (typeSel.value === 'monthly') ? 'flex' : 'none'; };
+      const toggleMonth = () => {
+        if (typeSel && monthWrap) monthWrap.style.display = (typeSel.value === 'monthly') ? 'flex' : 'none';
+      };
       toggleMonth();
       if (typeSel) typeSel.addEventListener('change', toggleMonth);
 
@@ -1285,7 +1354,9 @@ $stmt->close();
 
       // Apply selection state when table draws (pagination, filtering, etc.)
       $table.on('draw.dt', function() {
-        dt.rows({ search: 'applied' }).every(function() {
+        dt.rows({
+          search: 'applied'
+        }).every(function() {
           const node = this.node();
           const cb = node.querySelector('input.unserv-checkbox');
           if (cb) cb.checked = selected.has(cb.value);
@@ -1294,19 +1365,23 @@ $stmt->close();
 
       // Row checkbox handler
       $table.on('change', 'input.unserv-checkbox', function() {
-        if (this.checked) selected.add(this.value); else selected.delete(this.value);
+        if (this.checked) selected.add(this.value);
+        else selected.delete(this.value);
         updateCount();
       });
 
       // Select All for filtered rows
       $('#selectAllUnserv').on('change', function() {
         const checked = this.checked;
-        dt.rows({ search: 'applied' }).every(function() {
+        dt.rows({
+          search: 'applied'
+        }).every(function() {
           const node = this.node();
           const cb = node.querySelector('input.unserv-checkbox');
           if (cb) {
             cb.checked = checked;
-            if (checked) selected.add(cb.value); else selected.delete(cb.value);
+            if (checked) selected.add(cb.value);
+            else selected.delete(cb.value);
           }
         });
         updateCount();
@@ -1314,7 +1389,10 @@ $stmt->close();
 
       // Print Selected button posts selected ids
       $('#btnPrintSelectedUnserv').on('click', function() {
-        if (selected.size === 0) { alert('Please select at least one asset.'); return; }
+        if (selected.size === 0) {
+          alert('Please select at least one asset.');
+          return;
+        }
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = 'generate_unserviceable_report.php';
@@ -1333,7 +1411,10 @@ $stmt->close();
         const office = document.querySelector('input[name="office"][type="hidden"]');
         if (office) {
           const inp = document.createElement('input');
-          inp.type = 'hidden'; inp.name = 'office'; inp.value = office.value; form.appendChild(inp);
+          inp.type = 'hidden';
+          inp.name = 'office';
+          inp.value = office.value;
+          form.appendChild(inp);
         }
 
         document.body.appendChild(form);
@@ -1347,23 +1428,29 @@ $stmt->close();
     document.querySelectorAll('.viewAssetNoTagBtn').forEach(button => {
       button.addEventListener('click', function() {
         const assetId = this.getAttribute('data-id');
-        if (!assetId) { alert('No asset ID found'); return; }
+        if (!assetId) {
+          alert('No asset ID found');
+          return;
+        }
 
         // Always fetch from main asset details endpoint; backend may return either direct object or {success, asset}
         fetch(`get_asset_details.php?id=${assetId}`)
           .then(r => r.json())
           .then(resp => {
             // Normalize response: direct object or wrapped
-            const data = (resp && typeof resp === 'object' && 'asset' in resp)
-              ? resp.asset
-              : resp;
+            const data = (resp && typeof resp === 'object' && 'asset' in resp) ?
+              resp.asset :
+              resp;
             if (!data || data.error || resp?.success === false) {
               alert(data?.error || resp?.message || 'Failed to load asset details');
               return;
             }
 
             // Safe setters
-            const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? ''; };
+            const setText = (id, val) => {
+              const el = document.getElementById(id);
+              if (el) el.textContent = val ?? '';
+            };
 
             // Populate core fields
             setText('viewOfficeName', data.office_name ?? '');
@@ -1402,7 +1489,11 @@ $stmt->close();
               additionalImagesDiv.innerHTML = '';
               let additionalImages = [];
               if (data.additional_images) {
-                try { additionalImages = Array.isArray(data.additional_images) ? data.additional_images : JSON.parse(data.additional_images); } catch(e) { additionalImages = []; }
+                try {
+                  additionalImages = Array.isArray(data.additional_images) ? data.additional_images : JSON.parse(data.additional_images);
+                } catch (e) {
+                  additionalImages = [];
+                }
               }
               if (Array.isArray(additionalImages) && additionalImages.length > 0) {
                 additionalImages.forEach((imageName, index) => {
@@ -1474,7 +1565,11 @@ $stmt->close();
     function fmtDate(dateStr) {
       if (!dateStr) return '—';
       const d = new Date(dateStr);
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      return d.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
     }
 
     document.querySelectorAll('.viewConsumableBtn').forEach(btn => {
@@ -1483,7 +1578,10 @@ $stmt->close();
         fetch(`get_asset_details.php?id=${id}`)
           .then(r => r.json())
           .then(data => {
-            if (data.error) { alert(data.error); return; }
+            if (data.error) {
+              alert(data.error);
+              return;
+            }
 
             // Populate basic fields
             document.getElementById('consDescription').textContent = data.description ?? '—';
@@ -1518,7 +1616,10 @@ $stmt->close();
       fetch(`get_asset_details.php?id=${assetId}`)
         .then(r => r.json())
         .then(data => {
-          if (data.error) { alert(data.error); return; }
+          if (data.error) {
+            alert(data.error);
+            return;
+          }
           if (action === 'view') {
             // Re-populate the same modal with the selected asset's details
             document.querySelector(`#viewAssetModal .viewAssetBtn[data-id="${assetId}"]`);
@@ -1567,7 +1668,10 @@ $stmt->close();
             }
           } else if (action === 'edit') {
             // Populate Update Asset modal fields
-            const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+            const setVal = (id, val) => {
+              const el = document.getElementById(id);
+              if (el) el.value = val ?? '';
+            };
             setVal('asset_id', data.id);
             setVal('edit_asset_description', data.description);
             setVal('edit_asset_unit', data.unit);
@@ -1584,7 +1688,10 @@ $stmt->close();
             if (updateModalEl) new bootstrap.Modal(updateModalEl).show();
           } else if (action === 'delete') {
             // Populate Delete Asset modal
-            const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+            const setVal = (id, val) => {
+              const el = document.getElementById(id);
+              if (el) el.value = val ?? '';
+            };
             setVal('delete_asset_id', data.id);
             const nameEl = document.getElementById('delete_asset_name');
             if (nameEl) nameEl.textContent = data.description ?? '';
@@ -1594,70 +1701,72 @@ $stmt->close();
         })
         .catch(err => console.error('Asset action error:', err));
     }
-    
+
     // Force delete asset (No Property Tab) and update parent quantity
     window.forceDeleteAsset = function(assetId) {
       if (!assetId) return;
       if (!confirm('This will permanently delete the asset and update quantities. Continue?')) return;
       fetch('force_delete_asset.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'id=' + encodeURIComponent(assetId)
-      })
-      .then(async (r) => {
-        const txt = await r.text();
-        let data;
-        try {
-          data = JSON.parse(txt);
-        } catch(e) {
-          throw new Error('Invalid server response');
-        }
-        if (!r.ok) {
-          const msg = (data && data.message) ? data.message : 'Failed to delete asset';
-          throw new Error(msg);
-        }
-        return data;
-      })
-      .then(resp => {
-        if (resp && resp.success) {
-          const alerts = document.getElementById('pageAlerts');
-          if (alerts) {
-            alerts.innerHTML = `
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: 'id=' + encodeURIComponent(assetId)
+        })
+        .then(async (r) => {
+          const txt = await r.text();
+          let data;
+          try {
+            data = JSON.parse(txt);
+          } catch (e) {
+            throw new Error('Invalid server response');
+          }
+          if (!r.ok) {
+            const msg = (data && data.message) ? data.message : 'Failed to delete asset';
+            throw new Error(msg);
+          }
+          return data;
+        })
+        .then(resp => {
+          if (resp && resp.success) {
+            const alerts = document.getElementById('pageAlerts');
+            if (alerts) {
+              alerts.innerHTML = `
               <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="bi bi-check-circle"></i> Asset deleted successfully.
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
               </div>`;
-          }
-          // Reload to refresh counts/lists
-          setTimeout(() => location.reload(), 600);
-        } else {
-          const msg = (resp && resp.message) ? resp.message : 'Failed to delete asset';
-          const alerts = document.getElementById('pageAlerts');
-          if (alerts) {
-            alerts.innerHTML = `
+            }
+            // Reload to refresh counts/lists
+            setTimeout(() => location.reload(), 600);
+          } else {
+            const msg = (resp && resp.message) ? resp.message : 'Failed to delete asset';
+            const alerts = document.getElementById('pageAlerts');
+            if (alerts) {
+              alerts.innerHTML = `
               <div class="alert alert-warning alert-dismissible fade show" role="alert">
                 <i class="bi bi-exclamation-triangle"></i> ${msg}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
               </div>`;
-          } else {
-            alert(msg);
+            } else {
+              alert(msg);
+            }
           }
-        }
-      })
-      .catch(err => {
-        const alerts = document.getElementById('pageAlerts');
-        if (alerts) {
-          alerts.innerHTML = `
+        })
+        .catch(err => {
+          const alerts = document.getElementById('pageAlerts');
+          if (alerts) {
+            alerts.innerHTML = `
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
               <i class="bi bi-x-circle"></i> ${err.message || 'Unexpected error while deleting asset.'}
               <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>`;
-        } else {
-          alert(err.message || 'Unexpected error while deleting asset.');
-        }
-      });
+          } else {
+            alert(err.message || 'Unexpected error while deleting asset.');
+          }
+        });
     }
-    
+
     // Function to show image in modal
     window.showImageModal = function(imageSrc, imageTitle) {
       // Create modal if it doesn't exist
@@ -1681,11 +1790,11 @@ $stmt->close();
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         imageModal = document.getElementById('imageViewModal');
       }
-      
+
       // Update modal content
       document.getElementById('imageViewModalLabel').textContent = imageTitle;
       document.getElementById('modalImage').src = imageSrc;
-      
+
       // Show modal
       const modal = new bootstrap.Modal(imageModal);
       modal.show();
@@ -1694,7 +1803,7 @@ $stmt->close();
     // Function to view asset details with multiple images
     window.viewAssetDetails = function(assetId) {
       if (!assetId) return;
-      
+
       // Fetch asset details including additional images
       fetch('get_asset_details.php?id=' + encodeURIComponent(assetId))
         .then(response => response.json())
@@ -1752,7 +1861,7 @@ $stmt->close();
       let imagesHTML = '';
       if (asset.image || additionalImages.length > 0) {
         imagesHTML = '<div class="row g-2 mb-4">';
-        
+
         // Main image
         if (asset.image) {
           imagesHTML += `
@@ -1770,7 +1879,7 @@ $stmt->close();
             </div>
           `;
         }
-        
+
         // Additional images
         additionalImages.forEach((imageName, index) => {
           imagesHTML += `
@@ -1788,7 +1897,7 @@ $stmt->close();
             </div>
           `;
         });
-        
+
         imagesHTML += '</div>';
       } else {
         imagesHTML = `
@@ -1849,7 +1958,7 @@ $stmt->close();
       // Update modal content and show
       document.getElementById('assetDetailsContent').innerHTML = modalContent;
       document.getElementById('assetDetailsModalLabel').textContent = `Asset Details - ${asset.description || 'Unknown Asset'}`;
-      
+
       const modal = new bootstrap.Modal(detailsModal);
       modal.show();
     }
@@ -1883,61 +1992,63 @@ $stmt->close();
 
         // Call the existing forceDeleteAsset function
         fetch('force_delete_asset.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: 'id=' + encodeURIComponent(currentAssetId)
-        })
-        .then(async (r) => {
-          const txt = await r.text();
-          let data;
-          try {
-            data = JSON.parse(txt);
-          } catch(e) {
-            throw new Error('Invalid server response');
-          }
-          if (!r.ok) {
-            const msg = (data && data.message) ? data.message : 'Failed to delete asset';
-            throw new Error(msg);
-          }
-          return data;
-        })
-        .then(resp => {
-          if (resp && resp.success) {
-            // Hide modal
-            $('#deleteNoPropertyTagModal').modal('hide');
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'id=' + encodeURIComponent(currentAssetId)
+          })
+          .then(async (r) => {
+            const txt = await r.text();
+            let data;
+            try {
+              data = JSON.parse(txt);
+            } catch (e) {
+              throw new Error('Invalid server response');
+            }
+            if (!r.ok) {
+              const msg = (data && data.message) ? data.message : 'Failed to delete asset';
+              throw new Error(msg);
+            }
+            return data;
+          })
+          .then(resp => {
+            if (resp && resp.success) {
+              // Hide modal
+              $('#deleteNoPropertyTagModal').modal('hide');
 
-            // Show success message
-            const alerts = document.getElementById('pageAlerts');
-            if (alerts) {
-              alerts.innerHTML = `
+              // Show success message
+              const alerts = document.getElementById('pageAlerts');
+              if (alerts) {
+                alerts.innerHTML = `
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                   <i class="bi bi-check-circle"></i> Asset deleted and archived successfully.
                   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>`;
-            }
-            
-            // Reload page to refresh the table
-            setTimeout(() => location.reload(), 1000);
-          } else {
-            throw new Error(resp.message || 'Failed to delete asset');
-          }
-        })
-        .catch(err => {
-          // Reset button state
-          button.prop('disabled', false).html(originalText);
+              }
 
-          // Show error message
-          const alerts = document.getElementById('pageAlerts');
-          if (alerts) {
-            alerts.innerHTML = `
+              // Reload page to refresh the table
+              setTimeout(() => location.reload(), 1000);
+            } else {
+              throw new Error(resp.message || 'Failed to delete asset');
+            }
+          })
+          .catch(err => {
+            // Reset button state
+            button.prop('disabled', false).html(originalText);
+
+            // Show error message
+            const alerts = document.getElementById('pageAlerts');
+            if (alerts) {
+              alerts.innerHTML = `
               <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i class="bi bi-x-circle"></i> ${err.message || 'Unexpected error while deleting asset.'}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
               </div>`;
-          } else {
-            alert(err.message || 'Unexpected error while deleting asset.');
-          }
-        });
+            } else {
+              alert(err.message || 'Unexpected error while deleting asset.');
+            }
+          });
       });
 
       // Reset modal when hidden
@@ -1946,7 +2057,183 @@ $stmt->close();
         $('#confirmDeleteNoPropertyTag').prop('disabled', false).html('<i class="bi bi-trash me-2"></i>Yes, Delete Asset');
       });
     });
+
+    // Asset filtering and export functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const assetDateFilter = document.getElementById('assetDateFilter');
+      const customDateRangeAsset = document.getElementById('customDateRangeAsset');
+      const assetFromDate = document.getElementById('assetFromDate');
+      const assetToDate = document.getElementById('assetToDate');
+      const applyCustomFilterAsset = document.getElementById('applyCustomFilterAsset');
+
+      // Show/hide custom date range inputs for assets
+      if (assetDateFilter) {
+        assetDateFilter.addEventListener('change', function() {
+          if (this.value === 'custom') {
+            customDateRangeAsset.style.display = 'flex';
+          } else {
+            customDateRangeAsset.style.display = 'none';
+            // Auto-apply filter for predefined ranges
+            applyDateFilterAsset();
+          }
+        });
+      }
+
+      // Apply custom date filter for assets
+      if (applyCustomFilterAsset) {
+        applyCustomFilterAsset.addEventListener('click', applyDateFilterAsset);
+      }
+
+      // Function to get date range based on filter selection
+      function getDateRangeAsset(filterType) {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        const currentQuarter = Math.floor(currentMonth / 3);
+
+        switch (filterType) {
+          case 'current_month':
+            return {
+              from: new Date(currentYear, currentMonth, 1).toISOString().split('T')[0],
+                to: new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0]
+            };
+          case 'current_quarter':
+            const quarterStart = currentQuarter * 3;
+            return {
+              from: new Date(currentYear, quarterStart, 1).toISOString().split('T')[0],
+                to: new Date(currentYear, quarterStart + 3, 0).toISOString().split('T')[0]
+            };
+          case 'current_year':
+            return {
+              from: new Date(currentYear, 0, 1).toISOString().split('T')[0],
+                to: new Date(currentYear, 11, 31).toISOString().split('T')[0]
+            };
+          case 'last_month':
+            const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+            const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+            return {
+              from: new Date(lastMonthYear, lastMonth, 1).toISOString().split('T')[0],
+                to: new Date(lastMonthYear, lastMonth + 1, 0).toISOString().split('T')[0]
+            };
+          case 'last_quarter':
+            const lastQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
+            const lastQuarterYear = currentQuarter === 0 ? currentYear - 1 : currentYear;
+            const lastQuarterStart = lastQuarter * 3;
+            return {
+              from: new Date(lastQuarterYear, lastQuarterStart, 1).toISOString().split('T')[0],
+                to: new Date(lastQuarterYear, lastQuarterStart + 3, 0).toISOString().split('T')[0]
+            };
+          case 'last_year':
+            return {
+              from: new Date(currentYear - 1, 0, 1).toISOString().split('T')[0],
+                to: new Date(currentYear - 1, 11, 31).toISOString().split('T')[0]
+            };
+          case 'custom':
+            return {
+              from: assetFromDate.value,
+                to: assetToDate.value
+            };
+          default:
+            return null;
+        }
+      }
+
+      // Apply date filter to asset table
+      function applyDateFilterAsset() {
+        const filterType = assetDateFilter.value;
+        const dateRange = getDateRangeAsset(filterType);
+
+        if (!dateRange || filterType === 'all') {
+          // Show all rows
+          const assetTable = document.querySelector('#assets table tbody');
+          if (assetTable) {
+            [...assetTable.querySelectorAll('tr')].forEach(tr => {
+              tr.style.display = '';
+            });
+          }
+          return;
+        }
+
+        const fromDate = new Date(dateRange.from);
+        const toDate = new Date(dateRange.to);
+
+        const assetTable = document.querySelector('#assets table tbody');
+        if (assetTable) {
+          [...assetTable.querySelectorAll('tr')].forEach(tr => {
+            // Find the date created column (adjust index as needed)
+            const dateCells = tr.querySelectorAll('td');
+            if (dateCells.length > 10) { // Assuming date created is around column 11
+              const dateText = dateCells[dateCells.length - 2].textContent.trim(); // Second to last column
+              const rowDate = new Date(dateText);
+              const isInRange = rowDate >= fromDate && rowDate <= toDate;
+              tr.style.display = isInRange ? '' : 'none';
+            }
+          });
+        }
+      }
+
+      // Export CSV for Assets with date filtering
+      const assetExportCsvBtn = document.getElementById('assetExportCsvBtn');
+      if (assetExportCsvBtn) {
+        assetExportCsvBtn.addEventListener('click', () => {
+          const filterType = assetDateFilter.value;
+          const dateRange = getDateRangeAsset(filterType);
+          const officeFilter = new URLSearchParams(window.location.search).get('office') || 'all';
+
+          let exportUrl = 'export_assets_csv.php';
+          const params = new URLSearchParams({
+            office: officeFilter
+          });
+
+          if (dateRange && filterType !== 'all') {
+            params.append('filter_type', filterType);
+            params.append('from_date', dateRange.from);
+            params.append('to_date', dateRange.to);
+          }
+
+          exportUrl += '?' + params.toString();
+
+          // Direct download of CSV
+          window.location.href = exportUrl;
+        });
+      }
+
+      // Export PDF for Assets with date filtering
+      const assetExportPdfBtn = document.getElementById('assetExportPdfBtn');
+      if (assetExportPdfBtn) {
+        assetExportPdfBtn.addEventListener('click', () => {
+          const filterType = assetDateFilter.value;
+          const dateRange = getDateRangeAsset(filterType);
+          const officeFilter = new URLSearchParams(window.location.search).get('office') || 'all';
+
+          let exportUrl = 'export_assets_pdf.php';
+          const params = new URLSearchParams({
+            office: officeFilter
+          });
+
+          if (dateRange && filterType !== 'all') {
+            params.append('filter_type', filterType);
+            params.append('from_date', dateRange.from);
+            params.append('to_date', dateRange.to);
+          }
+
+          exportUrl += '?' + params.toString();
+
+          // Open PDF in new tab
+          window.open(exportUrl, '_blank');
+        });
+      }
+
+      // Refresh button for Assets
+      const assetRefreshBtn = document.getElementById('assetRefreshBtn');
+      if (assetRefreshBtn) {
+        assetRefreshBtn.addEventListener('click', () => {
+          window.location.reload();
+        });
+      }
+    });
   </script>
 
 </body>
+
 </html>
