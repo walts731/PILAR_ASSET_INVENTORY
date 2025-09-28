@@ -144,6 +144,18 @@ require_once "engine/login_engine.php";
                         </div>
                     <?php endif; ?>
 
+                    <?php 
+                    // Handle logout messages
+                    if (isset($_GET['message'])) {
+                        if ($_GET['message'] === 'logged_out_all') {
+                            echo '<div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+                                <i class="bi bi-check-circle me-2"></i>You have been logged out from all devices successfully.
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>';
+                        }
+                    }
+                    ?>
+
                     <form method="post" autocomplete="off" novalidate>
                         <input type="text" name="fakeusernameremembered" style="display:none">
                         <input type="password" name="fakepasswordremembered" style="display:none">
@@ -171,7 +183,7 @@ require_once "engine/login_engine.php";
 
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="1" id="rememberMe">
+                                <input class="form-check-input" type="checkbox" name="remember_me" value="1" id="rememberMe">
                                 <label class="form-check-label" for="rememberMe">
                                     Remember me
                                 </label>
