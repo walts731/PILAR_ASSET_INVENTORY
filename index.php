@@ -12,6 +12,35 @@ if (isset($conn) && $conn instanceof mysqli) {
         $system = $result->fetch_assoc();
     }
 }
+
+// Fetch legal documents (Privacy Policy and Terms of Service)
+$privacy_policy = null;
+$terms_of_service = null;
+
+if (isset($conn) && $conn instanceof mysqli) {
+    // Get Privacy Policy
+    $stmt = $conn->prepare("SELECT title, content, version, effective_date FROM legal_documents WHERE document_type = 'privacy_policy' AND is_active = 1 ORDER BY created_at DESC LIMIT 1");
+    if ($stmt) {
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
+            $privacy_policy = $result->fetch_assoc();
+        }
+        $stmt->close();
+    }
+    
+    // Get Terms of Service
+    $stmt = $conn->prepare("SELECT title, content, version, effective_date FROM legal_documents WHERE document_type = 'terms_of_service' AND is_active = 1 ORDER BY created_at DESC LIMIT 1");
+    if ($stmt) {
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
+            $terms_of_service = $result->fetch_assoc();
+        }
+        $stmt->close();
+    }
+}
+
 // Include login engine AFTER fetching system settings to avoid closing the connection prematurely
 require_once "engine/login_engine.php";
 ?>

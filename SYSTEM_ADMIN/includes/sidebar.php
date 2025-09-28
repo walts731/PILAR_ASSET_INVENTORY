@@ -98,6 +98,10 @@ $page = basename($_SERVER['PHP_SELF'], ".php");
             </a>
             <?php endif; ?>
 
+            <a href="../SYSTEM_ADMIN/manage_legal_documents.php" class="<?= ($page == 'manage_legal_documents') ? 'active' : '' ?>">
+                <i class="bi bi-file-text-fill"></i> Legal Documents
+            </a>
+
             <a href="../SYSTEM_ADMIN/edit_system.php" class="<?= ($page == 'System') ? 'active' : '' ?>">
                 <i class="bi bi-gear"></i> System
             </a>
