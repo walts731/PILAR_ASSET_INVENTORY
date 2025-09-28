@@ -133,7 +133,35 @@ echo "<!-- SIDEBAR DEBUG: user_id={$user_id} | office_id=" . htmlspecialchars($o
                 <?php endforeach; ?>
             </div>
 
-            <a href="borrow.php" class="<?= ($page == 'borrow') ? 'active' : '' ?>"><i class="bi bi-arrow-left-right"></i> Borrow</a>
+            <!-- Borrowing Menu -->
+            <a class="<?= (in_array($page, ['borrow', 'inter_department_borrow', 'view_inter_dept_cart', 'inter_dept_borrow_requests'])) ? 'active' : '' ?>"
+               data-bs-toggle="collapse" href="#borrowSubMenu" role="button"
+               aria-expanded="<?= (in_array($page, ['borrow', 'inter_department_borrow', 'view_inter_dept_cart', 'inter_dept_borrow_requests'])) ? 'true' : 'false' ?>"
+               aria-controls="borrowSubMenu">
+                <i class="bi bi-arrow-left-right"></i> Borrowing
+                <i class="bi bi-caret-down-fill float-end"></i>
+            </a>
+            <div class="collapse ps-4 <?= (in_array($page, ['borrow', 'inter_department_borrow', 'view_inter_dept_cart', 'inter_dept_borrow_requests'])) ? 'show' : '' ?>" id="borrowSubMenu">
+                <a class="nav-link <?= ($page == 'borrow') ? 'active' : '' ?>" href="borrow.php">
+                    <i class="bi bi-arrow-left-right"></i> Within Office
+                </a>
+                <a class="nav-link <?= ($page == 'inter_department_borrow' || $page == 'view_inter_dept_cart') ? 'active' : '' ?>" href="inter_department_borrow.php">
+                    <i class="bi bi-building"></i> Inter-Department
+                    <?php 
+                    // Get count of pending requests for the current user
+                    $pending_count = 0;
+                    if (isset($_SESSION['inter_dept_cart'])) {
+                        $pending_count = count($_SESSION['inter_dept_cart']);
+                    }
+                    if ($pending_count > 0): ?>
+                        <span class="badge bg-danger float-end"><?= $pending_count ?></span>
+                    <?php endif; ?>
+                </a>
+                <a class="nav-link <?= ($page == 'inter_dept_borrow_requests') ? 'active' : '' ?>" href="inter_dept_borrow_requests.php">
+                    <i class="bi bi-list-check"></i> My Requests
+                </a>
+            </div>
+            
             <a href="usage.php" class="<?= ($page == 'usage') ? 'active' : '' ?>">
                 <i class="bi bi-clock-history"></i> Usage
             </a>
