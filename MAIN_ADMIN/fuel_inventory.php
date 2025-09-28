@@ -243,19 +243,47 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
         <!-- Fuel Out Tab -->
         <div class="tab-pane fade" id="fuel-out" role="tabpanel">
           <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <strong><i class="bi bi-truck me-1"></i> Fuel Out Records</strong>
-              <div class="d-flex gap-2 align-items-center">
-                <input type="text" id="fuelOutSearch" class="form-control form-control-sm" placeholder="Search..." />
-                <button class="btn btn-sm btn-outline-secondary" id="fuelOutRefreshBtn" title="Refresh">
-                  <i class="bi bi-arrow-clockwise"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-secondary" id="fuelOutExportCsvBtn" title="Export CSV">
-                  <i class="bi bi-filetype-csv"></i>
-                </button>
-                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addFuelOutModal">
-                  <i class="bi bi-plus-circle me-1"></i> Add Fuel Out
-                </button>
+            <div class="card-header">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <strong><i class="bi bi-truck me-1"></i> Fuel Out Records</strong>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                  <div class="d-flex align-items-center gap-2">
+                    <label for="fuelOutDateFilter" class="form-label mb-0 small">Filter:</label>
+                    <select id="fuelOutDateFilter" class="form-select form-select-sm" style="min-width: 120px;">
+                      <option value="all">All Records</option>
+                      <option value="current_month">Current Month</option>
+                      <option value="current_quarter">Current Quarter</option>
+                      <option value="current_year">Current Year</option>
+                      <option value="last_month">Last Month</option>
+                      <option value="last_quarter">Last Quarter</option>
+                      <option value="last_year">Last Year</option>
+                      <option value="custom">Custom Range</option>
+                    </select>
+                  </div>
+                  <div id="customDateRange" class="d-flex align-items-center gap-2" style="display: none;">
+                    <input type="date" id="fuelOutFromDate" class="form-control form-control-sm" />
+                    <span class="small">to</span>
+                    <input type="date" id="fuelOutToDate" class="form-control form-control-sm" />
+                    <button class="btn btn-sm btn-outline-primary" id="applyCustomFilter" title="Apply Filter">
+                      <i class="bi bi-funnel"></i>
+                    </button>
+                  </div>
+                  <input type="text" id="fuelOutSearch" class="form-control form-control-sm" placeholder="Search..." />
+                  <button class="btn btn-sm btn-outline-secondary" id="fuelOutRefreshBtn" title="Refresh">
+                    <i class="bi bi-arrow-clockwise"></i>
+                  </button>
+                  <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-secondary" id="fuelOutExportCsvBtn" title="Export CSV">
+                      <i class="bi bi-filetype-csv"></i> CSV
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="fuelOutExportPdfBtn" title="Export PDF">
+                      <i class="bi bi-filetype-pdf"></i> PDF
+                    </button>
+                  </div>
+                  <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addFuelOutModal">
+                    <i class="bi bi-plus-circle me-1"></i> Add Fuel Out
+                  </button>
+                </div>
               </div>
             </div>
             <div class="card-body table-responsive">
@@ -626,12 +654,154 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
       });
     }
 
-    // Export CSV for Fuel Out
+    // Date filter functionality for Fuel Out
+    const fuelOutDateFilter = document.getElementById('fuelOutDateFilter');
+    const customDateRange = document.getElementById('customDateRange');
+    const fuelOutFromDate = document.getElementById('fuelOutFromDate');
+    const fuelOutToDate = document.getElementById('fuelOutToDate');
+    const applyCustomFilter = document.getElementById('applyCustomFilter');
+
+    // Show/hide custom date range inputs
+    if (fuelOutDateFilter) {
+      fuelOutDateFilter.addEventListener('change', function() {
+        if (this.value === 'custom') {
+          customDateRange.style.display = 'flex';
+        } else {
+          customDateRange.style.display = 'none';
+          // Auto-apply filter for predefined ranges
+          applyDateFilter();
+        }
+      });
+    }
+
+    // Apply custom date filter
+    if (applyCustomFilter) {
+      applyCustomFilter.addEventListener('click', applyDateFilter);
+    }
+
+    // Function to get date range based on filter selection
+    function getDateRange(filterType) {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const currentQuarter = Math.floor(currentMonth / 3);
+      
+      switch (filterType) {
+        case 'current_month':
+          return {
+            from: new Date(currentYear, currentMonth, 1).toISOString().split('T')[0],
+            to: new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0]
+          };
+        case 'current_quarter':
+          const quarterStart = currentQuarter * 3;
+          return {
+            from: new Date(currentYear, quarterStart, 1).toISOString().split('T')[0],
+            to: new Date(currentYear, quarterStart + 3, 0).toISOString().split('T')[0]
+          };
+        case 'current_year':
+          return {
+            from: new Date(currentYear, 0, 1).toISOString().split('T')[0],
+            to: new Date(currentYear, 11, 31).toISOString().split('T')[0]
+          };
+        case 'last_month':
+          const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+          const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+          return {
+            from: new Date(lastMonthYear, lastMonth, 1).toISOString().split('T')[0],
+            to: new Date(lastMonthYear, lastMonth + 1, 0).toISOString().split('T')[0]
+          };
+        case 'last_quarter':
+          const lastQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
+          const lastQuarterYear = currentQuarter === 0 ? currentYear - 1 : currentYear;
+          const lastQuarterStart = lastQuarter * 3;
+          return {
+            from: new Date(lastQuarterYear, lastQuarterStart, 1).toISOString().split('T')[0],
+            to: new Date(lastQuarterYear, lastQuarterStart + 3, 0).toISOString().split('T')[0]
+          };
+        case 'last_year':
+          return {
+            from: new Date(currentYear - 1, 0, 1).toISOString().split('T')[0],
+            to: new Date(currentYear - 1, 11, 31).toISOString().split('T')[0]
+          };
+        case 'custom':
+          return {
+            from: fuelOutFromDate.value,
+            to: fuelOutToDate.value
+          };
+        default:
+          return null;
+      }
+    }
+
+    // Apply date filter to table
+    function applyDateFilter() {
+      const filterType = fuelOutDateFilter.value;
+      const dateRange = getDateRange(filterType);
+      
+      if (!dateRange || filterType === 'all') {
+        // Show all rows
+        [...fuelOutTbody.querySelectorAll('tr')].forEach(tr => {
+          tr.style.display = '';
+        });
+        return;
+      }
+
+      const fromDate = new Date(dateRange.from);
+      const toDate = new Date(dateRange.to);
+
+      [...fuelOutTbody.querySelectorAll('tr')].forEach(tr => {
+        const dateCell = tr.querySelector('td:first-child');
+        if (dateCell) {
+          const rowDate = new Date(dateCell.textContent);
+          const isInRange = rowDate >= fromDate && rowDate <= toDate;
+          tr.style.display = isInRange ? '' : 'none';
+        }
+      });
+    }
+
+    // Export CSV for Fuel Out with date filtering
     const fuelOutExportBtn = document.getElementById('fuelOutExportCsvBtn');
     if (fuelOutExportBtn) {
       fuelOutExportBtn.addEventListener('click', () => {
+        const filterType = fuelOutDateFilter.value;
+        const dateRange = getDateRange(filterType);
+        
+        let exportUrl = 'export_fuel_out_csv.php';
+        
+        if (dateRange && filterType !== 'all') {
+          const params = new URLSearchParams({
+            filter_type: filterType,
+            from_date: dateRange.from,
+            to_date: dateRange.to
+          });
+          exportUrl += '?' + params.toString();
+        }
+        
         // Direct download of CSV (server will stream the file)
-        window.location.href = 'export_fuel_out_csv.php';
+        window.location.href = exportUrl;
+      });
+    }
+
+    // Export PDF for Fuel Out with date filtering
+    const fuelOutExportPdfBtn = document.getElementById('fuelOutExportPdfBtn');
+    if (fuelOutExportPdfBtn) {
+      fuelOutExportPdfBtn.addEventListener('click', () => {
+        const filterType = fuelOutDateFilter.value;
+        const dateRange = getDateRange(filterType);
+        
+        let exportUrl = 'export_fuel_out_pdf.php';
+        
+        if (dateRange && filterType !== 'all') {
+          const params = new URLSearchParams({
+            filter_type: filterType,
+            from_date: dateRange.from,
+            to_date: dateRange.to
+          });
+          exportUrl += '?' + params.toString();
+        }
+        
+        // Open PDF in new tab for viewing/downloading
+        window.open(exportUrl, '_blank');
       });
     }
 
