@@ -804,12 +804,31 @@ try {
             const values = rows.map(r => parseFloat(r.quantity || '0'));
             const total = values.reduce((a,b)=>a+b,0);
 
-            // Nice color palette
-            const palette = [
+            // Glass effect color palette with gradients
+            const baseColors = [
               '#0d6efd','#6f42c1','#20c997','#ffc107','#dc3545',
               '#198754','#fd7e14','#0dcaf0','#6610f2','#6c757d'
             ];
-            const bg = labels.map((_,i)=> palette[i % palette.length]);
+            
+            // Create glass effect gradients for fuel chart
+            const fuelGlassGradients = labels.map((_, i) => {
+              const baseColor = baseColors[i % baseColors.length];
+              const gradient = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2, 0,
+                canvas.width / 2, canvas.height / 2, canvas.width / 2
+              );
+              
+              // Convert hex to rgba for transparency
+              const r = parseInt(baseColor.slice(1, 3), 16);
+              const g = parseInt(baseColor.slice(3, 5), 16);
+              const b = parseInt(baseColor.slice(5, 7), 16);
+              
+              gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.9)`);
+              gradient.addColorStop(0.7, `rgba(${r}, ${g}, ${b}, 0.6)`);
+              gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.3)`);
+              
+              return gradient;
+            });
 
             new Chart(ctx, {
               type: 'doughnut',
@@ -817,16 +836,41 @@ try {
                 labels,
                 datasets: [{
                   data: values,
-                  backgroundColor: bg,
-                  borderWidth: 0
+                  backgroundColor: fuelGlassGradients,
+                  borderWidth: 3,
+                  borderColor: 'rgba(255, 255, 255, 0.8)',
+                  hoverBorderWidth: 4,
+                  hoverBorderColor: 'rgba(255, 255, 255, 1)',
+                  shadowOffsetX: 3,
+                  shadowOffsetY: 3,
+                  shadowBlur: 10,
+                  shadowColor: 'rgba(0, 0, 0, 0.2)'
                 }]
               },
               options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                  legend: { position: 'bottom', labels: { boxWidth: 12 } },
+                  legend: { 
+                    position: 'bottom', 
+                    labels: { 
+                      boxWidth: 12,
+                      padding: 15,
+                      font: { size: 11 },
+                      usePointStyle: true,
+                      pointStyle: 'circle'
+                    } 
+                  },
                   tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    titleColor: '#333',
+                    bodyColor: '#555',
+                    borderColor: 'rgba(0, 0, 0, 0.1)',
+                    borderWidth: 1,
+                    padding: 15,
+                    cornerRadius: 12,
+                    displayColors: true,
+                    boxPadding: 8,
                     callbacks: {
                       label: (ctx) => {
                         const v = ctx.parsed;
@@ -836,7 +880,16 @@ try {
                     }
                   }
                 },
-                cutout: '60%'
+                cutout: '65%',
+                animation: {
+                  duration: 1200,
+                  easing: 'easeOutQuart'
+                },
+                elements: {
+                  arc: {
+                    borderJoinStyle: 'round'
+                  }
+                }
               }
             });
 
@@ -848,7 +901,7 @@ try {
           });
       })();
 
-      // Assets by Office Chart (Doughnut)
+      // Assets by Office Chart (Doughnut) with Glass Effect
       (function() {
         const canvas = document.getElementById('assetsByOfficeChart');
         if (!canvas) return;
@@ -869,12 +922,31 @@ try {
 
         const total = data.data.reduce((a,b)=>a+b,0);
         
-        // Professional color palette
-        const palette = [
+        // Glass effect color palette with gradients
+        const baseColors = [
           '#0d6efd','#198754','#dc3545','#ffc107','#6f42c1',
           '#20c997','#fd7e14','#0dcaf0','#6610f2','#6c757d'
         ];
-        const bg = data.labels.map((_,i)=> palette[i % palette.length]);
+        
+        // Create glass effect gradients
+        const glassGradients = data.labels.map((_, i) => {
+          const baseColor = baseColors[i % baseColors.length];
+          const gradient = ctx.createRadialGradient(
+            canvas.width / 2, canvas.height / 2, 0,
+            canvas.width / 2, canvas.height / 2, canvas.width / 2
+          );
+          
+          // Convert hex to rgba for transparency
+          const r = parseInt(baseColor.slice(1, 3), 16);
+          const g = parseInt(baseColor.slice(3, 5), 16);
+          const b = parseInt(baseColor.slice(5, 7), 16);
+          
+          gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.9)`);
+          gradient.addColorStop(0.7, `rgba(${r}, ${g}, ${b}, 0.6)`);
+          gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.3)`);
+          
+          return gradient;
+        });
 
         new Chart(ctx, {
           type: 'doughnut',
@@ -882,9 +954,15 @@ try {
             labels: data.labels,
             datasets: [{
               data: data.data,
-              backgroundColor: bg,
-              borderWidth: 2,
-              borderColor: '#fff'
+              backgroundColor: glassGradients,
+              borderWidth: 3,
+              borderColor: 'rgba(255, 255, 255, 0.8)',
+              hoverBorderWidth: 4,
+              hoverBorderColor: 'rgba(255, 255, 255, 1)',
+              shadowOffsetX: 3,
+              shadowOffsetY: 3,
+              shadowBlur: 10,
+              shadowColor: 'rgba(0, 0, 0, 0.2)'
             }]
           },
           options: {
@@ -896,15 +974,21 @@ try {
                 labels: { 
                   boxWidth: 12,
                   padding: 15,
-                  font: { size: 11 }
+                  font: { size: 11 },
+                  usePointStyle: true,
+                  pointStyle: 'circle'
                 } 
               },
               tooltip: {
-                backgroundColor: 'rgba(33, 37, 41, 0.9)',
-                titleColor: '#fff',
-                bodyColor: '#fff',
-                padding: 12,
-                cornerRadius: 8,
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                titleColor: '#333',
+                bodyColor: '#555',
+                borderColor: 'rgba(0, 0, 0, 0.1)',
+                borderWidth: 1,
+                padding: 15,
+                cornerRadius: 12,
+                displayColors: true,
+                boxPadding: 8,
                 callbacks: {
                   label: (ctx) => {
                     const v = ctx.parsed;
@@ -914,10 +998,15 @@ try {
                 }
               }
             },
-            cutout: '60%',
+            cutout: '65%',
             animation: {
-              duration: 1000,
+              duration: 1200,
               easing: 'easeOutQuart'
+            },
+            elements: {
+              arc: {
+                borderJoinStyle: 'round'
+              }
             }
           }
         });
