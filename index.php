@@ -188,7 +188,7 @@ require_once "engine/login_engine.php";
                                     Remember me
                                 </label>
                             </div>
-                            <a href="forgot_password.php" class="small">Forgot Password?</a>
+                            <a href="#" class="small" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">Forgot Password?</a>
                         </div>
 
                         <!-- Login Button -->
@@ -208,9 +208,125 @@ require_once "engine/login_engine.php";
         </div>
     </div>
 
+    <!-- Forgot Password Modal -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="forgotPasswordModalLabel">
+                        <i class="bi bi-key me-2"></i>Reset Password
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="forgotPasswordAlert"></div>
+                    
+                    <form id="forgotPasswordForm">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-envelope-exclamation text-primary" style="font-size: 3rem;"></i>
+                            <h6 class="mt-2 text-muted">Enter your username to receive a password reset link</h6>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="resetUsername" class="form-label">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control" id="resetUsername" name="username" placeholder="Enter your username" required>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary" id="sendResetBtn">
+                                <i class="bi bi-send me-2"></i>Send Reset Link
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Login
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            <strong>Note:</strong> The reset link will be sent to your registered email address and will expire in 1 hour.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS and Toggle Password -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/login.js"></script>
+    
+    <!-- Forgot Password JavaScript -->
+    <script>
+    document.getElementById('forgotPasswordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('resetUsername').value.trim();
+        const alertDiv = document.getElementById('forgotPasswordAlert');
+        const submitBtn = document.getElementById('sendResetBtn');
+        
+        if (!username) {
+            showAlert('Please enter your username.', 'warning');
+            return;
+        }
+        
+        // Show loading state
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending...';
+        submitBtn.disabled = true;
+        
+        // Send AJAX request
+        fetch('forgot_password_handler.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'username=' + encodeURIComponent(username)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+                document.getElementById('forgotPasswordForm').reset();
+                
+                // Auto-close modal after 3 seconds
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal')).hide();
+                }, 3000);
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An error occurred. Please try again.', 'danger');
+        })
+        .finally(() => {
+            // Reset button state
+            submitBtn.innerHTML = '<i class="bi bi-send me-2"></i>Send Reset Link';
+            submitBtn.disabled = false;
+        });
+        
+        function showAlert(message, type) {
+            alertDiv.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'x-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+        }
+    });
+    
+    // Clear alerts when modal is closed
+    document.getElementById('forgotPasswordModal').addEventListener('hidden.bs.modal', function () {
+        document.getElementById('forgotPasswordAlert').innerHTML = '';
+        document.getElementById('forgotPasswordForm').reset();
+    });
+    </script>
 </body>
 
 

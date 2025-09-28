@@ -218,9 +218,16 @@ function sendPasswordResetEmail($email, $username, $token) {
         $mail->Subject = 'Password Reset Request - PILAR Asset Inventory';
         
         // Generate reset URL
-        $baseURL = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . 
-                   "://" . $_SERVER['HTTP_HOST'] . 
-                   dirname($_SERVER['PHP_SELF']);
+        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
+        $host = $_SERVER['HTTP_HOST'];
+        
+        // Get the base directory (remove /includes from path if present)
+        $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
+        if (basename($scriptDir) === 'includes') {
+            $scriptDir = dirname($scriptDir);
+        }
+        
+        $baseURL = $protocol . "://" . $host . $scriptDir;
         $resetURL = $baseURL . '/reset_password.php?token=' . $token;
         
         // Email content
