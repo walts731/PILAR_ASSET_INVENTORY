@@ -989,6 +989,22 @@ $stmt->close();
               </select>
               <div class="vr d-none d-md-block"></div>
 
+              <select id="redTagFilter" class="form-select form-select-sm w-auto me-2">
+                <option value="all">All Items</option>
+                <option value="tagged">Red Tagged Only</option>
+                <option value="not_tagged">Not Red Tagged Only</option>
+              </select>
+
+              <!-- Export Buttons -->
+              <div class="btn-group me-2" role="group">
+                <button type="button" class="btn btn-outline-success btn-sm" onclick="exportUnserviceable('csv')">
+                  <i class="bi bi-file-earmark-spreadsheet"></i> CSV
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="exportUnserviceable('pdf')">
+                  <i class="bi bi-file-earmark-pdf"></i> PDF
+                </button>
+              </div>
+
               <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill">
                 <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
               </button>
@@ -1144,6 +1160,7 @@ $stmt->close();
   <script src="js/dashboard.js"></script>
   <script src="js/delete_consumable_enhanced.js"></script>
   <script src="js/consumables_export.js"></script>
+  <script src="js/unserviceable_export.js"></script>
 
   <script>
     function formatDateFormal(dateStr) {
