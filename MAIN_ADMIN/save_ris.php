@@ -156,6 +156,26 @@ $stmt = $conn->prepare("
                         } else {
                             // Insert as new asset for this office (force type consumable)
                             $new_quantity = $qty;
+                            
+                            // Resolve category ID from category name/value
+                            $category_id = null;
+                            if (!empty($asset['category'])) {
+                                // Check if category is already an ID (numeric)
+                                if (is_numeric($asset['category'])) {
+                                    $category_id = (int)$asset['category'];
+                                } else {
+                                    // Look up category ID by name
+                                    $cat_stmt = $conn->prepare("SELECT id FROM categories WHERE category_name = ? LIMIT 1");
+                                    $cat_stmt->bind_param("s", $asset['category']);
+                                    $cat_stmt->execute();
+                                    $cat_result = $cat_stmt->get_result();
+                                    if ($cat_row = $cat_result->fetch_assoc()) {
+                                        $category_id = (int)$cat_row['id'];
+                                    }
+                                    $cat_stmt->close();
+                                }
+                            }
+                            
                             $sql = "
     INSERT INTO assets (
         asset_name, category, description, quantity, added_stock, unit, status,
@@ -164,7 +184,7 @@ $stmt = $conn->prepare("
         code, property_no, model, brand, inventory_tag, last_updated
     ) VALUES (
         '" . $conn->real_escape_string($asset['asset_name']) . "',
-        '" . $conn->real_escape_string($asset['category']) . "',
+        " . ($category_id ? (int)$category_id : 'NULL') . ",
         '" . $conn->real_escape_string($asset['description']) . "',
         '" . (int)$new_quantity . "',
         '" . (int)$qty . "',
