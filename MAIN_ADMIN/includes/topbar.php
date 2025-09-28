@@ -265,35 +265,39 @@ $low_stock_count = count($low_stock_items);
       <i id="themeIcon" class="bi bi-moon-fill text-info" style="font-size: 1.5rem;"></i>
     </button>
 
-    <!-- Notifications -->
-    <div class="dropdown">
+
+        <!-- Notifications -->
+        <div class="dropdown">
       <a href="#" class="text-dark text-decoration-none position-relative" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
         <i class="bi bi-bell text-primary" style="font-size: 1.8rem;"></i>
-        <?php if ($low_stock_count > 0): ?>
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-            <?php echo $low_stock_count; ?>
-          </span>
-        <?php endif; ?>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge" style="display: none;">0</span>
       </a>
-      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="min-width: 300px;">
-        <li class="dropdown-header fw-bold text-center">Notifications</li>
-        <li>
-          <hr class="dropdown-divider">
-        </li>
-        <?php if ($low_stock_count > 0): ?>
-          <?php foreach ($low_stock_items as $item): ?>
-            <li>
-              <a class="dropdown-item small text-danger d-flex justify-content-between align-items-center"
-                href="admin_dashboard.php?id=<?php echo $item['id']; ?>">
-                <span><?php echo htmlspecialchars($item['product_name']); ?></span>
-                <span class="badge bg-danger"><?php echo $item['stock']; ?> left</span>
-              </a>
-            </li>
-          <?php endforeach; ?>
-        <?php else: ?>
-          <li><a class="dropdown-item small text-muted text-center" href="#">No new notifications</a></li>
-        <?php endif; ?>
-      </ul>
+      <div class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="notificationDropdown" style="min-width: 350px; max-height: 70vh; overflow-y: auto;">
+        <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+          <h6 class="mb-0 fw-bold">Notifications</h6>
+          <div>
+            <button id="markAllAsRead" class="btn btn-sm btn-link text-decoration-none" title="Mark all as read">
+              <i class="bi bi-check2-all"></i>
+            </button>
+            <a href="notifications.php" class="btn btn-sm btn-link text-decoration-none" title="View all notifications">
+              <i class="bi bi-three-dots"></i>
+            </a>
+          </div>
+        </div>
+        <div class="notification-list">
+          <!-- Notifications will be loaded here via JavaScript -->
+          <div class="text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 mb-0 text-muted small">Loading notifications...</p>
+          </div>
+        </div>
+        <div class="dropdown-divider m-0"></div>
+        <div class="text-center py-2">
+          <a href="notifications.php" class="text-decoration-none small">View all notifications</a>
+        </div>
+      </div>
     </div>
 
     <!-- Profile Dropdown -->
