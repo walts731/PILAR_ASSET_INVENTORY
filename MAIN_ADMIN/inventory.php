@@ -651,18 +651,22 @@ $stmt->close();
                         </button>
 
 
-                        <?php if ($row['status'] !== 'borrowed'): ?>
-                          <button type="button"
-                            class="btn btn-sm btn-outline-danger deleteConsumableBtn rounded-pill"
-                            data-id="<?= $row['id'] ?>"
-                            data-name="<?= htmlspecialchars($row['asset_name']) ?>"
-                            data-bs-toggle="modal"
-                            data-bs-target="#deleteConsumableModal">
-                            <i class="bi bi-trash"></i>
-                          </button>
-                        <?php else: ?>
-                          <span class="text-muted small"><i class="bi bi-lock"></i></span>
-                        <?php endif; ?>
+                        <!-- Enhanced Delete Button -->
+                        <button type="button"
+                          class="btn btn-sm btn-outline-danger rounded-pill deleteConsumableEnhancedBtn"
+                          data-id="<?= $row['id'] ?>"
+                          data-stock-no="<?= htmlspecialchars($row['property_no']) ?>"
+                          data-description="<?= htmlspecialchars($row['description']) ?>"
+                          data-category="<?= htmlspecialchars($row['category_name']) ?>"
+                          data-quantity="<?= $row['quantity'] ?>"
+                          data-unit="<?= htmlspecialchars($row['unit']) ?>"
+                          data-value="<?= $row['value'] ?>"
+                          data-status="<?= $row['status'] ?>"
+                          data-office="<?= htmlspecialchars($row['office_name'] ?? 'No Office') ?>"
+                          data-last-updated="<?= date('M d, Y', strtotime($row['last_updated'])) ?>"
+                          title="Delete Consumable">
+                          <i class="bi bi-trash"></i>
+                        </button>
                       </td>
                     </tr>
                   <?php endwhile; ?>
@@ -1121,12 +1125,14 @@ $stmt->close();
   <?php include 'modals/view_asset_modal.php'; ?>
   <?php include 'modals/view_consumable_modal.php'; ?>
   <?php include 'modals/import_csv_modal.php'; ?>
+  <?php include 'modals/delete_consumable_enhanced_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <script src="js/dashboard.js"></script>
+  <script src="js/delete_consumable_enhanced.js"></script>
 
   <script>
     function formatDateFormal(dateStr) {
