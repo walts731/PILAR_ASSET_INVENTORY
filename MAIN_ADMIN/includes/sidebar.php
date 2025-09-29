@@ -282,7 +282,7 @@ if ($role === 'user' && $userId > 0) {
             </a>
 
             <div class="nav-section">Operations</div>
-            <a href="borrow.php" class="<?= ($page == 'borrow') ? 'active' : '' ?>">
+            <a href="borrowing.php" class="<?= ($page == 'borrow') ? 'active' : '' ?>">
                 <i class="bi bi-arrow-left-right"></i> Borrow
             </a>
             <a href="reports.php" class="<?= ($page == 'reports') ? 'active' : '' ?>">

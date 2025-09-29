@@ -72,7 +72,9 @@ $stmt->close();
       .input-group, .input-group-text { border: 0 !important; background: transparent !important; box-shadow: none !important; }
       /* Tables */
       table { border-color: #000 !important; }
-      thead.table-secondary { background: #e9ecef !important; -webkit-print-color-adjust: exact; }
+      thead.table-secondary { background: #e9ecef !important; -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact;
+      }
       /* Hide action column */
       th.no-print, td.no-print { display: none !important; }
     }
