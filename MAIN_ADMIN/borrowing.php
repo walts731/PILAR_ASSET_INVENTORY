@@ -32,6 +32,47 @@ $result = $stmt->get_result();
 $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 $count = is_array($rows) ? count($rows) : 0;
 $stmt->close();
+
+// If no live data, provide sample rows for testing the table UI
+if (empty($rows)) {
+  $now = date('Y-m-d H:i:s');
+  $rows = [
+    [
+      'borrow_id' => 0,
+      'quantity' => 1,
+      'approved_at' => $now,
+      'due_date' => null,
+      'asset_id' => 0,
+      'asset_description' => 'Sample Laptop Dell XPS 15',
+      'unit' => 'unit',
+      'office_name' => 'Office A',
+      'borrower_name' => 'John Doe',
+    ],
+    [
+      'borrow_id' => 0,
+      'quantity' => 3,
+      'approved_at' => date('Y-m-d H:i:s', strtotime('-2 days')),
+      'due_date' => null,
+      'asset_id' => 0,
+      'asset_description' => 'Sample Projector Epson EB-S41',
+      'unit' => 'pcs',
+      'office_name' => 'Office B',
+      'borrower_name' => 'Jane Smith',
+    ],
+    [
+      'borrow_id' => 0,
+      'quantity' => 5,
+      'approved_at' => date('Y-m-d H:i:s', strtotime('-5 days 3 hours')),
+      'due_date' => null,
+      'asset_id' => 0,
+      'asset_description' => 'Sample Tablet Samsung Galaxy Tab',
+      'unit' => 'pcs',
+      'office_name' => 'Office C',
+      'borrower_name' => 'Alice Johnson',
+    ],
+  ];
+  $count = count($rows);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
