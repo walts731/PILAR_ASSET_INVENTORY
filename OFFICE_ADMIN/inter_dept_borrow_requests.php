@@ -260,8 +260,8 @@ $my_requests_sql = "
            isa.status as source_office_approval
     FROM borrow_requests br
     JOIN assets a ON br.asset_id = a.id
-    JOIN office so ON br.source_office_id = so.id
-    JOIN office do ON br.office_id = do.id
+    JOIN offices so ON br.source_office_id = so.id
+    JOIN offices do ON br.office_id = do.id
     LEFT JOIN inter_department_approvals ia ON br.id = ia.request_id AND ia.approval_type = 'office_head'
     LEFT JOIN inter_department_approvals isa ON br.id = isa.request_id AND isa.approval_type = 'source_office'
     WHERE br.is_inter_department = 1
