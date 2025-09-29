@@ -146,7 +146,7 @@ while ($row = $unit_query->fetch_assoc()) {
                     <td>
                         <label class="form-label fw-semibold mb-0">Fund Cluster</label>
                         <input type="text" name="fund_cluster" class="form-control"
-                            value="<?= htmlspecialchars($par_data['fund_cluster']) ?>" required>
+                            value="<?= htmlspecialchars($par_data['fund_cluster']) ?>" >
                     </td>
                     <td>
                         <label class="form-label fw-semibold mb-0">PAR No.</label>
