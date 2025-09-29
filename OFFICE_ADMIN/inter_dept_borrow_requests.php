@@ -33,8 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                        u.full_name as requester_name
                 FROM borrow_requests br
                 JOIN assets a ON br.asset_id = a.id
-                JOIN office so ON br.source_office_id = so.id
-                JOIN office do ON br.office_id = do.id
+                JOIN offices so ON br.source_office_id = so.id
+                JOIN offices do ON br.office_id = do.id
                 JOIN users u ON br.requested_by_user_id = u.id
                 WHERE br.id = ? AND br.is_inter_department = 1
             ";
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $approval_type = 'office_head';
             } else {
                 // Check if user is the head of the source office
-                $check_source_office = $conn->prepare("SELECT id FROM office WHERE id = ? AND head_user_id = ?");
+                $check_source_office = $conn->prepare("SELECT id FROM offices WHERE id = ? AND head_user_id = ?");
                 $check_source_office->bind_param('ii', $request['source_office_id'], $user_id);
                 $check_source_office->execute();
                 $is_source_office_head = $check_source_office->get_result()->num_rows > 0;
