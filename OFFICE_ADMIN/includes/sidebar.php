@@ -233,11 +233,16 @@ echo "<!-- SIDEBAR DEBUG: user_id={$user_id} | office_id=" . htmlspecialchars($o
 <!-- SIDEBAR HTML -->
 <div class="sidebar d-flex flex-column justify-content-between">
     <div class="scrollable-nav px-3">
-        <!-- Logo -->
-        <h5 class="text-center d-flex align-items-center justify-content-center mt-3">
-            <img src="../img/<?= htmlspecialchars($system['logo']) ?>" alt="Logo" style="width:30px; height:30px; margin-right:10px;">
-            <?= htmlspecialchars($system['system_title']) ?>
-        </h5>
+        <!-- Brand header -->
+        <div class="sidebar-brand" aria-label="Application brand">
+            <div class="brand-logo-wrap">
+                <img src="../img/<?= htmlspecialchars($system['logo']) ?>" alt="Logo">
+            </div>
+            <div class="brand-title">
+                <strong><?= htmlspecialchars($system['system_title']) ?></strong>
+                <span>Office Admin</span>
+            </div>
+        </div>
         <hr>
 
         <!-- Navigation -->
