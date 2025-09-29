@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $approval_type = '';
             
             // Check if user is the head of the destination office
-            $check_office_head = $conn->prepare("SELECT id FROM office WHERE id = ? AND head_user_id = ?");
+            $check_office_head = $conn->prepare("SELECT id FROM offices WHERE id = ? AND head_user_id = ?");
             $check_office_head->bind_param('ii', $office_id, $user_id);
             $check_office_head->execute();
             $is_office_head = $check_office_head->get_result()->num_rows > 0;
@@ -231,8 +231,8 @@ $office_head_sql = "
            isa.status as source_office_approval
     FROM borrow_requests br
     JOIN assets a ON br.asset_id = a.id
-    JOIN office so ON br.source_office_id = so.id
-    JOIN office do ON br.office_id = do.id
+    JOIN offices so ON br.source_office_id = so.id
+    JOIN offices do ON br.office_id = do.id
     JOIN users u ON br.requested_by_user_id = u.id
     LEFT JOIN inter_department_approvals ia ON br.id = ia.request_id AND ia.approval_type = 'office_head'
     LEFT JOIN inter_department_approvals isa ON br.id = isa.request_id AND isa.approval_type = 'source_office'
