@@ -2,37 +2,45 @@
 require_once '../connect.php';
 session_start();
 
-if (!isset($_SESSION['user_id'])) {
+// Allow guest access when flagged; otherwise require user_id
+if (!isset($_SESSION['user_id']) && empty($_SESSION['is_guest'])) {
   header("Location: ../index.php");
   exit();
 }
 
-// Set office_id if not set
-if (!isset($_SESSION['office_id'])) {
-  $user_id = $_SESSION['user_id'];
-  $stmt = $conn->prepare("SELECT office_id FROM users WHERE user_id = ?");
-  $stmt->bind_param("i", $user_id);
-  $stmt->execute();
-  $stmt->bind_result($office_id);
-  if ($stmt->fetch()) {
-    $_SESSION['office_id'] = $office_id;
+// Set office_id if not set (skip DB lookup for guest)
+if (empty($_SESSION['is_guest'])) {
+  if (!isset($_SESSION['office_id'])) {
+    $user_id = $_SESSION['user_id'];
+    $stmt = $conn->prepare("SELECT office_id FROM users WHERE user_id = ?");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $stmt->bind_result($office_id);
+    if ($stmt->fetch()) {
+      $_SESSION['office_id'] = $office_id;
+    }
+    $stmt->close();
   }
-  $stmt->close();
 }
 
-// Fetch full name
+// Fetch full name (guest-safe)
 $user_name = '';
-$stmt = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
-$stmt->bind_param("i", $_SESSION['user_id']);
-$stmt->execute();
-$stmt->bind_result($fullname);
-$stmt->fetch();
-$stmt->close();
+if (!empty($_SESSION['is_guest'])) {
+  $user_name = 'Guest';
+} else {
+  $stmt = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
+  $stmt->bind_param("i", $_SESSION['user_id']);
+  $stmt->execute();
+  $stmt->bind_result($fullname);
+  $stmt->fetch();
+  $stmt->close();
+  $user_name = $fullname;
+}
+
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />

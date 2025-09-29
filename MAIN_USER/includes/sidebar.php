@@ -12,9 +12,6 @@
             <a href="../MAIN_USER/user_dashboard.php" class="nav-link <?= ($page == 'user_dashboard') ? 'active' : '' ?>">
                 <i class="bi bi-box-seam"></i> Inventory
             </a>
-            <a href="reports.php" class="nav-link <?= ($page == 'reports') ? 'active' : '' ?>">
-                <i class="bi bi-bar-chart-line"></i> Reports
-            </a>
             <a href="settings.php" class="nav-link <?= ($page == 'settings') ? 'active' : '' ?>">
                 <i class="bi bi-gear"></i> Settings
             </a>
