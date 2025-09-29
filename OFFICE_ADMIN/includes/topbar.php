@@ -174,7 +174,6 @@ $low_stock_count = count($low_stock_items);
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
       border: 1px solid rgba(0, 0, 0, 0.06);
     }
-
     .topbar .dropdown-item {
       padding: 0.5rem 0.75rem;
     }
@@ -182,13 +181,30 @@ $low_stock_count = count($low_stock_items);
     .topbar .dropdown-item:hover {
       background: rgba(11, 94, 215, 0.08);
     }
+    
+    /* Ensure readable text inside dropdown menus (override topbar text colors) */
+    .topbar .dropdown-menu {
+      background-color: #ffffff;
+      color: #212529 !important;
+    }
+    .topbar .dropdown-menu .dropdown-header,
+    .topbar .dropdown-menu .dropdown-item,
+    .topbar .dropdown-menu .text-dark {
+      color: #212529 !important;
+    }
+    .topbar .dropdown-menu .text-muted { 
+      color: #6c757d !important;
+    }
+    .topbar .dropdown-menu .dropdown-item i {
+      color: #0b5ed7 !important;
+    }
   </style>
 
   <!-- Right Side Controls -->
   <div class="order-2 order-sm-3 d-flex align-items-center gap-3 ms-auto flex-wrap justify-content-end">
     <!-- Date & Time -->
     <div id="datetime" class="text-end text-dark small fw-semibold"></div>
-
+{{ ... }}
     <!-- Scan QR -->
     <a href="scan_qr.php" class="text-dark text-decoration-none" title="Scan QR">
       <i class="bi bi-qr-code-scan text-primary" style="font-size: 1.8rem;"></i>
