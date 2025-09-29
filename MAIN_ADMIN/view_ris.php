@@ -59,6 +59,14 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
     <div class="main">
         <?php include 'includes/topbar.php'; ?>
 
+        <?php if (isset($_GET['updated']) && $_GET['updated'] == '1'): ?>
+            <div class="alert alert-success alert-dismissible fade show mx-3 mt-3" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                RIS form has been updated successfully.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+
         <div class="mb-3 text-center">
             <?php if (!empty($ris_data['header_image'])): ?>
                 <img src="../img/<?= htmlspecialchars($ris_data['header_image']) ?>" class="img-fluid mb-3" style="max-width: 100%; height: auto; object-fit: contain;">
@@ -212,6 +220,7 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 
 </html>
