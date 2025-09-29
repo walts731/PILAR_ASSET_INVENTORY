@@ -179,11 +179,35 @@ $html .= '
 
 // ✅ Insert RIS items
 if (!empty($ris['items'])) {
+    // Cache for resolved unit IDs -> unit_name
+    $unitCache = [];
+
     foreach ($ris['items'] as $item) {
+        // Resolve unit: if numeric ID, fetch unit_name from unit table; else use as-is
+        $unitDisplay = $item['unit'];
+        if ($unitDisplay !== null && $unitDisplay !== '' && ctype_digit((string)$unitDisplay)) {
+            $uid = (int)$unitDisplay;
+            if (isset($unitCache[$uid])) {
+                $unitDisplay = $unitCache[$uid];
+            } else {
+                $ustmt = $conn->prepare("SELECT unit_name FROM unit WHERE id = ? LIMIT 1");
+                if ($ustmt) {
+                    $ustmt->bind_param("i", $uid);
+                    $ustmt->execute();
+                    $ures = $ustmt->get_result();
+                    if ($urow = $ures->fetch_assoc()) {
+                        $unitDisplay = $urow['unit_name'];
+                        $unitCache[$uid] = $unitDisplay;
+                    }
+                    $ustmt->close();
+                }
+            }
+        }
+
         $html .= '
         <tr>
           <td>' . htmlspecialchars($item['stock_no']) . '</td>
-          <td>' . htmlspecialchars($item['unit']) . '</td>
+          <td>' . htmlspecialchars($unitDisplay) . '</td>
           <td style="text-align:left;">' . htmlspecialchars($item['description']) . '</td>
           <td>' . htmlspecialchars($item['quantity']) . '</td>
           <td></td>
