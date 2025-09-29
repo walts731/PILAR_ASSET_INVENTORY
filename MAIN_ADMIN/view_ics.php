@@ -163,9 +163,11 @@ $stmt->close();
                           <input type="text" class="form-control form-control-sm text-center" name="items[<?= (int)$item['item_id'] ?>][estimated_useful_life]" value="<?= htmlspecialchars($item['estimated_useful_life']) ?>">
                         </td>
                         <td class="text-nowrap">
-                          <a href="create_mr.php?asset_id=<?= htmlspecialchars($item['asset_id']) ?>&ics_id=<?= htmlspecialchars($ics['ics_id']) ?>&form_id=<?php echo $ics_form_id ?>" class="btn btn-primary btn-sm">
-                            Create Property Tag
-                          </a>
+                          <?php if ((int)$item['quantity'] === 1): ?>
+                            <a href="create_mr.php?asset_id=<?= htmlspecialchars($item['asset_id']) ?>&ics_id=<?= htmlspecialchars($ics['ics_id']) ?>&form_id=<?php echo $ics_form_id ?>" class="btn btn-primary btn-sm">
+                              Create Property Tag
+                            </a>
+                          <?php endif; ?>
                         </td>
                       </tr>
                     <?php endforeach; ?>
