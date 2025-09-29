@@ -35,18 +35,18 @@ $user_id = $_SESSION['user_id'] ?? 0;
 $office_name = "";
 $fullname = "";
 if ($user_id) {
-    $stmt = $conn->prepare("
+  $stmt = $conn->prepare("
         SELECT u.fullname, o.office_name 
         FROM users u 
         LEFT JOIN offices o ON u.office_id = o.id 
         WHERE u.id = ?
         LIMIT 1
     ");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $stmt->bind_result($fullname, $office_name);
-    $stmt->fetch();
-    $stmt->close();
+  $stmt->bind_param("i", $user_id);
+  $stmt->execute();
+  $stmt->bind_result($fullname, $office_name);
+  $stmt->fetch();
+  $stmt->close();
 }
 
 // Low stock alert
@@ -86,12 +86,12 @@ $low_stock_count = count($low_stock_items);
               <span class="mx-1 text-muted"> &gt; </span>
               <span class="text-dark">Edit Template</span>
             </h5>';
-    } elseif (in_array($current_page, ['borrow_requests','borrowed_assets','incoming_borrow_requests','returned_assets'])) {
+    } elseif (in_array($current_page, ['borrow_requests', 'borrowed_assets', 'incoming_borrow_requests', 'returned_assets'])) {
       $breadcrumb_name = str_replace("_", " ", $current_page);
       echo '<h5 class="m-0 text-center text-sm-start">
               <a href="borrow.php" class="text-decoration-none text-primary">Borrowing Management</a>
               <span class="mx-1 text-muted"> &gt; </span>
-              <span class="text-dark">'.ucwords($breadcrumb_name).'</span>
+              <span class="text-dark">' . ucwords($breadcrumb_name) . '</span>
             </h5>';
     } else {
       echo '<h5 class="m-0 text-center text-sm-start">' . htmlspecialchars($page_title) . '</h5>';
@@ -104,44 +104,85 @@ $low_stock_count = count($low_stock_items);
   </div>
 
   <style>
-  /* Professional blue-themed top bar */
-  .topbar {
-    background: linear-gradient(180deg, #0b5ed7 0%, #0a58ca 50%, #0948a6 100%);
-    color: #fff;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
-    position: sticky;
-    top: 0;
-    z-index: 1030;
-  }
+    /* Professional blue-themed top bar */
+    .topbar {
+      background: linear-gradient(180deg, #0b5ed7 0%, #0a58ca 50%, #0948a6 100%);
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+    }
 
-  .shadow-soft { box-shadow: 0 2px 14px rgba(0,0,0,0.08); }
+    .shadow-soft {
+      box-shadow: 0 2px 14px rgba(0, 0, 0, 0.08);
+    }
 
-  /* Typography & links */
-  .topbar h5 { color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.25); }
-  .topbar a { color: #eaf2ff; text-decoration: none; }
-  .topbar a:hover { opacity: 0.92; }
+    /* Typography & links */
+    .topbar h5 {
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
 
-  /* Ensure readable text when components use Bootstrap utilities inside the dark topbar */
-  .topbar .text-dark { color: rgba(255,255,255,0.92) !important; }
-  .topbar .text-muted { color: rgba(255,255,255,0.8) !important; }
-  .topbar .text-primary { color: #e2ecff !important; }
-  #datetime { color: rgba(255,255,255,0.85) !important; }
+    .topbar a {
+      color: #eaf2ff;
+      text-decoration: none;
+    }
 
-  /* Buttons & icons */
-  .topbar .btn { transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease; }
-  .topbar #toggleSidebar.btn { border-color: rgba(255,255,255,0.65); color: #fff; }
-  .topbar #toggleSidebar.btn:hover { background: rgba(255,255,255,0.12); }
-  .topbar i { color: #ffffff; }
+    .topbar a:hover {
+      opacity: 0.92;
+    }
 
-  /* Dropdown polish */
-  .topbar .dropdown-menu {
-    border-radius: 12px;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.15);
-    border: 1px solid rgba(0,0,0,0.06);
-  }
-  .topbar .dropdown-item { padding: 0.5rem 0.75rem; }
-  .topbar .dropdown-item:hover { background: rgba(11, 94, 215, 0.08); }
-</style>
+    /* Ensure readable text when components use Bootstrap utilities inside the dark topbar */
+    .topbar .text-dark {
+      color: rgba(255, 255, 255, 0.92) !important;
+    }
+
+    .topbar .text-muted {
+      color: rgba(255, 255, 255, 0.8) !important;
+    }
+
+    .topbar .text-primary {
+      color: #e2ecff !important;
+    }
+
+    #datetime {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    /* Buttons & icons */
+    .topbar .btn {
+      transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+    }
+
+    .topbar #toggleSidebar.btn {
+      border-color: rgba(255, 255, 255, 0.65);
+      color: #fff;
+    }
+
+    .topbar #toggleSidebar.btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .topbar i {
+      color: #ffffff;
+    }
+
+    /* Dropdown polish */
+    .topbar .dropdown-menu {
+      border-radius: 12px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .topbar .dropdown-item {
+      padding: 0.5rem 0.75rem;
+    }
+
+    .topbar .dropdown-item:hover {
+      background: rgba(11, 94, 215, 0.08);
+    }
+  </style>
 
   <!-- Right Side Controls -->
   <div class="order-2 order-sm-3 d-flex align-items-center gap-3 ms-auto flex-wrap justify-content-end">
@@ -170,7 +211,9 @@ $low_stock_count = count($low_stock_items);
       </a>
       <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="min-width: 300px;">
         <li class="dropdown-header fw-bold text-center">Notifications</li>
-        <li><hr class="dropdown-divider"></li>
+        <li>
+          <hr class="dropdown-divider">
+        </li>
         <?php if ($low_stock_count > 0): ?>
           <?php foreach ($low_stock_items as $item): ?>
             <li>
