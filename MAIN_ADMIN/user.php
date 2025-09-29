@@ -94,18 +94,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user_id'])) {
 // Fetch list of offices for dropdown
 $officeQuery = $conn->query("SELECT id, office_name FROM offices");
 
-// Set selected office from GET or use session default
-$selected_office = $_GET['office'] ?? $_SESSION['office_id'];
+// Set selected office from GET or use session default; allow 'all'
+$selected_office = $_GET['office'] ?? ($_SESSION['office_id'] ?? 'all');
 
-// Fetch users based on selected office
-$userStmt = $conn->prepare("
-  SELECT u.id, u.username, u.fullname, u.email, u.role, u.status, u.created_at, o.office_name
-  FROM users u
-  JOIN offices o ON u.office_id = o.id
-  WHERE u.office_id = ? AND u.status <> 'deleted'
-");
+// Fetch users based on selected office (support 'all')
+if ($selected_office === 'all') {
+  $userStmt = $conn->prepare("
+    SELECT u.id, u.username, u.fullname, u.email, u.role, u.status, u.created_at, o.office_name
+    FROM users u
+    JOIN offices o ON u.office_id = o.id
+    WHERE u.status <> 'deleted'
+  ");
+} else {
+  $officeId = (int)$selected_office;
+  $userStmt = $conn->prepare("
+    SELECT u.id, u.username, u.fullname, u.email, u.role, u.status, u.created_at, o.office_name
+    FROM users u
+    JOIN offices o ON u.office_id = o.id
+    WHERE u.office_id = ? AND u.status <> 'deleted'
+  ");
+  $userStmt->bind_param("i", $officeId);
+}
 
-$userStmt->bind_param("i", $selected_office);
 $userStmt->execute();
 $userResult = $userStmt->get_result();
 $user_total = $userResult->num_rows;
@@ -246,19 +256,18 @@ $stmt->close();
           <span>Listing</span>
           <span class="badge text-bg-secondary d-none d-sm-inline"><?= (int)$user_total ?></span>
         </h5>
-
         <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
           <form method="GET" class="d-flex align-items-center gap-2 mb-0">
             <label for="officeFilter" class="form-label mb-0">Office</label>
             <select name="office" id="officeFilter" class="form-select form-select-sm" onchange="this.form.submit()">
+              <option value="all" <?= ($selected_office === 'all') ? 'selected' : '' ?>>All Offices</option>
               <?php while ($office = $officeQuery->fetch_assoc()): ?>
-                <option value="<?= $office['id'] ?>" <?= $office['id'] == $selected_office ? 'selected' : '' ?>>
+                <option value="<?= $office['id'] ?>" <?= ((string)$office['id'] === (string)$selected_office) ? 'selected' : '' ?>>
                   <?= htmlspecialchars($office['office_name']) ?>
                 </option>
               <?php endwhile; ?>
             </select>
           </form>
-
           <a href="#" class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#addOfficeModal">
             <i class="bi bi-plus-circle me-1"></i> New Office
           </a>
