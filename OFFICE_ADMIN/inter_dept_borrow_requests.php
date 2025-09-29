@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 SELECT br.*, a.asset_name, 
                        so.office_name as source_office_name, 
                        do.office_name as dest_office_name,
-                       u.full_name as requester_name
+                       u.fullname as requester_name
                 FROM borrow_requests br
                 JOIN assets a ON br.asset_id = a.id
                 JOIN offices so ON br.source_office_id = so.id
@@ -226,7 +226,7 @@ $office_head_sql = "
     SELECT br.*, a.asset_name, 
            so.office_name as source_office_name, 
            do.office_name as dest_office_name,
-           u.full_name as requester_name,
+           u.fullname as requester_name,
            ia.status as office_head_approval,
            isa.status as source_office_approval
     FROM borrow_requests br
