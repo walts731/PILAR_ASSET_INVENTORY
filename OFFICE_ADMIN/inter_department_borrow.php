@@ -44,7 +44,7 @@ $sql = "
            c.category_name as category, o.office_name, o.id as office_id
     FROM assets a
     JOIN categories c ON a.category = c.id
-    JOIN office o ON a.office_id = o.id
+    JOIN offices o ON a.office_id = o.id
     WHERE a.status = 'available' 
     AND a.quantity > 0 
     AND a.office_id != ?
@@ -82,7 +82,7 @@ if ($stmt) {
 
 // Fetch office information for the current user
 $office_info = [];
-$office_result = $conn->prepare("SELECT * FROM office WHERE id = ?");
+$office_result = $conn->prepare("SELECT * FROM offices WHERE id = ?");
 if ($office_result) {
     $office_result->bind_param('i', $office_id);
     $office_result->execute();
