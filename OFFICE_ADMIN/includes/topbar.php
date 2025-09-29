@@ -204,7 +204,6 @@ $low_stock_count = count($low_stock_items);
   <div class="order-2 order-sm-3 d-flex align-items-center gap-3 ms-auto flex-wrap justify-content-end">
     <!-- Date & Time -->
     <div id="datetime" class="text-end text-dark small fw-semibold"></div>
-{{ ... }}
     <!-- Scan QR -->
     <a href="scan_qr.php" class="text-dark text-decoration-none" title="Scan QR">
       <i class="bi bi-qr-code-scan text-primary" style="font-size: 1.8rem;"></i>
