@@ -115,11 +115,8 @@ if ($result && $result->num_rows > 0) {
               <?php else: ?>
                   <p class="text-muted">No header image available</p>
               <?php endif; ?>
-              <div class="mt-3 text-start">
-                <label for="headerImageFile" class="form-label fw-semibold">Replace Header Image</label>
-                <input type="file" class="form-control" id="headerImageFile" name="header_image_file" accept="image/*">
-                <div class="form-text">Optional. Upload a new header image (JPG, PNG, or WEBP). This will replace the current image.</div>
-              </div>
+              <!-- Hidden file input to keep field available without visible UI -->
+              <input type="file" id="headerImageFile" name="header_image_file" accept="image/*" style="display:none;" hidden>
             </div>
 
             <div class="row mb-3">
@@ -150,15 +147,15 @@ if ($result && $result->num_rows > 0) {
             <div class="row">
                 <!-- FUND CLUSTER -->
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">FUND CLUSTER</label>
-                    <input type="text" class="form-control" name="fund_cluster" value="<?= htmlspecialchars($ics_data['fund_cluster']) ?>">
+                    <label class="form-label fw-semibold">FUND CLUSTER <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control" name="fund_cluster" value="<?= htmlspecialchars($ics_data['fund_cluster']) ?>" required>
                 </div>
 
                 <!-- ICS NO -->
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">ICS NO.</label>
+                    <label class="form-label fw-semibold">ICS NO. <span style="color: red;">*</span></label>
                     <input type="text" class="form-control" name="ics_no"
-                        value="<?= htmlspecialchars($ics_data['ics_no']) ?>">
+                        value="<?= htmlspecialchars($ics_data['ics_no']) ?>" required>
                 </div>
 
             </div>
