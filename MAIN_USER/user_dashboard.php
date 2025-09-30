@@ -49,6 +49,26 @@ if (!empty($_SESSION['is_guest'])) {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
   <link rel="stylesheet" href="css/dashboard.css" />
+  <style>
+    :root {
+      --inv-accent: #0d6efd;
+      --inv-muted: #6c757d;
+    }
+
+    .page-header {
+      background: linear-gradient(135deg, #f8f9fa 0%, #eef3ff 100%);
+      border: 1px solid #e9ecef;
+      border-radius: .75rem;
+    }
+
+    .page-header .title {
+      font-weight: 600;
+    }
+
+    .status-badge {
+      font-weight: 500;
+    }
+  </style>
 </head>
 
 <body>
@@ -58,6 +78,21 @@ if (!empty($_SESSION['is_guest'])) {
   <div class="main">
 
     <?php include 'includes/topbar.php' ?>
+
+    <!-- Page Header (mirrors MAIN_ADMIN) -->
+    <div class="container-fluid px-0 mb-3">
+      <div class="page-header p-3 p-sm-4 d-flex flex-wrap gap-3 align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center bg-white border" style="width:48px;height:48px;">
+            <i class="bi bi-archive text-primary fs-4"></i>
+          </div>
+          <div>
+            <div class="h4 mb-0 title">Inventory</div>
+            <div class="text-muted small">View assets and consumables</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
@@ -142,11 +177,10 @@ if (!empty($_SESSION['is_guest'])) {
             </div>
 
             <div class="card-body table-responsive">
-              <table id="assetTable" class="table table-hover align-middle">
+              <table id="assetTable" class="table table-striped table-hover align-middle">
                 <thead class="table-light">
                   <tr>
                     <th><input type="checkbox" id="selectAllAssets" /></th>
-                    <th>QR</th>
                     <th>Name</th>
                     <th>Category</th>
                     <th>Description</th>
@@ -165,7 +199,7 @@ if (!empty($_SESSION['is_guest'])) {
                   ?>
                     <tr>
                       <td><input type="checkbox" class="asset-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
-                      <td><img src="../img/<?= $row['qr_code'] ?>" width="50"></td>
+                      
                       <td><?= htmlspecialchars($row['asset_name']) ?></td>
                       <td><?= htmlspecialchars($row['category_name']) ?></td>
                       <td><?= htmlspecialchars($row['description']) ?></td>

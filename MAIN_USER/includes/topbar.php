@@ -142,24 +142,7 @@ $low_stock_count = count($low_stock_items);
       </ul>
     </div>
 
-    <!-- Profile Dropdown -->
-    <div class="dropdown">
-      <a href="#" class="d-flex align-items-center text-dark text-decoration-none" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bi bi-person-circle" id="profileIcon" style="font-size: 1.8rem;"></i>
-      </a>
-      <ul class="dropdown-menu dropdown-menu-end text-center" aria-labelledby="profileDropdown" style="min-width: 200px;">
-        <li class="dropdown-header fw-bold text-dark"><?php echo htmlspecialchars($fullname); ?></li>
-        <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item d-flex align-items-center" href="profile.php"><i class="bi bi-person me-2"></i> Profile</a></li>
-        <li>
-          <button class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#managePasswordModal">
-            <i class="bi bi-key me-2"></i> Manage Password
-          </button>
-        </li>
-        <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item d-flex align-items-center text-danger" href="../logout.php"><i class="bi bi-box-arrow-right me-2"></i> Sign Out</a></li>
-      </ul>
-    </div>
+    
   </div>
 </div>
 
