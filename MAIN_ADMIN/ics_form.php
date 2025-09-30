@@ -78,11 +78,13 @@ if ($result && $result->num_rows > 0) {
 ?>
 <?php if (!empty($_SESSION['flash'])): ?>
     <?php
-        $flash = $_SESSION['flash'];
-        // Normalize type to Bootstrap alert classes
-        $type = isset($flash['type']) ? strtolower($flash['type']) : 'info';
-        $allowed = ['primary','secondary','success','danger','warning','info','light','dark'];
-        if (!in_array($type, $allowed, true)) { $type = 'info'; }
+    $flash = $_SESSION['flash'];
+    // Normalize type to Bootstrap alert classes
+    $type = isset($flash['type']) ? strtolower($flash['type']) : 'info';
+    $allowed = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+    if (!in_array($type, $allowed, true)) {
+        $type = 'info';
+    }
     ?>
     <div class="alert alert-<?= htmlspecialchars($type) ?> alert-dismissible fade show" role="alert">
         <?= htmlspecialchars($flash['message'] ?? 'Action completed.') ?>
@@ -105,25 +107,25 @@ if ($result && $result->num_rows > 0) {
             <!-- ICS Form ID from database -->
             <input type="hidden" name="ics_id" value="<?= htmlspecialchars($ics_data['id'] ?? '') ?>">
             <div class="mb-3 text-center">
-              <?php if (!empty($ics_data['header_image'])): ?>
-                  <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
-                      class="img-fluid mb-2"
-                      style="max-width: 100%; height: auto; object-fit: contain;">
+                <?php if (!empty($ics_data['header_image'])): ?>
+                    <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
+                        class="img-fluid mb-2"
+                        style="max-width: 100%; height: auto; object-fit: contain;">
 
-                  <!-- Hidden input ensures it gets submitted -->
-                  <input type="hidden" name="header_image" value="<?= htmlspecialchars($ics_data['header_image']) ?>">
-              <?php else: ?>
-                  <p class="text-muted">No header image available</p>
-              <?php endif; ?>
-              <!-- Hidden file input to keep field available without visible UI -->
-              <input type="file" id="headerImageFile" name="header_image_file" accept="image/*" style="display:none;" hidden>
+                    <!-- Hidden input ensures it gets submitted -->
+                    <input type="hidden" name="header_image" value="<?= htmlspecialchars($ics_data['header_image']) ?>">
+                <?php else: ?>
+                    <p class="text-muted">No header image available</p>
+                <?php endif; ?>
+                <!-- Hidden file input to keep field available without visible UI -->
+                <input type="file" id="headerImageFile" name="header_image_file" accept="image/*" style="display:none;" hidden>
             </div>
 
             <div class="row mb-3">
                 <!-- ENTITY NAME -->
                 <div class="col-6">
                     <label class="form-label fw-semibold">ENTITY NAME</label>
-                    <input type="text" class="form-control" name="entity_name" value="<?= htmlspecialchars($ics_data['entity_name']) ?>">
+                    <input type="text" class="form-control" name="entity_name">
                 </div>
 
                 <!-- OFFICE -->
@@ -148,14 +150,14 @@ if ($result && $result->num_rows > 0) {
                 <!-- FUND CLUSTER -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">FUND CLUSTER <span style="color: red;">*</span></label>
-                    <input type="text" class="form-control" name="fund_cluster" value="<?= htmlspecialchars($ics_data['fund_cluster']) ?>" required>
+                    <input type="text" class="form-control" name="fund_cluster" required>
                 </div>
 
                 <!-- ICS NO -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">ICS NO. <span style="color: red;">*</span></label>
                     <input type="text" class="form-control" name="ics_no"
-                        value="<?= htmlspecialchars($ics_data['ics_no']) ?>" required>
+                        required>
                 </div>
 
             </div>
@@ -177,11 +179,11 @@ if ($result && $result->num_rows > 0) {
                     </tr>
                 </thead>
                 <tbody id="ics-items-body">
-                    <?php for ($i = 0; $i < 5; $i++): ?>
+                    <?php for ($i = 0; $i < 1; $i++): ?>
                         <tr>
-                            <td><input type="number" class="form-control quantity-field" name="quantity[]" min="1"></td>
+                            <td><input type="number" class="form-control quantity-field" name="quantity[]" min="1" required></td>
                             <td>
-                                <select class="form-select" name="unit[]">
+                                <select class="form-select" name="unit[]" required>
                                     <option value="" disabled>Select unit</option>
                                     <?php foreach ($unit_options as $unit): ?>
                                         <option value="<?= htmlspecialchars($unit) ?>" <?= (strtolower($unit) === 'unit') ? 'selected' : '' ?>><?= htmlspecialchars($unit) ?></option>
@@ -197,7 +199,7 @@ if ($result && $result->num_rows > 0) {
         pointer-events: none;
         color: inherit;
         font-size: 1rem;">₱</span>
-                                <input type="number" class="form-control text-end" step="0.01" name="unit_cost[]" max="50000" style="padding-left: 1.5rem;">
+                                <input type="number" class="form-control text-end" step="0.01" name="unit_cost[]" max="50000" style="padding-left: 1.5rem;" required>
                             </td>
                             <td style="position: relative;">
                                 <span style="
@@ -215,7 +217,7 @@ if ($result && $result->num_rows > 0) {
                                 <input type="text" class="form-control description-field"
                                     name="description[]"
                                     placeholder="Type description..."
-                                    style="padding-right: 2rem;"> <!-- add right padding so X doesn't overlap -->
+                                    style="padding-right: 2rem;" required> <!-- add right padding so X doesn't overlap -->
                                 <button type="button"
                                     class="clear-description"
                                     style="
@@ -233,8 +235,8 @@ if ($result && $result->num_rows > 0) {
         ">&times;</button>
                             </td>
 
-                            <td><input type="text" class="form-control" name="item_no[]"></td>
-                            <td><input type="text" class="form-control" name="estimated_useful_life[]"></td>
+                            <td><input type="text" class="form-control" name="item_no[]" required></td>
+                            <td><input type="text" class="form-control" name="estimated_useful_life[]" required></td>
                         </tr>
                     <?php endfor; ?>
                 </tbody>
@@ -316,12 +318,6 @@ if ($result && $result->num_rows > 0) {
 
             <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-send-check-fill"></i>Save</button>
         </form>
-        <!-- Button to go to Saved ICS -->
-        <div class="mt-3">
-            <a href="saved_ics.php" class="btn btn-info">
-                <i class="bi bi-folder-check"></i> View Saved ICS
-            </a>
-        </div>
 
     </div>
 </div>
