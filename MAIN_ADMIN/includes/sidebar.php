@@ -34,7 +34,8 @@ if ($categoryResult && $categoryResult->num_rows > 0) {
 }
 
 $form_categories = [];
-$formCatResult = $conn->query("SELECT MIN(id) AS id, category FROM forms WHERE category IS NOT NULL AND category != '' GROUP BY category");
+// Load individual forms and display their titles in the sidebar
+$formCatResult = $conn->query("SELECT id, form_title FROM forms WHERE form_title IS NOT NULL AND form_title != '' ORDER BY form_title ASC");
 if ($formCatResult && $formCatResult->num_rows > 0) {
     while ($row = $formCatResult->fetch_assoc()) {
         $form_categories[] = $row;
@@ -85,33 +86,28 @@ if ($role === 'user' && $userId > 0) {
 
     .sidebar .scrollable-nav::-webkit-scrollbar { display: none; }
 
-    /* Header */
     .sidebar .sidebar-brand {
         text-align: center;
         padding: 16px 10px 6px;
     }
 
     .sidebar .brand-logo-wrap {
-        width: 58px;
-        height: 58px;
+        width: 90px;
+        height: 90px;
         border-radius: 50%;
         background: #ffffff;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18), inset 0 0 0 6px rgba(255, 255, 255, 0.4);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2), inset 0 0 0 8px rgba(255, 255, 255, 0.4);
         margin-bottom: 8px;
     }
 
     .sidebar .brand-logo-wrap img {
-        width: 38px; height: 38px; object-fit: contain;
+        width: 70px; height: 70px; object-fit: contain;
         filter: none;
     }
 
-    .sidebar .brand-title {
-        color: #fff;
-        line-height: 1.1;
-    }
     .sidebar .brand-title strong {
         font-weight: 700;
         font-size: 0.98rem;
@@ -181,6 +177,13 @@ if ($role === 'user' && $userId > 0) {
         border-radius: 8px;
         color: #e9f2ff;
         margin: 3px 0;
+    }
+    /* Specific font styling for Inventory and Forms submenus */
+    #inventorySubMenu .nav-link,
+    #formsSubMenu .nav-link {
+        font-size: 0.92rem;
+        font-weight: 500;
+        letter-spacing: 0.1px;
     }
     .sidebar .collapse .nav-link:hover { background: rgba(255, 255, 255, 0.12); }
     .sidebar .collapse .nav-link.active { background: rgba(255, 255, 255, 0.22); }
@@ -265,7 +268,7 @@ if ($role === 'user' && $userId > 0) {
                 <?php foreach ($form_categories as $category): ?>
                     <a class="nav-link <?= (isset($_GET['id']) && $_GET['id'] == $category['id']) ? 'active' : '' ?>"
                         href="forms.php?id=<?= $category['id'] ?>">
-                        <?= htmlspecialchars($category['category']) ?>
+                        <?= htmlspecialchars($category['form_title']) ?>
                     </a>
                 <?php endforeach; ?>
                 <a class="nav-link <?= ($page == 'Saved Property Tags') ? 'active' : '' ?>" href="saved_mr.php">
