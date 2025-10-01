@@ -147,6 +147,17 @@ if (!empty($ics['items'])) {
     $html .= '<tr><td colspan="7">No items found.</td></tr>';
 }
 
+// Add a clear terminator row below the actual items, inside the Description column to avoid cutting lines
+$html .= '<tr>'
+       . '<td></td>'     // Quantity
+       . '<td></td>'     // Unit
+       . '<td></td>'     // Unit Cost
+       . '<td></td>'     // Total Cost
+       . '<td style="text-align:center; font-style:italic; padding:6px 0;">— NOTHING FOLLOWS —</td>' // Description
+       . '<td></td>'     // Item No.
+       . '<td></td>'     // Estimated Useful Life
+       . '</tr>';
+
 // Add empty rows for spacing (to keep table size uniform)
 for ($i = 0; $i < 10; $i++) {
     $html .= '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
