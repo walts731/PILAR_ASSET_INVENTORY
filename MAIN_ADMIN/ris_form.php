@@ -55,22 +55,20 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
   <div class="row mb-3">
     <div class="col-md-3">
       <label for="division" class="form-label fw-semibold">Division</label>
-      <input type="text" class="form-control" id="division" name="division"
-        value="<?= htmlspecialchars($ris_data['division'] ?? '') ?>">
+      <input type="text" class="form-control shadow" id="division" name="division" placeholder="Enter Division">
     </div>
     <div class="col-md-3">
       <label for="responsibility_center" class="form-label fw-semibold">Responsibility Center</label>
-      <input type="text" class="form-control" id="responsibility_center" name="responsibility_center"
-        value="<?= htmlspecialchars($ris_data['responsibility_center'] ?? '') ?>">
+      <input type="text" class="form-control shadow" id="responsibility_center" name="responsibility_center" placeholder="Enter Responsibility Center">
     </div>
     <div class="col-md-3">
       <label for="ris_no" class="form-label fw-semibold">RIS No.</label>
-      <input type="text" class="form-control" id="ris_no" name="ris_no"
-        value="<?= htmlspecialchars($ris_data['ris_no'] ?? '') ?>" placeholder="Enter RIS No.">
+      <input type="text" class="form-control shadow" id="ris_no" name="ris_no"
+        placeholder="Enter RIS No.">
     </div>
     <div class="col-md-3">
       <label for="date" class="form-label fw-semibold">Date</label>
-      <input type="date" class="form-control" id="date" name="date"
+      <input type="date" class="form-control shadow" id="date" name="date"
         value="<?= date('Y-m-d') ?>">
     </div>
   </div>
@@ -79,30 +77,27 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
   <div class="row mb-3">
     <div class="col-md-3">
       <label for="office_id" class="form-label fw-semibold">Office/Unit</label>
-      <select class="form-select" id="office_id" name="office_id" required>
-        <option value="" disabled <?= !isset($ris_data['office_id']) ? 'selected' : '' ?>>Select Office</option>
+      <select class="form-select shadow" id="office_id" name="office_id" required>
+        <option value="" disabled selected>Select Office</option>
         <?php
         $office_query = $conn->query("SELECT id, office_name FROM offices ORDER BY office_name ASC");
         while ($row = $office_query->fetch_assoc()):
-          $selected = (isset($ris_data['office_id']) && $ris_data['office_id'] == $row['id']) ? 'selected' : '';
         ?>
-          <option value="<?= $row['id'] ?>" <?= $selected ?>><?= htmlspecialchars($row['office_name']) ?></option>
+          <option value="<?= $row['id'] ?>"><?= htmlspecialchars($row['office_name']) ?></option>
         <?php endwhile; ?>
       </select>
     </div>
     <div class="col-md-3">
       <label for="responsibility_code" class="form-label fw-semibold">Code</label>
-      <input type="text" class="form-control" id="responsibility_code" name="responsibility_code"
-        value="<?= htmlspecialchars($ris_data['responsibility_code'] ?? '') ?>">
+      <input type="text" class="form-control shadow" id="responsibility_code" name="responsibility_code" placeholder="Enter Code">
     </div>
     <div class="col-md-3">
       <label for="sai_no" class="form-label fw-semibold">SAI No.</label>
-      <input type="text" class="form-control" id="sai_no" name="sai_no"
-        value="<?= htmlspecialchars($auto_sai_no) ?>" readonly>
+      <input type="text" class="form-control shadow" id="sai_no" name="sai_no" placeholder="Enter SAI No.">
     </div>
     <div class="col-md-3">
       <label for="date" class="form-label fw-semibold">Date</label>
-      <input type="date" class="form-control" id="date" name="date"
+      <input type="date" class="form-control shadow" id="date" name="date"
         value="<?= date('Y-m-d') ?>">
     </div>
   </div>
