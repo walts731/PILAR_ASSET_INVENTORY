@@ -42,6 +42,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Validate: ICS NO must be unique
+    if (!empty($ics_no)) {
+        if ($existing_ics_id > 0) {
+            $dupStmt = $conn->prepare("SELECT id FROM ics_form WHERE ics_no = ? AND id <> ? LIMIT 1");
+            $dupStmt->bind_param("si", $ics_no, $existing_ics_id);
+        } else {
+            $dupStmt = $conn->prepare("SELECT id FROM ics_form WHERE ics_no = ? LIMIT 1");
+            $dupStmt->bind_param("s", $ics_no);
+        }
+        $dupStmt->execute();
+        $dupRes = $dupStmt->get_result();
+        $duplicateFound = $dupRes && $dupRes->num_rows > 0;
+        $dupStmt->close();
+
+        if ($duplicateFound) {
+            $_SESSION['flash'] = [
+                'type' => 'danger',
+                'message' => 'ICS No. already exists. Please use a unique ICS No.'
+            ];
+            header("Location: forms.php?id=" . $form_id);
+            exit();
+        }
+    }
+
     // UPDATE flow when editing existing ICS
     if ($existing_ics_id > 0) {
         $ics_id = $existing_ics_id;
