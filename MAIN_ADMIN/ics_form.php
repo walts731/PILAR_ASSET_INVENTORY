@@ -58,11 +58,6 @@ if ($result && $result->num_rows > 0) {
     }
 }
 
-// Autofill description data removed to enforce manual entry for all item fields
-
-
-
-
 // Fetch office options
 $office_options = [];
 $result = $conn->query("SELECT id, office_name FROM offices");
@@ -71,9 +66,6 @@ if ($result && $result->num_rows > 0) {
         $office_options[] = $row;
     }
 }
-
-// Do not auto-generate ICS number. Prefill with latest value (editable). If no previous record, leave empty.
-
 
 ?>
 <?php if (!empty($_SESSION['flash'])): ?>
@@ -109,8 +101,8 @@ if ($result && $result->num_rows > 0) {
             <div class="mb-3 text-center">
                 <?php if (!empty($ics_data['header_image'])): ?>
                     <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
-                        class="img-fluid mb-2"
-                        style="max-width: 100%; height: auto; object-fit: contain;">
+                         class="img-fluid mb-2"
+                         style="max-width: 100%; height: auto; object-fit: contain;">
 
                     <!-- Hidden input ensures it gets submitted -->
                     <input type="hidden" name="header_image" value="<?= htmlspecialchars($ics_data['header_image']) ?>">
@@ -125,7 +117,7 @@ if ($result && $result->num_rows > 0) {
                 <!-- ENTITY NAME -->
                 <div class="col-6">
                     <label class="form-label fw-semibold">ENTITY NAME</label>
-                    <input type="text" class="form-control shadow" name="entity_name">
+                    <input type="text" class="form-control shadow" name="entity_name" id="entityName">
                 </div>
 
                 <!-- OFFICE -->
@@ -133,9 +125,9 @@ if ($result && $result->num_rows > 0) {
                     <label class="form-label fw-semibold">
                         DESTINATION <span style="color: red;">*</span>
                     </label>
-                    <select class="form-select shadow" name="office_id" required>
+                    <select class="form-select shadow" name="office_id" id="destinationOffice" required>
                         <option value="" disabled selected>Select office</option>
-                        <option value="outside_lgu">Outside LGU</option> <!-- ✅ Static option -->
+                        <option value="outside_lgu">Outside LGU</option>
                         <?php foreach ($office_options as $office): ?>
                             <option value="<?= htmlspecialchars($office['id']) ?>">
                                 <?= htmlspecialchars($office['office_name']) ?>
@@ -144,7 +136,6 @@ if ($result && $result->num_rows > 0) {
                     </select>
                 </div>
             </div>
-
 
             <div class="row">
                 <!-- FUND CLUSTER -->
@@ -156,10 +147,8 @@ if ($result && $result->num_rows > 0) {
                 <!-- ICS NO -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">ICS NO. <span style="color: red;">*</span></label>
-                    <input type="text" class="form-control shadow" name="ics_no"
-                        required>
+                    <input type="text" class="form-control shadow" name="ics_no" required>
                 </div>
-
             </div>
 
             <!-- Items Table -->
@@ -192,24 +181,24 @@ if ($result && $result->num_rows > 0) {
                             </td>
                             <td style="position: relative;">
                                 <span style="
-        position: absolute;
-        top: 50%;
-        left: 10px;
-        transform: translateY(-50%);
-        pointer-events: none;
-        color: inherit;
-        font-size: 1rem;">₱</span>
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: inherit;
+    font-size: 1rem;">₱</span>
                                 <input type="number" class="form-control text-end shadow" step="0.01" name="unit_cost[]" max="50000" style="padding-left: 1.5rem;" required>
                             </td>
                             <td style="position: relative;">
                                 <span style="
-        position: absolute;
-        top: 50%;
-        left: 10px;
-        transform: translateY(-50%);
-        pointer-events: none;
-        color: inherit;
-        font-size: 1rem;">₱</span>
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: inherit;
+    font-size: 1rem;">₱</span>
                                 <input type="number" class="form-control total_cost text-end shadow" name="total_cost[]" step="0.01" readonly style="padding-left: 1.5rem;">
                             </td>
 
@@ -217,22 +206,22 @@ if ($result && $result->num_rows > 0) {
                                 <input type="text" class="form-control description-field shadow"
                                     name="description[]"
                                     placeholder="Type description..."
-                                    style="padding-right: 2rem;" required> <!-- add right padding so X doesn't overlap -->
+                                    style="padding-right: 2rem;" required>
                                 <button type="button"
                                     class="clear-description"
                                     style="
-            position: absolute;
-            right: 5px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: transparent;
-            border: none;
-            font-weight: bold;
-            font-size: 1rem;
-            line-height: 1;
-            color: #888;
-            cursor: pointer;
-        ">&times;</button>
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent;
+        border: none;
+        font-weight: bold;
+        font-size: 1rem;
+        line-height: 1;
+        color: #888;
+        cursor: pointer;
+    ">&times;</button>
                             </td>
 
                             <td><input type="text" class="form-control shadow" name="item_no[]" required></td>
@@ -245,13 +234,13 @@ if ($result && $result->num_rows > 0) {
                         <td colspan="3" class="text-end fw-bold"></td>
                         <td style="position: relative;">
                             <span style="
-        position: absolute;
-        top: 50%;
-        left: 10px;
-        transform: translateY(-50%);
-        pointer-events: none;
-        color: inherit;
-        font-size: 1rem;">₱</span>
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: inherit;
+    font-size: 1rem;">₱</span>
                             <input type="number" id="grandTotal" class="form-control fw-bold text-end shadow" readonly style="padding-left: 1.5rem;">
                         </td>
 
@@ -327,7 +316,6 @@ if ($result && $result->num_rows > 0) {
         const tableBody = document.getElementById('ics-items-body');
         const addRowBtn = document.getElementById('addRowBtn');
         const grandTotalField = document.getElementById('grandTotal');
-        // Duplicate prevention and autofill removed; inputs are manual entry only
 
         function updateGrandTotal() {
             let sum = 0;
@@ -336,8 +324,6 @@ if ($result && $result->num_rows > 0) {
             });
             grandTotalField.value = sum.toFixed(2);
         }
-
-        // No duplicate checking; users may enter any values manually
 
         // Input handler (quantities, description selection, unit cost -> total)
         tableBody.addEventListener('input', function(event) {
@@ -360,8 +346,6 @@ if ($result && $result->num_rows > 0) {
                     target.setCustomValidity("");
                 }
             }
-
-            // No description-driven autofill; users will manually enter all values
 
             const quantity = parseFloat(quantityInput?.value) || 0;
             const unitCost = parseFloat(unitCostInput?.value) || 0;
@@ -417,9 +401,7 @@ if ($result && $result->num_rows > 0) {
 
             // clear values in cloned inputs/selects
             newRow.querySelectorAll('input, select').forEach(el => {
-                // keep attributes but reset values
                 if (el.tagName.toLowerCase() === 'select') {
-                    // default to 'unit' if available, else first option
                     let set = false;
                     for (let i = 0; i < el.options.length; i++) {
                         if (el.options[i].value.toLowerCase() === 'unit') {
@@ -442,5 +424,37 @@ if ($result && $result->num_rows > 0) {
 
         // initial total calc
         updateGrandTotal();
+
+        // Add destination and entity name handler
+        const destinationOffice = document.getElementById('destinationOffice');
+        const entityNameInput = document.getElementById('entityName');
+
+        function handleDestinationChange() {
+            if (!destinationOffice || !entityNameInput) return;
+            const val = destinationOffice.value;
+            const selectedText = destinationOffice.options[destinationOffice.selectedIndex]?.text?.trim() || '';
+
+            if (val === 'outside_lgu') {
+                entityNameInput.value = '';
+                entityNameInput.readOnly = false;
+                entityNameInput.required = true;
+                entityNameInput.placeholder = 'Enter external entity name';
+                entityNameInput.focus();
+            } else if (val) {
+                entityNameInput.value = selectedText;
+                entityNameInput.readOnly = true;
+                entityNameInput.required = false;
+                entityNameInput.placeholder = '';
+            } else {
+                entityNameInput.readOnly = false;
+                entityNameInput.required = false;
+                entityNameInput.placeholder = '';
+            }
+        }
+
+        if (destinationOffice) {
+            destinationOffice.addEventListener('change', handleDestinationChange);
+            handleDestinationChange(); // initialize on load for prefilled states
+        }
     });
 </script>
