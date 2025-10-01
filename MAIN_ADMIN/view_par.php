@@ -126,22 +126,22 @@ $stmt->close();
           <div class="row mb-3">
             <div class="col-md-6">
               <label class="form-label fw-semibold">Entity Name</label>
-              <input type="text" class="form-control" name="entity_name" value="<?= htmlspecialchars($par['entity_name']) ?>" required />
+              <input type="text" class="form-control shadow" name="entity_name" value="<?= htmlspecialchars($par['entity_name']) ?>" required />
             </div>
           </div>
 
           <div class="row mb-3">
             <div class="col-md-4">
               <label class="form-label fw-semibold">Fund Cluster</label>
-              <input type="text" class="form-control" name="fund_cluster" value="<?= htmlspecialchars($par['fund_cluster']) ?>" />
+              <input type="text" class="form-control shadow" name="fund_cluster" value="<?= htmlspecialchars($par['fund_cluster']) ?>" />
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">PAR No.</label>
-              <input type="text" class="form-control" name="par_no" value="<?= htmlspecialchars($par['par_no']) ?>" readonly />
+              <input type="text" class="form-control shadow" name="par_no" value="<?= htmlspecialchars($par['par_no']) ?>" readonly />
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">Office</label>
-              <input type="text" class="form-control" value="<?= htmlspecialchars($par['office_name'] ?? 'N/A') ?>" disabled />
+              <input type="text" class="form-control shadow" value="<?= htmlspecialchars($par['office_name'] ?? 'N/A') ?>" disabled />
             </div>
           </div>
 
@@ -159,7 +159,6 @@ $stmt->close();
                   <th>Description</th>
                   <th>Property No</th>
                   <th>Date Acquired</th>
-                  <th class="no-print">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -167,39 +166,32 @@ $stmt->close();
                   <?php foreach ($par['items'] as $item): ?>
                     <tr>
                       <td>
-                        <input type="number" step="1" min="0" class="form-control form-control-sm text-center" name="items[<?= (int)$item['item_id'] ?>][quantity]" value="<?= htmlspecialchars($item['quantity']) ?>">
+                        <input type="number" step="1" min="0" class="form-control form-control-sm text-center shadow" name="items[<?= (int)$item['item_id'] ?>][quantity]" value="<?= htmlspecialchars($item['quantity']) ?>">
                       </td>
                       <td>
-                        <input type="text" class="form-control form-control-sm text-center" name="items[<?= (int)$item['item_id'] ?>][unit]" value="<?= htmlspecialchars($item['unit']) ?>">
+                        <input type="text" class="form-control form-control-sm text-center shadow" name="items[<?= (int)$item['item_id'] ?>][unit]" value="<?= htmlspecialchars($item['unit']) ?>">
                       </td>
                       <td>
                         <div class="input-group input-group-sm">
                           <span class="input-group-text">₱</span>
-                          <input type="number" step="0.01" min="0" class="form-control text-end item-unit-price" name="items[<?= (int)$item['item_id'] ?>][unit_price]" value="<?= htmlspecialchars($item['unit_price']) ?>">
+                          <input type="number" step="0.01" min="0" class="form-control text-end item-unit-price shadow" name="items[<?= (int)$item['item_id'] ?>][unit_price]" value="<?= htmlspecialchars($item['unit_price']) ?>">
                         </div>
                       </td>
                       <td>
                         <div class="input-group input-group-sm">
                           <span class="input-group-text">₱</span>
-                          <input type="number" step="0.01" min="0" class="form-control text-end item-amount" name="items[<?= (int)$item['item_id'] ?>][amount]" value="<?= htmlspecialchars($item['amount']) ?>" readonly>
+                          <input type="number" step="0.01" min="0" class="form-control text-end item-amount shadow" name="items[<?= (int)$item['item_id'] ?>][amount]" value="<?= htmlspecialchars($item['amount']) ?>" readonly>
                         </div>
                       </td>
                       <td>
-                        <input type="text" class="form-control form-control-sm" name="items[<?= (int)$item['item_id'] ?>][description]" value="<?= htmlspecialchars($item['description']) ?>">
+                        <input type="text" class="form-control form-control-sm shadow" name="items[<?= (int)$item['item_id'] ?>][description]" value="<?= htmlspecialchars($item['description']) ?>">
                       </td>
                       <td>
-                        <input type="text" class="form-control form-control-sm" name="items[<?= (int)$item['item_id'] ?>][property_no]" value="<?= htmlspecialchars($item['property_no']) ?>">
+                        <input type="text" class="form-control form-control-sm shadow" name="items[<?= (int)$item['item_id'] ?>][property_no]" value="<?= htmlspecialchars($item['property_no']) ?>">
                       </td>
                       <td>
-                        <input type="date" class="form-control form-control-sm text-center" name="items[<?= (int)$item['item_id'] ?>][date_acquired]" value="<?= htmlspecialchars($item['date_acquired']) ?>">
+                        <input type="date" class="form-control form-control-sm text-center shadow" name="items[<?= (int)$item['item_id'] ?>][date_acquired]" value="<?= htmlspecialchars($item['date_acquired']) ?>">
                         <input type="hidden" name="items[<?= (int)$item['item_id'] ?>][asset_id]" value="<?= htmlspecialchars($item['asset_id']) ?>">
-                      </td>
-                      <td class="text-nowrap no-print">
-                        <?php if ((int)$item['quantity'] === 1): ?>
-                          <a href="create_mr.php?asset_id=<?= htmlspecialchars($item['asset_id']) ?>&par_id=<?= htmlspecialchars($par['par_id']) ?>&form_id=<?= htmlspecialchars($par_form_id) ?>" class="btn btn-primary btn-sm">
-                            Create Property Tag
-                          </a>
-                        <?php endif; ?>
                       </td>
                     </tr>
                   <?php endforeach; ?>
@@ -212,24 +204,30 @@ $stmt->close();
             </table>
           </div>
 
-          <!-- Signatories -->
-          <div class="row mt-4">
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Received by - Signature over Printed Name</label>
-              <input type="text" class="form-control" name="received_by_name" value="<?= htmlspecialchars($par['received_by_name'] ?? '') ?>" placeholder="Signature over Printed Name">
-              <label class="form-label mt-2">Position / Office</label>
-              <input type="text" class="form-control" name="position_office_left" value="<?= htmlspecialchars($par['position_office_left'] ?? '') ?>">
-              <label class="form-label mt-2">Date</label>
-              <input type="date" class="form-control" name="date_received_left" value="<?= htmlspecialchars($par['date_received_left'] ?? '') ?>">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Issued by - Signature over Printed Name</label>
-              <input type="text" class="form-control" name="issued_by_name" value="<?= htmlspecialchars($par['issued_by_name'] ?? '') ?>" placeholder="Signature over Printed Name">
-              <label class="form-label mt-2">Position / Office</label>
-              <input type="text" class="form-control" name="position_office_right" value="<?= htmlspecialchars($par['position_office_right'] ?? '') ?>">
-              <label class="form-label mt-2">Date</label>
-              <input type="date" class="form-control" name="date_received_right" value="<?= htmlspecialchars($par['date_received_right'] ?? '') ?>">
-            </div>
+         <!-- Signatories -->
+<div class="row mt-4">
+  <div class="col-md-6">
+    <label class="form-label fw-semibold text-center d-block">Received by - Signature over Printed Name</label>
+    <input type="text" class="form-control shadow text-center" name="received_by_name" value="<?= htmlspecialchars($par['received_by_name'] ?? '') ?>" placeholder="Signature over Printed Name">
+    
+    <label class="form-label mt-2 text-center d-block">Position / Office</label>
+    <input type="text" class="form-control shadow text-center" name="position_office_left" value="<?= htmlspecialchars($par['position_office_left'] ?? '') ?>">
+    
+    <label class="form-label mt-2 text-center d-block">Date</label>
+    <input type="date" class="form-control shadow text-center" name="date_received_left" value="<?= htmlspecialchars($par['date_received_left'] ?? '') ?>">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label fw-semibold text-center d-block">Issued by - Signature over Printed Name</label>
+    <input type="text" class="form-control shadow text-center" name="issued_by_name" value="<?= htmlspecialchars($par['issued_by_name'] ?? '') ?>" placeholder="Signature over Printed Name">
+    
+    <label class="form-label mt-2 text-center d-block">Position / Office</label>
+    <input type="text" class="form-control shadow text-center" name="position_office_right" value="<?= htmlspecialchars($par['position_office_right'] ?? '') ?>">
+    
+    <label class="form-label mt-2 text-center d-block">Date</label>
+    <input type="date" class="form-control shadow text-center" name="date_received_right" value="<?= htmlspecialchars($par['date_received_right'] ?? '') ?>">
+  </div>
+</div>
+
           </div>
           </div>
         </div>
