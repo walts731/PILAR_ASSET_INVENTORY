@@ -107,7 +107,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
     <thead>
       <tr class="table-secondary">
         <th colspan="4">REQUISITION</th>
-        <th colspan="3">ISSUANCE</th>
+        <th colspan="4">ISSUANCE</th>
       </tr>
       <tr class="table-light">
         <th>Stock No</th>
@@ -116,15 +116,16 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         <th>Quantity</th>
         <th>Price</th>
         <th>Total Amount</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
-      <?php for ($i = 0; $i < 5; $i++): ?>
+      <?php for ($i = 0; $i < 1; $i++): ?>
         <tr>
           <input type="hidden" name="asset_id[]">
-          <td><input type="text" class="form-control" name="stock_no[]"></td>
+          <td><input type="text" class="form-control shadow" name="stock_no[]"></td>
           <td>
-            <select name="unit[]" class="form-select">
+            <select name="unit[]" class="form-select shadow">
               <option value="" disabled selected>Select Unit</option>
               <?php
               $unit_query = $conn->query("SELECT id, unit_name FROM unit ORDER BY unit_name ASC");
@@ -136,13 +137,16 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
           </td>
           <td style="position: relative;">
             <div class="input-group">
-              <input type="text" class="form-control description-input" name="description[]" autocomplete="off" list="asset_list">
+              <input type="text" class="form-control description-input shadow" name="description[]" autocomplete="off" list="asset_list">
               <button type="button" class="btn btn-link p-0 ms-1 text-danger clear-description">&times;</button>
             </div>
           </td>
-          <td><input type="number" class="form-control" name="req_quantity[]" min="1"></td>
-          <td><input type="number" step="0.01" class="form-control" name="price[]"></td>
-          <td><input type="text" class="form-control total" name="total[]" readonly></td>
+          <td><input type="number" class="form-control shadow" name="req_quantity[]" min="1"></td>
+          <td><input type="number" step="0.01" class="form-control shadow" name="price[]"></td>
+          <td><input type="text" class="form-control total shadow" name="total[]" readonly></td>
+          <td>
+            <button type="button" class="btn btn-outline-danger btn-sm remove-row">Remove</button>
+          </td>
         </tr>
       <?php endfor; ?>
       <datalist id="asset_list">
@@ -174,7 +178,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
   <!-- Purpose -->
   <div class="mb-3">
     <label for="purpose" class="form-label fw-bold">PURPOSE:</label>
-    <textarea class="form-control" name="purpose" id="purpose" rows="2"><?= htmlspecialchars($ris_data['reason_for_transfer'] ?? '') ?></textarea>
+    <textarea class="form-control shadow" name="purpose" id="purpose" rows="2"></textarea>
   </div>
 
   <!-- Footer Table -->
@@ -191,24 +195,24 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
     <tbody>
       <tr>
         <td>Printed Name:</td>
-        <td><input type="text" class="form-control" name="requested_by_name" value="<?= htmlspecialchars($ris_data['requested_by_name'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control" name="approved_by_name" value="<?= htmlspecialchars($ris_data['approved_by_name'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control" name="issued_by_name" value="<?= htmlspecialchars($ris_data['issued_by_name'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control" name="received_by_name" value="<?= htmlspecialchars($ris_data['received_by_name'] ?? '') ?>"></td>
+        <td><input type="text" class="form-control shadow" name="requested_by_name" value="<?= htmlspecialchars($ris_data['requested_by_name'] ?? '') ?>"></td>
+        <td><input type="text" class="form-control shadow" name="approved_by_name" value="<?= htmlspecialchars($ris_data['approved_by_name'] ?? '') ?>"></td>
+        <td><input type="text" class="form-control shadow" name="issued_by_name" value="<?= htmlspecialchars($ris_data['issued_by_name'] ?? '') ?>"></td>
+        <td><input type="text" class="form-control shadow" name="received_by_name" value="<?= htmlspecialchars($ris_data['received_by_name'] ?? '') ?>"></td>
       </tr>
       <tr>
         <td>Designation:</td>
-        <td><input type="text" class="form-control" name="requested_by_designation" value="<?= htmlspecialchars($ris_data['requested_by_designation'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control" name="approved_by_designation" value="<?= htmlspecialchars($ris_data['approved_by_designation'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control" name="issued_by_designation" value="<?= htmlspecialchars($ris_data['issued_by_designation'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control" name="received_by_designation" value="<?= htmlspecialchars($ris_data['received_by_designation'] ?? '') ?>"></td>
+        <td><input type="text" class="form-control shadow" name="requested_by_designation" value="<?= htmlspecialchars($ris_data['requested_by_designation'] ?? '') ?>"></td>
+        <td><input type="text" class="form-control shadow" name="approved_by_designation" value="<?= htmlspecialchars($ris_data['approved_by_designation'] ?? '') ?>"></td>
+        <td><input type="text" class="form-control shadow" name="issued_by_designation" value="<?= htmlspecialchars($ris_data['issued_by_designation'] ?? '') ?>"></td>
+        <td><input type="text" class="form-control shadow" name="received_by_designation" value="<?= htmlspecialchars($ris_data['received_by_designation'] ?? '') ?>"></td>
       </tr>
       <tr>
         <td>Date:</td>
-        <td><input type="date" class="form-control" name="requested_by_date" value=""></td>
-        <td><input type="date" class="form-control" name="approved_by_date" value=""></td>
-        <td><input type="date" class="form-control" name="issued_by_date" value=""></td>
-        <td><input type="date" class="form-control" name="received_by_date" value=""></td>
+        <td><input type="date" class="form-control shadow" name="requested_by_date" value=""></td>
+        <td><input type="date" class="form-control shadow" name="approved_by_date" value=""></td>
+        <td><input type="date" class="form-control shadow" name="issued_by_date" value=""></td>
+        <td><input type="date" class="form-control shadow" name="received_by_date" value=""></td>
       </tr>
       <tr style="display:none;">
   <td>Footer Date:</td>
@@ -221,11 +225,6 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
   </table>
 
   <button type="submit" class="btn btn-primary"><i class="bi bi-send-check-fill"></i>Save</button>
-
-  <!-- Navigate to Saved RIS -->
-  <a href="saved_ris.php?id=<?= urlencode($form_id) ?>" class="btn btn-info ms-2">
-    <i class="bi bi-archive-fill"></i> View Saved RIS
-  </a>
 </form>
 
 <script>
@@ -321,27 +320,29 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
       });
     }
 
+    // Add Row button click - clones structure consistent with the first row
     function addRow() {
       const newRow = document.createElement("tr");
       newRow.innerHTML = `
-      <td><input type="text" class="form-control" name="stock_no[]" readonly></td>
-      <input type="hidden" name="asset_id[]">
-      <td>
-        <select name="unit[]" class="form-select" required>
-          <option value="" disabled selected>Select Unit</option>
-          ${document.querySelector("select[name='unit[]']").innerHTML}
-        </select>
-      </td>
-      <td style="position: relative;">
-        <div class="input-group">
-          <input type="text" class="form-control description-input" name="description[]" autocomplete="off">
-          <button type="button" class="btn btn-link p-0 ms-1 text-danger clear-description" style="border: none;">&times;</button>
-        </div>
-      </td>
-      <td><input type="number" class="form-control" name="req_quantity[]" min="1"></td>
-      <td><input type="number" step="0.01" class="form-control" name="price[]"></td>
-      <td><input type="text" class="form-control total" readonly></td>
-    `;
+        <input type=\"hidden\" name=\"asset_id[]\">\n
+        <td><input type=\"text\" class=\"form-control shadow\" name=\"stock_no[]\"></td>\n
+        <td>\n
+          <select name=\"unit[]\" class=\"form-select shadow\">\n
+            <option value=\"\" disabled selected>Select Unit</option>\n
+            ${document.querySelector("select[name='unit[]']").innerHTML.split('\n').slice(1).join('\n')}\n
+          </select>\n
+        </td>\n
+        <td style=\"position: relative;\">\n
+          <div class=\"input-group\">\n
+            <input type=\"text\" class=\"form-control description-input shadow\" name=\"description[]\" autocomplete=\"off\">\n
+            <button type=\"button\" class=\"btn btn-link p-0 ms-1 text-danger clear-description\" style=\"border: none;\">&times;</button>\n
+          </div>\n
+        </td>\n
+        <td><input type=\"number\" class=\"form-control shadow\" name=\"req_quantity[]\" min=\"1\"></td>\n
+        <td><input type=\"number\" step=\"0.01\" class=\"form-control shadow\" name=\"price[]\"></td>\n
+        <td><input type=\"text\" class=\"form-control total shadow\" name=\"total[]\" readonly></td>\n
+        <td><button type=\"button\" class=\"btn btn-outline-danger btn-sm remove-row\">Remove</button></td>\n
+      `;
       tableBody.appendChild(newRow);
       bindRowEvents(newRow);
       updateDatalist();
@@ -349,9 +350,9 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
 
     // Initial bind for existing rows
     document.querySelectorAll("tbody tr").forEach(row => bindRowEvents(row));
-
-    // Add Row button click
-    document.getElementById("addRowBtn").addEventListener("click", addRow);
+    
+    const addBtn = document.getElementById("addRowBtn");
+    if (addBtn) addBtn.addEventListener("click", addRow);
 
     // Handle clear button click
     tableBody.addEventListener("click", function(e) {
@@ -374,6 +375,34 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         if (totalField) totalField.value = "";
 
         descInput.dispatchEvent(new Event("input"));
+      }
+    });
+
+    // Handle remove row click - remove if >1 rows, otherwise clear the only row
+    tableBody.addEventListener("click", function(e) {
+      const btn = e.target.closest('.remove-row');
+      if (!btn) return;
+      const row = btn.closest('tr');
+      if (!row) return;
+
+      const rows = tableBody.querySelectorAll('tr');
+      if (rows.length > 1) {
+        row.remove();
+      } else {
+        // Clear the single remaining row
+        let descInput = row.querySelector('.description-input');
+        let reqQtyInput = row.querySelector("input[name='req_quantity[]']");
+        let unitSelect = row.querySelector("select[name='unit[]']");
+        let priceInput = row.querySelector("input[name='price[]']");
+        let stockNoInput = row.querySelector("input[name='stock_no[]']");
+        let totalField = row.querySelector('.total');
+
+        if (descInput) descInput.value = '';
+        if (reqQtyInput) { reqQtyInput.removeAttribute('max'); reqQtyInput.placeholder=''; reqQtyInput.value = ''; }
+        if (unitSelect) unitSelect.value = '';
+        if (priceInput) priceInput.value = '';
+        if (stockNoInput) stockNoInput.value = '';
+        if (totalField) totalField.value = '';
       }
     });
 
