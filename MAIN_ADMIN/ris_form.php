@@ -198,14 +198,14 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         <td><input type="text" class="form-control shadow" name="requested_by_name" value="<?= htmlspecialchars($ris_data['requested_by_name'] ?? '') ?>"></td>
         <td><input type="text" class="form-control shadow" name="approved_by_name" value="<?= htmlspecialchars($ris_data['approved_by_name'] ?? '') ?>"></td>
         <td><input type="text" class="form-control shadow" name="issued_by_name" value="<?= htmlspecialchars($ris_data['issued_by_name'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control shadow" name="received_by_name" value="<?= htmlspecialchars($ris_data['received_by_name'] ?? '') ?>"></td>
+        <td><input type="text" class="form-control shadow" name="received_by_name" ></td>
       </tr>
       <tr>
         <td>Designation:</td>
         <td><input type="text" class="form-control shadow" name="requested_by_designation" value="<?= htmlspecialchars($ris_data['requested_by_designation'] ?? '') ?>"></td>
         <td><input type="text" class="form-control shadow" name="approved_by_designation" value="<?= htmlspecialchars($ris_data['approved_by_designation'] ?? '') ?>"></td>
         <td><input type="text" class="form-control shadow" name="issued_by_designation" value="<?= htmlspecialchars($ris_data['issued_by_designation'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control shadow" name="received_by_designation" value="<?= htmlspecialchars($ris_data['received_by_designation'] ?? '') ?>"></td>
+        <td><input type="text" class="form-control shadow" name="received_by_designation" ></td>
       </tr>
       <tr>
         <td>Date:</td>
