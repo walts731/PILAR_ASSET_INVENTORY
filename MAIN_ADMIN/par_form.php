@@ -79,10 +79,12 @@ while ($row = $unit_query->fetch_assoc()) {
 <div class="container mt-3">
     <?php if (!empty($_SESSION['flash'])): ?>
         <?php
-            $flash = $_SESSION['flash'];
-            $type = isset($flash['type']) ? strtolower($flash['type']) : 'info';
-            $allowed = ['primary','secondary','success','danger','warning','info','light','dark'];
-            if (!in_array($type, $allowed, true)) { $type = 'info'; }
+        $flash = $_SESSION['flash'];
+        $type = isset($flash['type']) ? strtolower($flash['type']) : 'info';
+        $allowed = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+        if (!in_array($type, $allowed, true)) {
+            $type = 'info';
+        }
         ?>
         <div class="alert alert-<?= htmlspecialchars($type) ?> alert-dismissible fade show" role="alert">
             <?= htmlspecialchars($flash['message'] ?? 'Action completed.') ?>
@@ -113,7 +115,7 @@ while ($row = $unit_query->fetch_assoc()) {
                             <div class="col-md-3"></div>
                             <div class="col-md-6 text-center">
                                 <label class="form-label fw-semibold mb-0">Office/Location</label>
-                                <select name="office_id" class="form-select text-center" required>
+                                <select name="office_id" class="form-select text-center shadow" required>
                                     <option value="">Select Office</option>
                                     <option value="outside_lgu">Outside LGU</option>
                                     <?php foreach ($offices as $office): ?>
@@ -132,9 +134,9 @@ while ($row = $unit_query->fetch_assoc()) {
                 <!-- Entity Name and Blank -->
                 <tr>
                     <td>
-                        <label class="form-label fw-semibold mb-0">Entity Name</label>
-                        <input type="text" name="entity_name" class="form-control"
-                            value="<?= htmlspecialchars($par_data['entity_name']) ?>" required>
+                        <label class="form-label fw-semibold mb-0">Entity Name <span style="color: red;">*</span></label>
+                        <input type="text" name="entity_name" class="form-control shadow"
+                            required>
                     </td>
                     <td>
                         <!-- Blank right cell -->
@@ -144,15 +146,12 @@ while ($row = $unit_query->fetch_assoc()) {
                 <!-- Fund Cluster and PAR No. -->
                 <tr>
                     <td>
-                        <label class="form-label fw-semibold mb-0">Fund Cluster</label>
-                        <input type="text" name="fund_cluster" class="form-control"
-                            value="<?= htmlspecialchars($par_data['fund_cluster']) ?>" >
+                        <label class="form-label fw-semibold mb-0">Fund Cluster <span style="color: red;">*</span></label>
+                        <input type="text" name="fund_cluster" class="form-control shadow" required>
                     </td>
                     <td>
-                        <label class="form-label fw-semibold mb-0">PAR No.</label>
-                        <input type="text" name="par_no" class="form-control"
-                            value="<?= htmlspecialchars($par_data['par_no']) ?>">
-
+                        <label class="form-label fw-semibold mb-0">PAR No. <span style="color: red;">*</span></label>
+                        <input type="text" name="par_no" class="form-control shadow" required>
                     </td>
                 </tr>
             </tbody>
@@ -175,9 +174,9 @@ while ($row = $unit_query->fetch_assoc()) {
             <tbody id="itemTableBody">
                 <?php for ($i = 0; $i < 5; $i++): ?>
                     <tr>
-                        <td><input type="number" name="items[<?= $i ?>][quantity]" class="form-control text-end" id="qtyInput<?= $i ?>" min="1"></td>
+                        <td><input type="number" name="items[<?= $i ?>][quantity]" class="form-control text-end shadow" id="qtyInput<?= $i ?>" min="1" required></td>
                         <td>
-                            <select name="items[<?= $i ?>][unit]" class="form-select text-center">
+                            <select name="items[<?= $i ?>][unit]" class="form-select text-center shadow">
                                 <option value="">Select Unit</option>
                                 <?php foreach ($units as $unit): ?>
                                     <option value="<?= htmlspecialchars($unit['unit_name']) ?>" <?= (strtolower($unit['unit_name']) === 'unit') ? 'selected' : '' ?>>
@@ -188,7 +187,7 @@ while ($row = $unit_query->fetch_assoc()) {
                         </td>
                         <td class="position-relative" style="width: 30%;">
                             <div class="input-group">
-                                <input type="text" name="items[<?= $i ?>][description]" class="form-control form-control-lg" id="descInput<?= $i ?>" placeholder="Type description...">
+                                <input type="text" name="items[<?= $i ?>][description]" class="form-control form-control-lg shadow"  id="descInput<?= $i ?>" placeholder="Type description..." required>
                                 <input type="hidden" name="items[<?= $i ?>][asset_id]" id="assetId<?= $i ?>">
                                 <button type="button"
                                     class="btn p-0 m-0 border-0 bg-transparent"
@@ -199,8 +198,8 @@ while ($row = $unit_query->fetch_assoc()) {
                             </div>
                         </td>
 
-                        <td><input type="text" name="items[<?= $i ?>][property_no]" class="form-control"></td>
-                        <td><input type="date" name="items[<?= $i ?>][date_acquired]" class="form-control" id="acqDate<?= $i ?>"></td>
+                        <td><input type="text" name="items[<?= $i ?>][property_no]" class="form-control shadow" required></td>
+                        <td><input type="date" name="items[<?= $i ?>][date_acquired]" class="form-control shadow" id="acqDate<?= $i ?>" required></td>
                         <td style="position: relative;">
                             <span style="
                                             position: absolute;
@@ -214,10 +213,10 @@ while ($row = $unit_query->fetch_assoc()) {
                             <input
                                 type="number"
                                 name="items[<?= $i ?>][unit_price]"
-                                class="form-control text-end"
+                                class="form-control text-end shadow"
                                 step="0.01"
                                 id="unitCost<?= $i ?>"
-                                style="padding-left: 1.5rem;">
+                                style="padding-left: 1.5rem;" required>
                         </td>
 
                         <td style="position: relative;">
@@ -233,14 +232,14 @@ while ($row = $unit_query->fetch_assoc()) {
                             <input
                                 type="number"
                                 name="items[<?= $i ?>][amount]"
-                                class="form-control text-end"
+                                class="form-control text-end shadow"
                                 step="0.01"
                                 id="amount<?= $i ?>"
                                 readonly
-                                style="padding-left: 1.5rem;">
+                                style="padding-left: 1.5rem;" required>
                         </td>
 
-                        
+
                     </tr>
                 <?php endfor; ?>
             <tfoot>
@@ -259,7 +258,7 @@ while ($row = $unit_query->fetch_assoc()) {
                         <input
                             type="text"
                             id="totalAmount"
-                            class="form-control text-end fw-bold"
+                            class="form-control text-end fw-bold shadow"
                             readonly
                             style="padding-left: 1.5rem; width: 150px;">
                     </td>
@@ -277,46 +276,44 @@ while ($row = $unit_query->fetch_assoc()) {
         <div class="row mt-4 mb-3">
             <!-- Left: Received by -->
             <div class="col-md-6 text-center">
-                <p class="fw-semibold">Received by:</p>
-                <input type="text" class="form-control text-center fw-semibold" name="received_by_name"
-                    placeholder="Signature over Printed Name"
-                    value="<?= htmlspecialchars($par_data['received_by_name'] ?? '') ?>">
+                <p class="fw-semibold">Received by: <span style="color: red;">*</span></p>
+                <input type="text" class="form-control text-center fw-semibold shadow" name="received_by_name"
+                    placeholder="Signature over Printed Name" required>
                 <small class="text-muted">Signature over Printed Name – Received By</small>
 
                 <div class="mt-3">
-                    <label for="position_office_left">Position / Office:</label>
-                    <input type="text" class="form-control text-center" name="position_office_left"
-                        value="<?= htmlspecialchars($par_data['position_office_left'] ?? '') ?>">
+                    <label for="position_office_left">Position / Office: <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control text-center shadow" name="position_office_left" placeholder="Enter Position/Office" required>
                 </div>
                 <div class="mt-3">
                     <label>Date:</label>
                     <input type="date" name="date_received_left"
-                        value="<?= date('Y-m-d') ?>"
-                        class="form-control">
+                        class="form-control shadow">
                 </div>
             </div>
 
             <!-- Right: Issued by -->
             <div class="col-md-6 text-center">
-                <p class="fw-semibold">Issued by:</p>
-                <input type="text" class="form-control text-center fw-semibold" name="issued_by_name"
+                <p class="fw-semibold">Issued by: <span style="color: red;">*</span></p>
+                <input type="text" class="form-control text-center fw-semibold shadow" name="issued_by_name"
                     placeholder="Signature over Printed Name"
                     value="<?= htmlspecialchars($par_data['issued_by_name'] ?? '') ?>">
                 <small class="text-muted">Signature over Printed Name – Issued By</small>
 
                 <div class="mt-3">
-                    <label for="position_office_right">Position / Office:</label>
-                    <input type="text" class="form-control text-center" name="position_office_right"
+                    <label for="position_office_right">Position / Office: <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control text-center shadow" name="position_office_right"
                         value="<?= htmlspecialchars($par_data['position_office_right'] ?? '') ?>">
                 </div>
                 <div class="mt-3">
                     <label>Date:</label>
                     <input type="date" name="date_received_right"
-                        value="<?= date('Y-m-d') ?>"
-                        class="form-control">
+                        class="form-control shadow">
                 </div>
             </div>
         </div>
+
+        <small class="text-muted"><span style="color: red;">*</span> Required Fields</small>
 
         <button type="submit" class="btn btn-primary"><i class="bi bi-send-check-fill"></i>Save</button>
     </form>
@@ -332,9 +329,9 @@ while ($row = $unit_query->fetch_assoc()) {
         const newRow = document.createElement('tr');
 
         newRow.innerHTML = `
-        <td><input type="number" name="items[${rowIndex}][quantity]" class="form-control text-end" id="qtyInput${rowIndex}" min="1"></td>
+        <td><input type="number" name="items[${rowIndex}][quantity]" class="form-control text-end shadow" id="qtyInput${rowIndex}" min="1"></td>
         <td>
-            <select name="items[${rowIndex}][unit]" class="form-select text-center" required>
+            <select name="items[${rowIndex}][unit]" class="form-select text-center shadow" required>
                 <option value="">Select Unit</option>
                 <?php foreach ($units as $unit): ?>
                     <option value="<?= htmlspecialchars($unit['unit_name']) ?>" <?= (strtolower($unit['unit_name']) === 'unit') ? 'selected' : '' ?>>
@@ -345,7 +342,7 @@ while ($row = $unit_query->fetch_assoc()) {
         </td>
         <td class="position-relative">
     <div class="input-group">
-        <input type="text" name="items[${rowIndex}][description]" class="form-control form-control-lg" id="descInput${rowIndex}" placeholder="Type description...">
+        <input type="text" name="items[${rowIndex}][description]" class="form-control form-control-lg shadow" id="descInput${rowIndex}" placeholder="Type description...">
         <input type="hidden" name="items[${rowIndex}][asset_id]" id="assetId${rowIndex}">
         <button type="button"
                 class="btn p-0 m-0 border-0 bg-transparent"
@@ -356,8 +353,8 @@ while ($row = $unit_query->fetch_assoc()) {
     </div>
 </td>
 
-        <td><input type="text" name="items[${rowIndex}][property_no]" class="form-control"></td>
-        <td><input type="date" name="items[${rowIndex}][date_acquired]" class="form-control" id="acqDate${rowIndex}"></td>
+        <td><input type="text" name="items[${rowIndex}][property_no]" class="form-control shadow"></td>
+        <td><input type="date" name="items[${rowIndex}][date_acquired]" class="form-control shadow" id="acqDate${rowIndex}"></td>
         <td style="position: relative; width: 150px;">
     <span style="
         position: absolute;
@@ -370,7 +367,7 @@ while ($row = $unit_query->fetch_assoc()) {
     <input
         type="number"
         name="items[${rowIndex}][unit_price]"
-        class="form-control text-end"
+        class="form-control text-end shadow"
         step="0.01"
         id="unitCost${rowIndex}"
         style="padding-left: 1.5rem; width: 100%;">
@@ -388,7 +385,7 @@ while ($row = $unit_query->fetch_assoc()) {
     <input
         type="number"
         name="items[${rowIndex}][amount]"
-        class="form-control text-end fw-semibold"
+        class="form-control text-end fw-semibold shadow"
         step="0.01"
         id="amount${rowIndex}"
         readonly

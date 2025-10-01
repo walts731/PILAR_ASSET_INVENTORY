@@ -291,10 +291,14 @@ if (!empty($_SESSION['flash'])) {
     </div>
   </div>
 
+    <p class="small mt-4"> <span style="color: red;">*</span> Required fields</p>
+
+
   <!-- Single Save Button -->
   <div class="d-flex justify-content-end gap-2 mt-3">
     <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save </button>
   </div>
+
 </form>
 
 <script>
