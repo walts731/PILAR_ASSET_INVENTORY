@@ -119,7 +119,7 @@ if ($result && $result->num_rows > 0) {
   <script>
     $(document).ready(function () {
       $('#icsTable').DataTable({
-        order: [[2, 'desc']] // sort by Date Created column (index adjusted after column removals)
+        order: [[2, 'asc']] // sort by Date Created column (index adjusted after column removals)
       });
     });
   </script>

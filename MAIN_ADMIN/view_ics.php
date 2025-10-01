@@ -98,19 +98,19 @@ $stmt->close();
 
             <div class="row mb-3">
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Entity Name</label>
-                <input type="text" class="form-control" name="entity_name" value="<?= htmlspecialchars($ics['entity_name']) ?>" required />
+                <label class="form-label fw-semibold ">Entity Name</label>
+                <input type="text" class="form-control shadow" name="entity_name" value="<?= htmlspecialchars($ics['entity_name']) ?>" required />
               </div>
             </div>
 
             <div class="row mb-3">
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Fund Cluster</label>
-                <input type="text" class="form-control" name="fund_cluster" value="<?= htmlspecialchars($ics['fund_cluster']) ?>" />
+                <input type="text" class="form-control shadow" name="fund_cluster" value="<?= htmlspecialchars($ics['fund_cluster']) ?>" />
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-semibold">ICS No.</label>
-                <input type="text" class="form-control" name="ics_no" value="<?= htmlspecialchars($ics['ics_no']) ?>" required />
+                <input type="text" class="form-control shadow" name="ics_no" value="<?= htmlspecialchars($ics['ics_no']) ?>" required />
               </div>
             </div>
 
@@ -136,31 +136,31 @@ $stmt->close();
                     <?php foreach ($ics['items'] as $item): ?>
                       <tr>
                         <td>
-                          <input type="number" step="1" min="0" class="form-control form-control-sm text-center item-qty" name="items[<?= (int)$item['item_id'] ?>][quantity]" value="<?= htmlspecialchars($item['quantity']) ?>">
+                          <input type="number" step="1" min="0" class="form-control form-control-sm text-center item-qty shadow" name="items[<?= (int)$item['item_id'] ?>][quantity]" value="<?= htmlspecialchars($item['quantity']) ?>">
                         </td>
                         <td>
-                          <input type="text" class="form-control form-control-sm text-center" name="items[<?= (int)$item['item_id'] ?>][unit]" value="<?= htmlspecialchars($item['unit']) ?>">
+                          <input type="text" class="form-control form-control-sm text-center shadow" name="items[<?= (int)$item['item_id'] ?>][unit]" value="<?= htmlspecialchars($item['unit']) ?>">
                         </td>
                         <td>
                           <div class="input-group input-group-sm">
                             <span class="input-group-text">₱</span>
-                            <input type="number" step="0.01" min="0" class="form-control text-end item-unit-cost" name="items[<?= (int)$item['item_id'] ?>][unit_cost]" value="<?= htmlspecialchars($item['unit_cost']) ?>">
+                            <input type="number" step="0.01" min="0" class="form-control text-end item-unit-cost shadow" name="items[<?= (int)$item['item_id'] ?>][unit_cost]" value="<?= htmlspecialchars($item['unit_cost']) ?>">
                           </div>
                         </td>
                         <td>
                           <div class="input-group input-group-sm">
                             <span class="input-group-text">₱</span>
-                            <input type="number" step="0.01" min="0" class="form-control text-end item-total-cost" name="items[<?= (int)$item['item_id'] ?>][total_cost]" value="<?= htmlspecialchars($item['total_cost']) ?>" readonly>
+                            <input type="number" step="0.01" min="0" class="form-control text-end item-total-cost shadow" name="items[<?= (int)$item['item_id'] ?>][total_cost]" value="<?= htmlspecialchars($item['total_cost']) ?>" readonly>
                           </div>
                         </td>
                         <td>
-                          <input type="text" class="form-control form-control-sm" name="items[<?= (int)$item['item_id'] ?>][description]" value="<?= htmlspecialchars($item['description']) ?>">
+                          <input type="text" class="form-control form-control-sm shadow" name="items[<?= (int)$item['item_id'] ?>][description]" value="<?= htmlspecialchars($item['description']) ?>">
                         </td>
                         <td>
-                          <input type="number" step="1" min="0" class="form-control form-control-sm text-center" name="items[<?= (int)$item['item_id'] ?>][item_no]" value="<?= htmlspecialchars($item['item_no']) ?>">
+                          <input type="number" step="1" min="0" class="form-control form-control-sm text-center shadow" name="items[<?= (int)$item['item_id'] ?>][item_no]" value="<?= htmlspecialchars($item['item_no']) ?>">
                         </td>
                         <td>
-                          <input type="text" class="form-control form-control-sm text-center" name="items[<?= (int)$item['item_id'] ?>][estimated_useful_life]" value="<?= htmlspecialchars($item['estimated_useful_life']) ?>">
+                          <input type="text" class="form-control form-control-sm text-center shadow" name="items[<?= (int)$item['item_id'] ?>][estimated_useful_life]" value="<?= htmlspecialchars($item['estimated_useful_life']) ?>">
                         </td>
                        
                       </tr>
@@ -178,15 +178,15 @@ $stmt->close();
             <div class="row mt-4">
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Received from - Name</label>
-                <input type="text" class="form-control" name="received_from_name" value="<?= htmlspecialchars($ics['received_from_name']) ?>">
+                <input type="text" class="form-control shadow" name="received_from_name " value="<?= htmlspecialchars($ics['received_from_name']) ?>">
                 <label class="form-label mt-2">Position</label>
-                <input type="text" class="form-control" name="received_from_position" value="<?= htmlspecialchars($ics['received_from_position']) ?>">
+                <input type="text" class="form-control shadow" name="received_from_position" value="<?= htmlspecialchars($ics['received_from_position']) ?>">
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Received by - Name</label>
-                <input type="text" class="form-control" name="received_by_name" value="<?= htmlspecialchars($ics['received_by_name']) ?>">
+                <input type="text" class="form-control shadow" name="received_by_name" value="<?= htmlspecialchars($ics['received_by_name']) ?>">
                 <label class="form-label mt-2">Position</label>
-                <input type="text" class="form-control" name="received_by_position" value="<?= htmlspecialchars($ics['received_by_position']) ?>">
+                <input type="text" class="form-control shadow" name="received_by_position" value="<?= htmlspecialchars($ics['received_by_position']) ?>">
               </div>
             </div>
           </div>

@@ -125,7 +125,7 @@ if ($result && $result->num_rows > 0) {
                 <!-- ENTITY NAME -->
                 <div class="col-6">
                     <label class="form-label fw-semibold">ENTITY NAME</label>
-                    <input type="text" class="form-control" name="entity_name">
+                    <input type="text" class="form-control shadow" name="entity_name">
                 </div>
 
                 <!-- OFFICE -->
@@ -133,7 +133,7 @@ if ($result && $result->num_rows > 0) {
                     <label class="form-label fw-semibold">
                         DESTINATION <span style="color: red;">*</span>
                     </label>
-                    <select class="form-select" name="office_id" required>
+                    <select class="form-select shadow" name="office_id" required>
                         <option value="" disabled selected>Select office</option>
                         <option value="outside_lgu">Outside LGU</option> <!-- ✅ Static option -->
                         <?php foreach ($office_options as $office): ?>
@@ -150,13 +150,13 @@ if ($result && $result->num_rows > 0) {
                 <!-- FUND CLUSTER -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">FUND CLUSTER <span style="color: red;">*</span></label>
-                    <input type="text" class="form-control" name="fund_cluster" required>
+                    <input type="text" class="form-control shadow" name="fund_cluster" required>
                 </div>
 
                 <!-- ICS NO -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">ICS NO. <span style="color: red;">*</span></label>
-                    <input type="text" class="form-control" name="ics_no"
+                    <input type="text" class="form-control shadow" name="ics_no"
                         required>
                 </div>
 
@@ -181,9 +181,9 @@ if ($result && $result->num_rows > 0) {
                 <tbody id="ics-items-body">
                     <?php for ($i = 0; $i < 1; $i++): ?>
                         <tr>
-                            <td><input type="number" class="form-control quantity-field" name="quantity[]" min="1" required></td>
+                            <td><input type="number" class="form-control quantity-field shadow" name="quantity[]" min="1" required></td>
                             <td>
-                                <select class="form-select" name="unit[]" required>
+                                <select class="form-select shadow" name="unit[]" required>
                                     <option value="" disabled>Select unit</option>
                                     <?php foreach ($unit_options as $unit): ?>
                                         <option value="<?= htmlspecialchars($unit) ?>" <?= (strtolower($unit) === 'unit') ? 'selected' : '' ?>><?= htmlspecialchars($unit) ?></option>
@@ -199,7 +199,7 @@ if ($result && $result->num_rows > 0) {
         pointer-events: none;
         color: inherit;
         font-size: 1rem;">₱</span>
-                                <input type="number" class="form-control text-end" step="0.01" name="unit_cost[]" max="50000" style="padding-left: 1.5rem;" required>
+                                <input type="number" class="form-control text-end shadow" step="0.01" name="unit_cost[]" max="50000" style="padding-left: 1.5rem;" required>
                             </td>
                             <td style="position: relative;">
                                 <span style="
@@ -210,11 +210,11 @@ if ($result && $result->num_rows > 0) {
         pointer-events: none;
         color: inherit;
         font-size: 1rem;">₱</span>
-                                <input type="number" class="form-control total_cost text-end" name="total_cost[]" step="0.01" readonly style="padding-left: 1.5rem;">
+                                <input type="number" class="form-control total_cost text-end shadow" name="total_cost[]" step="0.01" readonly style="padding-left: 1.5rem;">
                             </td>
 
                             <td style="position: relative;">
-                                <input type="text" class="form-control description-field"
+                                <input type="text" class="form-control description-field shadow"
                                     name="description[]"
                                     placeholder="Type description..."
                                     style="padding-right: 2rem;" required> <!-- add right padding so X doesn't overlap -->
@@ -235,8 +235,8 @@ if ($result && $result->num_rows > 0) {
         ">&times;</button>
                             </td>
 
-                            <td><input type="text" class="form-control" name="item_no[]" required></td>
-                            <td><input type="text" class="form-control" name="estimated_useful_life[]" required></td>
+                            <td><input type="text" class="form-control shadow" name="item_no[]" required></td>
+                            <td><input type="text" class="form-control shadow" name="estimated_useful_life[]" required></td>
                         </tr>
                     <?php endfor; ?>
                 </tbody>
@@ -252,7 +252,7 @@ if ($result && $result->num_rows > 0) {
         pointer-events: none;
         color: inherit;
         font-size: 1rem;">₱</span>
-                            <input type="number" id="grandTotal" class="form-control fw-bold text-end" readonly style="padding-left: 1.5rem;">
+                            <input type="number" id="grandTotal" class="form-control fw-bold text-end shadow" readonly style="padding-left: 1.5rem;">
                         </td>
 
                         <td colspan="3" class="text-start">
@@ -271,14 +271,14 @@ if ($result && $result->num_rows > 0) {
                 <tr>
                     <td style="text-align:center;">
                         <input type="text" name="received_from_name"
-                            class="form-control text-center fw-bold"
+                            class="form-control text-center fw-bold shadow"
                             value="<?= htmlspecialchars($ics_data['received_from_name']) ?>"
                             placeholder="Enter name"
                             style="text-decoration:underline;">
                     </td>
                     <td style="text-align:center;">
                         <input type="text" name="received_by_name"
-                            class="form-control text-center fw-bold"
+                            class="form-control text-center fw-bold shadow"
                             value="<?= htmlspecialchars($ics_data['received_by_name']) ?>"
                             placeholder="Enter name"
                             style="text-decoration:underline;">
@@ -287,13 +287,13 @@ if ($result && $result->num_rows > 0) {
                 <tr>
                     <td style="text-align:center;">
                         <input type="text" name="received_from_position"
-                            class="form-control text-center"
+                            class="form-control text-center shadow"
                             value="<?= htmlspecialchars($ics_data['received_from_position']) ?>"
                             placeholder="Enter position">
                     </td>
                     <td style="text-align:center;">
                         <input type="text" name="received_by_position"
-                            class="form-control text-center"
+                            class="form-control text-center shadow"
                             value="<?= htmlspecialchars($ics_data['received_by_position']) ?>"
                             placeholder="Enter position">
                     </td>
@@ -305,12 +305,12 @@ if ($result && $result->num_rows > 0) {
                 <tr>
                     <td style="text-align:center;">
                         <input type="date" name="received_from_date"
-                            class="form-control text-center"
+                            class="form-control text-center shadow"
                             value="">
                     </td>
                     <td style="text-align:center;">
                         <input type="date" name="received_by_date"
-                            class="form-control text-center"
+                            class="form-control text-center shadow"
                             value="">
                     </td>
                 </tr>
