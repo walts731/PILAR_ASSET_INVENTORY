@@ -70,7 +70,6 @@ while ($row = $unit_query->fetch_assoc()) {
 }
 ?>
 
-
 <div class="d-flex justify-content-end mb-3">
     <a href="saved_par.php?id=<?= htmlspecialchars($form_id) ?>" class="btn btn-info">
         <i class="bi bi-folder-check"></i> View Saved PAR
@@ -93,18 +92,21 @@ while ($row = $unit_query->fetch_assoc()) {
         <?php unset($_SESSION['flash']); ?>
     <?php endif; ?>
 
+
     <form method="post" action="save_par_form.php" enctype="multipart/form-data" onsubmit="return checkDuplicates()">
         <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
+
 
         <div class="mb-3 text-center">
             <?php if (!empty($par_data['header_image'])): ?>
                 <img src="../img/<?= htmlspecialchars($par_data['header_image']) ?>"
-                    class="img-fluid mb-3"
-                    style="max-width: 100%; height: auto; object-fit: contain;">
+                     class="img-fluid mb-3"
+                     style="max-width: 100%; height: auto; object-fit: contain;">
                 <!-- ✅ Hidden input so header_image is included when saving -->
                 <input type="hidden" name="header_image" value="<?= htmlspecialchars($par_data['header_image']) ?>">
             <?php endif; ?>
         </div>
+
 
         <table class="table table-bordered align-middle text-start" style="table-layout: fixed;">
             <tbody>
@@ -135,8 +137,7 @@ while ($row = $unit_query->fetch_assoc()) {
                 <tr>
                     <td>
                         <label class="form-label fw-semibold mb-0">Entity Name <span style="color: red;">*</span></label>
-                        <input type="text" name="entity_name" class="form-control shadow"
-                            required>
+                        <input type="text" name="entity_name" class="form-control shadow" required>
                     </td>
                     <td>
                         <!-- Blank right cell -->
@@ -157,7 +158,6 @@ while ($row = $unit_query->fetch_assoc()) {
             </tbody>
         </table>
 
-
         <!-- ITEM TABLE -->
         <table class="table align-middle text-center mt-4" style="table-layout: fixed; ">
             <thead>
@@ -169,10 +169,11 @@ while ($row = $unit_query->fetch_assoc()) {
                     <th>DATE ACQUIRED</th>
                     <th>UNIT PRICE</th>
                     <th>AMOUNT</th>
+                    <th><!-- Remove column header --></th>
                 </tr>
             </thead>
             <tbody id="itemTableBody">
-                <?php for ($i = 0; $i < 5; $i++): ?>
+                <?php for ($i = 0; $i < 1; $i++): ?>
                     <tr>
                         <td><input type="number" name="items[<?= $i ?>][quantity]" class="form-control text-end shadow" id="qtyInput<?= $i ?>" min="1" required></td>
                         <td>
@@ -187,29 +188,25 @@ while ($row = $unit_query->fetch_assoc()) {
                         </td>
                         <td class="position-relative" style="width: 30%;">
                             <div class="input-group">
-                                <input type="text" name="items[<?= $i ?>][description]" class="form-control form-control-lg shadow"  id="descInput<?= $i ?>" placeholder="Type description..." required>
+                                <input type="text" name="items[<?= $i ?>][description]" class="form-control form-control-lg shadow" id="descInput<?= $i ?>" placeholder="Type description..." required>
                                 <input type="hidden" name="items[<?= $i ?>][asset_id]" id="assetId<?= $i ?>">
-                                <button type="button"
-                                    class="btn p-0 m-0 border-0 bg-transparent"
-                                    onclick="clearDescription(<?= $i ?>)"
-                                    style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                <button type="button" class="btn p-0 m-0 border-0 bg-transparent" onclick="clearDescription(<?= $i ?>)" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
                                     <span class="badge rounded-circle bg-secondary text-white" style="font-size: 0.75rem;">×</span>
                                 </button>
                             </div>
                         </td>
-
                         <td><input type="text" name="items[<?= $i ?>][property_no]" class="form-control shadow" required></td>
                         <td><input type="date" name="items[<?= $i ?>][date_acquired]" class="form-control shadow" id="acqDate<?= $i ?>" required></td>
                         <td style="position: relative;">
                             <span style="
-                                            position: absolute;
-                                            top: 50%;
-                                            left: 10px;
-                                            transform: translateY(-50%);
-                                            pointer-events: none;
-                                            color: inherit;
-                                            font-size: 1rem;
-                                        ">₱</span>
+                                    position: absolute;
+                                    top: 50%;
+                                    left: 10px;
+                                    transform: translateY(-50%);
+                                    pointer-events: none;
+                                    color: inherit;
+                                    font-size: 1rem;
+                                ">₱</span>
                             <input
                                 type="number"
                                 name="items[<?= $i ?>][unit_price]"
@@ -218,17 +215,16 @@ while ($row = $unit_query->fetch_assoc()) {
                                 id="unitCost<?= $i ?>"
                                 style="padding-left: 1.5rem;" required>
                         </td>
-
                         <td style="position: relative;">
                             <span style="
-                                            position: absolute;
-                                            top: 50%;
-                                            left: 10px;
-                                            transform: translateY(-50%);
-                                            pointer-events: none;
-                                            color: inherit;
-                                            font-size: 1rem;
-                                        ">₱</span>
+                                    position: absolute;
+                                    top: 50%;
+                                    left: 10px;
+                                    transform: translateY(-50%);
+                                    pointer-events: none;
+                                    color: inherit;
+                                    font-size: 1rem;
+                                ">₱</span>
                             <input
                                 type="number"
                                 name="items[<?= $i ?>][amount]"
@@ -238,23 +234,23 @@ while ($row = $unit_query->fetch_assoc()) {
                                 readonly
                                 style="padding-left: 1.5rem;" required>
                         </td>
-
-
+                        <td><!-- No remove button for first row --></td>
                     </tr>
                 <?php endfor; ?>
+            </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="3" class="text-end fw-bold">Total:</td>
+                    <td colspan="6" class="text-end fw-bold">Total:</td>
                     <td style="position: relative;">
                         <span style="
-                                    position: absolute;
-                                    top: 50%;
-                                    left: 10px;
-                                    transform: translateY(-50%);
-                                    pointer-events: none;
-                                    color: inherit;
-                                    font-size: 1rem;
-                                    ">₱</span>
+                                position: absolute;
+                                top: 50%;
+                                left: 10px;
+                                transform: translateY(-50%);
+                                pointer-events: none;
+                                color: inherit;
+                                font-size: 1rem;
+                            ">₱</span>
                         <input
                             type="text"
                             id="totalAmount"
@@ -262,12 +258,9 @@ while ($row = $unit_query->fetch_assoc()) {
                             readonly
                             style="padding-left: 1.5rem; width: 150px;">
                     </td>
+                    <td></td>
                 </tr>
-
             </tfoot>
-
-            </tbody>
-
         </table>
         <button type="button" class="btn btn-outline-primary mt-2" onclick="addRow()">+ Add Item</button>
 
@@ -321,7 +314,7 @@ while ($row = $unit_query->fetch_assoc()) {
 
 <?php include 'modals/par_duplicate_modal.php' ?>
 <script>
-    let rowIndex = 5; // Start after the initial 5 rows
+    let rowIndex = 1; // Start after the initial 1 row
     let selectedDescriptions = new Set(); // Track selected asset descriptions
 
     function addRow() {
@@ -329,7 +322,7 @@ while ($row = $unit_query->fetch_assoc()) {
         const newRow = document.createElement('tr');
 
         newRow.innerHTML = `
-        <td><input type="number" name="items[${rowIndex}][quantity]" class="form-control text-end shadow" id="qtyInput${rowIndex}" min="1"></td>
+        <td><input type="number" name="items[${rowIndex}][quantity]" class="form-control text-end shadow" id="qtyInput${rowIndex}" min="1" required></td>
         <td>
             <select name="items[${rowIndex}][unit]" class="form-select text-center shadow" required>
                 <option value="">Select Unit</option>
@@ -341,57 +334,54 @@ while ($row = $unit_query->fetch_assoc()) {
             </select>
         </td>
         <td class="position-relative">
-    <div class="input-group">
-        <input type="text" name="items[${rowIndex}][description]" class="form-control form-control-lg shadow" id="descInput${rowIndex}" placeholder="Type description...">
-        <input type="hidden" name="items[${rowIndex}][asset_id]" id="assetId${rowIndex}">
-        <button type="button"
-                class="btn p-0 m-0 border-0 bg-transparent"
-                onclick="clearDescription(${rowIndex})"
-                style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
-            <span class="badge rounded-circle bg-secondary text-white" style="font-size: 0.75rem;">×</span>
-        </button>
-    </div>
-</td>
-
-        <td><input type="text" name="items[${rowIndex}][property_no]" class="form-control shadow"></td>
-        <td><input type="date" name="items[${rowIndex}][date_acquired]" class="form-control shadow" id="acqDate${rowIndex}"></td>
+            <div class="input-group">
+                <input type="text" name="items[${rowIndex}][description]" class="form-control form-control-lg shadow" id="descInput${rowIndex}" placeholder="Type description..." required>
+                <input type="hidden" name="items[${rowIndex}][asset_id]" id="assetId${rowIndex}">
+                <button type="button" class="btn p-0 m-0 border-0 bg-transparent" onclick="clearDescription(${rowIndex})" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                    <span class="badge rounded-circle bg-secondary text-white" style="font-size: 0.75rem;">×</span>
+                </button>
+            </div>
+        </td>
+        <td><input type="text" name="items[${rowIndex}][property_no]" class="form-control shadow" required></td>
+        <td><input type="date" name="items[${rowIndex}][date_acquired]" class="form-control shadow" id="acqDate${rowIndex}" required></td>
         <td style="position: relative; width: 150px;">
-    <span style="
-        position: absolute;
-        top: 50%;
-        left: 10px;
-        transform: translateY(-50%);
-        pointer-events: none;
-        color: inherit;
-        font-size: 1rem;">₱</span>
-    <input
-        type="number"
-        name="items[${rowIndex}][unit_price]"
-        class="form-control text-end shadow"
-        step="0.01"
-        id="unitCost${rowIndex}"
-        style="padding-left: 1.5rem; width: 100%;">
-</td>
-
+            <span style="
+                position: absolute;
+                top: 50%;
+                left: 10px;
+                transform: translateY(-50%);
+                pointer-events: none;
+                color: inherit;
+                font-size: 1rem;">₱</span>
+            <input
+                type="number"
+                name="items[${rowIndex}][unit_price]"
+                class="form-control text-end shadow"
+                step="0.01"
+                id="unitCost${rowIndex}"
+                style="padding-left: 1.5rem; width: 100%;" required>
+        </td>
         <td style="position: relative; width: 150px;">
-    <span style="
-        position: absolute;
-        top: 50%;
-        left: 10px;
-        transform: translateY(-50%);
-        pointer-events: none;
-        color: inherit;
-        font-size: 1rem;">₱</span>
-    <input
-        type="number"
-        name="items[${rowIndex}][amount]"
-        class="form-control text-end fw-semibold shadow"
-        step="0.01"
-        id="amount${rowIndex}"
-        readonly
-        style="padding-left: 1.5rem; width: 100%;">
-</td>
-
+            <span style="
+                position: absolute;
+                top: 50%;
+                left: 10px;
+                transform: translateY(-50%);
+                pointer-events: none;
+                color: inherit;
+                font-size: 1rem;">₱</span>
+            <input
+                type="number"
+                name="items[${rowIndex}][amount]"
+                class="form-control text-end fw-semibold shadow"
+                step="0.01"
+                id="amount${rowIndex}"
+                readonly
+                style="padding-left: 1.5rem; width: 100%;" required>
+        </td>
+        <td>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">Remove</button>
+        </td>
         `;
 
         tbody.appendChild(newRow);
@@ -408,7 +398,6 @@ while ($row = $unit_query->fetch_assoc()) {
         const acqDateInput = document.getElementById('acqDate' + i);
         const amountInput = document.getElementById('amount' + i);
         const assetIdInput = document.getElementById('assetId' + i);
-        const propertyNoInput = document.querySelector(`[name="items[${i}][property_no]"]`);
 
         // Auto-calculate amount
         qtyInput.addEventListener('input', calculateAmount);
@@ -439,8 +428,6 @@ while ($row = $unit_query->fetch_assoc()) {
                 descInput.value = '';
                 return;
             }
-
-            // No autofill when suggestions are disabled; keep manual entry behavior
             updateTotalAmount();
         });
     }
@@ -463,7 +450,16 @@ while ($row = $unit_query->fetch_assoc()) {
         document.getElementById('totalAmount').value = total.toFixed(2);
     }
 
-    // Optional: Final duplicate check on form submission
+    // Remove row except first
+    function removeRow(button) {
+        const row = button.closest('tr');
+        if (row) {
+            row.remove();
+            updateTotalAmount();
+        }
+    }
+
+    // Final duplicate check on form submission
     function checkDuplicates() {
         const descInputs = document.querySelectorAll('[id^="descInput"]');
         const seen = new Set();
@@ -478,7 +474,6 @@ while ($row = $unit_query->fetch_assoc()) {
                 seen.add(val);
             }
         }
-
         return true;
     }
 
@@ -510,7 +505,4 @@ while ($row = $unit_query->fetch_assoc()) {
 
         updateTotalAmount();
     }
-
-
-    // Add this to your submit button: onclick="return checkDuplicates()"
 </script>
