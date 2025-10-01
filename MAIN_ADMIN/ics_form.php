@@ -161,6 +161,7 @@ if ($result && $result->num_rows > 0) {
                         <th rowspan="2">DESCRIPTION</th>
                         <th rowspan="2">ITEM NO</th>
                         <th rowspan="2">ESTIMATED USEFUL LIFE</th>
+                        <th rowspan="2">ACTIONS</th>
                     </tr>
                     <tr>
                         <th>UNIT COST</th>
@@ -226,6 +227,11 @@ if ($result && $result->num_rows > 0) {
 
                             <td><input type="text" class="form-control shadow" name="item_no[]" required></td>
                             <td><input type="text" class="form-control shadow" name="estimated_useful_life[]" required></td>
+                            <td>
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-row">
+                                    Remove
+                                </button>
+                            </td>
                         </tr>
                     <?php endfor; ?>
                 </tbody>
@@ -390,6 +396,34 @@ if ($result && $result->num_rows > 0) {
 
             // Optional: put focus back into the description field
             if (descriptionInput) descriptionInput.focus();
+        });
+
+        // Remove row handler - remove the row if more than one exists; otherwise clear it
+        tableBody.addEventListener('click', function(event) {
+            const removeBtn = event.target.closest('.remove-row');
+            if (!removeBtn) return;
+
+            const row = removeBtn.closest('tr');
+            if (!row) return;
+
+            const rows = tableBody.querySelectorAll('tr');
+            if (rows.length > 1) {
+                row.remove();
+            } else {
+                // Clear inputs/selects for the last remaining row instead of removing
+                row.querySelectorAll('input').forEach(el => {
+                    el.value = '';
+                    el.removeAttribute('max');
+                    el.placeholder = '';
+                    if (typeof el.setCustomValidity === 'function') el.setCustomValidity('');
+                });
+                row.querySelectorAll('select').forEach(sel => {
+                    if (sel.options.length > 0) sel.selectedIndex = 0;
+                });
+            }
+
+            // Recalculate totals
+            updateGrandTotal();
         });
 
         // Add row (clone)
