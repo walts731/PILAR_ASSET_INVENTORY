@@ -37,17 +37,16 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
 <form method="POST" action="save_ris.php" enctype="multipart/form-data">
   <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
 
-  <!-- Header Image -->
-  <!-- Header Image -->
+  <!-- Header Image (display only) -->
   <div class="mb-3 text-center">
-    <input type="file" name="header_image" class="form-control" accept="image/*">
-
     <?php if (!empty($ris_data['header_image'])): ?>
       <img src="../img/<?= htmlspecialchars($ris_data['header_image']) ?>"
-        class="img-fluid mb-3"
-        style="max-width: 100%; height: auto; object-fit: contain;">
-      <!-- Keep old image in a hidden input -->
-      <input type="hidden" name="existing_header_image" value="<?= htmlspecialchars($ris_data['header_image']) ?>">
+           class="img-fluid mb-2"
+           style="max-width: 100%; height: auto; object-fit: contain;">
+      <!-- Submit existing header image with the form -->
+      <input type="hidden" name="header_image" value="<?= htmlspecialchars($ris_data['header_image']) ?>">
+    <?php else: ?>
+      <p class="text-muted">No header image available</p>
     <?php endif; ?>
   </div>
 
@@ -211,10 +210,10 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
       </tr>
       <tr>
         <td>Date:</td>
-        <td><input type="date" class="form-control" name="requested_by_date" value="<?= date('Y-m-d') ?>"></td>
-        <td><input type="date" class="form-control" name="approved_by_date" value="<?= date('Y-m-d') ?>"></td>
-        <td><input type="date" class="form-control" name="issued_by_date" value="<?= date('Y-m-d') ?>"></td>
-        <td><input type="date" class="form-control" name="received_by_date" value="<?= date('Y-m-d') ?>"></td>
+        <td><input type="date" class="form-control" name="requested_by_date" value=""></td>
+        <td><input type="date" class="form-control" name="approved_by_date" value=""></td>
+        <td><input type="date" class="form-control" name="issued_by_date" value=""></td>
+        <td><input type="date" class="form-control" name="received_by_date" value=""></td>
       </tr>
       <tr style="display:none;">
   <td>Footer Date:</td>
