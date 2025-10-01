@@ -120,7 +120,6 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         <th>Unit</th>
         <th style="width: 30%;">DESCRIPTION</th>
         <th>Quantity</th>
-        <th>Signature</th>
         <th>Price</th>
         <th>Total Amount</th>
       </tr>
@@ -148,7 +147,6 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
             </div>
           </td>
           <td><input type="number" class="form-control" name="req_quantity[]" min="1"></td>
-          <td><input type="text" class="form-control" name="signature[]"></td>
           <td><input type="number" step="0.01" class="form-control" name="price[]"></td>
           <td><input type="text" class="form-control total" name="total[]" readonly></td>
         </tr>
@@ -347,7 +345,6 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         </div>
       </td>
       <td><input type="number" class="form-control" name="req_quantity[]" min="1"></td>
-      <td><input type="text" class="form-control" name="signature[]"></td>
       <td><input type="number" step="0.01" class="form-control" name="price[]"></td>
       <td><input type="text" class="form-control total" readonly></td>
     `;
