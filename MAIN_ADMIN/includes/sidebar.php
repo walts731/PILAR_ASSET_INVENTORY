@@ -92,8 +92,8 @@ if ($role === 'user' && $userId > 0) {
     }
 
     .sidebar .brand-logo-wrap {
-        width: 90px;
-        height: 90px;
+        width: 77px;
+        height: 77px;
         border-radius: 50%;
         background: #ffffff;
         display: inline-flex;
@@ -104,7 +104,7 @@ if ($role === 'user' && $userId > 0) {
     }
 
     .sidebar .brand-logo-wrap img {
-        width: 70px; height: 70px; object-fit: contain;
+        width: 75px; height: 75px; object-fit: contain;
         filter: none;
     }
 
