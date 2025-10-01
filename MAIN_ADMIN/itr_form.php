@@ -125,35 +125,30 @@ if (!empty($_SESSION['flash'])) {
         <?php else: ?>
           <p class="text-muted">No header image available</p>
         <?php endif; ?>
-        <div class="mt-3 text-start">
-          <label for="header_image_file" class="form-label fw-semibold">Replace Header Image</label>
-          <input type="file" class="form-control" id="header_image_file" name="header_image_file" accept="image/*">
-          <div class="form-text">Optional. Upload a new header image (JPG, PNG, or WEBP). This will replace the current image.</div>
-        </div>
       </div>
 
 
       <div class="row g-3 mt-2">
         <div class="col-md-4">
-          <label for="entity_name" class="form-label">Entity Name</label>
-          <input type="text" id="entity_name" name="entity_name" class="form-control" value="<?= htmlspecialchars($itr['entity_name']) ?>">
+          <label for="entity_name" class="form-label">Entity Name <span style="color: red;">*</span></label>
+          <input type="text" id="entity_name" name="entity_name" class="form-control shadow" placeholder="Enter Entity Name" required>
         </div>
         <div class="col-md-4">
-          <label for="fund_cluster" class="form-label">Fund Cluster</label>
-          <input type="text" id="fund_cluster" name="fund_cluster" class="form-control" value="<?= htmlspecialchars($itr['fund_cluster']) ?>">
+          <label for="fund_cluster" class="form-label">Fund Cluster <span style="color: red;">*</span></label>
+          <input type="text" id="fund_cluster" name="fund_cluster" class="form-control shadow" placeholder="Enter Fund Cluster" required>
         </div>
         <div class="col-md-4">
           <label for="date" class="form-label">Date</label>
-          <input type="date" id="date" name="date" class="form-control" value="<?= htmlspecialchars($itr['date']) ?>">
+          <input type="date" id="date" name="date" class="form-control shadow" value="<?= htmlspecialchars($itr['date']) ?>">
         </div>
         <div class="col-md-6">
-          <label for="from_accountable_officer" class="form-label">From Accountable Officer</label>
-          <input type="text" id="from_accountable_officer" name="from_accountable_officer" class="form-control" value="<?= htmlspecialchars($itr['from_accountable_officer']) ?>">
+          <label for="from_accountable_officer" class="form-label">From Accountable Officer <span style="color: red;">*</span></label>
+          <input type="text" id="from_accountable_officer" name="from_accountable_officer" class="form-control shadow" value="<?= htmlspecialchars($itr['from_accountable_officer']) ?>" required>
         </div>
         <div class="col-md-6">
-          <label for="to_accountable_officer" class="form-label">To Accountable Officer</label>
+          <label for="to_accountable_officer" class="form-label">To Accountable Officer <span style="color: red;">*</span></label>
           <div class="input-group">
-            <input type="text" id="to_accountable_officer" name="to_accountable_officer" class="form-control" list="employeesList" placeholder="Type to search employees..." value="<?= htmlspecialchars($itr['to_accountable_officer']) ?>">
+            <input type="text" id="to_accountable_officer" name="to_accountable_officer" class="form-control shadow" list="employeesList" placeholder="Type to search employees..." required>
             <button type="button" class="btn btn-outline-secondary" id="clear_to_accountable" title="Clear field" aria-label="Clear To Accountable Officer">
               <i class="bi bi-x-circle"></i>
             </button>
@@ -167,7 +162,7 @@ if (!empty($_SESSION['flash'])) {
 
         <!-- Transfer type radios -->
         <div class="col-md-6">
-          <label class="form-label d-block">Transfer Type</label>
+          <label class="form-label d-block">Transfer Type <span style="color: red;">*</span></label>
           <?php
           // Determine selected transfer type; legacy values may be comma-separated, use first
           $raw_transfer = (string)$itr['transfer_type'];
@@ -191,19 +186,19 @@ if (!empty($_SESSION['flash'])) {
             <label class="form-check-label" for="tt_others">Others</label>
           </div>
           <div id="transfer_type_other_wrap" class="mt-2" style="display: <?= ($selectedType === 'Others') ? 'block' : 'none' ?>;">
-            <input type="text" id="transfer_type_other" name="transfer_type_other" class="form-control" placeholder="Specify other transfer type" value="<?= htmlspecialchars($otherValue) ?>">
+            <input type="text" id="transfer_type_other" name="transfer_type_other" class="form-control shadow" placeholder="Specify other transfer type" value="<?= htmlspecialchars($otherValue) ?>">
           </div>
         </div>
 
         <div class="col-md-6">
-          <label for="itr_no" class="form-label">ITR No.</label>
-          <input type="text" id="itr_no" name="itr_no" class="form-control" value="<?= htmlspecialchars($itr['itr_no']) ?>">
+          <label for="itr_no" class="form-label">ITR No. <span style="color: red;">*</span></label>
+          <input type="text" id="itr_no" name="itr_no" class="form-control shadow" placeholder="Enter ITR number" required>
         </div>
         
         <!-- End User Field -->
         <div class="col-md-12">
-          <label for="end_user" class="form-label">End User</label>
-          <input type="text" id="end_user" name="end_user" class="form-control" placeholder="Enter end user name..." value="">
+          <label for="end_user" class="form-label">End User <span style="color: red;">*</span></label>
+          <input type="text" id="end_user" name="end_user" class="form-control shadow" placeholder="Enter end user name..." value="" required>
           <div class="form-text">This will update the end user for all assets being transferred in this ITR.</div>
         </div>
       </div>
@@ -212,7 +207,6 @@ if (!empty($_SESSION['flash'])) {
 
   <div class="card shadow-sm mt-3">
     <div class="card-body">
-      <h5>ITR Items</h5>
       <table class="table table-bordered" id="itrItemsTable">
         <thead>
           <tr>
@@ -226,18 +220,18 @@ if (!empty($_SESSION['flash'])) {
         </thead>
         <tbody>
           <?php
-          $rowCount = max(5, count($items)); // at least 5 rows
+          $rowCount = max(1, count($items)); // at least 1 row
           for ($i = 0; $i < $rowCount; $i++):
             $item = $items[$i] ?? ['date_acquired' => '', 'property_no' => '', 'description' => '', 'amount' => '', 'condition_of_PPE' => ''];
           ?>
             <tr>
-              <td><input type="date" name="date_acquired[]" class="form-control" value="<?= htmlspecialchars($item['date_acquired']) ?>"></td>
-              <td><input type="text" name="property_no[]" class="form-control property-search" value="<?= htmlspecialchars($item['property_no']) ?>"></td>
+              <td><input type="date" name="date_acquired[]" class="form-control shadow" value="<?= htmlspecialchars($item['date_acquired']) ?>" required></td>
+              <td><input type="text" name="property_no[]" class="form-control property-search shadow" value="<?= htmlspecialchars($item['property_no']) ?>" required></td>
               <td>
-                <input type="text" name="description[]" class="form-control asset-search" list="assetsList" value="<?= htmlspecialchars($item['description']) ?>" placeholder="Search description or property no">
+                <input type="text" name="description[]" class="form-control asset-search shadow" list="assetsList" value="<?= htmlspecialchars($item['description']) ?>" placeholder="Search description or property no" required>
               </td>
-              <td><input type="number" step="0.01" name="amount[]" class="form-control" value="<?= htmlspecialchars($item['amount']) ?>"></td>
-              <td><input type="text" name="condition_of_PPE[]" class="form-control" value="<?= htmlspecialchars($item['condition_of_PPE']) ?>"></td>
+              <td><input type="number" step="0.01" name="amount[]" class="form-control shadow" value="<?= htmlspecialchars($item['amount']) ?>" required></td>
+              <td><input type="text" name="condition_of_PPE[]" class="form-control shadow" value="<?= htmlspecialchars($item['condition_of_PPE']) ?>" required></td>
               <td>
                 <button type="button" class="btn btn-sm btn-danger clear-row">Clear</button>
                 <button type="button" class="btn btn-sm btn-danger remove-asset-btn ms-1" style="display: none;" title="Remove Asset">
@@ -274,8 +268,8 @@ if (!empty($_SESSION['flash'])) {
   <!-- Reason for Transfer -->
   <div class="card shadow-sm mt-3">
     <div class="card-body">
-      <label for="reason_for_transfer" class="form-label">Reason for Transfer</label>
-      <textarea id="reason_for_transfer" name="reason_for_transfer" class="form-control" rows="3" placeholder="Enter reason for transfer..."><?= htmlspecialchars($itr['reason_for_transfer']) ?></textarea>
+      <label for="reason_for_transfer" class="form-label">Reason for Transfer <span style="color: red;">*</span></label>
+      <textarea id="reason_for_transfer" name="reason_for_transfer" class="form-control shadow" rows="3" placeholder="Enter reason for transfer..." required></textarea>
     </div>
   </div>
 
@@ -285,12 +279,12 @@ if (!empty($_SESSION['flash'])) {
       <div class="row g-3">
         <?php foreach (['approved', 'released', 'received'] as $role): ?>
           <div class="col-md-4">
-            <label class="form-label"><?= ucfirst($role) ?> By</label>
-            <input type="text" name="<?= $role ?>_by" class="form-control" value="<?= htmlspecialchars($itr[$role . '_by']) ?>">
-            <label class="form-label mt-2"><?= ucfirst($role) ?> Designation</label>
-            <input type="text" name="<?= $role ?>_designation" class="form-control" value="<?= htmlspecialchars($itr[$role . '_designation']) ?>">
+            <label class="form-label"><?= ucfirst($role) ?> By <span style="color: red;">*</span></label>
+            <input type="text" name="<?= $role ?>_by" class="form-control shadow" value="<?= htmlspecialchars($itr[$role . '_by']) ?>" required>
+            <label class="form-label mt-2"><?= ucfirst($role) ?> Designation <span style="color: red;">*</span></label>
+            <input type="text" name="<?= $role ?>_designation" class="form-control shadow" value="<?= htmlspecialchars($itr[$role . '_designation']) ?>" required>
             <label class="form-label mt-2"><?= ucfirst($role) ?> Date</label>
-            <input type="date" name="<?= $role ?>_date" class="form-control" value="<?= htmlspecialchars($itr[$role . '_date']) ?>">
+            <input type="date" name="<?= $role ?>_date" class="form-control shadow" value="<?= htmlspecialchars($itr[$role . '_date']) ?>">
           </div>
         <?php endforeach; ?>
       </div>
@@ -299,7 +293,7 @@ if (!empty($_SESSION['flash'])) {
 
   <!-- Single Save Button -->
   <div class="d-flex justify-content-end gap-2 mt-3">
-    <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save ITR</button>
+    <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save </button>
   </div>
 </form>
 
@@ -396,11 +390,11 @@ if (!empty($_SESSION['flash'])) {
     document.getElementById('addRow').addEventListener('click', function() {
       const newRow = document.createElement('tr');
       newRow.innerHTML = `
-        <td><input type="date" name="date_acquired[]" class="form-control"></td>
-        <td><input type="text" name="property_no[]" class="form-control property-search"></td>
-        <td><input type="text" name="description[]" class="form-control asset-search" list="assetsList" placeholder="Search description or property no"></td>
-        <td><input type="number" step="0.01" name="amount[]" class="form-control"></td>
-        <td><input type="text" name="condition_of_PPE[]" class="form-control"></td>
+        <td><input type="date" name="date_acquired[]" class="form-control shadow"></td>
+        <td><input type="text" name="property_no[]" class="form-control property-search shadow"></td>
+        <td><input type="text" name="description[]" class="form-control asset-search shadow" list="assetsList" placeholder="Search description or property no"></td>
+        <td><input type="number" step="0.01" name="amount[]" class="form-control shadow"></td>
+        <td><input type="text" name="condition_of_PPE[]" class="form-control shadow"></td>
         <td>
           <button type="button" class="btn btn-sm btn-danger clear-row">Clear</button>
           <button type="button" class="btn btn-sm btn-danger remove-asset-btn ms-1" style="display: none;" title="Remove Asset">
