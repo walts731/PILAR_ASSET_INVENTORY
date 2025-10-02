@@ -464,6 +464,15 @@ $stmt->close();
                           data-bs-target="#viewAssetModal">
                           <i class="bi bi-eye"></i>View
                         </button>
+                        <button type="button"
+  class="btn btn-sm btn-outline-secondary rounded-pill viewLifecycleBtn ms-1"
+  data-source="assets_new"
+  data-id="<?= (int)$row['an_id'] ?>"
+  data-bs-toggle="modal"
+  data-bs-target="#viewLifecycleModal"
+  title="View Asset Life Cycle">
+  <i class="bi bi-graph-up"></i> Life Cycle
+</button>
                       </td>
                     </tr>
                   <?php endwhile; ?>
@@ -1152,6 +1161,7 @@ $stmt->close();
   <?php include 'modals/view_consumable_modal.php'; ?>
   <?php include 'modals/import_csv_modal.php'; ?>
   <?php include 'modals/delete_consumable_enhanced_modal.php'; ?>
+  <?php include 'modals/view_lifecycle_modal.php'; ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -2266,6 +2276,74 @@ $stmt->close();
         });
       }
     });
+
+    // Lifecycle viewer for Assets tab (assets_new)
+document.querySelectorAll('.viewLifecycleBtn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const id = this.getAttribute('data-id');
+    const source = this.getAttribute('data-source') || 'assets_new';
+    const tableBody = document.getElementById('lifecycleBody');
+    const countEl = document.getElementById('lifecycleCount');
+    const assetsCountEl = document.getElementById('lifecycleAssetsCount');
+    const ctxEl = document.getElementById('lifecycleContext');
+
+    if (tableBody) {
+      tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">
+        <div class="spinner-border spinner-border-sm me-2"></div>Loading life cycle...
+      </td></tr>`;
+    }
+    if (countEl) countEl.textContent = '0';
+    if (assetsCountEl) assetsCountEl.textContent = '0';
+    if (ctxEl) ctxEl.textContent = source === 'assets_new'
+      ? 'Items created from this Acquisition (assets_new)'
+      : 'Single Asset';
+
+    fetch(`get_asset_lifecycle.php?source=${encodeURIComponent(source)}&id=${encodeURIComponent(id)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${data.error}</td></tr>`;
+          return;
+        }
+        const events = Array.isArray(data.events) ? data.events : [];
+        if (countEl) countEl.textContent = events.length;
+        if (assetsCountEl && data.summary && typeof data.summary.assets_count !== 'undefined') {
+          assetsCountEl.textContent = data.summary.assets_count;
+        }
+        if (tableBody) {
+          if (events.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No events found.</td></tr>`;
+            return;
+          }
+          const escapeHtml = v => (v == null ? '' : String(v)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+          tableBody.innerHTML = events.map(ev => {
+            const ref = ev.ref_table ? `${escapeHtml(ev.ref_table)} #${escapeHtml(ev.ref_id ?? '')}` : '';
+            const fromStr = [ev.from_office, ev.from_employee].filter(Boolean).map(escapeHtml).join(' • ');
+            const toStr = [ev.to_office, ev.to_employee].filter(Boolean).map(escapeHtml).join(' • ');
+            const t = (ev.event_type || '').toUpperCase();
+            const color = { ACQUIRED: 'success', ASSIGNED: 'primary', TRANSFERRED: 'info', DISPOSAL_LISTED: 'warning', DISPOSED: 'secondary', RED_TAGGED: 'danger' }[t] || 'light';
+            const typeBadge = `<span class="badge bg-${color}">${escapeHtml(t)}</span>`;
+            const dt = ev.created_at ? new Date(ev.created_at).toLocaleString('en-US', { year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+            return `
+              <tr>
+                <td>${escapeHtml(dt)}</td>
+                <td>${typeBadge}</td>
+                <td>${fromStr || ''}</td>
+                <td>${toStr || ''}</td>
+                <td>${ref}</td>
+                <td>${escapeHtml(ev.notes || '')}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      })
+      .catch(err => {
+        if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Failed to load life cycle.</td></tr>`;
+        console.error('Lifecycle load error:', err);
+      });
+  });
+});
   </script>
 
 </body>
