@@ -74,6 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $description_array = $_POST['description'] ?? [];
         $amount_array = $_POST['amount'] ?? [];
         $condition_array = $_POST['condition_of_PPE'] ?? [];
+        // Optional: asset IDs posted by itr_form hidden inputs per row
+        $asset_id_array = $_POST['asset_id'] ?? [];
 
         // Validate that we have items
         if (empty($date_acquired_array) || count($date_acquired_array) == 0) {
@@ -86,50 +88,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $valid_items = [];
         
         for ($i = 0; $i < count($date_acquired_array); $i++) {
-            if (!empty($description_array[$i]) && !empty($property_no_array[$i])) {
-                // Extract asset ID from description or property number
+            if (!empty($description_array[$i])) {
+                // Resolve asset_id based on description-first logic
                 $asset_id = null;
-                
-                // Try to find asset by property number first
-                $asset_stmt = $conn->prepare("SELECT id, employee_id, inventory_tag FROM assets WHERE property_no = ? AND type = 'asset' LIMIT 1");
-                $asset_stmt->bind_param("s", $property_no_array[$i]);
-                $asset_stmt->execute();
-                $asset_result = $asset_stmt->get_result();
-                
-                if ($asset_result->num_rows > 0) {
-                    $asset_row = $asset_result->fetch_assoc();
-                    $asset_id = $asset_row['id'];
-                    $current_employee_id = $asset_row['employee_id'];
-                    $asset_inventory_tags[(int)$asset_id] = $asset_row['inventory_tag'] ?? '';
-                } else {
-                    // Try to extract from description format "Description (Property No)"
-                    if (preg_match('/\(([^)]+)\)$/', $description_array[$i], $matches)) {
-                        $extracted_property_no = $matches[1];
-                        $asset_stmt2 = $conn->prepare("SELECT id, employee_id, inventory_tag FROM assets WHERE property_no = ? AND type = 'asset' LIMIT 1");
-                        $asset_stmt2->bind_param("s", $extracted_property_no);
-                        $asset_stmt2->execute();
-                        $asset_result2 = $asset_stmt2->get_result();
-                        
-                        if ($asset_result2->num_rows > 0) {
-                            $asset_row2 = $asset_result2->fetch_assoc();
-                            $asset_id = $asset_row2['id'];
-                            $current_employee_id = $asset_row2['employee_id'];
-                            $asset_inventory_tags[(int)$asset_id] = $asset_row2['inventory_tag'] ?? '';
-                        }
-                        $asset_stmt2->close();
+                $desc = trim((string)$description_array[$i]);
+                $propNo = trim((string)($property_no_array[$i] ?? ''));
+
+                // 1) If hidden asset_id[] was posted, validate and use it
+                if (isset($asset_id_array[$i]) && !empty($asset_id_array[$i])) {
+                    $candidate = (int)$asset_id_array[$i];
+                    $chk = $conn->prepare("SELECT id, employee_id, inventory_tag FROM assets WHERE id = ? AND type = 'asset' LIMIT 1");
+                    $chk->bind_param('i', $candidate);
+                    $chk->execute();
+                    $cr = $chk->get_result();
+                    if ($cr && $cr->num_rows === 1) {
+                        $r = $cr->fetch_assoc();
+                        $asset_id = (int)$r['id'];
+                        $current_employee_id = $r['employee_id'];
+                        $asset_inventory_tags[$asset_id] = $r['inventory_tag'] ?? '';
                     }
+                    $chk->close();
                 }
-                $asset_stmt->close();
-                
+
+                // 2) Parse description in format "Description (PROPERTY_NO)"
+                if (!$asset_id && preg_match('/\(([^)]+)\)$/', $desc, $m)) {
+                    $extracted = trim($m[1]);
+                    $s1 = $conn->prepare("SELECT id, employee_id, inventory_tag FROM assets WHERE property_no = ? AND type = 'asset' LIMIT 1");
+                    $s1->bind_param('s', $extracted);
+                    $s1->execute();
+                    $res1 = $s1->get_result();
+                    if ($res1 && $res1->num_rows === 1) {
+                        $ar = $res1->fetch_assoc();
+                        $asset_id = (int)$ar['id'];
+                        $current_employee_id = $ar['employee_id'];
+                        $asset_inventory_tags[$asset_id] = $ar['inventory_tag'] ?? '';
+                    }
+                    $s1->close();
+                }
+
+                // 3) Fallback to posted property_no[]
+                if (!$asset_id && !empty($propNo)) {
+                    $s2 = $conn->prepare("SELECT id, employee_id, inventory_tag FROM assets WHERE property_no = ? AND type = 'asset' LIMIT 1");
+                    $s2->bind_param('s', $propNo);
+                    $s2->execute();
+                    $res2 = $s2->get_result();
+                    if ($res2 && $res2->num_rows === 1) {
+                        $ar2 = $res2->fetch_assoc();
+                        $asset_id = (int)$ar2['id'];
+                        $current_employee_id = $ar2['employee_id'];
+                        $asset_inventory_tags[$asset_id] = $ar2['inventory_tag'] ?? '';
+                    }
+                    $s2->close();
+                }
+
+                // 4) Last resort: exact description match if unique
+                if (!$asset_id) {
+                    $s3 = $conn->prepare("SELECT id, employee_id, inventory_tag FROM assets WHERE description = ? AND type = 'asset' LIMIT 2");
+                    $s3->bind_param('s', $desc);
+                    $s3->execute();
+                    $res3 = $s3->get_result();
+                    if ($res3 && $res3->num_rows === 1) {
+                        $ar3 = $res3->fetch_assoc();
+                        $asset_id = (int)$ar3['id'];
+                        $current_employee_id = $ar3['employee_id'];
+                        $asset_inventory_tags[$asset_id] = $ar3['inventory_tag'] ?? '';
+                    }
+                    $s3->close();
+                }
+
                 if ($asset_id) {
-                    $assets_to_update[] = (int)$asset_id;
+                    $assets_to_update[] = $asset_id;
                     $valid_items[] = [
-                        'date_acquired' => $date_acquired_array[$i],
-                        'property_no' => $property_no_array[$i],
+                        'date_acquired' => $date_acquired_array[$i] ?? '',
+                        'property_no' => $propNo,
                         'asset_id' => $asset_id,
-                        'description' => $description_array[$i],
-                        'amount' => $amount_array[$i],
-                        'condition_of_PPE' => $condition_array[$i]
+                        'description' => $desc,
+                        'amount' => $amount_array[$i] ?? 0,
+                        'condition_of_PPE' => $condition_array[$i] ?? ''
                     ];
                 }
             }

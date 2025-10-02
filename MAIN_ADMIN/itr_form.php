@@ -250,8 +250,13 @@ if (!empty($_SESSION['flash'])) {
               <td><input type="date" name="date_acquired[]" class="form-control shadow" value="<?= htmlspecialchars($item['date_acquired']) ?>" required></td>
               <td><input type="text" name="property_no[]" class="form-control property-search shadow" value="<?= htmlspecialchars($item['property_no']) ?>" required></td>
               <td>
-                <input type="text" name="description[]" class="form-control asset-search shadow" list="assetsList" value="<?= htmlspecialchars($item['description']) ?>" placeholder="Search description or property no" required>
-              </td>
+  <input type="hidden" name="asset_id[]" value="">
+  <input type="text" name="description[]" 
+         class="form-control asset-search shadow" 
+         list="assetsList" 
+         placeholder="Search description or property no" required>
+</td>
+
               <td><input type="number" step="0.01" name="amount[]" class="form-control shadow" value="<?= htmlspecialchars($item['amount']) ?>" required></td>
               <td><input type="text" name="condition_of_PPE[]" class="form-control shadow" value="<?= htmlspecialchars($item['condition_of_PPE']) ?>" required></td>
               <td>
@@ -480,36 +485,36 @@ if (!empty($_SESSION['flash'])) {
     }
 
     function onDescriptionSelected(input) {
-      const val = input.value;
-      const option = Array.from(document.getElementById('assetsList').options).find(opt => opt.value === val);
-      if (option) {
-        const assetId = option.dataset.id;
-        if (selectedAssetIds.has(assetId)) {
-          alert('This asset has already been selected in another row.');
-          input.value = '';
-          return;
-        }
-        const previousAssetId = input.dataset.selectedAssetId;
-        if (previousAssetId && previousAssetId !== assetId) {
-          selectedAssetIds.delete(previousAssetId);
-          const prevOption = document.querySelector(`#assetsList option[data-id="${previousAssetId}"]`);
-          if (prevOption) prevOption.style.display = '';
-        }
-        selectedAssetIds.add(assetId);
-        input.dataset.selectedAssetId = assetId;
-        option.style.display = 'none';
-        const row = input.closest('tr');
-        row.querySelector('input[name="date_acquired[]"]').value = option.dataset.acquisition_date || '';
-        row.querySelector('input[name="property_no[]"]').value = option.dataset.property_no || '';
-        row.querySelector('input[name="amount[]"]').value = option.dataset.value || '';
-        
-        // Auto-fill PPE condition based on asset status
-        const conditionInput = row.querySelector('input[name="condition_of_PPE[]"]');
-        if (conditionInput && option.dataset.status) {
-          conditionInput.value = getConditionFromStatus(option.dataset.status);
-        }
-      }
+  const val = input.value;
+  const option = Array.from(document.getElementById('assetsList').options)
+                      .find(opt => opt.value === val);
+  if (option) {
+    const assetId = option.dataset.id;
+
+    // Prevent duplicate selection
+    if (selectedAssetIds.has(assetId)) {
+      alert('This asset has already been selected in another row.');
+      input.value = '';
+      return;
     }
+
+    // Update hidden input with asset_id
+    const row = input.closest('tr');
+    row.querySelector('input[name="asset_id[]"]').value = assetId;
+
+    // Fill other fields
+    row.querySelector('input[name="date_acquired[]"]').value = option.dataset.acquisition_date || '';
+    row.querySelector('input[name="property_no[]"]').value = option.dataset.property_no || '';
+    row.querySelector('input[name="amount[]"]').value = option.dataset.value || '';
+    row.querySelector('input[name="condition_of_PPE[]"]').value = getConditionFromStatus(option.dataset.status);
+    
+    // Track selected
+    input.dataset.selectedAssetId = assetId;
+    option.style.display = 'none';
+    selectedAssetIds.add(assetId);
+  }
+}
+
 
     document.getElementById('addRow').addEventListener('click', function() {
       const newRow = document.createElement('tr');
