@@ -52,12 +52,30 @@ $items = [];
 $preselected_asset = null;
 if (isset($_GET['asset_id']) && !empty($_GET['asset_id'])) {
   $asset_id = intval($_GET['asset_id']);
-  $stmt = $conn->prepare("SELECT id, description, property_no, value, acquisition_date FROM assets WHERE id = ? LIMIT 1");
+  $stmt = $conn->prepare("SELECT id, description, property_no, value, acquisition_date, status FROM assets WHERE id = ? LIMIT 1");
   $stmt->bind_param('i', $asset_id);
   $stmt->execute();
   $result = $stmt->get_result();
   if ($row = $result->fetch_assoc()) {
     $preselected_asset = $row;
+    
+    // Helper function to map status to PPE condition
+    function getConditionFromStatus($status) {
+      switch (strtolower($status)) {
+        case 'available':
+        case 'serviceable':
+          return 'Serviceable';
+        case 'unserviceable':
+          return 'Unserviceable';
+        case 'borrowed':
+          return 'On Loan';
+        case 'red_tagged':
+          return 'For Disposal';
+        default:
+          return 'Fair';
+      }
+    }
+    
     // If no existing items, add the preselected asset as first item
     if (empty($items)) {
       $items[] = [
@@ -68,7 +86,7 @@ if (isset($_GET['asset_id']) && !empty($_GET['asset_id'])) {
         'asset_id' => $row['id'],
         'description' => $row['description'] . ' (' . $row['property_no'] . ')',
         'amount' => $row['value'] ?? '',
-        'condition_of_PPE' => ''
+        'condition_of_PPE' => getConditionFromStatus($row['status'] ?? '')
       ];
     }
   }
@@ -251,7 +269,7 @@ if (!empty($_SESSION['flash'])) {
       <!-- Asset datalist for search -->
       <datalist id="assetsList">
         <?php
-        $assets_q = $conn->query("SELECT id, description, property_no, acquisition_date, value FROM assets WHERE type='asset' AND employee_id IS NOT NULL ORDER BY description ASC");
+        $assets_q = $conn->query("SELECT id, description, property_no, acquisition_date, value, status FROM assets WHERE type='asset' AND employee_id IS NOT NULL ORDER BY description ASC");
         while ($a = $assets_q->fetch_assoc()):
           $display = htmlspecialchars($a['description'] . ' (' . $a['property_no'] . ')');
         ?>
@@ -260,6 +278,7 @@ if (!empty($_SESSION['flash'])) {
             data-property_no="<?= htmlspecialchars($a['property_no']) ?>"
             data-acquisition_date="<?= htmlspecialchars($a['acquisition_date']) ?>"
             data-value="<?= htmlspecialchars($a['value']) ?>"
+            data-status="<?= htmlspecialchars($a['status']) ?>"
             value="<?= $display ?>">
           </option>
         <?php endwhile; ?>
@@ -445,6 +464,23 @@ if (!empty($_SESSION['flash'])) {
       if (removeBtn) removeBtn.style.display = 'none';
     }
 
+    // Helper function to map asset status to PPE condition
+    function getConditionFromStatus(status) {
+      switch (status?.toLowerCase()) {
+        case 'available':
+        case 'serviceable':
+          return 'Serviceable';
+        case 'unserviceable':
+          return 'Unserviceable';
+        case 'borrowed':
+          return 'On Loan';
+        case 'red_tagged':
+          return 'For Disposal';
+        default:
+          return 'Fair';
+      }
+    }
+
     function onDescriptionSelected(input) {
       const val = input.value;
       const option = Array.from(document.getElementById('assetsList').options).find(opt => opt.value === val);
@@ -468,6 +504,13 @@ if (!empty($_SESSION['flash'])) {
         row.querySelector('input[name="date_acquired[]"]').value = option.dataset.acquisition_date || '';
         row.querySelector('input[name="property_no[]"]').value = option.dataset.property_no || '';
         row.querySelector('input[name="amount[]"]').value = option.dataset.value || '';
+        
+        // Auto-fill PPE condition based on asset status
+        const conditionInput = row.querySelector('input[name="condition_of_PPE[]"]');
+        if (conditionInput && option.dataset.status) {
+          conditionInput.value = getConditionFromStatus(option.dataset.status);
+        }
+        
         const removeBtn = row.querySelector('.remove-asset-btn');
         if (removeBtn) removeBtn.style.display = 'inline-block';
       }
