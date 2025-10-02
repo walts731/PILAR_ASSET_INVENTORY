@@ -70,20 +70,6 @@ if ($result_assets && $result_assets->num_rows > 0) {
 
 ?>
 
-<?php if (!empty($header_image)): ?>
-
-    <div style="text-align: center; margin-bottom: 15px;">
-        <img src="../img/<?= $header_image ?>" 
-             alt="Header Image" 
-             style="max-height: 120px; display: block; margin: 0 auto;">
-        <div style="font-size: 12px; color: gray; margin-top: 5px;">
-            As of <?= date("F, Y") ?>
-        </div>
-        <!-- Hidden input so header_image is retained if user doesn't upload a new one -->
-        <input type="hidden" name="header_image" value="<?= htmlspecialchars($header_image) ?>">
-
-    </div>
-<?php endif; ?>
 
 
 <!-- IIRUP FORM HEADER -->
@@ -101,12 +87,20 @@ if ($result_assets && $result_assets->num_rows > 0) {
     </div>
 <?php endif; ?>
 
-<form method="POST" action="save_iirup_items.php" enctype="multipart/form-data">
+<?php if (!empty($header_image)): ?>
+    <div style="text-align: center; margin-bottom: 15px;">
+        <img src="../img/<?= $header_image ?>" 
+             alt="Header Image" 
+             style="max-height: 120px; display: block; margin: 0 auto;">
+        <div style="font-size: 12px; color: gray; margin-top: 5px;">
+            As of <?= date("F, Y") ?>
+        </div>
+    </div>
+<?php endif; ?>
 
-<div class="mb-3" style="text-align:center;">
-    <label class="form-label">Header Image</label>
-    <input type="file" name="header_image" accept="image/*" class="form-control" style="max-width: 400px; margin: 0 auto;">
-</div>
+<form method="POST" action="save_iirup_items.php">
+    <!-- Hidden input to always include header_image in submission -->
+    <input type="hidden" name="header_image" value="<?= htmlspecialchars($header_image) ?>">
 
 <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 10px;" class="mb-3">
     <div style="flex: 1; margin: 0 5px;">
