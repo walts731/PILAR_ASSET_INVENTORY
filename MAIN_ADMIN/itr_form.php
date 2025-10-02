@@ -189,7 +189,7 @@ if (!empty($_SESSION['flash'])) {
           // Determine selected transfer type; legacy values may be comma-separated, use first
           $raw_transfer = (string)$itr['transfer_type'];
           $parts = array_map('trim', array_filter(explode(',', $raw_transfer)));
-          $selectedType = $parts[0] ?? '';
+          $selectedType = $parts[0] ?? 'Reassignment'; // Default to Reassignment
           $known = ['Donation', 'Reassignment', 'Relocation'];
           $otherValue = '';
           if ($selectedType !== '' && !in_array($selectedType, $known, true)) {
@@ -255,9 +255,11 @@ if (!empty($_SESSION['flash'])) {
               <td><input type="number" step="0.01" name="amount[]" class="form-control shadow" value="<?= htmlspecialchars($item['amount']) ?>" required></td>
               <td><input type="text" name="condition_of_PPE[]" class="form-control shadow" value="<?= htmlspecialchars($item['condition_of_PPE']) ?>" required></td>
               <td>
-                <button type="button" class="btn btn-sm btn-danger clear-row">Clear</button>
-                <button type="button" class="btn btn-sm btn-danger remove-asset-btn ms-1" style="display: none;" title="Remove Asset">
-                  <i class="bi bi-x"></i>
+                <button type="button" class="btn btn-sm btn-danger remove-row" title="Remove Row">
+                  <i class="bi bi-trash"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-warning clear-row ms-1" title="Clear Fields">
+                  <i class="bi bi-eraser"></i>
                 </button>
               </td>
             </tr>
@@ -444,15 +446,12 @@ if (!empty($_SESSION['flash'])) {
     const firstRow = table.querySelector('tr');
     if (firstRow) {
       const descriptionInput = firstRow.querySelector('input[name="description[]"]');
-      const removeBtn = firstRow.querySelector('.remove-asset-btn');
       if (descriptionInput) descriptionInput.dataset.selectedAssetId = preselectedAssetId;
-      if (removeBtn) removeBtn.style.display = 'inline-block';
     }
     <?php endif; ?>
 
     function clearAssetRow(row) {
       const descriptionInput = row.querySelector('input[name="description[]"]');
-      const removeBtn = row.querySelector('.remove-asset-btn');
       const assetId = descriptionInput && descriptionInput.dataset.selectedAssetId;
       if (assetId) {
         selectedAssetIds.delete(assetId);
@@ -461,7 +460,6 @@ if (!empty($_SESSION['flash'])) {
         delete descriptionInput.dataset.selectedAssetId;
       }
       row.querySelectorAll('input').forEach(input => input.value = '');
-      if (removeBtn) removeBtn.style.display = 'none';
     }
 
     // Helper function to map asset status to PPE condition
@@ -510,9 +508,6 @@ if (!empty($_SESSION['flash'])) {
         if (conditionInput && option.dataset.status) {
           conditionInput.value = getConditionFromStatus(option.dataset.status);
         }
-        
-        const removeBtn = row.querySelector('.remove-asset-btn');
-        if (removeBtn) removeBtn.style.display = 'inline-block';
       }
     }
 
@@ -525,9 +520,11 @@ if (!empty($_SESSION['flash'])) {
         <td><input type="number" step="0.01" name="amount[]" class="form-control shadow"></td>
         <td><input type="text" name="condition_of_PPE[]" class="form-control shadow"></td>
         <td>
-          <button type="button" class="btn btn-sm btn-danger clear-row">Clear</button>
-          <button type="button" class="btn btn-sm btn-danger remove-asset-btn ms-1" style="display: none;" title="Remove Asset">
-            <i class="bi bi-x"></i>
+          <button type="button" class="btn btn-sm btn-danger remove-row" title="Remove Row">
+            <i class="bi bi-trash"></i>
+          </button>
+          <button type="button" class="btn btn-sm btn-warning clear-row ms-1" title="Clear Fields">
+            <i class="bi bi-eraser"></i>
           </button>
         </td>
       `;
@@ -536,10 +533,20 @@ if (!empty($_SESSION['flash'])) {
 
     table.addEventListener('click', function(e) {
       const row = e.target.closest('tr');
-      if (e.target.classList.contains('clear-row')) {
+      if (e.target.classList.contains('clear-row') || e.target.closest('.clear-row')) {
         clearAssetRow(row);
-      } else if (e.target.classList.contains('remove-asset-btn') || e.target.closest('.remove-asset-btn')) {
-        clearAssetRow(row);
+      } else if (e.target.classList.contains('remove-row') || e.target.closest('.remove-row')) {
+        // Remove row functionality - ensure at least one row remains
+        const allRows = table.querySelectorAll('tr');
+        if (allRows.length > 1) {
+          // Clear any selected asset data before removing
+          clearAssetRow(row);
+          row.remove();
+        } else {
+          // If it's the last row, just clear it instead of removing
+          clearAssetRow(row);
+          alert('Cannot remove the last row. At least one row is required.');
+        }
       }
     });
 
