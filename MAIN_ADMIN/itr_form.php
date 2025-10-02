@@ -89,6 +89,7 @@ if ($emp_q) {
     $employees[] = $er['name'];
   }
 }
+
 // Header image handling - simplified like ics_form.php
 
 ?>
@@ -158,6 +159,9 @@ if (!empty($_SESSION['flash'])) {
               <option value="<?= htmlspecialchars($ename) ?>"></option>
             <?php endforeach; ?>
           </datalist>
+          <div class="form-text">
+            <small class="text-muted">Will auto-fill "Received By" field below</small>
+          </div>
         </div>
 
         <!-- Transfer type radios -->
@@ -280,7 +284,19 @@ if (!empty($_SESSION['flash'])) {
         <?php foreach (['approved', 'released', 'received'] as $role): ?>
           <div class="col-md-4">
             <label class="form-label"><?= ucfirst($role) ?> By <span style="color: red;">*</span></label>
-            <input type="text" name="<?= $role ?>_by" class="form-control shadow" value="<?= htmlspecialchars($itr[$role . '_by']) ?>" required>
+            <?php if ($role === 'received'): ?>
+              <div class="input-group">
+                <input type="text" id="<?= $role ?>_by" name="<?= $role ?>_by" class="form-control shadow" list="employeesList" value="<?= htmlspecialchars($itr[$role . '_by']) ?>" required>
+                <button type="button" class="btn btn-outline-secondary" id="clear_received_by" title="Clear field" aria-label="Clear Received By">
+                  <i class="bi bi-x-circle"></i>
+                </button>
+              </div>
+              <div class="form-text">
+                <small class="text-muted">Auto-fills from "To Accountable Officer" selection</small>
+              </div>
+            <?php else: ?>
+              <input type="text" name="<?= $role ?>_by" class="form-control shadow" value="<?= htmlspecialchars($itr[$role . '_by']) ?>" required>
+            <?php endif; ?>
             <label class="form-label mt-2"><?= ucfirst($role) ?> Designation <span style="color: red;">*</span></label>
             <input type="text" name="<?= $role ?>_designation" class="form-control shadow" value="<?= htmlspecialchars($itr[$role . '_designation']) ?>" required>
             <label class="form-label mt-2"><?= ucfirst($role) ?> Date</label>
@@ -321,12 +337,78 @@ if (!empty($_SESSION['flash'])) {
     // Clear function for To Accountable Officer
     const clearBtn = document.getElementById('clear_to_accountable');
     const toOfficerInput = document.getElementById('to_accountable_officer');
+    const receivedByInput = document.getElementById('received_by');
+    
     if (clearBtn && toOfficerInput) {
       clearBtn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
         toOfficerInput.value = '';
+        // Also clear received by field when clearing to accountable officer
+        if (receivedByInput) {
+          receivedByInput.value = '';
+        }
         toOfficerInput.focus();
+      });
+    }
+
+    // Clear function for Received By
+    const clearReceivedBtn = document.getElementById('clear_received_by');
+    if (clearReceivedBtn && receivedByInput) {
+      clearReceivedBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        receivedByInput.value = '';
+        receivedByInput.focus();
+      });
+    }
+
+    // Auto-fill Received By when To Accountable Officer is selected
+    if (toOfficerInput && receivedByInput) {
+      // Listen for input changes (typing, selection from datalist)
+      toOfficerInput.addEventListener('input', function() {
+        const selectedName = this.value.trim();
+        
+        // Check if the entered value matches an option in the datalist
+        const datalistOptions = document.querySelectorAll('#employeesList option');
+        const matchingOption = Array.from(datalistOptions).find(option => 
+          option.value === selectedName
+        );
+        
+        if (matchingOption && selectedName) {
+          // Auto-fill received by field
+          receivedByInput.value = selectedName;
+          
+          // Show brief success indicator
+          const successIndicator = document.createElement('span');
+          successIndicator.className = 'text-success ms-2';
+          successIndicator.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+          successIndicator.style.fontSize = '0.875rem';
+          
+          // Remove any existing indicators
+          const existingIndicator = receivedByInput.parentNode.querySelector('.text-success');
+          if (existingIndicator) {
+            existingIndicator.remove();
+          }
+          
+          // Add new indicator
+          receivedByInput.parentNode.appendChild(successIndicator);
+          
+          // Remove indicator after 2 seconds
+          setTimeout(() => {
+            if (successIndicator.parentNode) {
+              successIndicator.remove();
+            }
+          }, 2000);
+        }
+      });
+      
+      // Also listen for change event (when user selects from datalist)
+      toOfficerInput.addEventListener('change', function() {
+        const selectedName = this.value.trim();
+        if (selectedName) {
+          receivedByInput.value = selectedName;
+        }
       });
     }
 
