@@ -106,83 +106,243 @@ if ($res_off && $res_off->num_rows) {
         </div>
 
         <style>
-          .excel-table { 
-            border-collapse: collapse; 
-            width: 100%; 
-            font-size: 9px; 
-            text-align: center; 
+          /* Enhanced IIRUP Table Styling - Matching iirup_form.php */
+          .excel-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 11px;
+            text-align: center;
             table-layout: auto;
-            min-width: 2000px;
-            overflow-x: auto;
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: visible;
+            margin: 20px 0;
+            position: relative;
+            z-index: 1;
           }
-          
-          .excel-table th, .excel-table td { 
-            border: 1px solid #000; 
-            padding: 4px 6px; 
-            vertical-align: middle; 
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-          
-          .excel-table thead th { 
-            background-color: #f8f9fa; 
-            font-weight: bold; 
-            font-size: 8px;
+
+          .excel-table th,
+          .excel-table td {
+            border: 1px solid #ddd;
+            padding: 4px 3px;
+            vertical-align: middle;
+            position: relative;
+            overflow: visible;
+            font-size: 10px;
             line-height: 1.2;
-            padding: 3px 4px;
           }
-          
-          .excel-table input, .excel-table select { 
-            width: 100%; 
-            border: none; 
-            text-align: center; 
-            font-size: 9px; 
-            padding: 2px; 
-            background: transparent;
-            min-width: 0;
+
+          /* Header Styling */
+          .excel-table thead th {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            font-size: 7px;
+            line-height: 1.0;
+            border: 1px solid #6c757d;
+            padding: 2px 1px;
+            height: 20px;
+            vertical-align: middle;
+            position: sticky;
+            top: 0;
+            z-index: 10;
           }
-          
+
+          /* Section Headers with Different Colors */
+          .excel-table thead tr:first-child th:nth-child(1) {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1565c0;
+            border-color: #1976d2;
+          }
+
+          .excel-table thead tr:first-child th:nth-child(2) {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            color: #7b1fa2;
+            border-color: #8e24aa;
+          }
+
+          .excel-table thead tr:first-child th:nth-child(3) {
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+            color: #2e7d32;
+            border-color: #388e3c;
+          }
+
+          .excel-table thead tr:first-child th:nth-child(4) {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffcc02 100%);
+            color: #f57c00;
+            border-color: #ff9800;
+          }
+
+          .excel-table thead tr:first-child th:nth-child(5) {
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
+            color: #c2185b;
+            border-color: #e91e63;
+          }
+
+          /* Individual Column Headers */
+          .excel-table thead tr:nth-child(2) th {
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            font-size: 6px;
+            padding: 1px 1px;
+            min-width: 50px;
+            line-height: 1.0;
+            height: 18px;
+            vertical-align: middle;
+          }
+
+          /* Specific Column Widths for Better Readability */
+          .excel-table th:nth-child(1), .excel-table td:nth-child(1) { min-width: 80px; } /* Date Acquired */
+          .excel-table th:nth-child(2), .excel-table td:nth-child(2) { min-width: 150px; } /* Particulars */
+          .excel-table th:nth-child(3), .excel-table td:nth-child(3) { min-width: 80px; } /* Property No */
+          .excel-table th:nth-child(4), .excel-table td:nth-child(4) { min-width: 40px; }  /* Qty */
+          .excel-table th:nth-child(5), .excel-table td:nth-child(5) { min-width: 70px; }  /* Unit Cost */
+          .excel-table th:nth-child(6), .excel-table td:nth-child(6) { min-width: 70px; }  /* Total Cost */
+          .excel-table th:nth-child(7), .excel-table td:nth-child(7) { min-width: 90px; }  /* Accumulated Depreciation */
+          .excel-table th:nth-child(8), .excel-table td:nth-child(8) { min-width: 90px; }  /* Accumulated Impairment */
+          .excel-table th:nth-child(9), .excel-table td:nth-child(9) { min-width: 70px; }  /* Carrying Amount */
+          .excel-table th:nth-child(10), .excel-table td:nth-child(10) { min-width: 70px; } /* Remarks */
+          .excel-table th:nth-child(11), .excel-table td:nth-child(11) { min-width: 60px; } /* Sale */
+          .excel-table th:nth-child(12), .excel-table td:nth-child(12) { min-width: 60px; } /* Transfer */
+          .excel-table th:nth-child(13), .excel-table td:nth-child(13) { min-width: 60px; } /* Destruction */
+          .excel-table th:nth-child(14), .excel-table td:nth-child(14) { min-width: 60px; } /* Others */
+          .excel-table th:nth-child(15), .excel-table td:nth-child(15) { min-width: 60px; } /* Total */
+          .excel-table th:nth-child(16), .excel-table td:nth-child(16) { min-width: 70px; } /* Appraised Value */
+          .excel-table th:nth-child(17), .excel-table td:nth-child(17) { min-width: 60px; } /* OR No */
+          .excel-table th:nth-child(18), .excel-table td:nth-child(18) { min-width: 60px; } /* Amount */
+          .excel-table th:nth-child(19), .excel-table td:nth-child(19) { min-width: 80px; } /* Dept/Office */
+          .excel-table th:nth-child(20), .excel-table td:nth-child(20) { min-width: 50px; } /* Code */
+          .excel-table th:nth-child(21), .excel-table td:nth-child(21) { min-width: 80px; } /* Date Received */
+          .excel-table th:nth-child(22), .excel-table td:nth-child(22) { min-width: 70px; } /* Actions */
+
+          /* Row Styling */
+          .excel-table tbody tr {
+            transition: background-color 0.2s ease;
+            position: relative;
+            z-index: 1;
+          }
+
+          .excel-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+          }
+
+          .excel-table tbody tr:hover {
+            background-color: #e3f2fd;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          }
+
+          /* Input Field Styling */
+          .excel-table input,
+          .excel-table select {
+            width: 100%;
+            border: 1px solid transparent;
+            text-align: center;
+            font-size: 9px;
+            padding: 2px 1px;
+            background-color: transparent;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+            height: 22px;
+            min-height: 22px;
+          }
+
+          .excel-table input:focus,
+          .excel-table select:focus {
+            outline: none;
+            border-color: #007bff;
+            background-color: #fff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+          }
+
+          .excel-table input[readonly],
+          .excel-table input[disabled] {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+          }
+
+          /* Date Input Styling */
+          .excel-table input[type="date"] {
+            font-size: 10px;
+            padding: 3px;
+          }
+
+          /* Number Input Styling */
+          .excel-table input[type="number"] {
+            text-align: right;
+            padding-right: 6px;
+          }
+
+          /* Select Dropdown Styling */
+          .excel-table select {
+            cursor: pointer;
+            font-size: 10px;
+            padding: 3px;
+          }
+
+          /* Button Styling in Table */
+          .excel-table .btn {
+            padding: 2px 6px;
+            font-size: 10px;
+            border-radius: 3px;
+            margin: 0 1px;
+          }
+
+          /* Particulars Column Special Styling */
+          .excel-table .particulars {
+            text-align: left;
+            font-weight: 500;
+            color: #495057;
+          }
+
           /* Table Container */
           .table-responsive {
             overflow-x: auto;
             margin-bottom: 1rem;
+            max-height: 70vh;
+            overflow-y: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
           }
-          
-          /* Specific Column Widths - More generous spacing */
-          .excel-table th:nth-child(1), .excel-table td:nth-child(1) { min-width: 90px; max-width: 90px; } /* Date Acquired */
-          .excel-table th:nth-child(2), .excel-table td:nth-child(2) { min-width: 180px; max-width: 180px; } /* Particulars */
-          .excel-table th:nth-child(3), .excel-table td:nth-child(3) { min-width: 120px; max-width: 120px; } /* Property No */
-          .excel-table th:nth-child(4), .excel-table td:nth-child(4) { min-width: 60px; max-width: 60px; } /* Qty */
-          .excel-table th:nth-child(5), .excel-table td:nth-child(5) { min-width: 90px; max-width: 90px; } /* Unit Cost */
-          .excel-table th:nth-child(6), .excel-table td:nth-child(6) { min-width: 90px; max-width: 90px; } /* Total Cost */
-          .excel-table th:nth-child(7), .excel-table td:nth-child(7) { min-width: 100px; max-width: 100px; } /* Accumulated Depreciation */
-          .excel-table th:nth-child(8), .excel-table td:nth-child(8) { min-width: 100px; max-width: 100px; } /* Accumulated Impairment */
-          .excel-table th:nth-child(9), .excel-table td:nth-child(9) { min-width: 90px; max-width: 90px; } /* Carrying Amount */
-          .excel-table th:nth-child(10), .excel-table td:nth-child(10) { min-width: 90px; max-width: 90px; } /* Remarks */
-          .excel-table th:nth-child(11), .excel-table td:nth-child(11) { min-width: 80px; max-width: 80px; } /* Sale */
-          .excel-table th:nth-child(12), .excel-table td:nth-child(12) { min-width: 80px; max-width: 80px; } /* Transfer */
-          .excel-table th:nth-child(13), .excel-table td:nth-child(13) { min-width: 80px; max-width: 80px; } /* Destruction */
-          .excel-table th:nth-child(14), .excel-table td:nth-child(14) { min-width: 80px; max-width: 80px; } /* Others */
-          .excel-table th:nth-child(15), .excel-table td:nth-child(15) { min-width: 80px; max-width: 80px; } /* Total */
-          .excel-table th:nth-child(16), .excel-table td:nth-child(16) { min-width: 90px; max-width: 90px; } /* Appraised Value */
-          .excel-table th:nth-child(17), .excel-table td:nth-child(17) { min-width: 80px; max-width: 80px; } /* OR No */
-          .excel-table th:nth-child(18), .excel-table td:nth-child(18) { min-width: 80px; max-width: 80px; } /* Amount */
-          .excel-table th:nth-child(19), .excel-table td:nth-child(19) { min-width: 120px; max-width: 120px; } /* Dept/Office */
-          .excel-table th:nth-child(20), .excel-table td:nth-child(20) { min-width: 70px; max-width: 70px; } /* Code */
-          .excel-table th:nth-child(21), .excel-table td:nth-child(21) { min-width: 90px; max-width: 90px; } /* Date Received */
-          .excel-table th:nth-child(22), .excel-table td:nth-child(22) { min-width: 90px; max-width: 90px; } /* Actions */
-          
-          /* Hover effects */
-          .excel-table tbody tr:hover {
-            background-color: #f5f5f5;
-          }
-          
+
           /* Button styling */
           .view-row-details {
             font-size: 8px;
             padding: 2px 6px;
             white-space: nowrap;
+          }
+
+          /* Responsive Design */
+          @media (max-width: 1400px) {
+            .excel-table {
+              font-size: 10px;
+            }
+            .excel-table thead th {
+              font-size: 6px;
+            }
+            .excel-table input, .excel-table select {
+              font-size: 8px;
+            }
+          }
+
+          @media (max-width: 1200px) {
+            .excel-table {
+              font-size: 9px;
+            }
+            .excel-table thead th {
+              font-size: 5px;
+            }
+            .excel-table input, .excel-table select {
+              font-size: 7px;
+            }
+          }
+
+          @media (max-width: 992px) {
+            .table-responsive {
+              overflow-x: auto;
+            }
           }
         </style>
 
@@ -224,7 +384,7 @@ if ($res_off && $res_off->num_rows) {
               <?php foreach ($items as $it): ?>
                 <tr>
                   <td><input type="date" value="<?= htmlspecialchars($it['date_acquired']) ?>" disabled></td>
-                  <td>
+                  <td class="particulars">
                     <input type="text" value="<?= htmlspecialchars($it['particulars']) ?>" disabled>
                     <input type="hidden" value="<?= (int)$it['asset_id'] ?>">
                   </td>
