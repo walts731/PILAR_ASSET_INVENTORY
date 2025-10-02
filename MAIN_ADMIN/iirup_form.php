@@ -675,7 +675,8 @@ if ($result_assets && $result_assets->num_rows > 0) {
                     </div>
                     <div class="col-md-8">
                         <label class="form-label">Particulars/Articles</label>
-                        <input type="text" class="form-control" id="modal_particulars" placeholder="Asset description">
+                        <input type="text" class="form-control" id="modal_particulars" list="asset_descriptions" placeholder="Select or type asset description">
+                        <input type="hidden" id="modal_asset_id">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Property No.</label>
@@ -1353,6 +1354,7 @@ if ($result_footer && $result_footer->num_rows > 0) {
         // Populate modal fields
         document.getElementById('modal_date_acquired').value = row.querySelector('input[name="date_acquired[]"]').value || '';
         document.getElementById('modal_particulars').value = row.querySelector('input[name="particulars[]"]').value || '';
+        document.getElementById('modal_asset_id').value = row.querySelector('input[name="asset_id[]"]').value || '';
         document.getElementById('modal_property_no').value = row.querySelector('input[name="property_no[]"]').value || '';
         document.getElementById('modal_qty').value = row.querySelector('input[name="qty[]"]').value || '';
         document.getElementById('modal_unit_cost').value = row.querySelector('input[name="unit_cost[]"]').value || '';
@@ -1381,9 +1383,22 @@ if ($result_footer && $result_footer->num_rows > 0) {
     // Handle save button in modal
     document.getElementById('saveRowDetails').addEventListener('click', function() {
         if (currentEditingRow) {
+            // Get previous asset ID to remove from selected set
+            const previousAssetId = currentEditingRow.querySelector('input[name="asset_id[]"]').value;
+            const newAssetId = document.getElementById('modal_asset_id').value;
+            
+            // Update selectedAssetIds Set
+            if (previousAssetId && previousAssetId !== newAssetId) {
+                selectedAssetIds.delete(previousAssetId);
+            }
+            if (newAssetId && newAssetId !== previousAssetId) {
+                selectedAssetIds.add(newAssetId);
+            }
+            
             // Update row with modal values
             currentEditingRow.querySelector('input[name="date_acquired[]"]').value = document.getElementById('modal_date_acquired').value;
             currentEditingRow.querySelector('input[name="particulars[]"]').value = document.getElementById('modal_particulars').value;
+            currentEditingRow.querySelector('input[name="asset_id[]"]').value = document.getElementById('modal_asset_id').value;
             currentEditingRow.querySelector('input[name="property_no[]"]').value = document.getElementById('modal_property_no').value;
             currentEditingRow.querySelector('input[name="qty[]"]').value = document.getElementById('modal_qty').value;
             currentEditingRow.querySelector('input[name="unit_cost[]"]').value = document.getElementById('modal_unit_cost').value;
@@ -1406,6 +1421,10 @@ if ($result_footer && $result_footer->num_rows > 0) {
 
             // Update tooltips after changes
             updateInputTitles();
+            
+            // Update datalist and remove button visibility
+            updateDatalist();
+            updateRemoveButtonVisibility(currentEditingRow);
 
             // Close modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('rowDetailsModal'));
@@ -1424,5 +1443,87 @@ if ($result_footer && $result_footer->num_rows > 0) {
         const qty = parseFloat(document.getElementById('modal_qty').value) || 0;
         const unitCost = parseFloat(document.getElementById('modal_unit_cost').value) || 0;
         document.getElementById('modal_total_cost').value = (qty * unitCost).toFixed(2);
+    }
+
+    // Handle asset selection in modal
+    document.getElementById('modal_particulars').addEventListener('input', function() {
+        const description = this.value.trim();
+        if (!description) {
+            // Clear fields if description is empty
+            document.getElementById('modal_asset_id').value = '';
+            document.getElementById('modal_property_no').value = '';
+            document.getElementById('modal_unit_cost').value = '';
+            document.getElementById('modal_dept_office').value = '';
+            document.getElementById('modal_date_acquired').value = '';
+            return;
+        }
+
+        // Find matching asset from datalist
+        const options = document.querySelectorAll('#asset_descriptions option');
+        let selectedAsset = null;
+        
+        for (const option of options) {
+            if (option.value === description) {
+                selectedAsset = {
+                    id: option.getAttribute('data-asset-id'),
+                    description: option.value,
+                };
+                break;
+            }
+        }
+
+        if (selectedAsset && selectedAsset.id) {
+            // Check if asset is already selected in another row
+            const currentAssetId = document.getElementById('modal_asset_id').value;
+            if (selectedAssetIds.has(selectedAsset.id) && selectedAsset.id !== currentAssetId) {
+                alert('This asset is already selected in another row. Please choose a different asset.');
+                this.value = '';
+                return;
+            }
+            
+            // Fetch asset details via AJAX
+            fetchAssetDetailsForModal(selectedAsset.id);
+        }
+    });
+
+    function fetchAssetDetailsForModal(assetId) {
+        // Create a simple AJAX request to get asset details
+        fetch('get_asset_details.php?id=' + assetId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Auto-fill modal fields with asset data
+                    document.getElementById('modal_asset_id').value = data.asset.id;
+                    document.getElementById('modal_property_no').value = data.asset.inventory_tag || '';
+                    document.getElementById('modal_unit_cost').value = data.asset.value || '';
+                    document.getElementById('modal_qty').value = '1';
+                    document.getElementById('modal_dept_office').value = data.asset.office_name || '';
+                    
+                    // Auto-fill date acquired from asset's acquisition_date
+                    if (data.asset.acquisition_date) {
+                        document.getElementById('modal_date_acquired').value = data.asset.acquisition_date;
+                    }
+                    
+                    // Calculate total cost
+                    calculateModalTotalCost();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching asset details:', error);
+            });
+    }
+
+    // Update remove button visibility for a specific row
+    function updateRemoveButtonVisibility(row) {
+        const assetIdInput = row.querySelector('.asset_id');
+        const removeBtn = row.querySelector('.remove-asset');
+        
+        if (removeBtn) {
+            if (assetIdInput && assetIdInput.value) {
+                removeBtn.style.display = 'inline-block';
+            } else {
+                removeBtn.style.display = 'none';
+            }
+        }
     }
 </script>
