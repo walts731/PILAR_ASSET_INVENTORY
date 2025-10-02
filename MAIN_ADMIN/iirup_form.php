@@ -131,32 +131,360 @@ if ($result_assets && $result_assets->num_rows > 0) {
 </div>
 
 <style>
+    /* Enhanced IIRUP Table Styling */
     .excel-table {
         border-collapse: collapse;
         width: 100%;
-        font-size: 10px;
+        font-size: 11px;
         text-align: center;
-        table-layout: fixed;
+        table-layout: auto;
+        background-color: #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: visible;
+        margin: 20px 0;
+        position: relative;
+        z-index: 1;
     }
 
     .excel-table th,
     .excel-table td {
-        border: 1px solid #000;
-        padding: 2px 3px;
+        border: 1px solid #ddd;
+        padding: 4px 3px;
+        vertical-align: middle;
+        position: relative;
+        overflow: visible;
+        font-size: 10px;
+        line-height: 1.2;
+    }
+
+    /* Header Styling */
+    .excel-table thead th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        font-weight: 600;
+        color: #495057;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        font-size: 7px;
+        line-height: 1.0;
+        border: 1px solid #6c757d;
+        padding: 2px 1px;
+        height: 20px;
         vertical-align: middle;
     }
 
-    .excel-table thead th {
-        background-color: #fff;
-        font-weight: bold;
+    /* Section Headers with Different Colors */
+    .excel-table thead tr:first-child th:nth-child(1) {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        color: #1565c0;
+        border-color: #1976d2;
     }
 
-    .excel-table input {
+    .excel-table thead tr:first-child th:nth-child(2) {
+        background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+        color: #7b1fa2;
+        border-color: #8e24aa;
+    }
+
+    .excel-table thead tr:first-child th:nth-child(3) {
+        background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+        color: #2e7d32;
+        border-color: #388e3c;
+    }
+
+    /* Individual Column Headers */
+    .excel-table thead tr:nth-child(2) th {
+        background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+        font-size: 6px;
+        padding: 1px 1px;
+        min-width: 50px;
+        line-height: 1.0;
+        height: 18px;
+        vertical-align: middle;
+    }
+
+    /* Specific Column Widths for Better Readability */
+    .excel-table th:nth-child(1), .excel-table td:nth-child(1) { min-width: 80px; } /* Date Acquired */
+    .excel-table th:nth-child(2), .excel-table td:nth-child(2) { min-width: 150px; } /* Particulars */
+    .excel-table th:nth-child(3), .excel-table td:nth-child(3) { min-width: 80px; } /* Property No */
+    .excel-table th:nth-child(4), .excel-table td:nth-child(4) { min-width: 40px; }  /* Qty */
+    .excel-table th:nth-child(5), .excel-table td:nth-child(5) { min-width: 70px; }  /* Unit Cost */
+    .excel-table th:nth-child(6), .excel-table td:nth-child(6) { min-width: 70px; }  /* Total Cost */
+
+    /* Row Styling */
+    .excel-table tbody tr {
+        transition: background-color 0.2s ease;
+        position: relative;
+        z-index: 1;
+    }
+
+    .excel-table tbody tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    .excel-table tbody tr:hover {
+        background-color: #e3f2fd;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Ensure tooltip containers can appear above other rows */
+    .excel-table tbody tr:has(.tooltip-container:hover) {
+        z-index: 9998;
+    }
+
+    /* Input Field Styling */
+    .excel-table input,
+    .excel-table select {
         width: 100%;
-        border: none;
+        border: 1px solid transparent;
         text-align: center;
+        font-size: 9px;
+        padding: 2px 1px;
+        background-color: transparent;
+        border-radius: 2px;
+        transition: all 0.2s ease;
+        height: 22px;
+        min-height: 22px;
+    }
+
+    .excel-table input:focus,
+    .excel-table select:focus {
+        outline: none;
+        border-color: #007bff;
+        background-color: #fff;
+        box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    }
+
+    .excel-table input[readonly] {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        cursor: not-allowed;
+    }
+
+    /* Date Input Styling */
+    .excel-table input[type="date"] {
         font-size: 10px;
-        padding: 0;
+        padding: 3px;
+    }
+
+    /* Number Input Styling */
+    .excel-table input[type="number"] {
+        text-align: right;
+        padding-right: 6px;
+    }
+
+    /* Select Dropdown Styling */
+    .excel-table select {
+        cursor: pointer;
+        font-size: 10px;
+        padding: 3px;
+    }
+
+    /* Button Styling in Table */
+    .excel-table .btn {
+        padding: 2px 6px;
+        font-size: 10px;
+        border-radius: 3px;
+        margin: 0 1px;
+    }
+
+    /* Particulars Column Special Styling */
+    .excel-table .particulars {
+        text-align: left;
+        font-weight: 500;
+        color: #495057;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .excel-table {
+            font-size: 10px;
+            overflow-x: auto;
+            display: table;
+            width: 100%;
+            min-width: 800px;
+        }
+        
+        .excel-table th,
+        .excel-table td {
+            padding: 4px 2px;
+            font-size: 9px;
+        }
+        
+        .excel-table input,
+        .excel-table select {
+            font-size: 9px;
+            padding: 2px 1px;
+        }
+    }
+
+    /* Print Styling */
+    @media print {
+        .excel-table {
+            font-size: 8px;
+            box-shadow: none;
+        }
+        
+        .excel-table th,
+        .excel-table td {
+            padding: 2px;
+        }
+        
+        .excel-table input,
+        .excel-table select {
+            border: 1px solid #000 !important;
+            font-size: 8px;
+        }
+    }
+
+    /* Loading Animation for Dynamic Rows */
+    .iirup-row {
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Enhanced Section Headers */
+    .table-section-header {
+        position: relative;
+    }
+
+    /* Improved Visual Hierarchy */
+    .excel-table thead tr:first-child th {
+        font-size: 8px;
+        font-weight: 700;
+        padding: 3px 2px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        height: 22px;
+    }
+
+    /* Fix Form Layout and Prevent Overlapping */
+    .form-container {
+        clear: both;
+        overflow: visible;
+    }
+
+    /* Ensure proper spacing between form elements */
+    .excel-table + * {
+        margin-top: 20px;
+        clear: both;
+    }
+
+    /* Fix any floating issues */
+    .excel-table::after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+
+    /* Ensure table doesn't break out of container */
+    .excel-table {
+        max-width: 100%;
+        table-layout: fixed;
+    }
+
+    /* Prevent column overflow */
+    .excel-table th,
+    .excel-table td {
+        word-wrap: break-word;
+        overflow: hidden;
+    }
+
+    /* Tooltip Styles for Input Field Details */
+    .tooltip-container {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+
+    .excel-table .tooltip-container:hover {
+        z-index: 9999;
+        position: relative;
+    }
+
+    .field-tooltip {
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 500;
+        white-space: nowrap;
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        pointer-events: none;
+        margin-top: 8px;
+    }
+
+    .field-tooltip::after {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-bottom-color: #2c3e50;
+    }
+
+    .tooltip-container:hover .field-tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(5px);
+    }
+
+    /* Enhanced input hover effects */
+    .excel-table input:hover,
+    .excel-table select:hover {
+        border-color: #007bff;
+        background-color: #f8f9ff;
+        transform: scale(1.02);
+        box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+    }
+
+    /* Special styling for different field types */
+    .tooltip-required {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    }
+
+    .tooltip-required::after {
+        border-bottom-color: #e74c3c;
+    }
+
+    .tooltip-calculated {
+        background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    }
+
+    .tooltip-calculated::after {
+        border-bottom-color: #27ae60;
+    }
+
+    .tooltip-info {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    }
+
+    .tooltip-info::after {
+        border-bottom-color: #3498db;
+    }
+
+    /* Responsive tooltip adjustments */
+    @media (max-width: 768px) {
+        .field-tooltip {
+            font-size: 10px;
+            padding: 6px 8px;
+            white-space: normal;
+            max-width: 200px;
+            text-align: center;
+        }
     }
 </style>
 
@@ -169,7 +497,6 @@ if ($result_assets && $result_assets->num_rows > 0) {
             <th colspan="2">RECORD OF SALES</th>
             <th rowspan="2">DEPT/OFFICE</th>
             <th rowspan="2">CODE</th>
-            <th rowspan="2">RED TAG</th>
             <th rowspan="2">DATE RECEIVED</th>
         </tr>
         <tr>
@@ -206,11 +533,15 @@ if ($result_assets && $result_assets->num_rows > 0) {
                 $show_remove_btn = ($is_first_row && $preselected_asset) ? 'inline-block' : 'none';
             ?>
             <tr class="iirup-row">
-                <td><input type="date" name="date_acquired[]" value="<?= date('Y-m-d'); ?>"></td>
-                <td>
+                <td data-label="Date Acquired">
+                    <input type="date" name="date_acquired[]" value="<?= date('Y-m-d'); ?>" 
+                           title="Date when the asset was originally acquired by the organization">
+                </td>
+                <td data-label="Particulars/Articles">
                     <div class="d-flex align-items-center">
                         <input type="text" name="particulars[]" list="asset_descriptions" class="particulars flex-grow-1" 
-                               value="<?= htmlspecialchars($preselected_description) ?>">
+                               value="<?= htmlspecialchars($preselected_description) ?>" placeholder="Select or type asset description"
+                               title="Description of the asset/item being inspected for disposal">
                         <button type="button" class="btn btn-sm btn-danger ms-1 remove-asset" 
                                 style="display: <?= $show_remove_btn ?>;" title="Remove Asset">
                             <i class="bi bi-x"></i>
@@ -218,37 +549,86 @@ if ($result_assets && $result_assets->num_rows > 0) {
                     </div>
                     <input type="hidden" name="asset_id[]" class="asset_id" value="<?= htmlspecialchars($preselected_asset_id) ?>">
                 </td>
-                <td><input type="text" name="property_no[]" value="<?= htmlspecialchars($preselected_property_no) ?>"></td>
-                <td><input type="number" name="qty[]" min="1" class="qty" max="1" value="<?= $preselected_asset ? '1' : '' ?>"></td>
-                <td><input type="number" step="0.01" name="unit_cost[]" min="1" class="unit_cost" 
-                           value="<?= htmlspecialchars($preselected_unit_cost) ?>"></td>
-                <td>
-                    <input type="number" step="0.01" name="total_cost[]" min="1" readonly 
-                           value="<?= $preselected_unit_cost ? $preselected_unit_cost : '' ?>">
+                <td data-label="Property No">
+                    <input type="text" name="property_no[]" value="<?= htmlspecialchars($preselected_property_no) ?>" placeholder="Property Number"
+                           title="Official property number or inventory tag assigned to the asset">
                 </td>
-                <td><input type="number" step="0.01" name="accumulated_depreciation[]" min="1"></td>
-                <td><input type="number" step="0.01" name="accumulated_impairment_losses[]" min="1"></td>
-                <td><input type="number" step="0.01" name="carrying_amount[]" min="1"></td>
-                <td>
-                    <select name="remarks[]">
+                <td data-label="Quantity">
+                    <input type="number" name="qty[]" min="1" class="qty" max="1" value="<?= $preselected_asset ? '1' : '' ?>" placeholder="Qty"
+                           title="Number of units of this asset being inspected">
+                </td>
+                <td data-label="Unit Cost">
+                    <input type="number" step="0.01" name="unit_cost[]" min="1" class="unit_cost" 
+                           value="<?= htmlspecialchars($preselected_unit_cost) ?>" placeholder="0.00"
+                           title="Original purchase price per unit of the asset">
+                </td>
+                <td data-label="Total Cost">
+                    <input type="number" step="0.01" name="total_cost[]" min="1" readonly 
+                           value="<?= $preselected_unit_cost ? $preselected_unit_cost : '' ?>" placeholder="Auto-calculated"
+                           title="Automatically calculated: Quantity × Unit Cost">
+                </td>
+                <td data-label="Accumulated Depreciation">
+                    <input type="number" step="0.01" name="accumulated_depreciation[]" min="1" placeholder="0.00"
+                           title="Total depreciation accumulated over the asset's useful life">
+                </td>
+                <td data-label="Accumulated Impairment">
+                    <input type="number" step="0.01" name="accumulated_impairment_losses[]" min="1" placeholder="0.00"
+                           title="Total impairment losses recognized for this asset">
+                </td>
+                <td data-label="Carrying Amount">
+                    <input type="number" step="0.01" name="carrying_amount[]" min="1" placeholder="0.00"
+                           title="Current book value: Cost - Depreciation - Impairment">
+                </td>
+                <td data-label="Remarks">
+                    <select name="remarks[]" class="form-select" title="Current condition status of the asset">
                         <option value="Unserviceable" selected>Unserviceable</option>
                         <option value="Serviceable">Serviceable</option>
                     </select>
                 </td>
-                <td><input type="text" name="sale[]"></td>
-                <td><input type="text" name="transfer[]"></td>
-                <td><input type="text" name="destruction[]"></td>
-                <td><input type="text" name="others[]"></td>
-                <td><input type="number" step="0.01" name="total[]" min="1"></td>
-                <td><input type="number" step="0.01" name="appraised_value[]" min="1"></td>
-                <td><input type="text" name="or_no[]"></td>
-                <td><input type="number" step="0.01" name="amount[]" min="1"></td>
-                <td>
-                    <input type="text" name="dept_office[]" class="dept_office" value="<?= htmlspecialchars($preselected_office) ?>" readonly>
+                <td data-label="Sale">
+                    <input type="text" name="sale[]" placeholder="Sale info"
+                           title="Details if asset is to be sold (buyer, price, etc.)">
                 </td>
-                <td><input type="text" name="code[]"></td>
-                <td><input type="text" name="red_tag[]"></td>
-                <td><input type="date" name="date_received[]" value="<?= date('Y-m-d'); ?>"></td>
+                <td data-label="Transfer">
+                    <input type="text" name="transfer[]" placeholder="Transfer info"
+                           title="Details if asset is to be transferred (recipient, location)">
+                </td>
+                <td data-label="Destruction">
+                    <input type="text" name="destruction[]" placeholder="Destruction info"
+                           title="Details if asset is to be destroyed (method, date, reason)">
+                </td>
+                <td data-label="Others">
+                    <input type="text" name="others[]" placeholder="Other disposal"
+                           title="Other disposal methods not covered above">
+                </td>
+                <td data-label="Total">
+                    <input type="number" step="0.01" name="total[]" min="1" placeholder="0.00"
+                           title="Total disposal value or cost">
+                </td>
+                <td data-label="Appraised Value">
+                    <input type="number" step="0.01" name="appraised_value[]" min="1" placeholder="0.00"
+                           title="Current market value as determined by appraisal">
+                </td>
+                <td data-label="OR Number">
+                    <input type="text" name="or_no[]" placeholder="OR Number"
+                           title="Official Receipt number for any sales transaction">
+                </td>
+                <td data-label="Amount">
+                    <input type="number" step="0.01" name="amount[]" min="1" placeholder="0.00"
+                           title="Amount received from sale or disposal">
+                </td>
+                <td data-label="Department/Office">
+                    <input type="text" name="dept_office[]" class="dept_office" value="<?= htmlspecialchars($preselected_office) ?>" readonly placeholder="Auto-filled"
+                           title="Department/Office responsible for this asset">
+                </td>
+                <td data-label="Code">
+                    <input type="text" name="code[]" placeholder="Code"
+                           title="Internal classification or reference code">
+                </td>
+                <td data-label="Date Received">
+                    <input type="date" name="date_received[]" value="<?= date('Y-m-d'); ?>"
+                           title="Date when IIRUP form was received/processed">
+                </td>
             </tr>
         <?php endfor; ?>
     </tbody>
@@ -534,10 +914,14 @@ if ($result_footer && $result_footer->num_rows > 0) {
         const today = new Date().toISOString().split('T')[0];
         
         newRow.innerHTML = `
-            <td><input type="date" name="date_acquired[]" value="${today}"></td>
-            <td>
+            <td data-label="Date Acquired">
+                <input type="date" name="date_acquired[]" value="${today}" 
+                       title="Date when the asset was originally acquired by the organization">
+            </td>
+            <td data-label="Particulars/Articles">
                 <div class="d-flex align-items-center">
-                    <input type="text" name="particulars[]" list="asset_descriptions" class="particulars flex-grow-1">
+                    <input type="text" name="particulars[]" list="asset_descriptions" class="particulars flex-grow-1" placeholder="Select or type asset description"
+                           title="Description of the asset/item being inspected for disposal">
                     <button type="button" class="btn btn-sm btn-danger ms-1 remove-asset" 
                             style="display: none;" title="Remove Asset">
                         <i class="bi bi-x"></i>
@@ -545,31 +929,84 @@ if ($result_footer && $result_footer->num_rows > 0) {
                 </div>
                 <input type="hidden" name="asset_id[]" class="asset_id">
             </td>
-            <td><input type="text" name="property_no[]"></td>
-            <td><input type="number" name="qty[]" min="1" class="qty" max="1"></td>
-            <td><input type="number" step="0.01" name="unit_cost[]" min="1" class="unit_cost"></td>
-            <td><input type="number" step="0.01" name="total_cost[]" min="1" readonly></td>
-            <td><input type="number" step="0.01" name="accumulated_depreciation[]" min="1"></td>
-            <td><input type="number" step="0.01" name="accumulated_impairment_losses[]" min="1"></td>
-            <td><input type="number" step="0.01" name="carrying_amount[]" min="1"></td>
-            <td>
-                <select name="remarks[]">
+            <td data-label="Property No">
+                <input type="text" name="property_no[]" placeholder="Property Number"
+                       title="Official property number or inventory tag assigned to the asset">
+            </td>
+            <td data-label="Quantity">
+                <input type="number" name="qty[]" min="1" class="qty" max="1" placeholder="Qty"
+                       title="Number of units of this asset being inspected">
+            </td>
+            <td data-label="Unit Cost">
+                <input type="number" step="0.01" name="unit_cost[]" min="1" class="unit_cost" placeholder="0.00"
+                       title="Original purchase price per unit of the asset">
+            </td>
+            <td data-label="Total Cost">
+                <input type="number" step="0.01" name="total_cost[]" min="1" readonly placeholder="Auto-calculated"
+                       title="Automatically calculated: Quantity × Unit Cost">
+            </td>
+            <td data-label="Accumulated Depreciation">
+                <input type="number" step="0.01" name="accumulated_depreciation[]" min="1" placeholder="0.00"
+                       title="Total depreciation accumulated over the asset's useful life">
+            </td>
+            <td data-label="Accumulated Impairment">
+                <input type="number" step="0.01" name="accumulated_impairment_losses[]" min="1" placeholder="0.00"
+                       title="Total impairment losses recognized for this asset">
+            </td>
+            <td data-label="Carrying Amount">
+                <input type="number" step="0.01" name="carrying_amount[]" min="1" placeholder="0.00"
+                       title="Current book value: Cost - Depreciation - Impairment">
+            </td>
+            <td data-label="Remarks">
+                <select name="remarks[]" class="form-select" title="Current condition status of the asset">
                     <option value="Unserviceable" selected>Unserviceable</option>
                     <option value="Serviceable">Serviceable</option>
                 </select>
             </td>
-            <td><input type="text" name="sale[]"></td>
-            <td><input type="text" name="transfer[]"></td>
-            <td><input type="text" name="destruction[]"></td>
-            <td><input type="text" name="others[]"></td>
-            <td><input type="number" step="0.01" name="total[]" min="1"></td>
-            <td><input type="number" step="0.01" name="appraised_value[]" min="1"></td>
-            <td><input type="text" name="or_no[]"></td>
-            <td><input type="number" step="0.01" name="amount[]" min="1"></td>
-            <td><input type="text" name="dept_office[]" class="dept_office" readonly></td>
-            <td><input type="text" name="code[]"></td>
-            <td><input type="text" name="red_tag[]"></td>
-            <td><input type="date" name="date_received[]" value="${today}"></td>
+            <td data-label="Sale">
+                <input type="text" name="sale[]" placeholder="Sale info"
+                       title="Details if asset is to be sold (buyer, price, etc.)">
+            </td>
+            <td data-label="Transfer">
+                <input type="text" name="transfer[]" placeholder="Transfer info"
+                       title="Details if asset is to be transferred (recipient, location)">
+            </td>
+            <td data-label="Destruction">
+                <input type="text" name="destruction[]" placeholder="Destruction info"
+                       title="Details if asset is to be destroyed (method, date, reason)">
+            </td>
+            <td data-label="Others">
+                <input type="text" name="others[]" placeholder="Other disposal"
+                       title="Other disposal methods not covered above">
+            </td>
+            <td data-label="Total">
+                <input type="number" step="0.01" name="total[]" min="1" placeholder="0.00"
+                       title="Total disposal value or cost">
+            </td>
+            <td data-label="Appraised Value">
+                <input type="number" step="0.01" name="appraised_value[]" min="1" placeholder="0.00"
+                       title="Current market value as determined by appraisal">
+            </td>
+            <td data-label="OR Number">
+                <input type="text" name="or_no[]" placeholder="OR Number"
+                       title="Official Receipt number for any sales transaction">
+            </td>
+            <td data-label="Amount">
+                <input type="number" step="0.01" name="amount[]" min="1" placeholder="0.00"
+                       title="Amount received from sale or disposal">
+            </td>
+            <td data-label="Department/Office">
+                <input type="text" name="dept_office[]" class="dept_office" readonly placeholder="Auto-filled"
+                       title="Department/Office responsible for this asset">
+            </td>
+            <td data-label="Code">
+                <input type="text" name="code[]" placeholder="Code"
+                       title="Internal classification or reference code">
+            </td>
+            <td data-label="Date Received">
+                <input type="date" name="date_received[]" value="${today}"
+                       title="Date when IIRUP form was received/processed">
+            </td>
         `;
         
         tbody.appendChild(newRow);
@@ -577,6 +1014,9 @@ if ($result_footer && $result_footer->num_rows > 0) {
         // Attach event listeners to the new row
         attachRowEventListeners(newRow);
         updateRowVisibility();
+        
+        // Update titles for the new row
+        updateInputTitles();
     }
     
     function removeLastRow() {
@@ -678,6 +1118,51 @@ if ($result_footer && $result_footer->num_rows > 0) {
     document.getElementById('addRowBtn').addEventListener('click', addNewRow);
     document.getElementById('removeRowBtn').addEventListener('click', removeLastRow);
     
+    // Dynamic title updates to show current values
+    function updateInputTitles() {
+        document.querySelectorAll('.excel-table input, .excel-table select').forEach(input => {
+            const originalTitle = input.getAttribute('data-original-title');
+            if (!originalTitle) {
+                // Store original title on first run
+                input.setAttribute('data-original-title', input.title);
+            }
+            
+            const baseTitle = input.getAttribute('data-original-title') || '';
+            const currentValue = input.value.trim();
+            
+            if (currentValue) {
+                input.title = `${baseTitle}\nCurrent value: ${currentValue}`;
+            } else {
+                input.title = baseTitle;
+            }
+        });
+    }
+
+    // Update titles on input change
+    document.addEventListener('input', function(e) {
+        if (e.target.matches('.excel-table input, .excel-table select')) {
+            updateInputTitles();
+        }
+        
+        // Existing calculation logic
+        if (e.target.name === 'qty[]' || e.target.name === 'unit_cost[]') {
+            let row = e.target.closest('tr');
+            let qty = parseFloat(row.querySelector('input[name="qty[]"]').value) || 0;
+            let unitCost = parseFloat(row.querySelector('input[name="unit_cost[]"]').value) || 0;
+            row.querySelector('input[name="total_cost[]"]').value = (qty * unitCost).toFixed(2);
+        }
+    });
+
+    // Update titles on change (for selects)
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('.excel-table select')) {
+            updateInputTitles();
+        }
+    });
+
+    // Initialize titles
+    updateInputTitles();
+    
     // Initialize row visibility
     updateRowVisibility();
     
@@ -686,5 +1171,7 @@ if ($result_footer && $result_footer->num_rows > 0) {
         // Add preselected asset to selected set
         selectedAssetIds.add('<?= $preselected_asset['id'] ?>');
         updateDatalist();
+        // Update titles after preselection
+        setTimeout(updateInputTitles, 100);
     <?php endif; ?>
 </script>
