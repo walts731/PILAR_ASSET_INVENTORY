@@ -740,15 +740,18 @@ $stmt->close();
                 <?php while ($row = $npResult->fetch_assoc()): ?>
                   <tr>
                     <td>
-                      <?php
-                      $displayNo = 'N/A';
-                      if (isset($row['value']) && $row['value'] >= 50000) {
-                        $displayNo = htmlspecialchars($row['par_no'] ?? 'N/A (PAR)');
-                      } else {
-                        $displayNo = htmlspecialchars($row['ics_no'] ?? 'N/A (ICS)');
-                      }
-                      echo $displayNo;
-                      ?>
+                    <?php
+$displayNo = 'N/A';
+// Prefer PAR number if linked; otherwise use ICS number if linked
+if (!empty($row['par_no'])) {
+  $displayNo = htmlspecialchars($row['par_no']);
+} elseif (!empty($row['ics_no'])) {
+  $displayNo = htmlspecialchars($row['ics_no']);
+} else {
+  $displayNo = 'N/A';
+}
+echo $displayNo;
+?>
                     </td>
                     <td><?= htmlspecialchars($row['description']) ?></td>
                     <td><?= htmlspecialchars($row['category_name']) ?></td>
