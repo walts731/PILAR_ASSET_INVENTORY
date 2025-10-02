@@ -46,6 +46,31 @@ while ($row = $low_stock_result->fetch_assoc()) {
 $low_stock_count = count($low_stock_items);
 ?>
 <style>
+  /* Global Search dropdown: force readable colors inside topbar */
+  #globalSearchResults .list-group-item {
+    color: #212529 !important;
+    /* main text */
+    background-color: #ffffff !important;
+    border: 0;
+    /* optional: cleaner look */
+  }
+
+  #globalSearchResults .list-group-item:hover,
+  #globalSearchResults .list-group-item:focus {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+  }
+
+  #globalSearchResults .small {
+    color: #6c757d !important;
+    /* subtitle line */
+  }
+
+  /* Highest specificity to beat .topbar a color */
+  .topbar #globalSearchResults a {
+    color: #212529 !important;
+  }
+
   /* Professional blue-themed top bar */
   .topbar {
     background: linear-gradient(180deg, #0b5ed7 0%, #0a58ca 50%, #0948a6 100%);
@@ -56,33 +81,74 @@ $low_stock_count = count($low_stock_items);
     z-index: 1030;
   }
 
-  .shadow-soft { box-shadow: 0 2px 14px rgba(0,0,0,0.08); }
+  .shadow-soft {
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.08);
+  }
 
   /* Typography & links */
-  .topbar h5 { color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.25); }
-  .topbar a { color: #eaf2ff; text-decoration: none; }
-  .topbar a:hover { opacity: 0.92; }
+  .topbar h5 {
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  }
+
+  .topbar a {
+    color: #eaf2ff;
+    text-decoration: none;
+  }
+
+  .topbar a:hover {
+    opacity: 0.92;
+  }
 
   /* Ensure readable text when components use Bootstrap utilities inside the dark topbar */
-  .topbar .text-dark { color: rgba(255,255,255,0.92) !important; }
-  .topbar .text-muted { color: rgba(255,255,255,0.8) !important; }
-  .topbar .text-primary { color: #e2ecff !important; }
-  #datetime { color: rgba(255,255,255,0.85) !important; }
+  .topbar .text-dark {
+    color: rgba(255, 255, 255, 0.92) !important;
+  }
+
+  .topbar .text-muted {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  .topbar .text-primary {
+    color: #e2ecff !important;
+  }
+
+  #datetime {
+    color: rgba(255, 255, 255, 0.85) !important;
+  }
 
   /* Buttons & icons */
-  .topbar .btn { transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease; }
-  .topbar #toggleSidebar.btn { border-color: rgba(255,255,255,0.65); color: #fff; }
-  .topbar #toggleSidebar.btn:hover { background: rgba(255,255,255,0.12); }
-  .topbar i { color: #ffffff; }
+  .topbar .btn {
+    transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .topbar #toggleSidebar.btn {
+    border-color: rgba(255, 255, 255, 0.65);
+    color: #fff;
+  }
+
+  .topbar #toggleSidebar.btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .topbar i {
+    color: #ffffff;
+  }
 
   /* Dropdown polish */
   .topbar .dropdown-menu {
     border-radius: 12px;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.15);
-    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.06);
   }
-  .topbar .dropdown-item { padding: 0.5rem 0.75rem; }
-  .topbar .dropdown-item:hover { background: rgba(11, 94, 215, 0.08); }
+
+  .topbar .dropdown-item {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .topbar .dropdown-item:hover {
+    background: rgba(11, 94, 215, 0.08);
+  }
 </style>
 <div class="topbar d-flex flex-wrap justify-content-between align-items-center p-2 gap-2">
   <!-- Sidebar Toggle -->
@@ -252,9 +318,20 @@ $low_stock_count = count($low_stock_items);
   <!-- Right Side Controls -->
   <div class="order-2 order-sm-3 d-flex align-items-center gap-3 ms-auto flex-wrap justify-content-end">
 
+
+
     <!-- Date & Time -->
     <div id="datetime" class="text-end text-dark small fw-semibold"></div>
 
+    <!-- Global Search -->
+    <div class="position-relative" style="min-width: 260px;">
+      <input id="globalSearchInput" type="search" class="form-control form-control-sm shadow-soft"
+        placeholder="Search assets (description, tag, property, serial)" autocomplete="off">
+      <div id="globalSearchResults"
+        class="position-absolute w-100 bg-white border rounded shadow-sm list-group"
+        style="top: 100%; left: 0; z-index: 2050; display: none; max-height: 50vh; overflow-y: auto; color: #212529;"></div>
+
+    </div>
     <!-- Scan QR -->
     <a href="scan_qr.php" class="text-dark text-decoration-none" title="Scan QR">
       <i class="bi bi-qr-code-scan text-primary" style="font-size: 1.8rem;"></i>
@@ -266,8 +343,8 @@ $low_stock_count = count($low_stock_items);
     </button>
 
 
-        <!-- Notifications -->
-        <div class="dropdown">
+    <!-- Notifications -->
+    <div class="dropdown">
       <a href="#" class="text-dark text-decoration-none position-relative" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
         <i class="bi bi-bell text-primary" style="font-size: 1.8rem;"></i>
         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge" style="display: none;">0</span>
@@ -322,6 +399,8 @@ $low_stock_count = count($low_stock_items);
         <li><a class="dropdown-item d-flex align-items-center text-danger" href="../logout.php"><i class="bi bi-box-arrow-right me-2"></i> Sign Out</a></li>
       </ul>
     </div>
+
+    
   </div>
 </div>
 
@@ -361,24 +440,24 @@ $low_stock_count = count($low_stock_items);
       // Handle theme toggle click
       themeToggle.addEventListener('click', function() {
         fetch('../includes/dark_mode_helper.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: 'toggle_dark_mode=1'
-        })
-        .then(response => response.json())
-        .then(data => {
-          // Toggle dark mode class on body and html
-          document.body.classList.toggle('dark-mode', data.dark_mode);
-          document.documentElement.classList.toggle('dark-mode', data.dark_mode);
-          
-          // Update the icon and title
-          updateThemeIcon(themeToggle, themeIcon, data.dark_mode);
-        })
-        .catch(error => {
-          console.error('Error toggling dark mode:', error);
-        });
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'toggle_dark_mode=1'
+          })
+          .then(response => response.json())
+          .then(data => {
+            // Toggle dark mode class on body and html
+            document.body.classList.toggle('dark-mode', data.dark_mode);
+            document.documentElement.classList.toggle('dark-mode', data.dark_mode);
+
+            // Update the icon and title
+            updateThemeIcon(themeToggle, themeIcon, data.dark_mode);
+          })
+          .catch(error => {
+            console.error('Error toggling dark mode:', error);
+          });
       });
 
       // Initialize theme icon based on current mode
@@ -389,7 +468,7 @@ $low_stock_count = count($low_stock_items);
     // Low stock notification
     const lowStockCard = document.getElementById('lowStockCard');
     const consumablesTab = document.querySelector('#consumables-tab');
-    
+
     if (lowStockCard && consumablesTab) {
       const tab = new bootstrap.Tab(consumablesTab);
       lowStockCard.addEventListener('click', function() {
@@ -423,4 +502,261 @@ $low_stock_count = count($low_stock_items);
       }
     }
   });
+
+  // ================= Global Search =================
+  (function() {
+    const input = document.getElementById('globalSearchInput');
+    const box = document.getElementById('globalSearchResults');
+    if (!input || !box) return;
+
+    let timer = null;
+    let lastQ = '';
+    const esc = (v) => (v == null ? '' : String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+
+    function render(list) {
+      if (!list || list.length === 0) {
+        box.innerHTML = '<div class="p-2 text-muted small">No results</div>';
+      } else {
+        box.innerHTML = list.map(it => {
+          // NEW: show Property No specifically (and ICS/PAR)
+const line2 = [
+  (it.property_no ? ('Property No: ' + esc(it.property_no)) : 'Property No: —'),
+  (it.ics_no ? ('ICS: ' + esc(it.ics_no)) : null),
+  (it.par_no ? ('PAR: ' + esc(it.par_no)) : null)
+].filter(Boolean).join(' • ');
+          return `<a href="#" class="list-group-item list-group-item-action global-search-item" data-id="${it.id}">
+                  <div class="fw-semibold">${esc(it.description)}</div>
+                  <div class="small text-muted">${esc(line2)}</div>
+                </a>`;
+        }).join('');
+      }
+      box.style.display = 'block';
+    }
+
+    function search(q) {
+      if (!q || q.length < 2) {
+        box.style.display = 'none';
+        return;
+      }
+      fetch('search_assets.php?q=' + encodeURIComponent(q))
+        .then(r => r.json())
+        .then(data => render(Array.isArray(data.results) ? data.results : []))
+        .catch(() => render([]));
+    }
+
+    input.addEventListener('input', () => {
+      const q = input.value.trim();
+      if (q === lastQ) return;
+      lastQ = q;
+      clearTimeout(timer);
+      timer = setTimeout(() => search(q), 250);
+    });
+
+    input.addEventListener('focus', () => {
+      if (box.innerHTML) box.style.display = 'block';
+    });
+    input.addEventListener('blur', () => setTimeout(() => {
+      box.style.display = 'none';
+    }, 250));
+
+    box.addEventListener('mousedown', (e) => {
+        // Prevent input blur from hiding results before click handler runs
+        e.preventDefault();
+      });
+
+    box.addEventListener('click', (e) => {
+      const a = e.target.closest('.global-search-item');
+      if (!a) return;
+      e.preventDefault();
+
+      const id = a.getAttribute('data-id');
+      const content = document.getElementById('globalAssetContent');
+      if (content) content.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border text-primary"></div><div>Loading...</div></div>';
+
+      // Reuse existing details endpoint
+      fetch('get_asset_details.php?id=' + encodeURIComponent(id))
+        .then(r => r.json())
+        .then(resp => {
+          const d = (resp && resp.asset) ? resp.asset : resp;
+          if (!d || d.error) {
+            content.innerHTML = '<div class="text-danger">Failed to load details.</div>';
+            return;
+          }
+          // Build professional, organized details view
+const statusBadge = (() => {
+  const s = (d.status || '').toLowerCase();
+  const map = { available: 'success', borrowed: 'warning', unserviceable: 'danger', red_tagged: 'danger' };
+  const cls = map[s] || 'secondary';
+  return `<span class="badge bg-${cls} text-uppercase">${esc(d.status || 'N/A')}</span>`;
+})();
+
+const chips = (label, value) => {
+  if (!value) return '';
+  return `<span class="badge rounded-pill text-bg-light border me-1">${label}: ${esc(value)}</span>`;
+};
+
+const img = d.image
+  ? `<img src="../img/assets/${esc(d.image)}"
+           class="img-fluid rounded border"
+           style="width:100%;max-height:300px;object-fit:cover;"
+           alt="Asset">`
+  : `<div class="border rounded d-flex align-items-center justify-content-center bg-light"
+           style="width:100%;height:300px;">
+       <i class="bi bi-image text-muted" style="font-size:3rem;"></i>
+     </div>`;
+
+content.innerHTML = `
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+      <div>
+        <h5 class="mb-1">${esc(d.description || 'Unnamed Asset')}</h5>
+        <div class="text-muted small">
+          ${esc(d.category_name || 'Uncategorized')}
+          ${d.code ? ' • Code: ' + esc(d.code) : ''}
+        </div>
+      </div>
+      <div>${statusBadge}</div>
+    </div>
+
+    <div class="row g-3">
+      <!-- Left: Image -->
+      <div class="col-md-5">
+        <div class="card h-100">
+          <div class="card-body p-2">
+            ${img}
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Details -->
+      <div class="col-md-7">
+        <div class="card mb-3">
+          <div class="card-header bg-light fw-semibold">
+            Identification
+          </div>
+          <div class="card-body">
+            <div class="row g-2">
+              <div class="col-sm-6">
+                <div class="small text-muted">Property No.</div>
+                <div class="fw-semibold">${esc(d.property_no || '—')}</div>
+              </div>
+              <div class="col-sm-6">
+                <div class="small text-muted">Inventory Tag</div>
+                <div class="fw-semibold">${esc(d.inventory_tag || '—')}</div>
+              </div>
+              <div class="col-sm-6">
+                <div class="small text-muted">Brand</div>
+                <div class="fw-semibold">${esc(d.brand || '—')}</div>
+              </div>
+              <div class="col-sm-6">
+                <div class="small text-muted">Model</div>
+                <div class="fw-semibold">${esc(d.model || '—')}</div>
+              </div>
+              <div class="col-sm-6">
+                <div class="small text-muted">Serial No.</div>
+                <div class="fw-semibold">${esc(d.serial_no || '—')}</div>
+              </div>
+              <div class="col-sm-6">
+                <div class="small text-muted">Unit / Quantity</div>
+                <div class="fw-semibold">${esc(d.unit || '—')} • ${esc(d.quantity || '0')}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-header bg-light fw-semibold">
+            Assignment
+          </div>
+          <div class="card-body">
+            <div class="row g-2">
+              <div class="col-sm-6">
+                <div class="small text-muted">Office</div>
+                <div class="fw-semibold">${esc(d.office_name || '—')}</div>
+              </div>
+              <div class="col-sm-6">
+                <div class="small text-muted">Person Accountable</div>
+                <div class="fw-semibold">${esc(d.employee_name || d.person_accountable || '—')}</div>
+              </div>
+              <div class="col-sm-6">
+                <div class="small text-muted">End User</div>
+                <div class="fw-semibold">${esc(d.end_user || '—')}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-header bg-light fw-semibold">
+            Documentation
+          </div>
+          <div class="card-body">
+            <div class="mb-2">
+              ${chips('ICS', d.ics_no)}${chips('PAR', d.par_no)}
+            </div>
+            <div class="row g-2">
+              <div class="col-sm-6">
+                <div class="small text-muted">Acquisition Date</div>
+                <div class="fw-semibold">
+                  ${d.acquisition_date ? new Date(d.acquisition_date).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—'}
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="small text-muted">Last Updated</div>
+                <div class="fw-semibold">
+                  ${d.last_updated ? new Date(d.last_updated).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—'}
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="small text-muted">Unit Value</div>
+                <div class="fw-semibold">₱${(parseFloat(d.value||0)||0).toLocaleString(undefined,{minimumFractionDigits:2})}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-primary btn-sm" href="create_mr.php?asset_id=${d.id}" target="_blank" title="Create/Edit Property Tag">
+            <i class="bi bi-tag"></i> Property Tag
+          </a>
+          <a class="btn btn-outline-secondary btn-sm" href="forms.php?id=2" target="_blank" title="Open Forms">
+            <i class="bi bi-journal-text"></i> Forms
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>`;
+          const modal = new bootstrap.Modal(document.getElementById('globalAssetModal'));
+          modal.show();
+        })
+        .catch(() => {
+          if (content) content.innerHTML = '<div class="text-danger">Failed to load details.</div>';
+        });
+    });
+  })();
+  // ================= End Global Search =================
 </script>
+
+<!-- Global Asset Details Modal -->
+<div class="modal fade" id="globalAssetModal" tabindex="-1" aria-labelledby="globalAssetModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="globalAssetModalLabel">Asset Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="globalAssetContent">
+              <div class="text-center text-muted py-4">
+                <div class="spinner-border text-primary"></div>
+                <div>Loading...</div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
