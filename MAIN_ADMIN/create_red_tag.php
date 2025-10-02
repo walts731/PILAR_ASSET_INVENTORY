@@ -1,6 +1,7 @@
 <?php
 require_once '../connect.php';
 require_once '../includes/audit_helper.php';
+require_once '../includes/lifecycle_helper.php';
 session_start();
 
 // Check if user is logged in
@@ -258,6 +259,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $update_asset_query->bind_param('i', $asset_id);
             $update_asset_query->execute();
             $update_asset_query->close();
+            // Log lifecycle RED_TAGGED event
+            $notes = "Removal: {$removal_reason}; Action: {$action}; Location: {$item_location}";
+            if (!empty($red_tag_id)) {
+                logLifecycleEvent($asset_id, 'RED_TAGGED', 'red_tags', (int)$red_tag_id, null, null, null, null, $notes);
+            } else {
+                logLifecycleEvent($asset_id, 'RED_TAGGED', 'red_tags', null, null, null, null, null, $notes);
+            }
             
             $_SESSION['success_message'] = 'Red Tag successfully updated!';
             $form_id = isset($_GET['form_id']) ? intval($_GET['form_id']) : 7;
@@ -297,6 +305,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $update_asset_query->bind_param('i', $asset_id);
             $update_asset_query->execute();
             $update_asset_query->close();
+            // Log lifecycle RED_TAGGED event
+            $notes = "Removal: {$removal_reason}; Action: {$action}; Location: {$item_location}";
+            logLifecycleEvent($asset_id, 'RED_TAGGED', 'red_tags', (int)$red_tag_id, null, null, null, null, $notes);
             
             // Get asset description for logging
             $asset_stmt = $conn->prepare("SELECT description FROM assets WHERE id = ?");
