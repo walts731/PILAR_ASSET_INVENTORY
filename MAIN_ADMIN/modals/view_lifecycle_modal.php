@@ -11,6 +11,53 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
+        <style>
+          /* Scoped styles for lifecycle roadmap */
+          #lifecycleRoadmap {
+            position: relative;
+            padding: 18px 6px 6px 6px;
+            overflow-x: auto;
+            white-space: nowrap;
+          }
+          .roadmap-track {
+            position: relative;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 8px 0 18px 0;
+            min-width: 680px;
+          }
+          .roadmap-steps {
+            display: flex;
+            gap: 28px;
+            align-items: flex-start;
+            position: relative;
+            min-width: 680px;
+          }
+          .roadmap-step {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 120px;
+          }
+          .roadmap-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 3px rgba(13,110,253,.15);
+            background: #adb5bd;
+          }
+          .roadmap-dot.success { background: #198754; }
+          .roadmap-dot.primary { background: #0d6efd; }
+          .roadmap-dot.info { background: #0dcaf0; }
+          .roadmap-dot.warning { background: #ffc107; }
+          .roadmap-dot.secondary { background: #6c757d; }
+          .roadmap-dot.danger { background: #dc3545; }
+          .roadmap-label { font-weight: 600; font-size: .9rem; margin-top: 6px; text-align:center; }
+          .roadmap-date { font-size: .8rem; color: #6c757d; }
+          .roadmap-ref { font-size: .75rem; color: #6c757d; }
+        </style>
         <div class="row g-3 mb-3">
           <div class="col-md-4">
             <div class="card h-100 shadow-sm">
@@ -43,6 +90,22 @@
             <div class="alert alert-info py-2 mb-0">
               <i class="bi bi-info-circle me-1"></i>
               This timeline shows movements and status changes across assignments, transfers, red tags, and disposal.
+            </div>
+          </div>
+        </div>
+
+        <!-- Roadmap visualization -->
+        <div class="card shadow-sm mb-3">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+              <div class="fw-semibold"><i class="bi bi-signpost-2 me-1 text-primary"></i>Roadmap</div>
+              <div class="small text-muted">Scroll horizontally to see the full journey</div>
+            </div>
+            <div id="lifecycleRoadmap">
+              <div class="roadmap-track"></div>
+              <div class="roadmap-steps" id="lifecycleRoadmapSteps">
+                <!-- Steps injected by JS -->
+              </div>
             </div>
           </div>
         </div>

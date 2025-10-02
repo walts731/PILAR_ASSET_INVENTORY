@@ -2337,6 +2337,77 @@ document.querySelectorAll('.viewLifecycleBtn').forEach(btn => {
             `;
           }).join('');
         }
+
+        // ==============================
+        // Render roadmap steps
+        // ==============================
+        const stepsWrap = document.getElementById('lifecycleRoadmapSteps');
+        if (stepsWrap) {
+          stepsWrap.innerHTML = ''; // clear previous
+
+          const colorFor = (t) => {
+            const map = {
+              ACQUIRED: 'success',
+              ASSIGNED: 'primary',
+              TRANSFERRED: 'info',
+              DISPOSAL_LISTED: 'warning',
+              DISPOSED: 'secondary',
+              RED_TAGGED: 'danger'
+            };
+            return map[(t || '').toUpperCase()] || 'secondary';
+          };
+          const iconFor = (t) => {
+            switch ((t || '').toUpperCase()) {
+              case 'ACQUIRED': return 'bi-bag-check';
+              case 'ASSIGNED': return 'bi-person-check';
+              case 'TRANSFERRED': return 'bi-arrow-left-right';
+              case 'DISPOSAL_LISTED': return 'bi-journal-text';
+              case 'DISPOSED': return 'bi-trash';
+              case 'RED_TAGGED': return 'bi-tag';
+              default: return 'bi-circle';
+            }
+          };
+          const fmt = (d) => {
+            if (!d) return '';
+            try {
+              return new Date(d).toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+            } catch { return ''; }
+          };
+          const escapeHtml = v => (v == null ? '' : String(v)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+
+          if (events.length === 0) {
+            stepsWrap.innerHTML = '<div class="text-muted small">No events</div>';
+          } else {
+            const steps = [...events].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            steps.forEach(ev => {
+              const t = (ev.event_type || '').toUpperCase();
+              const color = colorFor(t);
+              const icon = iconFor(t);
+              const dt = fmt(ev.created_at);
+              const ref = ev.ref_table ? `${escapeHtml(ev.ref_table)} #${escapeHtml(ev.ref_id ?? '')}` : '';
+              const label = escapeHtml(t.replace('_', ' '));
+
+              const stepHtml = `
+                <div class="roadmap-step">
+                  <div class="roadmap-dot ${color}" title="${label}"></div>
+                  <div class="roadmap-label mt-1"><i class="bi ${icon} me-1"></i>${label}</div>
+                  <div class="roadmap-date">${escapeHtml(dt)}</div>
+                  ${ref ? `<div class="roadmap-ref">${ref}</div>` : ''}
+                </div>
+              `;
+              stepsWrap.insertAdjacentHTML('beforeend', stepHtml);
+            });
+
+            // Auto-scroll to the latest step
+            const road = document.getElementById('lifecycleRoadmap');
+            if (road) {
+              setTimeout(() => { road.scrollLeft = road.scrollWidth; }, 0);
+            }
+          }
+        }
+        // ==============================
+
       })
       .catch(err => {
         if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Failed to load life cycle.</td></tr>`;
@@ -2344,6 +2415,9 @@ document.querySelectorAll('.viewLifecycleBtn').forEach(btn => {
       });
   });
 });
+
+
+
   </script>
 
 </body>
