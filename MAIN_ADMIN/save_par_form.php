@@ -58,6 +58,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $items = $_POST['items'] ?? [];
 
+    // --- Load PAR/ICS thresholds ---
+    $par_min = 50000.00; // default
+    $thrRes = $conn->query("SELECT par_min FROM form_thresholds ORDER BY id ASC LIMIT 1");
+    if ($thrRes && $thrRes->num_rows > 0) {
+        $thrRow = $thrRes->fetch_assoc();
+        if (isset($thrRow['par_min'])) { $par_min = (float)$thrRow['par_min']; }
+    }
+
     // --- Skipped items collector ---
     $skipped = [];
 
@@ -74,9 +82,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $amount = floatval($item['amount'] ?? 0);
 
         if ($quantity <= 0 || empty($description)) continue;
-        // Server-side enforcement for PAR rule: unit price must be > 50,000
-        if ($unit_price <= 50000) {
-            $skipped[] = "Item '" . $description . "' skipped (unit price must be > 50,000).";
+        // Server-side enforcement for PAR rule: unit price must be >= configured minimum
+        if ($unit_price < $par_min) {
+            $skipped[] = "Item '" . $description . "' skipped (unit price must be ≥ " . number_format($par_min, 2) . ").";
             continue;
         }
 

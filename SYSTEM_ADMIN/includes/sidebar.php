@@ -239,9 +239,12 @@ $page = basename($_SERVER['PHP_SELF'], ".php");
                 <i class="bi bi-google"></i> Drive Backup
             </a>
             <?php endif; ?>
-
             <a href="../SYSTEM_ADMIN/manage_legal_documents.php" class="<?= ($page == 'manage_legal_documents') ? 'active' : '' ?>">
                 <i class="bi bi-file-text-fill"></i> Legal Documents
+            </a>
+
+            <a href="../SYSTEM_ADMIN/par_ics_settings.php" class="<?= ($page == 'par_ics_settings') ? 'active' : '' ?>">
+                <i class="bi bi-sliders"></i> PAR/ICS Settings
             </a>
 
             <a href="../SYSTEM_ADMIN/edit_system.php" class="<?= ($page == 'System') ? 'active' : '' ?>">
@@ -249,10 +252,6 @@ $page = basename($_SERVER['PHP_SELF'], ".php");
             </a>
 
         </nav>
-    </div>
-
-    <!-- Logout -->
-    <div class="p-3 border-top">
         <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#logoutModal">
             <i class="bi bi-box-arrow-right"></i> Logout
         </a>

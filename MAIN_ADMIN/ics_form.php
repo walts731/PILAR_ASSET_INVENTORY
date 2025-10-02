@@ -67,6 +67,14 @@ if ($result && $result->num_rows > 0) {
     }
 }
 
+// Load ICS max threshold for client-side hints/validation
+$ics_max = 50000.00; // default fallback
+$thrRes = $conn->query("SELECT ics_max FROM form_thresholds ORDER BY id ASC LIMIT 1");
+if ($thrRes && $thrRes->num_rows > 0) {
+    $thrRow = $thrRes->fetch_assoc();
+    if (isset($thrRow['ics_max'])) { $ics_max = (float)$thrRow['ics_max']; }
+}
+
 ?>
 <?php if (!empty($_SESSION['flash'])): ?>
     <?php
@@ -189,7 +197,7 @@ if ($result && $result->num_rows > 0) {
     pointer-events: none;
     color: inherit;
     font-size: 1rem;">₱</span>
-                                <input type="number" class="form-control text-end shadow" step="0.01" name="unit_cost[]" max="50000" style="padding-left: 1.5rem;" required>
+                                <input type="number" class="form-control text-end shadow" step="0.01" name="unit_cost[]" max="<?= htmlspecialchars(number_format($ics_max, 2, '.', '')) ?>" style="padding-left: 1.5rem;" required>
                             </td>
                             <td style="position: relative;">
                                 <span style="
@@ -319,6 +327,7 @@ if ($result && $result->num_rows > 0) {
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const ICS_MAX = parseFloat('<?= htmlspecialchars(number_format($ics_max, 2, '.', '')) ?>');
         const tableBody = document.getElementById('ics-items-body');
         const addRowBtn = document.getElementById('addRowBtn');
         const grandTotalField = document.getElementById('grandTotal');
@@ -344,9 +353,10 @@ if ($result && $result->num_rows > 0) {
 
             if (target.name === "unit_cost[]") {
                 const val = parseFloat(target.value) || 0;
-                if (val > 50000) {
-                    target.value = 50000;
-                    target.setCustomValidity("Unit cost cannot exceed ₱50,000.");
+                if (val > ICS_MAX) {
+                    target.value = ICS_MAX;
+                    const cap = ICS_MAX.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    target.setCustomValidity("Unit cost cannot exceed ₱" + cap + ".");
                     target.reportValidity();
                 } else {
                     target.setCustomValidity("");

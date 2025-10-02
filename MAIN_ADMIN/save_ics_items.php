@@ -192,6 +192,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $item_nos = $_POST['item_no'] ?? [];
     $estimated_lives = $_POST['estimated_useful_life'] ?? [];
 
+    // Load thresholds (ICS max)
+    $ics_max = 50000.00; // default
+    $thrRes = $conn->query("SELECT ics_max FROM form_thresholds ORDER BY id ASC LIMIT 1");
+    if ($thrRes && $thrRes->num_rows > 0) {
+        $thrRow = $thrRes->fetch_assoc();
+        if (isset($thrRow['ics_max'])) { $ics_max = (float)$thrRow['ics_max']; }
+    }
+
     // Prepare ICS items insert
     $stmt_items = $conn->prepare("INSERT INTO ics_items 
         (ics_id, asset_id, ics_no, quantity, unit, unit_cost, total_cost, description, item_no, estimated_useful_life, created_at)
@@ -201,6 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt_assets_new = $conn->prepare("INSERT INTO assets_new (description, quantity, unit_cost, unit, office_id, ics_id, date_created) VALUES (?, ?, ?, ?, ?, ?, NOW())");
     // We no longer create/update aggregate assets or deduct stock here; only per-item assets are created.
 
+    $skipped = [];
     for ($i = 0; $i < count($descriptions); $i++) {
         $quantity = isset($quantities[$i]) ? floatval($quantities[$i]) : 0;
         $unit = $units[$i] ?? '';
@@ -211,6 +220,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $estimated_life = $estimated_lives[$i] ?? '';
 
         if (empty($description) || $quantity <= 0) continue;
+
+        // Enforce ICS maximum unit cost
+        if ($unit_cost > $ics_max) {
+            $skipped[] = "Item '" . $description . "' skipped (unit cost must be ≤ " . number_format($ics_max, 2) . ").";
+            continue;
+        }
 
         // Record this line into assets_new, include destination office and link to ICS
         $stmt_assets_new->bind_param("sddsii", $description, $quantity, $unit_cost, $unit, $office_id, $ics_id);
@@ -264,11 +279,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt_items->close();
     if (isset($stmt_assets_new) && $stmt_assets_new) { $stmt_assets_new->close(); }
 
-    // Set flash message for success and redirect back to ICS form
-    $_SESSION['flash'] = [
-        'type' => 'success',
-        'message' => 'ICS has been saved successfully.'
-    ];
+    // Set flash message for success (or partial) and redirect back to ICS form
+    $_SESSION['flash'] = empty($skipped)
+        ? [ 'type' => 'success', 'message' => 'ICS has been saved successfully.' ]
+        : [ 'type' => 'warning', 'message' => 'ICS saved with some items skipped: ' . implode(' ', $skipped) ];
 
     header("Location: forms.php?id=" . $form_id);
     exit();
