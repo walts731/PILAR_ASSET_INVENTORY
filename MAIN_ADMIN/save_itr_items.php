@@ -1,6 +1,7 @@
 <?php
 require_once '../connect.php';
 require_once '../includes/audit_logger.php';
+require_once '../includes/lifecycle_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -86,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $assets_to_update = [];
         $asset_inventory_tags = [];
         $valid_items = [];
+        $from_employee_map = [];
         
         for ($i = 0; $i < count($date_acquired_array); $i++) {
             if (!empty($description_array[$i])) {
@@ -106,6 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $asset_id = (int)$r['id'];
                         $current_employee_id = $r['employee_id'];
                         $asset_inventory_tags[$asset_id] = $r['inventory_tag'] ?? '';
+                        $from_employee_map[$asset_id] = $current_employee_id;
                     }
                     $chk->close();
                 }
@@ -122,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $asset_id = (int)$ar['id'];
                         $current_employee_id = $ar['employee_id'];
                         $asset_inventory_tags[$asset_id] = $ar['inventory_tag'] ?? '';
+                        $from_employee_map[$asset_id] = $current_employee_id;
                     }
                     $s1->close();
                 }
@@ -137,6 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $asset_id = (int)$ar2['id'];
                         $current_employee_id = $ar2['employee_id'];
                         $asset_inventory_tags[$asset_id] = $ar2['inventory_tag'] ?? '';
+                        $from_employee_map[$asset_id] = $current_employee_id;
                     }
                     $s2->close();
                 }
@@ -152,6 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $asset_id = (int)$ar3['id'];
                         $current_employee_id = $ar3['employee_id'];
                         $asset_inventory_tags[$asset_id] = $ar3['inventory_tag'] ?? '';
+                        $from_employee_map[$asset_id] = $current_employee_id;
                     }
                     $s3->close();
                 }
@@ -304,6 +310,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $action = 'ITR_CREATE';
             $description = "ITR No: {$itr_no}, From: {$from_accountable_officer}, To: {$to_accountable_officer}, Assets: " . count($valid_items);
             logAssetActivity($action, $description, $itr_id, "Transfer Type: {$final_transfer_type}, End User: {$end_user}");
+        }
+
+        // Lifecycle: TRANSFERRED per asset
+        if (function_exists('logLifecycleEvent') && !empty($assets_to_update)) {
+            foreach ($assets_to_update as $aid_int) {
+                $from_emp = $from_employee_map[$aid_int] ?? null;
+                $note = sprintf('ITR %s; Reason: %s; To: %s', (string)$itr_no, (string)$reason_for_transfer, (string)$to_accountable_officer);
+                logLifecycleEvent((int)$aid_int, 'TRANSFERRED', 'itr_form', (int)$itr_id, $from_emp ? (int)$from_emp : null, $to_employee_id ? (int)$to_employee_id : null, null, null, $note);
+            }
         }
 
         $conn->commit();

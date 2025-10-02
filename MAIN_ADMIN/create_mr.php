@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/lifecycle_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -267,6 +268,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // No backend auto-generation of code; UI will propose a pattern which user can edit
 
+    // Capture previous assignment before we mutate the asset
+    $prev_employee_id = null;
+    $prev_office_id = null;
+    if (!empty($asset_id_form)) {
+        if ($__stPrev = $conn->prepare("SELECT employee_id, office_id FROM assets WHERE id = ?")) {
+            $__stPrev->bind_param("i", $asset_id_form);
+            $__stPrev->execute();
+            $__rsPrev = $__stPrev->get_result();
+            if ($__rsPrev && ($__rowPrev = $__rsPrev->fetch_assoc())) {
+                $prev_employee_id = $__rowPrev['employee_id'] ?? null;
+                $prev_office_id = $__rowPrev['office_id'] ?? null;
+            }
+            $__stPrev->close();
+        }
+    }
+
     // --- NEW: Update other asset details to complete the asset record ---
     if ($asset_id_form) {
         if ($category_id === null) {
@@ -470,6 +487,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['error_message'] = "Failed to update asset details: " . $stmt_ai->error;
             }
             $stmt_ai->close();
+            // Lifecycle: ASSIGNED (create)
+            if (function_exists('logLifecycleEvent') && !empty($asset_id_form)) {
+                $note = sprintf('MR create; PA: %s; InvTag: %s', (string)$person_accountable_name, (string)$inventory_tag_gen);
+                logLifecycleEvent((int)$asset_id_form, 'ASSIGNED', 'mr_details', null, $prev_employee_id ? (int)$prev_employee_id : null, $employee_id ? (int)$employee_id : null, $prev_office_id ? (int)$prev_office_id : null, null, $note);
+            }
             $_SESSION['success_message'] = "MR has been successfully created!";
             header("Location: create_mr.php?asset_id=" . $asset_id_form);
             exit();

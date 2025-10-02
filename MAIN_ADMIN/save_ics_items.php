@@ -2,6 +2,7 @@
 require_once '../connect.php';
 require_once '../phpqrcode/qrlib.php';
 require_once '../includes/audit_logger.php';
+require_once '../includes/lifecycle_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -251,6 +252,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Log individual ICS item creation
         $item_details = "Added item to ICS {$ics_no}: {$description} (Qty: {$quantity}, Unit Cost: ₱" . number_format($unit_cost, 2) . ", Total: ₱" . number_format($total_cost, 2) . ")";
         $logger->log($_SESSION['user_id'], $username, 'CREATE', 'ICS Items', $item_details, 'ics_items', $conn->insert_id);
+
+        // Lifecycle: mark asset(s) as acquired via ICS
+        if (function_exists('logLifecycleEvent') && !empty($latest_asset_id)) {
+            $toOffice = $is_outside_lgu ? null : ($office_id > 0 ? (int)$office_id : null);
+            $note = sprintf('ICS %s; Qty %s; UnitCost ₱%0.2f; Total ₱%0.2f', (string)$ics_no, (string)$quantity, (float)$unit_cost, (float)$total_cost);
+            logLifecycleEvent((int)$latest_asset_id, 'ACQUIRED', 'ics_form', (int)$ics_id, null, null, null, $toOffice, $note);
+        }
     }
 
     $stmt_items->close();

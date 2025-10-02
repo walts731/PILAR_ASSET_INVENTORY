@@ -1,6 +1,7 @@
 <?php
 require_once '../connect.php';
 require_once '../phpqrcode/qrlib.php';
+require_once '../includes/lifecycle_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -116,6 +117,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         if (!$stmt_items->execute()) {
             die("PAR item insert error: " . $stmt_items->error);
+        }
+
+        // Lifecycle: ACQUIRED via PAR for the created item asset
+        if (function_exists('logLifecycleEvent') && !empty($latest_asset_id)) {
+            $toOffice = $is_outside_lgu ? null : ($office_id ? (int)$office_id : null);
+            $note = sprintf('PAR %s; Qty %s; UnitCost ₱%0.2f; Amount ₱%0.2f', (string)$par_no, (string)$quantity, (float)$unit_price, (float)$amount);
+            logLifecycleEvent((int)$latest_asset_id, 'ACQUIRED', 'par_form', (int)$par_id, null, null, null, $toOffice, $note);
         }
     }
 

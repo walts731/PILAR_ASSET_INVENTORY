@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/lifecycle_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   http_response_code(405);
@@ -279,6 +280,19 @@ try {
       $updateAssetStmt->bind_param('i', $aid);
       if (!$updateAssetStmt->execute()) {
         throw new Exception('Asset update failed: ' . $updateAssetStmt->error);
+      }
+      // Lifecycle: DISPOSAL_LISTED for asset added to IIRUP
+      if (function_exists('logLifecycleEvent')) {
+        $disp_note = sprintf(
+          'IIRUP #%d; Remarks: %s; Method: %s%s%s%s',
+          (int)$iirup_id,
+          (string)$rem,
+          $sl !== '' ? ('Sale=' . $sl) : 'N/A',
+          $tr !== '' ? (', Transfer=' . $tr) : '',
+          $des !== '' ? (', Destruction=' . $des) : '',
+          $oth !== '' ? (', Others=' . $oth) : ''
+        );
+        logLifecycleEvent((int)$aid, 'DISPOSAL_LISTED', 'iirup_form', (int)$iirup_id, null, null, null, null, $disp_note);
       }
       
       // Update corresponding mr_details record to set unserviceable = 1
