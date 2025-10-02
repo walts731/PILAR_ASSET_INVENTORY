@@ -194,7 +194,7 @@ if ($result_assets && $result_assets->num_rows > 0) {
         </tr>
     </thead>
     <tbody>
-        <?php for ($i = 0; $i < 5; $i++): ?>
+        <?php for ($i = 0; $i < 1; $i++): ?>
             <?php 
                 // Pre-populate first row if asset is selected from QR scan
                 $is_first_row = ($i === 0);
@@ -205,7 +205,7 @@ if ($result_assets && $result_assets->num_rows > 0) {
                 $preselected_office = ($is_first_row && $preselected_asset) ? $preselected_asset['office_name'] : '';
                 $show_remove_btn = ($is_first_row && $preselected_asset) ? 'inline-block' : 'none';
             ?>
-            <tr>
+            <tr class="iirup-row">
                 <td><input type="date" name="date_acquired[]" value="<?= date('Y-m-d'); ?>"></td>
                 <td>
                     <div class="d-flex align-items-center">
@@ -253,6 +253,16 @@ if ($result_assets && $result_assets->num_rows > 0) {
         <?php endfor; ?>
     </tbody>
 </table>
+
+<!-- Row Management Buttons -->
+<div class="d-flex justify-content-start gap-2 mt-2 mb-3">
+    <button type="button" id="addRowBtn" class="btn btn-success btn-sm">
+        <i class="bi bi-plus-circle"></i> Add Row
+    </button>
+    <button type="button" id="removeRowBtn" class="btn btn-danger btn-sm">
+        <i class="bi bi-dash-circle"></i> Remove Last Row
+    </button>
+</div>
 
 <datalist id="asset_descriptions">
     <?php foreach ($assets_data as $asset): ?>
@@ -514,6 +524,162 @@ if ($result_footer && $result_footer->num_rows > 0) {
             row.querySelector('input[name="total_cost[]"]').value = (qty * unitCost).toFixed(2);
         }
     });
+    
+    // Add Row Functionality
+    function addNewRow() {
+        const tbody = document.querySelector('.excel-table tbody');
+        const newRow = document.createElement('tr');
+        newRow.className = 'iirup-row';
+        
+        const today = new Date().toISOString().split('T')[0];
+        
+        newRow.innerHTML = `
+            <td><input type="date" name="date_acquired[]" value="${today}"></td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <input type="text" name="particulars[]" list="asset_descriptions" class="particulars flex-grow-1">
+                    <button type="button" class="btn btn-sm btn-danger ms-1 remove-asset" 
+                            style="display: none;" title="Remove Asset">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                <input type="hidden" name="asset_id[]" class="asset_id">
+            </td>
+            <td><input type="text" name="property_no[]"></td>
+            <td><input type="number" name="qty[]" min="1" class="qty" max="1"></td>
+            <td><input type="number" step="0.01" name="unit_cost[]" min="1" class="unit_cost"></td>
+            <td><input type="number" step="0.01" name="total_cost[]" min="1" readonly></td>
+            <td><input type="number" step="0.01" name="accumulated_depreciation[]" min="1"></td>
+            <td><input type="number" step="0.01" name="accumulated_impairment_losses[]" min="1"></td>
+            <td><input type="number" step="0.01" name="carrying_amount[]" min="1"></td>
+            <td>
+                <select name="remarks[]">
+                    <option value="Unserviceable" selected>Unserviceable</option>
+                    <option value="Serviceable">Serviceable</option>
+                </select>
+            </td>
+            <td><input type="text" name="sale[]"></td>
+            <td><input type="text" name="transfer[]"></td>
+            <td><input type="text" name="destruction[]"></td>
+            <td><input type="text" name="others[]"></td>
+            <td><input type="number" step="0.01" name="total[]" min="1"></td>
+            <td><input type="number" step="0.01" name="appraised_value[]" min="1"></td>
+            <td><input type="text" name="or_no[]"></td>
+            <td><input type="number" step="0.01" name="amount[]" min="1"></td>
+            <td><input type="text" name="dept_office[]" class="dept_office" readonly></td>
+            <td><input type="text" name="code[]"></td>
+            <td><input type="text" name="red_tag[]"></td>
+            <td><input type="date" name="date_received[]" value="${today}"></td>
+        `;
+        
+        tbody.appendChild(newRow);
+        
+        // Attach event listeners to the new row
+        attachRowEventListeners(newRow);
+        updateRowVisibility();
+    }
+    
+    function removeLastRow() {
+        const rows = document.querySelectorAll('.iirup-row');
+        if (rows.length > 1) {
+            const lastRow = rows[rows.length - 1];
+            const assetIdInput = lastRow.querySelector('.asset_id');
+            
+            // Remove from selected set if it was selected
+            if (assetIdInput && assetIdInput.value) {
+                selectedAssetIds.delete(assetIdInput.value);
+                updateDatalist();
+            }
+            
+            lastRow.remove();
+            updateRowVisibility();
+        }
+    }
+    
+    
+    function updateRowVisibility() {
+        const rows = document.querySelectorAll('.iirup-row');
+        
+        // Update remove last row button
+        const removeRowBtn = document.getElementById('removeRowBtn');
+        if (removeRowBtn) {
+            removeRowBtn.disabled = rows.length <= 1;
+        }
+    }
+    
+    function attachRowEventListeners(row) {
+        // Attach particulars input listener
+        const particularInput = row.querySelector('.particulars');
+        if (particularInput) {
+            particularInput.addEventListener('input', function() {
+                const selected = assetsData.find(a => a.description === this.value);
+                const qtyInput = row.querySelector('.qty');
+                const unitCostInput = row.querySelector('.unit_cost');
+                const idInput = row.querySelector('.asset_id');
+                const deptInput = row.querySelector('.dept_office');
+                const removeBtn = row.querySelector('.remove-asset');
+                
+                // Clear previous selection from set
+                if (idInput.value) {
+                    selectedAssetIds.delete(idInput.value);
+                }
+
+                if (selected) {
+                    // Check if asset is already selected
+                    if (selectedAssetIds.has(selected.id.toString())) {
+                        alert('This asset has already been selected. Please choose a different asset.');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Add to selected set
+                    selectedAssetIds.add(selected.id.toString());
+                    
+                    // Set hidden asset id
+                    if (idInput) idInput.value = selected.id || '';
+                    // Set max quantity based on DB
+                    if (qtyInput) {
+                        qtyInput.max = selected.quantity;
+                        qtyInput.value = 1;
+                    }
+                    // Autofill unit cost based on DB
+                    if (unitCostInput) unitCostInput.value = selected.value;
+                    // Autofill department/office name (read-only)
+                    if (deptInput) deptInput.value = selected.office_name || '';
+                    
+                    // Show remove button
+                    removeBtn.style.display = 'inline-block';
+                } else {
+                    // Clear when no matching asset
+                    if (idInput.value) {
+                        selectedAssetIds.delete(idInput.value);
+                    }
+                    if (idInput) idInput.value = '';
+                    if (deptInput) deptInput.value = '';
+                    removeBtn.style.display = 'none';
+                }
+                
+                // Update datalist
+                updateDatalist();
+            });
+        }
+        
+        // Attach remove asset button listener
+        const removeAssetBtn = row.querySelector('.remove-asset');
+        if (removeAssetBtn) {
+            removeAssetBtn.addEventListener('click', function() {
+                clearAssetRow(row);
+            });
+        }
+        
+    }
+    
+    // Event listeners for add/remove row buttons
+    document.getElementById('addRowBtn').addEventListener('click', addNewRow);
+    document.getElementById('removeRowBtn').addEventListener('click', removeLastRow);
+    
+    // Initialize row visibility
+    updateRowVisibility();
     
     // Handle preselected asset from QR scan
     <?php if ($preselected_asset): ?>
