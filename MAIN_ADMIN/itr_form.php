@@ -190,7 +190,7 @@ if (!empty($_SESSION['flash'])) {
           $raw_transfer = (string)$itr['transfer_type'];
           $parts = array_map('trim', array_filter(explode(',', $raw_transfer)));
           $selectedType = $parts[0] ?? 'Reassignment'; // Default to Reassignment
-          $known = ['Donation', 'Reassignment', 'Relocation'];
+          $known = ['Donation', 'Reassignment', 'Relocate'];
           $otherValue = '';
           if ($selectedType !== '' && !in_array($selectedType, $known, true)) {
             $otherValue = $selectedType; // Legacy/custom value
