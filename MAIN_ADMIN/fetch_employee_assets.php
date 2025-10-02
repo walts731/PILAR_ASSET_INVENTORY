@@ -26,13 +26,6 @@ if (isset($_GET['employee_id'])) {
                 <button class='btn btn-sm btn-primary view-asset-details' data-id='". (int)$row['id'] ."'>
                   <i class='bi bi-eye'></i> View
                 </button>
-
-                <button class='btn btn-sm btn-info transfer-asset'
-                  data-asset-id='". (int)$row['id'] ."'
-                  data-inventory-tag='". htmlspecialchars($row['inventory_tag']) ."'
-                  data-current-employee-id='". (int)$employee_id ."'>
-                  <i class='bi bi-arrow-left-right'></i> Transfer
-                </button>
               </td>
             </tr>";
     }

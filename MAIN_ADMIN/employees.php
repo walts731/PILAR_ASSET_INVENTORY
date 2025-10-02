@@ -681,37 +681,6 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
       $("#editEmployeeModal").modal("show");
     });
 
-    $(document).on('click', '.transfer-asset', function () {
-  // Get asset data
-  const assetId = $(this).data('asset-id');
-  const inventoryTag = $(this).data('inventory-tag');
-  const currentEmployeeId = $(this).data('current-employee-id');
-  
-  // Option 1: Use hardcoded ITR form ID (change this to your actual ITR form ID)
-  const ITR_FORM_ID = 9; // Change this to the actual ITR form ID from your forms table
-  
-  // Redirect to forms.php with ITR form ID and asset parameters
-  window.location.href = `forms.php?id=${ITR_FORM_ID}&asset_id=${assetId}&inventory_tag=${inventoryTag}&current_employee_id=${currentEmployeeId}`;
-  
-  // Option 2: Dynamic fetch from database (uncomment below and comment above if you prefer dynamic)
-  /*
-  $.ajax({
-    url: 'get_itr_form_id.php',
-    type: 'GET',
-    dataType: 'json',
-    success: function(response) {
-      if (response.success && response.form_id) {
-        window.location.href = `forms.php?id=${response.form_id}&asset_id=${assetId}&inventory_tag=${inventoryTag}&current_employee_id=${currentEmployeeId}`;
-      } else {
-        window.location.href = `itr_form.php?asset_id=${assetId}&inventory_tag=${inventoryTag}&current_employee_id=${currentEmployeeId}`;
-      }
-    },
-    error: function() {
-      window.location.href = `itr_form.php?asset_id=${assetId}&inventory_tag=${inventoryTag}&current_employee_id=${currentEmployeeId}`;
-    }
-  });
-  */
-});
 
   </script>
 </body>
