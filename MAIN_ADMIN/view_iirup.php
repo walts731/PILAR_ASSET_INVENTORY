@@ -80,7 +80,7 @@ if ($res_off && $res_off->num_rows) {
 
       <form method="POST" action="save_iirup_view.php" enctype="multipart/form-data">
         <input type="hidden" name="iirup_id" value="<?= (int)$iirup_id ?>">
-        <div class="mb-3" style="text-align:center;">
+        <div class="mb-3" style="text-align:center; display: none;">
           <label class="form-label">Header Image</label>
           <input type="file" name="header_image" class="form-control" style="max-width: 400px; margin: 0 auto;">
         </div>
@@ -106,13 +106,88 @@ if ($res_off && $res_off->num_rows) {
         </div>
 
         <style>
-          .excel-table { border-collapse: collapse; width: 100%; font-size: 10px; text-align: center; table-layout: fixed; }
-          .excel-table th, .excel-table td { border: 1px solid #000; padding: 2px 3px; vertical-align: middle; }
-          .excel-table thead th { background-color: #fff; font-weight: bold; }
-          .excel-table input, .excel-table select { width: 100%; border: none; text-align: center; font-size: 10px; padding: 0; }
+          .excel-table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            font-size: 9px; 
+            text-align: center; 
+            table-layout: auto;
+            min-width: 2000px;
+            overflow-x: auto;
+          }
+          
+          .excel-table th, .excel-table td { 
+            border: 1px solid #000; 
+            padding: 4px 6px; 
+            vertical-align: middle; 
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          
+          .excel-table thead th { 
+            background-color: #f8f9fa; 
+            font-weight: bold; 
+            font-size: 8px;
+            line-height: 1.2;
+            padding: 3px 4px;
+          }
+          
+          .excel-table input, .excel-table select { 
+            width: 100%; 
+            border: none; 
+            text-align: center; 
+            font-size: 9px; 
+            padding: 2px; 
+            background: transparent;
+            min-width: 0;
+          }
+          
+          /* Table Container */
+          .table-responsive {
+            overflow-x: auto;
+            margin-bottom: 1rem;
+          }
+          
+          /* Specific Column Widths - More generous spacing */
+          .excel-table th:nth-child(1), .excel-table td:nth-child(1) { min-width: 90px; max-width: 90px; } /* Date Acquired */
+          .excel-table th:nth-child(2), .excel-table td:nth-child(2) { min-width: 180px; max-width: 180px; } /* Particulars */
+          .excel-table th:nth-child(3), .excel-table td:nth-child(3) { min-width: 120px; max-width: 120px; } /* Property No */
+          .excel-table th:nth-child(4), .excel-table td:nth-child(4) { min-width: 60px; max-width: 60px; } /* Qty */
+          .excel-table th:nth-child(5), .excel-table td:nth-child(5) { min-width: 90px; max-width: 90px; } /* Unit Cost */
+          .excel-table th:nth-child(6), .excel-table td:nth-child(6) { min-width: 90px; max-width: 90px; } /* Total Cost */
+          .excel-table th:nth-child(7), .excel-table td:nth-child(7) { min-width: 100px; max-width: 100px; } /* Accumulated Depreciation */
+          .excel-table th:nth-child(8), .excel-table td:nth-child(8) { min-width: 100px; max-width: 100px; } /* Accumulated Impairment */
+          .excel-table th:nth-child(9), .excel-table td:nth-child(9) { min-width: 90px; max-width: 90px; } /* Carrying Amount */
+          .excel-table th:nth-child(10), .excel-table td:nth-child(10) { min-width: 90px; max-width: 90px; } /* Remarks */
+          .excel-table th:nth-child(11), .excel-table td:nth-child(11) { min-width: 80px; max-width: 80px; } /* Sale */
+          .excel-table th:nth-child(12), .excel-table td:nth-child(12) { min-width: 80px; max-width: 80px; } /* Transfer */
+          .excel-table th:nth-child(13), .excel-table td:nth-child(13) { min-width: 80px; max-width: 80px; } /* Destruction */
+          .excel-table th:nth-child(14), .excel-table td:nth-child(14) { min-width: 80px; max-width: 80px; } /* Others */
+          .excel-table th:nth-child(15), .excel-table td:nth-child(15) { min-width: 80px; max-width: 80px; } /* Total */
+          .excel-table th:nth-child(16), .excel-table td:nth-child(16) { min-width: 90px; max-width: 90px; } /* Appraised Value */
+          .excel-table th:nth-child(17), .excel-table td:nth-child(17) { min-width: 80px; max-width: 80px; } /* OR No */
+          .excel-table th:nth-child(18), .excel-table td:nth-child(18) { min-width: 80px; max-width: 80px; } /* Amount */
+          .excel-table th:nth-child(19), .excel-table td:nth-child(19) { min-width: 120px; max-width: 120px; } /* Dept/Office */
+          .excel-table th:nth-child(20), .excel-table td:nth-child(20) { min-width: 70px; max-width: 70px; } /* Code */
+          .excel-table th:nth-child(21), .excel-table td:nth-child(21) { min-width: 90px; max-width: 90px; } /* Date Received */
+          .excel-table th:nth-child(22), .excel-table td:nth-child(22) { min-width: 90px; max-width: 90px; } /* Actions */
+          
+          /* Hover effects */
+          .excel-table tbody tr:hover {
+            background-color: #f5f5f5;
+          }
+          
+          /* Button styling */
+          .view-row-details {
+            font-size: 8px;
+            padding: 2px 6px;
+            white-space: nowrap;
+          }
         </style>
 
-        <table class="excel-table">
+        <div class="table-responsive">
+          <table class="excel-table">
           <thead>
             <tr>
               <th colspan="10">INVENTORY</th>
@@ -178,18 +253,13 @@ if ($res_off && $res_off->num_rows) {
                   <td><input type="text" value="<?= htmlspecialchars($it['code']) ?>" disabled></td>
                   <td><input type="date" value="<?= htmlspecialchars($it['date_received']) ?>" disabled></td>
                   <td class="text-center">
-                    <?php if (!empty($it['asset_id']) && strtolower($it['remarks']) !== 'serviceable'): ?>
-                      <button type="button" class="btn btn-sm btn-danger create-red-tag" 
-                              data-asset-id="<?= (int)$it['asset_id'] ?>"
-                              data-property-no="<?= htmlspecialchars($it['property_no']) ?>"
-                              data-particulars="<?= htmlspecialchars($it['particulars']) ?>">
-                        <i class="bi bi-tag"></i> Red Tag
-                      </button>
-                    <?php elseif (!empty($it['asset_id']) && strtolower($it['remarks']) === 'serviceable'): ?>
-                      <span class="text-muted small">
-                        <i class="bi bi-check-circle"></i> Serviceable
-                      </span>
-                    <?php endif; ?>
+                    <button type="button" class="btn btn-sm btn-info view-row-details" 
+                            data-item-id="<?= (int)$it['item_id'] ?>"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#rowDetailsModal"
+                            title="View full row details">
+                      <i class="bi bi-eye"></i> View
+                    </button>
                   </td>
                 </tr>
               <?php endforeach; ?>
@@ -197,10 +267,152 @@ if ($res_off && $res_off->num_rows) {
               <tr><td colspan="21" class="text-muted">No items found.</td></tr>
             <?php endif; ?>
           </tbody>
-        </table>
+          </table>
+        </div>
 
         <!-- Keep datalist for structure parity -->
         <datalist id="asset_descriptions"></datalist>
+
+        <!-- Row Details Modal -->
+        <div class="modal fade" id="rowDetailsModal" tabindex="-1" aria-labelledby="rowDetailsModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="rowDetailsModalLabel">
+                  <i class="bi bi-eye"></i> Row Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div class="row g-3">
+                  <!-- Basic Information -->
+                  <div class="col-12">
+                    <h6 class="text-primary border-bottom pb-2 mb-3">
+                      <i class="bi bi-info-circle"></i> Basic Information
+                    </h6>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-bold">Date Acquired</label>
+                    <p class="form-control-plaintext" id="view_date_acquired">-</p>
+                  </div>
+                  <div class="col-md-8">
+                    <label class="form-label fw-bold">Particulars/Articles</label>
+                    <p class="form-control-plaintext" id="view_particulars">-</p>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-bold">Property No.</label>
+                    <p class="form-control-plaintext" id="view_property_no">-</p>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label fw-bold">Quantity</label>
+                    <p class="form-control-plaintext" id="view_qty">-</p>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label fw-bold">Unit Cost</label>
+                    <p class="form-control-plaintext" id="view_unit_cost">-</p>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label fw-bold">Total Cost</label>
+                    <p class="form-control-plaintext" id="view_total_cost">-</p>
+                  </div>
+
+                  <!-- Financial Information -->
+                  <div class="col-12 mt-4">
+                    <h6 class="text-success border-bottom pb-2 mb-3">
+                      <i class="bi bi-currency-dollar"></i> Financial Information
+                    </h6>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-bold">Accumulated Depreciation</label>
+                    <p class="form-control-plaintext" id="view_accumulated_depreciation">-</p>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-bold">Accumulated Impairment</label>
+                    <p class="form-control-plaintext" id="view_accumulated_impairment">-</p>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-bold">Carrying Amount</label>
+                    <p class="form-control-plaintext" id="view_carrying_amount">-</p>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold">Remarks</label>
+                    <p class="form-control-plaintext" id="view_remarks">-</p>
+                  </div>
+
+                  <!-- Disposal Information -->
+                  <div class="col-12 mt-4">
+                    <h6 class="text-warning border-bottom pb-2 mb-3">
+                      <i class="bi bi-recycle"></i> Disposal Information
+                    </h6>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label fw-bold">Sale</label>
+                    <p class="form-control-plaintext" id="view_sale">-</p>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label fw-bold">Transfer</label>
+                    <p class="form-control-plaintext" id="view_transfer">-</p>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label fw-bold">Destruction</label>
+                    <p class="form-control-plaintext" id="view_destruction">-</p>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label fw-bold">Others</label>
+                    <p class="form-control-plaintext" id="view_others">-</p>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-bold">Total Disposal</label>
+                    <p class="form-control-plaintext" id="view_total">-</p>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-bold">Appraised Value</label>
+                    <p class="form-control-plaintext" id="view_appraised_value">-</p>
+                  </div>
+
+                  <!-- Sales Record -->
+                  <div class="col-12 mt-4">
+                    <h6 class="text-info border-bottom pb-2 mb-3">
+                      <i class="bi bi-receipt"></i> Sales Record
+                    </h6>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-bold">OR Number</label>
+                    <p class="form-control-plaintext" id="view_or_no">-</p>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-bold">Amount</label>
+                    <p class="form-control-plaintext" id="view_amount">-</p>
+                  </div>
+
+                  <!-- Administrative Information -->
+                  <div class="col-12 mt-4">
+                    <h6 class="text-secondary border-bottom pb-2 mb-3">
+                      <i class="bi bi-building"></i> Administrative Information
+                    </h6>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-bold">Department/Office</label>
+                    <p class="form-control-plaintext" id="view_dept_office">-</p>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-bold">Code</label>
+                    <p class="form-control-plaintext" id="view_code">-</p>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-bold">Date Received</label>
+                    <p class="form-control-plaintext" id="view_date_received">-</p>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                  <i class="bi bi-x-circle"></i> Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- FOOTER SECTION mirroring form -->
         <div style="margin-top: 30px; font-size: 12px; line-height: 1.5;">
@@ -257,17 +469,38 @@ if ($res_off && $res_off->num_rows) {
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Handle Red Tag button click - redirect directly to create_red_tag.php
-      document.querySelectorAll('.create-red-tag').forEach(button => {
+      // Handle View button click - populate modal with row details
+      document.querySelectorAll('.view-row-details').forEach(button => {
         button.addEventListener('click', function() {
-          const assetId = this.getAttribute('data-asset-id');
-          const iirupId = '<?= $iirup_id ?>';
-          const formId = '<?= isset($_GET['form_id']) ? intval($_GET['form_id']) : 7 ?>';
-          // Redirect to red tag creation page with asset details
-          window.location.href = `create_red_tag.php?asset_id=${assetId}&iirup_id=${iirupId}&form_id=${formId}`;
+          const row = this.closest('tr');
+          
+          // Get all the data from the row
+          const inputs = row.querySelectorAll('input, select');
+          
+          // Populate modal with row data
+          document.getElementById('view_date_acquired').textContent = inputs[0].value || '-';
+          document.getElementById('view_particulars').textContent = inputs[1].value || '-';
+          document.getElementById('view_property_no').textContent = inputs[2].value || '-';
+          document.getElementById('view_qty').textContent = inputs[3].value || '-';
+          document.getElementById('view_unit_cost').textContent = inputs[4].value ? '₱' + parseFloat(inputs[4].value).toLocaleString('en-US', {minimumFractionDigits: 2}) : '-';
+          document.getElementById('view_total_cost').textContent = inputs[5].value ? '₱' + parseFloat(inputs[5].value).toLocaleString('en-US', {minimumFractionDigits: 2}) : '-';
+          document.getElementById('view_accumulated_depreciation').textContent = inputs[6].value ? '₱' + parseFloat(inputs[6].value).toLocaleString('en-US', {minimumFractionDigits: 2}) : '-';
+          document.getElementById('view_accumulated_impairment').textContent = inputs[7].value ? '₱' + parseFloat(inputs[7].value).toLocaleString('en-US', {minimumFractionDigits: 2}) : '-';
+          document.getElementById('view_carrying_amount').textContent = inputs[8].value ? '₱' + parseFloat(inputs[8].value).toLocaleString('en-US', {minimumFractionDigits: 2}) : '-';
+          document.getElementById('view_remarks').textContent = inputs[9].value || '-';
+          document.getElementById('view_sale').textContent = inputs[10].value || '-';
+          document.getElementById('view_transfer').textContent = inputs[11].value || '-';
+          document.getElementById('view_destruction').textContent = inputs[12].value || '-';
+          document.getElementById('view_others').textContent = inputs[13].value || '-';
+          document.getElementById('view_total').textContent = inputs[14].value ? '₱' + parseFloat(inputs[14].value).toLocaleString('en-US', {minimumFractionDigits: 2}) : '-';
+          document.getElementById('view_appraised_value').textContent = inputs[15].value ? '₱' + parseFloat(inputs[15].value).toLocaleString('en-US', {minimumFractionDigits: 2}) : '-';
+          document.getElementById('view_or_no').textContent = inputs[16].value || '-';
+          document.getElementById('view_amount').textContent = inputs[17].value ? '₱' + parseFloat(inputs[17].value).toLocaleString('en-US', {minimumFractionDigits: 2}) : '-';
+          document.getElementById('view_dept_office').textContent = inputs[18].value || '-';
+          document.getElementById('view_code').textContent = inputs[19].value || '-';
+          document.getElementById('view_date_received').textContent = inputs[20].value || '-';
         });
       });
     });
   </script>
 </body>
-</html>

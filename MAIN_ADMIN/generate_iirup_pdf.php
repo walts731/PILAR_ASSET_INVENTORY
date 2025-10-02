@@ -32,7 +32,7 @@ if (!$form) { die('IIRUP record not found.'); }
 $sql_items = "SELECT date_acquired, particulars, property_no, qty, unit_cost, total_cost,
                      accumulated_depreciation, accumulated_impairment_losses, carrying_amount,
                      remarks, sale, transfer, destruction, others, total, appraised_value,
-                     or_no, amount, dept_office, code, red_tag, date_received
+                     or_no, amount, dept_office, code, date_received
               FROM iirup_items WHERE iirup_id = ? ORDER BY item_id ASC";
 $stmt = $conn->prepare($sql_items);
 $stmt->bind_param('i', $iirup_id);
@@ -125,7 +125,6 @@ $html .= '<table class="hdr-table">
       <th colspan="2">RECORD OF SALES</th>
       <th rowspan="2">DEPT/OFFICE</th>
       <th rowspan="2">CODE</th>
-      <th rowspan="2">RED TAG</th>
       <th rowspan="2">DATE RECEIVED</th>
     </tr>
     <tr>
@@ -174,12 +173,11 @@ if (!empty($items)) {
           <td>' . number_format((float)$row['amount'], 2) . '</td>
           <td>' . htmlspecialchars($row['dept_office']) . '</td>
           <td>' . htmlspecialchars($row['code']) . '</td>
-          <td>' . htmlspecialchars($row['red_tag']) . '</td>
           <td>' . htmlspecialchars($row['date_received']) . '</td>
         </tr>';
     }
 } else {
-    $html .= '<tr><td colspan="22">No items found.</td></tr>';
+    $html .= '<tr><td colspan="21">No items found.</td></tr>';
 }
 
 $html .= '</tbody>
