@@ -120,7 +120,6 @@ if ($res_off && $res_off->num_rows) {
               <th colspan="2">RECORD OF SALES</th>
               <th rowspan="2">DEPT/OFFICE</th>
               <th rowspan="2">CODE</th>
-              <th rowspan="2">RED TAG</th>
               <th rowspan="2">DATE RECEIVED</th>
               <th rowspan="2">ACTIONS</th>
             </tr>
@@ -177,7 +176,6 @@ if ($res_off && $res_off->num_rows) {
                   <td><input type="number" step="0.01" value="<?= htmlspecialchars($it['amount']) ?>" disabled></td>
                   <td><input type="text" value="<?= htmlspecialchars($it['dept_office']) ?>" disabled></td>
                   <td><input type="text" value="<?= htmlspecialchars($it['code']) ?>" disabled></td>
-                  <td><input type="text" value="<?= htmlspecialchars($it['red_tag']) ?>" disabled></td>
                   <td><input type="date" value="<?= htmlspecialchars($it['date_received']) ?>" disabled></td>
                   <td class="text-center">
                     <?php if (!empty($it['asset_id']) && strtolower($it['remarks']) !== 'serviceable'): ?>
@@ -196,7 +194,7 @@ if ($res_off && $res_off->num_rows) {
                 </tr>
               <?php endforeach; ?>
             <?php else: ?>
-              <tr><td colspan="22" class="text-muted">No items found.</td></tr>
+              <tr><td colspan="21" class="text-muted">No items found.</td></tr>
             <?php endif; ?>
           </tbody>
         </table>

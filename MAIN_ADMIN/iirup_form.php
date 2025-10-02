@@ -498,6 +498,7 @@ if ($result_assets && $result_assets->num_rows > 0) {
             <th rowspan="2">DEPT/OFFICE</th>
             <th rowspan="2">CODE</th>
             <th rowspan="2">DATE RECEIVED</th>
+            <th rowspan="2">ACTIONS</th>
         </tr>
         <tr>
             <th>Date Acquired<br>(1)</th>
@@ -629,6 +630,12 @@ if ($result_assets && $result_assets->num_rows > 0) {
                     <input type="date" name="date_received[]" value="<?= date('Y-m-d'); ?>"
                            title="Date when IIRUP form was received/processed">
                 </td>
+                <td data-label="Actions">
+                    <button type="button" class="btn btn-sm btn-info edit-row-btn" 
+                            title="Edit row details in modal">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                </td>
             </tr>
         <?php endfor; ?>
     </tbody>
@@ -642,6 +649,153 @@ if ($result_assets && $result_assets->num_rows > 0) {
     <button type="button" id="removeRowBtn" class="btn btn-danger btn-sm">
         <i class="bi bi-dash-circle"></i> Remove Last Row
     </button>
+</div>
+
+<!-- Row Details Modal -->
+<div class="modal fade" id="rowDetailsModal" tabindex="-1" aria-labelledby="rowDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rowDetailsModalLabel">
+                    <i class="bi bi-pencil-square"></i> Edit Row Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <!-- Basic Information -->
+                    <div class="col-12">
+                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                            <i class="bi bi-info-circle"></i> Basic Information
+                        </h6>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Date Acquired</label>
+                        <input type="date" class="form-control" id="modal_date_acquired">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Particulars/Articles</label>
+                        <input type="text" class="form-control" id="modal_particulars" placeholder="Asset description">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Property No.</label>
+                        <input type="text" class="form-control" id="modal_property_no" placeholder="Property number">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="modal_qty" min="1" max="1" placeholder="Qty">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Unit Cost</label>
+                        <input type="number" class="form-control" id="modal_unit_cost" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Total Cost</label>
+                        <input type="number" class="form-control" id="modal_total_cost" step="0.01" readonly placeholder="Auto-calculated">
+                    </div>
+
+                    <!-- Financial Information -->
+                    <div class="col-12 mt-4">
+                        <h6 class="text-success border-bottom pb-2 mb-3">
+                            <i class="bi bi-currency-dollar"></i> Financial Information
+                        </h6>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Accumulated Depreciation</label>
+                        <input type="number" class="form-control" id="modal_accumulated_depreciation" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Accumulated Impairment</label>
+                        <input type="number" class="form-control" id="modal_accumulated_impairment" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Carrying Amount</label>
+                        <input type="number" class="form-control" id="modal_carrying_amount" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Remarks</label>
+                        <select class="form-select" id="modal_remarks">
+                            <option value="Unserviceable">Unserviceable</option>
+                            <option value="Serviceable">Serviceable</option>
+                        </select>
+                    </div>
+
+                    <!-- Disposal Information -->
+                    <div class="col-12 mt-4">
+                        <h6 class="text-warning border-bottom pb-2 mb-3">
+                            <i class="bi bi-recycle"></i> Disposal Information
+                        </h6>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Sale</label>
+                        <input type="text" class="form-control" id="modal_sale" placeholder="Sale details">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Transfer</label>
+                        <input type="text" class="form-control" id="modal_transfer" placeholder="Transfer details">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Destruction</label>
+                        <input type="text" class="form-control" id="modal_destruction" placeholder="Destruction details">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Others</label>
+                        <input type="text" class="form-control" id="modal_others" placeholder="Other disposal">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Total Disposal</label>
+                        <input type="number" class="form-control" id="modal_total" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Appraised Value</label>
+                        <input type="number" class="form-control" id="modal_appraised_value" step="0.01" placeholder="0.00">
+                    </div>
+
+                    <!-- Sales Record -->
+                    <div class="col-12 mt-4">
+                        <h6 class="text-info border-bottom pb-2 mb-3">
+                            <i class="bi bi-receipt"></i> Sales Record
+                        </h6>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">OR Number</label>
+                        <input type="text" class="form-control" id="modal_or_no" placeholder="Official Receipt No.">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Amount</label>
+                        <input type="number" class="form-control" id="modal_amount" step="0.01" placeholder="0.00">
+                    </div>
+
+                    <!-- Administrative Information -->
+                    <div class="col-12 mt-4">
+                        <h6 class="text-secondary border-bottom pb-2 mb-3">
+                            <i class="bi bi-building"></i> Administrative Information
+                        </h6>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Department/Office</label>
+                        <input type="text" class="form-control" id="modal_dept_office" readonly placeholder="Auto-filled">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Code</label>
+                        <input type="text" class="form-control" id="modal_code" placeholder="Classification code">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Date Received</label>
+                        <input type="date" class="form-control" id="modal_date_received">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="saveRowDetails">
+                    <i class="bi bi-check-circle"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <datalist id="asset_descriptions">
@@ -1007,6 +1161,12 @@ if ($result_footer && $result_footer->num_rows > 0) {
                 <input type="date" name="date_received[]" value="${today}"
                        title="Date when IIRUP form was received/processed">
             </td>
+            <td data-label="Actions">
+                <button type="button" class="btn btn-sm btn-info edit-row-btn" 
+                        title="Edit row details in modal">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+            </td>
         `;
         
         tbody.appendChild(newRow);
@@ -1174,4 +1334,95 @@ if ($result_footer && $result_footer->num_rows > 0) {
         // Update titles after preselection
         setTimeout(updateInputTitles, 100);
     <?php endif; ?>
+
+    // Modal functionality
+    let currentEditingRow = null;
+
+    // Handle edit row button clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-row-btn')) {
+            currentEditingRow = e.target.closest('tr');
+            openRowDetailsModal(currentEditingRow);
+        }
+    });
+
+    function openRowDetailsModal(row) {
+        // Get all input values from the row
+        const inputs = row.querySelectorAll('input, select');
+        
+        // Populate modal fields
+        document.getElementById('modal_date_acquired').value = row.querySelector('input[name="date_acquired[]"]').value || '';
+        document.getElementById('modal_particulars').value = row.querySelector('input[name="particulars[]"]').value || '';
+        document.getElementById('modal_property_no').value = row.querySelector('input[name="property_no[]"]').value || '';
+        document.getElementById('modal_qty').value = row.querySelector('input[name="qty[]"]').value || '';
+        document.getElementById('modal_unit_cost').value = row.querySelector('input[name="unit_cost[]"]').value || '';
+        document.getElementById('modal_total_cost').value = row.querySelector('input[name="total_cost[]"]').value || '';
+        document.getElementById('modal_accumulated_depreciation').value = row.querySelector('input[name="accumulated_depreciation[]"]').value || '';
+        document.getElementById('modal_accumulated_impairment').value = row.querySelector('input[name="accumulated_impairment_losses[]"]').value || '';
+        document.getElementById('modal_carrying_amount').value = row.querySelector('input[name="carrying_amount[]"]').value || '';
+        document.getElementById('modal_remarks').value = row.querySelector('select[name="remarks[]"]').value || 'Unserviceable';
+        document.getElementById('modal_sale').value = row.querySelector('input[name="sale[]"]').value || '';
+        document.getElementById('modal_transfer').value = row.querySelector('input[name="transfer[]"]').value || '';
+        document.getElementById('modal_destruction').value = row.querySelector('input[name="destruction[]"]').value || '';
+        document.getElementById('modal_others').value = row.querySelector('input[name="others[]"]').value || '';
+        document.getElementById('modal_total').value = row.querySelector('input[name="total[]"]').value || '';
+        document.getElementById('modal_appraised_value').value = row.querySelector('input[name="appraised_value[]"]').value || '';
+        document.getElementById('modal_or_no').value = row.querySelector('input[name="or_no[]"]').value || '';
+        document.getElementById('modal_amount').value = row.querySelector('input[name="amount[]"]').value || '';
+        document.getElementById('modal_dept_office').value = row.querySelector('input[name="dept_office[]"]').value || '';
+        document.getElementById('modal_code').value = row.querySelector('input[name="code[]"]').value || '';
+        document.getElementById('modal_date_received').value = row.querySelector('input[name="date_received[]"]').value || '';
+
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('rowDetailsModal'));
+        modal.show();
+    }
+
+    // Handle save button in modal
+    document.getElementById('saveRowDetails').addEventListener('click', function() {
+        if (currentEditingRow) {
+            // Update row with modal values
+            currentEditingRow.querySelector('input[name="date_acquired[]"]').value = document.getElementById('modal_date_acquired').value;
+            currentEditingRow.querySelector('input[name="particulars[]"]').value = document.getElementById('modal_particulars').value;
+            currentEditingRow.querySelector('input[name="property_no[]"]').value = document.getElementById('modal_property_no').value;
+            currentEditingRow.querySelector('input[name="qty[]"]').value = document.getElementById('modal_qty').value;
+            currentEditingRow.querySelector('input[name="unit_cost[]"]').value = document.getElementById('modal_unit_cost').value;
+            currentEditingRow.querySelector('input[name="total_cost[]"]').value = document.getElementById('modal_total_cost').value;
+            currentEditingRow.querySelector('input[name="accumulated_depreciation[]"]').value = document.getElementById('modal_accumulated_depreciation').value;
+            currentEditingRow.querySelector('input[name="accumulated_impairment_losses[]"]').value = document.getElementById('modal_accumulated_impairment').value;
+            currentEditingRow.querySelector('input[name="carrying_amount[]"]').value = document.getElementById('modal_carrying_amount').value;
+            currentEditingRow.querySelector('select[name="remarks[]"]').value = document.getElementById('modal_remarks').value;
+            currentEditingRow.querySelector('input[name="sale[]"]').value = document.getElementById('modal_sale').value;
+            currentEditingRow.querySelector('input[name="transfer[]"]').value = document.getElementById('modal_transfer').value;
+            currentEditingRow.querySelector('input[name="destruction[]"]').value = document.getElementById('modal_destruction').value;
+            currentEditingRow.querySelector('input[name="others[]"]').value = document.getElementById('modal_others').value;
+            currentEditingRow.querySelector('input[name="total[]"]').value = document.getElementById('modal_total').value;
+            currentEditingRow.querySelector('input[name="appraised_value[]"]').value = document.getElementById('modal_appraised_value').value;
+            currentEditingRow.querySelector('input[name="or_no[]"]').value = document.getElementById('modal_or_no').value;
+            currentEditingRow.querySelector('input[name="amount[]"]').value = document.getElementById('modal_amount').value;
+            currentEditingRow.querySelector('input[name="dept_office[]"]').value = document.getElementById('modal_dept_office').value;
+            currentEditingRow.querySelector('input[name="code[]"]').value = document.getElementById('modal_code').value;
+            currentEditingRow.querySelector('input[name="date_received[]"]').value = document.getElementById('modal_date_received').value;
+
+            // Update tooltips after changes
+            updateInputTitles();
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('rowDetailsModal'));
+            modal.hide();
+            
+            // Reset current editing row
+            currentEditingRow = null;
+        }
+    });
+
+    // Auto-calculate total cost in modal
+    document.getElementById('modal_qty').addEventListener('input', calculateModalTotalCost);
+    document.getElementById('modal_unit_cost').addEventListener('input', calculateModalTotalCost);
+
+    function calculateModalTotalCost() {
+        const qty = parseFloat(document.getElementById('modal_qty').value) || 0;
+        const unitCost = parseFloat(document.getElementById('modal_unit_cost').value) || 0;
+        document.getElementById('modal_total_cost').value = (qty * unitCost).toFixed(2);
+    }
 </script>
