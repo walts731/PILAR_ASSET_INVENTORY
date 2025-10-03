@@ -117,9 +117,7 @@ try {
 
 } catch (Exception $e) {
     // Rollback transaction on error
-    if ($conn->in_transaction) {
-        $conn->rollback();
-    }
+    $conn->rollback();
 
     // Set error message
     $_SESSION['flash'] = [

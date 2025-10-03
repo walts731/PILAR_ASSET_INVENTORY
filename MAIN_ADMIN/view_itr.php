@@ -364,9 +364,6 @@ $stmt->close();
           <button type="submit" class="btn btn-success btn-lg">
             <i class="bi bi-save"></i> Save Changes
           </button>
-          <button type="button" class="btn btn-secondary btn-lg ms-2" onclick="location.reload()">
-            <i class="bi bi-arrow-clockwise"></i> Reset
-          </button>
         </div>
       </form>
 
