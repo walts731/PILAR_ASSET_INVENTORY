@@ -68,17 +68,21 @@ class TagFormatHelper {
         $nextNumber = $counter + 1;
         $this->updateCounter($tagType, 'global', $prefixHash, $nextNumber);
         
-        // Replace increment placeholders with formatted number
-        $formattedNumber = str_pad($nextNumber, $format['increment_digits'], '0', STR_PAD_LEFT);
+        // Enhanced flexible digit replacement - supports any number of # symbols
+        $template = preg_replace_callback('/\{(#+)\}/', function($matches) use ($nextNumber) {
+            $digitCount = strlen($matches[1]);
+            return str_pad($nextNumber, $digitCount, '0', STR_PAD_LEFT);
+        }, $template);
         
-        // Replace various increment placeholder formats
-        $template = str_replace('{' . str_repeat('#', $format['increment_digits']) . '}', $formattedNumber, $template);
+        // Legacy support for specific patterns and XXXX format
         $template = str_replace('{XXXX}', str_pad($nextNumber, 4, '0', STR_PAD_LEFT), $template);
         $template = str_replace('XXXX', str_pad($nextNumber, 4, '0', STR_PAD_LEFT), $template);
-        $template = str_replace('{####}', str_pad($nextNumber, 4, '0', STR_PAD_LEFT), $template);
-        $template = str_replace('{###}', str_pad($nextNumber, 3, '0', STR_PAD_LEFT), $template);
-        $template = str_replace('{#####}', str_pad($nextNumber, 5, '0', STR_PAD_LEFT), $template);
-        $template = str_replace('{######}', str_pad($nextNumber, 6, '0', STR_PAD_LEFT), $template);
+        
+        // Fallback for database-configured increment_digits
+        if (isset($format['increment_digits']) && $format['increment_digits'] > 0) {
+            $formattedNumber = str_pad($nextNumber, $format['increment_digits'], '0', STR_PAD_LEFT);
+            $template = str_replace('{' . str_repeat('#', $format['increment_digits']) . '}', $formattedNumber, $template);
+        }
         
         return $template;
     }

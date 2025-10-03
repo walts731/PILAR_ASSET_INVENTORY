@@ -463,9 +463,13 @@ if (isset($_SESSION['flash'])) {
                 <div class="modal-body">
                     <h6>Available Placeholders:</h6>
                     <ul>
-                        <li><code>{####}</code> - Auto-increment number (padded with zeros)</li>
+                        <li><code>{#}</code> - Single digit increment (1, 2, 3...)</li>
+                        <li><code>{##}</code> - 2-digit increment (01, 02, 03...)</li>
                         <li><code>{###}</code> - 3-digit increment (001, 002, 003...)</li>
+                        <li><code>{####}</code> - 4-digit increment (0001, 0002, 0003...)</li>
                         <li><code>{#####}</code> - 5-digit increment (00001, 00002...)</li>
+                        <li><code>{######}</code> - 6-digit increment (000001, 000002...)</li>
+                        <li><em>And so on... Use any number of # symbols for custom digit lengths!</em></li>
                     </ul>
                     
                     <h6 class="mt-3">Date Placeholders:</h6>
@@ -484,6 +488,8 @@ if (isset($_SESSION['flash'])) {
                         <li><code>{YYYY}-PAR-{####}</code> → <?= date('Y') ?>-PAR-0001, <?= date('Y') ?>-PAR-0002...</li>
                         <li><code>ICS-{YYYYMM}-{###}</code> → ICS-<?= date('Ym') ?>-001, ICS-<?= date('Ym') ?>-002...</li>
                         <li><code>RT-{#####}</code> → RT-00001, RT-00002, RT-00003...</li>
+                        <li><code>SN-{##}-{##}</code> → SN-01-01, SN-01-02, SN-02-01...</li>
+                        <li><code>ITEM-{#######}</code> → ITEM-0000001, ITEM-0000002...</li>
                     </ul>
                     
                     <h6 class="mt-3">Asset Code Placeholders:</h6>
@@ -585,11 +591,14 @@ if (isset($_SESSION['flash'])) {
             // Replace category code placeholder
             output = output.replace(/\{CODE\}|CODE/g, catCode);
             
-            // Replace increment placeholders
+            // Enhanced flexible digit replacement - supports any number of # symbols
+            output = output.replace(/\{(#+)\}/g, function(match, hashes) {
+                const digitCount = hashes.length;
+                return '0'.repeat(Math.max(1, digitCount - 1)) + '1';
+            });
+            
+            // Legacy support for XXXX format
             output = output.replace(/\{XXXX\}|XXXX/g, seq);
-            output = output.replace(/\{####\}/g, seq);
-            output = output.replace(/\{###\}/g, '001');
-            output = output.replace(/\{#####\}/g, '00001');
             
             return output;
         }
@@ -820,28 +829,45 @@ if (isset($_SESSION['flash'])) {
                         button.classList.remove('btn-success');
                         button.classList.add('btn-outline-secondary');
                     }, 2000);
-                }).catch(function(err) {
-                    console.error('Could not copy text: ', err);
                 });
             }
         }
 
-        function previewFormat(form) {
-            const template = form.format_template.value;
-            const digits = parseInt(form.increment_digits.value);
-            const dateFormat = form.date_format.value;
-            
-            // Simple preview generation (client-side)
+        // Enhanced preview format functionality with flexible digit support
+        function previewFormat(template) {
+            // Replace placeholders with sample values
             let preview = template;
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
             
             // Replace date placeholders
-            preview = replaceDatePlaceholders(preview, dateFormat);
+            preview = preview.replace(/\{YYYY\}/g, year);
+            preview = preview.replace(/\{YY\}/g, year.toString().slice(-2));
+            preview = preview.replace(/\{MM\}/g, month);
+            preview = preview.replace(/\{DD\}/g, day);
+            preview = preview.replace(/\{YYYYMM\}/g, year + month);
+            preview = preview.replace(/\{YYYYMMDD\}/g, year + month + day);
             
-            // Replace increment placeholder
-            const incrementPattern = new RegExp('\\{#{' + digits + '}\\}', 'g');
-            preview = preview.replace(incrementPattern, '1'.padStart(digits, '0'));
+            // Enhanced flexible digit replacement - supports any number of # symbols
+            preview = preview.replace(/\{(#+)\}/g, function(match, hashes) {
+                const digitCount = hashes.length;
+                return '0'.repeat(Math.max(1, digitCount - 1)) + '1';
+            });
             
-            // Show preview with better formatting
+            // Legacy support for specific patterns
+            preview = preview.replace(/\{####\}/g, '0001');
+            preview = preview.replace(/\{###\}/g, '001');
+            preview = preview.replace(/\{#####\}/g, '00001');
+            preview = preview.replace(/\{######\}/g, '000001');
+            preview = preview.replace(/\{##\}/g, '01');
+            preview = preview.replace(/\{#\}/g, '1');
+            
+            // Replace asset code placeholder
+            preview = preview.replace(/\{CODE\}/g, 'COMP');
+            
+            // Show preview modal
             const modal = document.createElement('div');
             modal.className = 'modal fade';
             modal.innerHTML = `
@@ -857,6 +883,19 @@ if (isset($_SESSION['flash'])) {
                                 <code style="font-size: 1.5em; font-weight: bold;">${preview}</code>
                             </div>
                             <small class="text-muted">This shows how the next generated tag will look</small>
+                            <hr>
+                            <div class="text-start">
+                                <h6>Supported Patterns:</h6>
+                                <ul class="list-unstyled small">
+                                    <li><code>{#}</code> → Single digit (1, 2, 3...)</li>
+                                    <li><code>{##}</code> → Two digits (01, 02, 03...)</li>
+                                    <li><code>{###}</code> → Three digits (001, 002, 003...)</li>
+                                    <li><code>{####}</code> → Four digits (0001, 0002, 0003...)</li>
+                                    <li><code>{#####}</code> → Five digits (00001, 00002...)</li>
+                                    <li><code>{######}</code> → Six digits (000001, 000002...)</li>
+                                    <li><em>And so on... Use any number of # symbols!</em></li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -864,6 +903,7 @@ if (isset($_SESSION['flash'])) {
                     </div>
                 </div>
             `;
+            
             document.body.appendChild(modal);
             const bsModal = new bootstrap.Modal(modal);
             bsModal.show();
@@ -924,8 +964,10 @@ if (isset($_SESSION['flash'])) {
                     }
                 }
                 
-                // Add increment digits
-                template += '{' + digits + '}';
+                // Add increment digits - support flexible digit patterns
+                if (digits) {
+                    template += '{' + digits + '}';
+                }
                 
                 // Add suffix
                 if (suffix) {

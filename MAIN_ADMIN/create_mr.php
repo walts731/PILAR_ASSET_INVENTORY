@@ -894,12 +894,12 @@ if ($baseProp !== '') {
                                 <div class="row mb-4">
                                     <div class="col-md-6">
                                         <label for="model_no" class="form-label fw-semibold">
-                                            <i class="bi bi-cpu me-1 text-success"></i>Model Number
+                                            <i class="bi bi-cpu me-1 text-success"></i>Model
                                         </label>
                                         <input type="text" class="form-control form-control-lg" name="model_no"
                                             value="<?= isset($asset_details['model']) ? htmlspecialchars($asset_details['model']) : '' ?>"
                                             placeholder="Enter model number or identifier">
-                                        <div class="form-text">Manufacturer's model number or product identifier</div>
+                                        <div class="form-text">Manufacturer's model or product identifier</div>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="serial_no" class="form-label fw-semibold">
@@ -1541,12 +1541,14 @@ if ($baseProp !== '') {
                     // Replace category code placeholder
                     output = output.replace(/\{CODE\}|CODE/g, catCode);
                     
-                    // Replace increment placeholders with preview sequence (actual sequence will be generated server-side)
+                    // Enhanced flexible digit replacement - supports any number of # symbols
+                    output = output.replace(/\{(#+)\}/g, function(match, hashes) {
+                        const digitCount = hashes.length;
+                        return '0'.repeat(Math.max(1, digitCount - 1)) + '1';
+                    });
+                    
+                    // Legacy support for specific patterns
                     output = output.replace(/\{XXXX\}|XXXX/g, '0001');
-                    output = output.replace(/\{####\}/g, '0001');
-                    output = output.replace(/\{###\}/g, '001');
-                    output = output.replace(/\{#####\}/g, '00001');
-                    output = output.replace(/\{######\}/g, '000001');
                     
                     return output;
                 }
@@ -1574,11 +1576,11 @@ if ($baseProp !== '') {
                     output = output.replace(/\{YYYYMM\}|YYYYMM/g, year.toString() + month);
                     output = output.replace(/\{YYYYMMDD\}|YYYYMMDD/g, year.toString() + month + day);
                     
-                    // Replace increment placeholders with preview sequence (actual sequence will be generated server-side)
-                    output = output.replace(/\{######\}/g, '000001');
-                    output = output.replace(/\{#####\}/g, '00001');
-                    output = output.replace(/\{####\}/g, '0001');
-                    output = output.replace(/\{###\}/g, '001');
+                    // Enhanced flexible digit replacement - supports any number of # symbols
+                    output = output.replace(/\{(#+)\}/g, function(match, hashes) {
+                        const digitCount = hashes.length;
+                        return '0'.repeat(Math.max(1, digitCount - 1)) + '1';
+                    });
                     
                     return output;
                 }
@@ -1647,11 +1649,11 @@ if ($baseProp !== '') {
                     output = output.replace(/\{YYYYMM\}|YYYYMM/g, year.toString() + month);
                     output = output.replace(/\{YYYYMMDD\}|YYYYMMDD/g, year.toString() + month + day);
                     
-                    // Replace increment placeholders with preview sequence
-                    output = output.replace(/\{######\}/g, '000001');
-                    output = output.replace(/\{#####\}/g, '00001');
-                    output = output.replace(/\{####\}/g, '0001');
-                    output = output.replace(/\{###\}/g, '001');
+                    // Enhanced flexible digit replacement - supports any number of # symbols
+                    output = output.replace(/\{(#+)\}/g, function(match, hashes) {
+                        const digitCount = hashes.length;
+                        return '0'.repeat(Math.max(1, digitCount - 1)) + '1';
+                    });
                     
                     serialInput.value = output;
                     
