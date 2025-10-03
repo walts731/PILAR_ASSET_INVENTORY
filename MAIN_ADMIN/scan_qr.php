@@ -496,7 +496,13 @@ $stmt->close();
                         <button class="btn btn-info btn-lg px-4 transfer-asset" 
                                 data-asset-id="<?= $asset_id ?>" 
                                 data-inventory-tag="<?= htmlspecialchars($row['inventory_tag'] ?? '') ?>" 
-                                data-current-employee-id="<?= $row['employee_id'] ?? '' ?>">
+                                data-current-employee-id="<?= $row['employee_id'] ?? '' ?>"
+                                data-description="<?= htmlspecialchars($row['description'] ?? '') ?>"
+                                data-acquisition-date="<?= htmlspecialchars($row['acquisition_date'] ?? '') ?>"
+                                data-property-no="<?= htmlspecialchars($row['property_no'] ?? '') ?>"
+                                data-unit-price="<?= htmlspecialchars($row['value'] ?? '') ?>"
+                                data-status="<?= htmlspecialchars($row['status'] ?? '') ?>"
+                                data-employee-name="<?= htmlspecialchars($row['employee_name'] ?? '') ?>">
                           <i class="bi bi-arrow-left-right me-2"></i>Transfer Asset
                         </button>
                       <?php endif; ?>
@@ -836,20 +842,35 @@ $stmt->close();
         e.preventDefault();
         console.log('Transfer button clicked'); // Debug log
         
-        // Get asset data
+        // Get asset data from button attributes
         const assetId = $(this).data('asset-id');
         const inventoryTag = $(this).data('inventory-tag');
         const currentEmployeeId = $(this).data('current-employee-id');
+        const description = $(this).data('description');
+        const acquisitionDate = $(this).data('acquisition-date');
+        const propertyNo = $(this).data('property-no');
+        const unitPrice = $(this).data('unit-price');
+        const status = $(this).data('status');
+        const employeeName = $(this).data('employee-name');
         
-        console.log('Asset data:', { assetId, inventoryTag, currentEmployeeId }); // Debug log
+        console.log('Asset data:', { 
+          assetId, inventoryTag, currentEmployeeId, description, 
+          acquisitionDate, propertyNo, unitPrice, status, employeeName 
+        }); // Debug log
         
-        // Redirect to forms.php with ITR form ID 9 and asset parameters
+        // Redirect to forms.php with ITR form ID 9 and all asset parameters
         // URL-encode values to be safe
         const ITR_FORM_ID = 9;
         const url = `forms.php?id=${ITR_FORM_ID}`
           + `&asset_id=${encodeURIComponent(assetId)}`
           + `&inventory_tag=${encodeURIComponent(inventoryTag || '')}`
-          + `&current_employee_id=${encodeURIComponent(currentEmployeeId || '')}`;
+          + `&current_employee_id=${encodeURIComponent(currentEmployeeId || '')}`
+          + `&description=${encodeURIComponent(description || '')}`
+          + `&acquisition_date=${encodeURIComponent(acquisitionDate || '')}`
+          + `&property_no=${encodeURIComponent(propertyNo || '')}`
+          + `&unit_price=${encodeURIComponent(unitPrice || '')}`
+          + `&status=${encodeURIComponent(status || '')}`
+          + `&employee_name=${encodeURIComponent(employeeName || '')}`;
         console.log('Redirecting to:', url); // Debug log
         
         window.location.href = url;
