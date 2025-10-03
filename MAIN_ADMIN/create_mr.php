@@ -134,6 +134,17 @@ if ($code_result->num_rows > 0) {
 }
 $code_stmt->close();
 
+// Fetch serial number format from tag_formats table
+$serial_format = '';
+$serial_stmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'serial_no' AND is_active = 1 LIMIT 1");
+$serial_stmt->execute();
+$serial_result = $serial_stmt->get_result();
+if ($serial_result->num_rows > 0) {
+    $serial_row = $serial_result->fetch_assoc();
+    $serial_format = $serial_row['format_template'];
+}
+$serial_stmt->close();
+
 // Ensure database columns for End User exist (assets.end_user, mr_details.end_user)
 try {
     if ($chk = $conn->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'assets' AND COLUMN_NAME = 'end_user'")) {
@@ -214,6 +225,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
         $cat_stmt->close();
+    }
+
+    // Generate serial number using tag format system if not provided or empty
+    if (empty($serial_no)) {
+        $tagHelper = new TagFormatHelper($conn);
+        $generated_serial = $tagHelper->generateNextTag('serial_no');
+        if ($generated_serial) {
+            $serial_no = $generated_serial;
+        } else {
+            // Fallback to simple format if tag generation fails
+            $year = date('Y');
+            $serial_no = 'SN-' . $year . '-000001';
+        }
     }
 
     // Server-side validation for required fields
@@ -883,8 +907,15 @@ if ($baseProp !== '') {
                                         </label>
                                         <input type="text" class="form-control form-control-lg" name="serial_no"
                                             value="<?= isset($asset_details['serial_no']) ? htmlspecialchars($asset_details['serial_no']) : '' ?>"
-                                            placeholder="Enter unique serial number">
-                                        <div class="form-text">Unique serial number from manufacturer</div>
+                                            placeholder="Auto-generated or enter custom serial" id="serial_no">
+                                        <div class="form-text">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Unique serial number - Format managed in 
+                                            <strong>System Admin → Manage Tag Format</strong>
+                                            <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="generateSerialNumber()" title="Generate Serial Number">
+                                                <i class="bi bi-arrow-clockwise me-1"></i>Generate
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1471,12 +1502,15 @@ if ($baseProp !== '') {
                 });
             }
 
-            // Category code builder - Connected to manage tag format system
+            // Serial number and asset code generation - Connected to manage tag format system
             (function() {
                 const categorySelect = document.getElementById('category_id');
                 const codeInput = document.getElementById('code');
-                // PHP-provided format for Code tag type from manage tag format
+                const serialInput = document.getElementById('serial_no');
+                
+                // PHP-provided formats from manage tag format
                 const codeFormatTemplate = <?= json_encode($code_format ?? '') ?>;
+                const serialFormatTemplate = <?= json_encode($serial_format ?? '') ?>;
 
                 // Enhanced asset code generation using tag format system
                 function buildCodeFromCategory(catCode) {
@@ -1513,6 +1547,38 @@ if ($baseProp !== '') {
                     output = output.replace(/\{###\}/g, '001');
                     output = output.replace(/\{#####\}/g, '00001');
                     output = output.replace(/\{######\}/g, '000001');
+                    
+                    return output;
+                }
+                
+                // Serial number generation using tag format system
+                function buildSerialNumber() {
+                    let template = (serialFormatTemplate || '').trim();
+                    if (!template) {
+                        // Fallback to default format if no template is configured
+                        template = 'SN-{YYYY}-{######}';
+                    }
+
+                    let output = template;
+                    
+                    // Replace date placeholders
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    
+                    output = output.replace(/\{YYYY\}|YYYY/g, year.toString());
+                    output = output.replace(/\{YY\}|YY/g, year.toString().slice(-2));
+                    output = output.replace(/\{MM\}|MM/g, month);
+                    output = output.replace(/\{DD\}|DD/g, day);
+                    output = output.replace(/\{YYYYMM\}|YYYYMM/g, year.toString() + month);
+                    output = output.replace(/\{YYYYMMDD\}|YYYYMMDD/g, year.toString() + month + day);
+                    
+                    // Replace increment placeholders with preview sequence (actual sequence will be generated server-side)
+                    output = output.replace(/\{######\}/g, '000001');
+                    output = output.replace(/\{#####\}/g, '00001');
+                    output = output.replace(/\{####\}/g, '0001');
+                    output = output.replace(/\{###\}/g, '001');
                     
                     return output;
                 }
@@ -1556,6 +1622,46 @@ if ($baseProp !== '') {
                     maybePrefillCode();
                 }
             })();
+
+            // Global function for serial number generation (called by button)
+            function generateSerialNumber() {
+                const serialInput = document.getElementById('serial_no');
+                if (serialInput) {
+                    const serialFormatTemplate = <?= json_encode($serial_format ?? '') ?>;
+                    
+                    let template = (serialFormatTemplate || '').trim();
+                    if (!template) {
+                        template = 'SN-{YYYY}-{######}';
+                    }
+
+                    let output = template;
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    
+                    output = output.replace(/\{YYYY\}|YYYY/g, year.toString());
+                    output = output.replace(/\{YY\}|YY/g, year.toString().slice(-2));
+                    output = output.replace(/\{MM\}|MM/g, month);
+                    output = output.replace(/\{DD\}|DD/g, day);
+                    output = output.replace(/\{YYYYMM\}|YYYYMM/g, year.toString() + month);
+                    output = output.replace(/\{YYYYMMDD\}|YYYYMMDD/g, year.toString() + month + day);
+                    
+                    // Replace increment placeholders with preview sequence
+                    output = output.replace(/\{######\}/g, '000001');
+                    output = output.replace(/\{#####\}/g, '00001');
+                    output = output.replace(/\{####\}/g, '0001');
+                    output = output.replace(/\{###\}/g, '001');
+                    
+                    serialInput.value = output;
+                    
+                    // Add visual feedback
+                    serialInput.style.background = '#d4edda';
+                    setTimeout(() => {
+                        serialInput.style.background = '';
+                    }, 1000);
+                }
+            }
 
             // Function to show image in modal with enhanced features
             function showImageModal(imageSrc, imageTitle) {

@@ -262,6 +262,7 @@ if (isset($_SESSION['flash'])) {
                         <div class="card-header bg-info text-white">
                             <h6 class="mb-0">
                                 <i class="bi bi-upc-scan"></i> Asset Code Generator Testing
+                                <span class="badge bg-light text-dark ms-2">Asset Code</span>
                             </h6>
                         </div>
                         <div class="card-body">
@@ -555,19 +556,41 @@ if (isset($_SESSION['flash'])) {
             const seq = '0001'; // Default sequence placeholder
 
             let template = (codeFormatTemplate || '').trim();
-            let output = '';
-            const hasBarePlaceholders = template.includes('YYYY') || template.includes('CODE') || template.includes('XXXX');
-            const hasCurlyPlaceholders = template.includes('{YYYY}') || template.includes('{CODE}') || template.includes('{XXXX}');
-            if (hasBarePlaceholders || hasCurlyPlaceholders) {
-                output = template
-                    .replace(/\{YYYY\}|YYYY/g, year)
-                    .replace(/\{CODE\}|CODE/g, catCode)
-                    .replace(/\{XXXX\}|XXXX/g, seq);
-            } else if (template.length > 0) {
-                output = `${year}-${template}-${catCode}-${seq}`;
-            } else {
-                output = `${year}-${catCode}-${seq}`;
+            
+            // Ensure {CODE} placeholder is always present in template
+            if (template && !template.includes('{CODE}') && !template.includes('CODE')) {
+                // If template doesn't have CODE placeholder, add it
+                template = template.replace(/(\{####\}|\{###\}|\{#####\})/, '{CODE}-$1');
             }
+            
+            // If no template, use default with CODE
+            if (!template) {
+                template = '{YYYY}-{CODE}-{####}';
+            }
+
+            let output = template;
+            
+            // Replace date placeholders
+            const now = new Date();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            
+            output = output.replace(/\{YYYY\}|YYYY/g, year);
+            output = output.replace(/\{YY\}|YY/g, year.slice(-2));
+            output = output.replace(/\{MM\}|MM/g, month);
+            output = output.replace(/\{DD\}|DD/g, day);
+            output = output.replace(/\{YYYYMM\}|YYYYMM/g, year + month);
+            output = output.replace(/\{YYYYMMDD\}|YYYYMMDD/g, year + month + day);
+            
+            // Replace category code placeholder
+            output = output.replace(/\{CODE\}|CODE/g, catCode);
+            
+            // Replace increment placeholders
+            output = output.replace(/\{XXXX\}|XXXX/g, seq);
+            output = output.replace(/\{####\}/g, seq);
+            output = output.replace(/\{###\}/g, '001');
+            output = output.replace(/\{#####\}/g, '00001');
+            
             return output;
         }
         
