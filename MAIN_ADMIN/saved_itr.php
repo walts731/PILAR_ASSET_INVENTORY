@@ -58,7 +58,7 @@ if ($result && $result->num_rows > 0) {
               <i class="bi bi-arrow-left"></i> Back to Forms
             </a>
           <?php endif; ?>
-          <a href="itr_form.php<?= $form_id ? '?id=' . $form_id : '' ?>" class="btn btn-primary">
+          <a href="http://localhost/pilar_asset_inventory/MAIN_ADMIN/forms.php?id=9" class="btn btn-primary">
             <i class="bi bi-plus-circle"></i> New ITR
           </a>
         </div>

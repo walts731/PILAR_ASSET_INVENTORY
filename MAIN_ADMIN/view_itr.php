@@ -135,9 +135,9 @@ $stmt->close();
     </div>
 
     <div class="container-fluid py-4">
-      <!-- Navigation -->
-      <div class="d-flex justify-content-between align-items-center mb-3 no-print">
-        <h4 class="fw-bold"><i class="bi bi-file-earmark-text"></i> View ITR Form</h4>
+      <!-- Header with Navigation -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Inventory Transfer Receipt (ITR) Form - View/Edit</h4>
         <div>
           <a href="saved_itr.php<?= $form_id ? '?id=' . $form_id : '' ?>" class="btn btn-outline-secondary me-2">
             <i class="bi bi-arrow-left"></i> Back to Saved ITR
@@ -157,207 +157,150 @@ $stmt->close();
         <?php unset($_SESSION['flash']); ?>
       <?php endif; ?>
 
-      <!-- ITR Header Image -->
-      <?php if (!empty($itr['header_image'])): ?>
-        <div class="text-center mb-4">
-          <img src="../img/<?= htmlspecialchars($itr['header_image']) ?>" 
-               alt="Header Image" 
-               class="img-fluid" 
-               style="max-height: 150px;">
-        </div>
-      <?php endif; ?>
-
       <!-- ITR Form Content -->
       <form id="updateItrForm" method="POST" action="update_itr.php">
         <input type="hidden" name="itr_id" value="<?= $itr_id ?>">
         <input type="hidden" name="form_id" value="<?= $form_id ?>">
-        
-        <div class="itr-header">
-          <div class="text-center mb-3">
-            <h3 class="fw-bold text-primary">INVENTORY TRANSFER RECEIPT</h3>
-            <h5 class="text-muted">ITR No: <?= htmlspecialchars($itr['itr_no'] ?? 'N/A') ?></h5>
-          </div>
 
-          <div class="row g-3">
-            <div class="col-md-4">
-              <div class="field-group">
-                <label class="field-label">Entity Name <span class="text-danger">*</span></label>
-                <input type="text" name="entity_name" class="form-control" 
+        <!-- ITR Header Card -->
+        <div class="card shadow-sm mb-3">
+          <div class="card-body">
+            <!-- ITR Header Image Display -->
+            <div class="mb-3 text-center">
+              <?php if (!empty($itr['header_image'])): ?>
+                <img src="../img/<?= htmlspecialchars($itr['header_image']) ?>"
+                  class="img-fluid mb-2"
+                  style="max-width: 100%; height: auto; object-fit: contain;">
+              <?php else: ?>
+                <p class="text-muted">No header image available</p>
+              <?php endif; ?>
+            </div>
+
+            <div class="row g-3 mt-2">
+              <div class="col-md-4">
+                <label for="entity_name" class="form-label">Entity Name <span style="color: red;">*</span></label>
+                <input type="text" id="entity_name" name="entity_name" class="form-control shadow" 
                        value="<?= htmlspecialchars($itr['entity_name'] ?? '') ?>" required>
               </div>
-            </div>
-            <div class="col-md-4">
-              <div class="field-group">
-                <label class="field-label">Fund Cluster <span class="text-danger">*</span></label>
-                <input type="text" name="fund_cluster" class="form-control" 
+              <div class="col-md-4">
+                <label for="fund_cluster" class="form-label">Fund Cluster <span style="color: red;">*</span></label>
+                <input type="text" id="fund_cluster" name="fund_cluster" class="form-control shadow" 
                        value="<?= htmlspecialchars($itr['fund_cluster'] ?? '') ?>" required>
               </div>
-            </div>
-            <div class="col-md-4">
-              <div class="field-group">
-                <div class="field-label">Date</div>
-                <div class="field-value"><?= $itr['date'] ? date('F d, Y', strtotime($itr['date'])) : 'N/A' ?></div>
+              <div class="col-md-4">
+                <label for="date" class="form-label">Date</label>
+                <div class="form-control-plaintext"><?= $itr['date'] ? date('F d, Y', strtotime($itr['date'])) : 'N/A' ?></div>
               </div>
-            </div>
-          </div>
+              <div class="col-md-6">
+                <label class="form-label">From Accountable Officer</label>
+                <div class="form-control-plaintext"><?= htmlspecialchars($itr['from_accountable_officer'] ?? 'N/A') ?></div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">To Accountable Officer</label>
+                <div class="form-control-plaintext"><?= htmlspecialchars($itr['to_accountable_officer'] ?? 'N/A') ?></div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">ITR No.</label>
+                <div class="form-control-plaintext"><?= htmlspecialchars($itr['itr_no'] ?? 'N/A') ?></div>
+              </div>
 
-          <div class="row g-3 mt-2">
-            <div class="col-md-6">
-              <div class="field-group">
-                <div class="field-label">From Accountable Officer</div>
-                <div class="field-value"><?= htmlspecialchars($itr['from_accountable_officer'] ?? 'N/A') ?></div>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="field-group">
-                <div class="field-label">To Accountable Officer</div>
-                <div class="field-value"><?= htmlspecialchars($itr['to_accountable_officer'] ?? 'N/A') ?></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="row g-3 mt-2">
-            <div class="col-md-6">
-              <div class="field-group">
-                <label class="field-label">Transfer Type <span class="text-danger">*</span></label>
-                <select name="transfer_type" class="form-select" required>
-                  <option value="">-- Select Transfer Type --</option>
-                  <option value="Donation" <?= ($itr['transfer_type'] === 'Donation') ? 'selected' : '' ?>>Donation</option>
-                  <option value="Reassignment" <?= ($itr['transfer_type'] === 'Reassignment') ? 'selected' : '' ?>>Reassignment</option>
-                  <option value="Relocate" <?= ($itr['transfer_type'] === 'Relocate') ? 'selected' : '' ?>>Relocate</option>
-                  <option value="Others" <?= (!in_array($itr['transfer_type'], ['Donation', 'Reassignment', 'Relocate']) && !empty($itr['transfer_type'])) ? 'selected' : '' ?>>Others</option>
-                </select>
-                <?php if (!in_array($itr['transfer_type'], ['Donation', 'Reassignment', 'Relocate']) && !empty($itr['transfer_type'])): ?>
-                  <input type="text" name="transfer_type_other" class="form-control mt-2" 
-                         placeholder="Specify other transfer type" 
-                         value="<?= htmlspecialchars($itr['transfer_type']) ?>">
-                <?php else: ?>
-                  <input type="text" name="transfer_type_other" class="form-control mt-2" 
-                         placeholder="Specify other transfer type" style="display: none;">
-                <?php endif; ?>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="field-group">
-                <label class="field-label">Reason for Transfer <span class="text-danger">*</span></label>
-                <textarea name="reason_for_transfer" class="form-control" rows="3" required><?= htmlspecialchars($itr['reason_for_transfer'] ?? '') ?></textarea>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      <!-- ITR Items Table -->
-      <div class="itr-section">
-        <h5 class="fw-bold mb-3"><i class="bi bi-list-check"></i> Transfer Items</h5>
-        
-        <?php if (!empty($items)): ?>
-          <div class="table-responsive">
-            <table class="table table-bordered items-table">
-              <thead>
-                <tr>
-                  <th style="width: 12%">Date Acquired</th>
-                  <th style="width: 8%">Item No.</th>
-                  <th style="width: 15%">ICS & PAR No./Date</th>
-                  <th style="width: 35%">Description / Property No</th>
-                  <th style="width: 15%">Unit Price</th>
-                  <th style="width: 15%">Condition of Inventory</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($items as $index => $item): ?>
-                  <tr>
-                    <td><?= $item['date_acquired'] ? date('M d, Y', strtotime($item['date_acquired'])) : 'N/A' ?></td>
-                    <td class="text-center"><?= $index + 1 ?></td>
-                    <td><?= htmlspecialchars($item['property_no'] ?? '') ?></td>
-                    <td><?= htmlspecialchars($item['description'] ?? '') ?></td>
-                    <td class="text-end">₱<?= number_format($item['amount'] ?? 0, 2) ?></td>
-                    <td class="text-center">
-                      <span class="badge bg-<?= 
-                        (strtolower($item['condition_of_PPE'] ?? '') === 'serviceable') ? 'success' : 
-                        ((strtolower($item['condition_of_PPE'] ?? '') === 'unserviceable') ? 'danger' : 'warning') 
-                      ?>">
-                        <?= htmlspecialchars($item['condition_of_PPE'] ?? 'N/A') ?>
-                      </span>
-                    </td>
-                  </tr>
+              <!-- Transfer type radios -->
+              <div class="col-md-6">
+                <label class="form-label d-block">Transfer Type <span style="color: red;">*</span></label>
+                <?php
+                // Determine selected transfer type
+                $selectedType = $itr['transfer_type'] ?? '';
+                $known = ['Donation', 'Reassignment', 'Relocate'];
+                $otherValue = '';
+                if ($selectedType !== '' && !in_array($selectedType, $known, true)) {
+                  $otherValue = $selectedType;
+                  $selectedType = 'Others';
+                }
+                ?>
+                <?php foreach ($known as $k): ?>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input transfer-type" type="radio" name="transfer_type" id="tt_<?= strtolower($k) ?>" value="<?= $k ?>" <?= ($selectedType === $k) ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="tt_<?= strtolower($k) ?>"><?= $k ?></label>
+                  </div>
                 <?php endforeach; ?>
-              </tbody>
-              <tfoot>
-                <tr class="table-light">
-                  <td colspan="4" class="text-end fw-bold">Total Value:</td>
-                  <td class="text-end fw-bold">₱<?= number_format(array_sum(array_column($items, 'amount')), 2) ?></td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        <?php else: ?>
-          <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> No items found for this ITR.
-          </div>
-        <?php endif; ?>
-      </div>
-
-        <!-- Signature Section -->
-        <div class="signature-section">
-          <h5 class="fw-bold mb-3"><i class="bi bi-pen"></i> Signatures & Approvals</h5>
-          
-          <div class="row g-3">
-            <!-- Approved By -->
-            <div class="col-md-4">
-              <div class="signature-box">
-                <div class="fw-bold border-bottom pb-2 mb-2">APPROVED BY:</div>
-                <div class="mb-2">
-                  <label class="form-label small">Name:</label>
-                  <input type="text" name="approved_by" class="form-control form-control-sm" 
-                         value="<?= htmlspecialchars($itr['approved_by'] ?? '') ?>">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" id="tt_others" name="transfer_type" value="Others" <?= ($selectedType === 'Others') ? 'checked' : '' ?>>
+                  <label class="form-check-label" for="tt_others">Others</label>
                 </div>
-                <div class="mb-2">
-                  <label class="form-label small">Designation:</label>
-                  <input type="text" name="approved_designation" class="form-control form-control-sm" 
-                         value="<?= htmlspecialchars($itr['approved_designation'] ?? '') ?>">
+                <div id="transfer_type_other_wrap" class="mt-2" style="display: <?= ($selectedType === 'Others') ? 'block' : 'none' ?>;">
+                  <input type="text" id="transfer_type_other" name="transfer_type_other" class="form-control shadow" placeholder="Specify other transfer type" value="<?= htmlspecialchars($otherValue) ?>">
                 </div>
-                <div class="mb-2">
-                  <label class="form-label small">Date:</label>
-                  <input type="date" name="approved_date" class="form-control form-control-sm" 
-                         value="<?= $itr['approved_date'] ?? '' ?>">
-                </div>
-              </div>
-            </div>
-
-            <!-- Released By -->
-            <div class="col-md-4">
-              <div class="signature-box">
-                <div class="fw-bold border-bottom pb-2 mb-2">RELEASED BY:</div>
-                <div class="mb-2">
-                  <label class="form-label small">Name:</label>
-                  <input type="text" name="released_by" class="form-control form-control-sm" 
-                         value="<?= htmlspecialchars($itr['released_by'] ?? '') ?>">
-                </div>
-                <div class="mb-2">
-                  <label class="form-label small">Designation:</label>
-                  <input type="text" name="released_designation" class="form-control form-control-sm" 
-                         value="<?= htmlspecialchars($itr['released_designation'] ?? '') ?>">
-                </div>
-                <div class="mb-2">
-                  <label class="form-label small">Date:</label>
-                  <input type="date" name="released_date" class="form-control form-control-sm" 
-                         value="<?= $itr['released_date'] ?? '' ?>">
-                </div>
-              </div>
-            </div>
-
-            <!-- Received By -->
-            <div class="col-md-4">
-              <div class="signature-box">
-                <div class="fw-bold border-bottom pb-2 mb-2">RECEIVED BY:</div>
-                <div class="field-value fw-bold"><?= htmlspecialchars($itr['received_by'] ?? '') ?></div>
-                <div class="field-label"><?= htmlspecialchars($itr['received_designation'] ?? '') ?></div>
-                <div class="field-label mt-2">Date: <?= $itr['received_date'] ? date('M d, Y', strtotime($itr['received_date'])) : '___________' ?></div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- Items Table Card -->
+        <div class="card shadow-sm mt-3">
+          <div class="card-body">
+            <h5 class="card-title">Transfer Items</h5>
+            <?php if (!empty($items)): ?>
+              <div class="table-responsive">
+                <table class="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th style="width:15%">Date Acquired</th>
+                      <th style="width:10%">Item No.</th>
+                      <th style="width:20%">ICS & PAR No./Date</th>
+                      <th style="width:35%">Description</th>
+                      <th style="width:15%">Unit Price</th>
+                      <th style="width:15%">Condition of Inventory</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php foreach ($items as $index => $item): ?>
+                      <tr>
+                        <td><?= $item['date_acquired'] ? date('m/d/Y', strtotime($item['date_acquired'])) : 'N/A' ?></td>
+                        <td class="text-center"><?= $index + 1 ?></td>
+                        <td><?= htmlspecialchars($item['property_no'] ?? 'N/A') ?></td>
+                        <td><?= htmlspecialchars($item['description'] ?? 'N/A') ?></td>
+                        <td class="text-end"><?= number_format($item['amount'] ?? 0, 2) ?></td>
+                        <td class="text-center"><?= htmlspecialchars($item['condition_of_PPE'] ?? 'N/A') ?></td>
+                      </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
+              </div>
+            <?php else: ?>
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> No items found for this ITR.
+              </div>
+            <?php endif; ?>
+          </div>
+        </div>
+
+        <!-- Reason for Transfer Card -->
+        <div class="card shadow-sm mt-3">
+          <div class="card-body">
+            <label for="reason_for_transfer" class="form-label">Reason for Transfer <span style="color: red;">*</span></label>
+            <textarea id="reason_for_transfer" name="reason_for_transfer" class="form-control shadow" rows="3" required><?= htmlspecialchars($itr['reason_for_transfer'] ?? '') ?></textarea>
+          </div>
+        </div>
+
+        <!-- Footer Card -->
+        <div class="card shadow-sm mt-3">
+          <div class="card-body">
+            <div class="row g-3">
+              <?php foreach (['approved', 'released', 'received'] as $role): ?>
+                <div class="col-md-4">
+                  <label class="form-label"><?= ucfirst($role) ?> By <span style="color: red;">*</span></label>
+                  <input type="text" name="<?= $role ?>_by" class="form-control shadow" value="<?= htmlspecialchars($itr[$role . '_by'] ?? '') ?>" required>
+                  <label class="form-label mt-2"><?= ucfirst($role) ?> Designation <span style="color: red;">*</span></label>
+                  <input type="text" name="<?= $role ?>_designation" class="form-control shadow" value="<?= htmlspecialchars($itr[$role . '_designation'] ?? '') ?>" required>
+                  <label class="form-label mt-2"><?= ucfirst($role) ?> Date</label>
+                  <input type="date" name="<?= $role ?>_date" class="form-control shadow" value="<?= htmlspecialchars($itr[$role . '_date'] ?? '') ?>">
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+        </div>
+
+        <p class="small mt-4"> <span style="color: red;">*</span> Required fields</p>
 
         <!-- Save Button -->
         <div class="text-center mt-4 no-print">
@@ -389,26 +332,22 @@ $stmt->close();
       }
     });
 
-    // Transfer type dropdown handling
+    // Transfer type radio handling
     document.addEventListener('DOMContentLoaded', function() {
-      const transferTypeSelect = document.querySelector('select[name="transfer_type"]');
-      const transferTypeOther = document.querySelector('input[name="transfer_type_other"]');
+      const ttOthers = document.getElementById('tt_others');
+      const ttOtherWrap = document.getElementById('transfer_type_other_wrap');
+      const ttOtherInput = document.getElementById('transfer_type_other');
 
-      function toggleOtherInput() {
-        if (transferTypeSelect.value === 'Others') {
-          transferTypeOther.style.display = 'block';
-          transferTypeOther.required = true;
-        } else {
-          transferTypeOther.style.display = 'none';
-          transferTypeOther.required = false;
-          transferTypeOther.value = '';
-        }
+      function updateOtherVisibility() {
+        if (!ttOthers || !ttOtherWrap) return;
+        const show = ttOthers.checked;
+        ttOtherWrap.style.display = show ? 'block' : 'none';
+        if (!show && ttOtherInput) ttOtherInput.value = '';
       }
-
-      if (transferTypeSelect && transferTypeOther) {
-        transferTypeSelect.addEventListener('change', toggleOtherInput);
-        // Initialize on page load
-        toggleOtherInput();
+      
+      if (ttOthers) {
+        document.querySelectorAll('input[name="transfer_type"]').forEach(r => r.addEventListener('change', updateOtherVisibility));
+        updateOtherVisibility();
       }
 
       // Form submission handling
