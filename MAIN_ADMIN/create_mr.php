@@ -110,7 +110,6 @@ if ($mr_item_id) {
 } elseif (!empty($asset_id)) {
     // Fallback: check by asset_id to prevent duplicates when item mapping is unavailable (e.g., PAR items beyond first)
     $stmt_check2 = $conn->prepare("SELECT 1 FROM mr_details WHERE asset_id = ? LIMIT 1");
-    $stmt_check2->bind_param("i", $asset_id);
     $stmt_check2->execute();
     $res_check2 = $stmt_check2->get_result();
     $stmt_check2->close();
@@ -118,7 +117,26 @@ if ($mr_item_id) {
 
 // Generate automatic inventory tag using the new tag format system
 require_once '../includes/tag_format_helper.php';
-$inventory_tag = generateTag('inventory_tag');
+
+// Check if asset already has an inventory_tag
+$existing_inventory_tag = '';
+if ($asset_id) {
+    $stmt_check_tag = $conn->prepare("SELECT inventory_tag FROM assets WHERE id = ?");
+    $stmt_check_tag->bind_param("i", $asset_id);
+    $stmt_check_tag->execute();
+    $result_check_tag = $stmt_check_tag->get_result();
+    if ($result_check_tag && $row_check_tag = $result_check_tag->fetch_assoc()) {
+        $existing_inventory_tag = $row_check_tag['inventory_tag'] ?? '';
+    }
+    $stmt_check_tag->close();
+}
+
+// Use existing inventory_tag if available, otherwise generate new one
+if (!empty($existing_inventory_tag)) {
+    $inventory_tag = $existing_inventory_tag;
+} else {
+    $inventory_tag = generateTag('inventory_tag');
+}
 
 // Format patterns are now handled by the tag format system
 $property_no_format = '';
