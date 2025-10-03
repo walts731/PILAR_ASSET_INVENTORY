@@ -423,6 +423,12 @@ if ($res_off && $res_off->num_rows) {
                   </td>
                 </tr>
               <?php endforeach; ?>
+              <!-- Nothing follows row -->
+              <?php if (!empty($items)): ?>
+                <tr>
+                  <td colspan="21" style="text-align: center; font-style: italic; padding: 8px 0; border-top: 1px solid #000;">— NOTHING FOLLOWS —</td>
+                </tr>
+              <?php endif; ?>
             <?php else: ?>
               <tr><td colspan="21" class="text-muted">No items found.</td></tr>
             <?php endif; ?>

@@ -2,6 +2,7 @@
 require_once '../connect.php';
 require_once '../phpqrcode/qrlib.php';
 require_once '../includes/lifecycle_helper.php';
+require_once '../includes/tag_format_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -16,7 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $header_image = $_POST['header_image'] ?? '';
     $entity_name = $_POST['entity_name'] ?? '';
     $fund_cluster = $_POST['fund_cluster'] ?? '';
-    $par_no = $_POST['par_no'] ?? '';
+    // Generate automatic PAR number
+    $par_no = generateTag('par_no');
     $position_left = $_POST['position_office_left'] ?? '';
     $position_right = $_POST['position_office_right'] ?? '';
     $received_by_name = trim($_POST['received_by_name'] ?? '');

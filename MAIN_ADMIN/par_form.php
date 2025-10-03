@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/tag_format_helper.php';
 
 // Start session similar to ICS form (for flash messages, etc.)
 if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -151,8 +152,14 @@ while ($row = $unit_query->fetch_assoc()) {
                         <input type="text" name="fund_cluster" class="form-control shadow" required>
                     </td>
                     <td>
-                        <label class="form-label fw-semibold mb-0">PAR No. <span style="color: red;">*</span></label>
-                        <input type="text" name="par_no" class="form-control shadow" required>
+                        <label class="form-label fw-semibold mb-0">PAR No. (Auto-generated)</label>
+                        <div class="input-group">
+                            <input type="text" name="par_no" class="form-control shadow" value="<?= previewTag('par_no') ?>" readonly>
+                            <span class="input-group-text">
+                                <i class="bi bi-magic" title="Auto-generated"></i>
+                            </span>
+                        </div>
+                        <small class="text-muted">This number will be automatically assigned when you save the form.</small>
                     </td>
                 </tr>
             </tbody>

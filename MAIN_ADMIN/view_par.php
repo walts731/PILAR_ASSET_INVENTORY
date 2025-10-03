@@ -195,9 +195,15 @@ $stmt->close();
                       </td>
                     </tr>
                   <?php endforeach; ?>
+                  <!-- Nothing follows row -->
+                  <?php if (!empty($par['items'])): ?>
+                    <tr>
+                      <td colspan="7" style="text-align: center; font-style: italic; padding: 8px 0; border-top: 1px solid #000;">— NOTHING FOLLOWS —</td>
+                    </tr>
+                  <?php endif; ?>
                 <?php else: ?>
                   <tr>
-                    <td colspan="8" class="text-muted">No items found.</td>
+                    <td colspan="7" class="text-muted">No items found.</td>
                   </tr>
                 <?php endif; ?>
               </tbody>

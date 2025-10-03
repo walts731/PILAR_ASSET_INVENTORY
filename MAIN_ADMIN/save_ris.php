@@ -1,11 +1,13 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/tag_format_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // HEADER + FOOTER fields
     $division = $_POST['division'] ?? '';
     $responsibility_center = $_POST['responsibility_center'] ?? '';
-    $ris_no = $_POST['ris_no'] ?? '';
+    // Generate automatic RIS number
+    $ris_no = generateTag('ris_no');
     $date = $_POST['date'] ?? date('Y-m-d');
     $office_id = $_POST['office_id'] ?? '';
     $responsibility_code = $_POST['responsibility_code'] ?? '';

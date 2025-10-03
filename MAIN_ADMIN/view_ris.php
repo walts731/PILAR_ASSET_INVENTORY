@@ -159,6 +159,12 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
                                 <td><input type="number" step="0.01" class="form-control" value="<?= htmlspecialchars($item['total']) ?>" readonly></td>
                             </tr>
                         <?php endforeach; ?>
+                        <!-- Nothing follows row -->
+                        <?php if (!empty($ris_items)): ?>
+                          <tr>
+                            <td colspan="6" style="text-align: center; font-style: italic; padding: 8px 0; border-top: 1px solid #000;">— NOTHING FOLLOWS —</td>
+                          </tr>
+                        <?php endif; ?>
                     <?php else: ?>
                         <tr>
                             <td colspan="6" class="text-center">No items found</td>

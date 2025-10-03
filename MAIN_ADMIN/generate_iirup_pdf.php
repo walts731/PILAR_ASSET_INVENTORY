@@ -176,6 +176,14 @@ if (!empty($items)) {
           <td>' . htmlspecialchars($row['date_received']) . '</td>
         </tr>';
     }
+    
+    // Add "nothing follows" row if there are items
+    if (!empty($items)) {
+        $html .= '
+        <tr>
+          <td colspan="21" style="text-align: center; font-style: italic; padding: 6px 0; border-top: 1px solid #000;">— NOTHING FOLLOWS —</td>
+        </tr>';
+    }
 } else {
     $html .= '<tr><td colspan="21">No items found.</td></tr>';
 }
