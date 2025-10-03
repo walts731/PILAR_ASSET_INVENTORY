@@ -122,7 +122,17 @@ $inventory_tag = generateTag('inventory_tag');
 
 // Format patterns are now handled by the tag format system
 $property_no_format = '';
+
+// Fetch asset code format from tag_formats table
 $code_format = '';
+$code_stmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'asset_code' AND is_active = 1 LIMIT 1");
+$code_stmt->execute();
+$code_result = $code_stmt->get_result();
+if ($code_result->num_rows > 0) {
+    $code_row = $code_result->fetch_assoc();
+    $code_format = $code_row['format_template'];
+}
+$code_stmt->close();
 
 // Ensure database columns for End User exist (assets.end_user, mr_details.end_user)
 try {
@@ -175,6 +185,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $end_user = trim($_POST['end_user'] ?? '');
     $acquired_date = $_POST['acquired_date'];
     $counted_date = $_POST['counted_date'];
+
+    // Generate asset code using tag format system if not provided or empty
+    if (empty($code) && $category_id) {
+        // Get category code for asset code generation
+        $cat_stmt = $conn->prepare("SELECT category_code FROM categories WHERE id = ?");
+        $cat_stmt->bind_param("i", $category_id);
+        $cat_stmt->execute();
+        $cat_result = $cat_stmt->get_result();
+        if ($cat_result->num_rows > 0) {
+            $cat_row = $cat_result->fetch_assoc();
+            $category_code = $cat_row['category_code'];
+            
+            if (!empty($category_code)) {
+                // Generate asset code using tag format system
+                $tagHelper = new TagFormatHelper($conn);
+                $generated_code = $tagHelper->generateNextTag('asset_code');
+                
+                if ($generated_code) {
+                    // Replace placeholders with actual values
+                    $code = str_replace('{CODE}', $category_code, $generated_code);
+                    $code = str_replace('CODE', $category_code, $code);
+                } else {
+                    // Fallback to simple format if tag generation fails
+                    $year = date('Y');
+                    $code = $year . '-' . $category_code . '-0001';
+                }
+            }
+        }
+        $cat_stmt->close();
+    }
 
     // Server-side validation for required fields
     if ($category_id === null || trim((string)$person_accountable_name) === '') {
@@ -857,7 +897,11 @@ if ($baseProp !== '') {
                                         <input type="text" class="form-control form-control-lg" name="code" id="code"
                                             value="<?= isset($asset_details['code']) ? htmlspecialchars($asset_details['code']) : '' ?>"
                                             placeholder="Auto-generated based on category">
-                                        <div class="form-text">Internal asset classification code</div>
+                                        <div class="form-text">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Internal asset classification code - Format managed in 
+                                            <strong>System Admin → Manage Tag Format</strong>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="property_no" class="form-label fw-semibold">
@@ -1427,36 +1471,54 @@ if ($baseProp !== '') {
                 });
             }
 
-            // Category code builder
+            // Category code builder - Connected to manage tag format system
             (function() {
                 const categorySelect = document.getElementById('category_id');
                 const codeInput = document.getElementById('code');
-                // PHP-provided format for Code tag type
+                // PHP-provided format for Code tag type from manage tag format
                 const codeFormatTemplate = <?= json_encode($code_format ?? '') ?>;
 
+                // Enhanced asset code generation using tag format system
                 function buildCodeFromCategory(catCode) {
                     if (!catCode) return '';
-                    const year = new Date().getFullYear().toString();
-                    const seq = '0001'; // Default sequence placeholder
-
+                    
                     let template = (codeFormatTemplate || '').trim();
-                    let output = '';
-                    const hasBarePlaceholders = template.includes('YYYY') || template.includes('CODE') || template.includes('XXXX');
-                    const hasCurlyPlaceholders = template.includes('{YYYY}') || template.includes('{CODE}') || template.includes('{XXXX}');
-                    if (hasBarePlaceholders || hasCurlyPlaceholders) {
-                        output = template
-                            .replace(/\{YYYY\}|YYYY/g, year)
-                            .replace(/\{CODE\}|CODE/g, catCode)
-                            .replace(/\{XXXX\}|XXXX/g, seq);
-                    } else if (template.length > 0) {
-                        output = `${year}-${template}-${catCode}-${seq}`;
-                    } else {
-                        output = `${year}-${catCode}-${seq}`;
+                    if (!template) {
+                        // Fallback to default format if no template is configured
+                        template = '{YYYY}-{CODE}-{####}';
                     }
+                    
+                    // Replace date placeholders
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    
+                    let output = template;
+                    
+                    // Replace date placeholders (both with and without curly braces)
+                    output = output.replace(/\{YYYY\}|YYYY/g, year.toString());
+                    output = output.replace(/\{YY\}|YY/g, year.toString().slice(-2));
+                    output = output.replace(/\{MM\}|MM/g, month);
+                    output = output.replace(/\{DD\}|DD/g, day);
+                    output = output.replace(/\{YYYYMM\}|YYYYMM/g, year.toString() + month);
+                    output = output.replace(/\{YYYYMMDD\}|YYYYMMDD/g, year.toString() + month + day);
+                    
+                    // Replace category code placeholder
+                    output = output.replace(/\{CODE\}|CODE/g, catCode);
+                    
+                    // Replace increment placeholders with preview sequence (actual sequence will be generated server-side)
+                    output = output.replace(/\{XXXX\}|XXXX/g, '0001');
+                    output = output.replace(/\{####\}/g, '0001');
+                    output = output.replace(/\{###\}/g, '001');
+                    output = output.replace(/\{#####\}/g, '00001');
+                    output = output.replace(/\{######\}/g, '000001');
+                    
                     return output;
                 }
-
+                
                 function maybePrefillCode() {
+                    if (!categorySelect || !codeInput) return;
                     const selected = categorySelect.options[categorySelect.selectedIndex];
                     if (!selected) return;
                     const catCode = selected.getAttribute('data-code') || '';
@@ -1466,13 +1528,30 @@ if ($baseProp !== '') {
                 }
 
                 if (categorySelect && codeInput) {
+                    // Clear code when category changes to empty
                     categorySelect.addEventListener('change', function() {
                         const selected = this.options[this.selectedIndex];
                         const catCode = selected ? (selected.getAttribute('data-code') || '') : '';
+                        
                         if (catCode) {
                             codeInput.value = buildCodeFromCategory(catCode);
+                        } else {
+                            codeInput.value = ''; // Clear if no category selected
                         }
                     });
+                    
+                    // Also trigger on input event for datalist
+                    categorySelect.addEventListener('input', function() {
+                        setTimeout(() => {
+                            const selected = this.options[this.selectedIndex];
+                            const catCode = selected ? (selected.getAttribute('data-code') || '') : '';
+                            if (catCode) {
+                                codeInput.value = buildCodeFromCategory(catCode);
+                            }
+                        }, 100);
+                    });
+                    
+                    // Initialize on page load
                     document.addEventListener('DOMContentLoaded', maybePrefillCode);
                     maybePrefillCode();
                 }
