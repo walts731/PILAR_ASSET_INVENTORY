@@ -58,9 +58,10 @@ if (isset($_GET['asset_id']) && !empty($_GET['asset_id'])) {
   $result = $stmt->get_result();
   if ($row = $result->fetch_assoc()) {
     $preselected_asset = $row;
-    
+
     // Helper function to map status to PPE condition
-    function getConditionFromStatus($status) {
+    function getConditionFromStatus($status)
+    {
       switch (strtolower($status)) {
         case 'available':
         case 'serviceable':
@@ -75,7 +76,7 @@ if (isset($_GET['asset_id']) && !empty($_GET['asset_id'])) {
           return 'Fair';
       }
     }
-    
+
     // If no existing items, add the preselected asset as first item
     if (empty($items)) {
       $items[] = [
@@ -136,8 +137,8 @@ if (!empty($_SESSION['flash'])) {
       <div class="mb-3 text-center">
         <?php if (!empty($itr['header_image'])): ?>
           <img src="../img/<?= htmlspecialchars($itr['header_image']) ?>"
-              class="img-fluid mb-2"
-              style="max-width: 100%; height: auto; object-fit: contain;">
+            class="img-fluid mb-2"
+            style="max-width: 100%; height: auto; object-fit: contain;">
 
           <!-- Hidden input ensures it gets submitted -->
           <input type="hidden" name="header_image" value="<?= htmlspecialchars($itr['header_image']) ?>">
@@ -216,9 +217,9 @@ if (!empty($_SESSION['flash'])) {
           <label for="itr_no" class="form-label">ITR No. <span style="color: red;">*</span></label>
           <input type="text" id="itr_no" name="itr_no" class="form-control shadow" placeholder="Enter ITR number" required>
         </div>
-        
+
         <!-- End User Field -->
-        <div class="col-md-12">
+        <div class="col-md-6">
           <label for="end_user" class="form-label">End User <span style="color: red;">*</span></label>
           <input type="text" id="end_user" name="end_user" class="form-control shadow" placeholder="Enter end user name..." value="" required>
           <div class="form-text">This will update the end user for all assets being transferred in this ITR.</div>
@@ -233,10 +234,11 @@ if (!empty($_SESSION['flash'])) {
         <thead>
           <tr>
             <th style="width:15%">Date Acquired</th>
-            <th style="width:20%">Property No</th>
+            <th style="width:10%">Item No.</th>
+            <th style="width:20%">ICS & PAR No./Date</th>
             <th style="width:35%">Description / Property No</th>
-            <th style="width:15%">Amount</th>
-            <th style="width:10%">Condition of PPE</th>
+            <th style="width:15%">Unit Price</th>
+            <th style="width:10%">Condition of Inventory</th>
             <th style="width:5%">Actions</th>
           </tr>
         </thead>
@@ -248,14 +250,15 @@ if (!empty($_SESSION['flash'])) {
           ?>
             <tr>
               <td><input type="date" name="date_acquired[]" class="form-control shadow" value="<?= htmlspecialchars($item['date_acquired']) ?>" required></td>
+              <td><input type="text" name="item_no[]" class="form-control shadow" value="1" required></td>
               <td><input type="text" name="property_no[]" class="form-control property-search shadow" value="<?= htmlspecialchars($item['property_no']) ?>" required></td>
               <td>
-  <input type="hidden" name="asset_id[]" value="">
-  <input type="text" name="description[]" 
-         class="form-control asset-search shadow" 
-         list="assetsList" 
-         placeholder="Search description or property no" required>
-</td>
+                <input type="hidden" name="asset_id[]" value="">
+                <input type="text" name="description[]"
+                  class="form-control asset-search shadow"
+                  list="assetsList"
+                  placeholder="Search description or property no" required>
+              </td>
 
               <td><input type="number" step="0.01" name="amount[]" class="form-control shadow" value="<?= htmlspecialchars($item['amount']) ?>" required></td>
               <td><input type="text" name="condition_of_PPE[]" class="form-control shadow" value="<?= htmlspecialchars($item['condition_of_PPE']) ?>" required></td>
@@ -333,7 +336,7 @@ if (!empty($_SESSION['flash'])) {
     </div>
   </div>
 
-    <p class="small mt-4"> <span style="color: red;">*</span> Required fields</p>
+  <p class="small mt-4"> <span style="color: red;">*</span> Required fields</p>
 
 
   <!-- Single Save Button -->
@@ -349,6 +352,7 @@ if (!empty($_SESSION['flash'])) {
     const ttOthers = document.getElementById('tt_others');
     const ttOtherWrap = document.getElementById('transfer_type_other_wrap');
     const ttOtherInput = document.getElementById('transfer_type_other');
+
     function updateOtherVisibility() {
       if (!ttOthers || !ttOtherWrap) return;
       const show = ttOthers.checked;
@@ -364,7 +368,7 @@ if (!empty($_SESSION['flash'])) {
     const clearBtn = document.getElementById('clear_to_accountable');
     const toOfficerInput = document.getElementById('to_accountable_officer');
     const receivedByInput = document.getElementById('received_by');
-    
+
     if (clearBtn && toOfficerInput) {
       clearBtn.addEventListener('click', function(e) {
         e.preventDefault();
@@ -394,32 +398,32 @@ if (!empty($_SESSION['flash'])) {
       // Listen for input changes (typing, selection from datalist)
       toOfficerInput.addEventListener('input', function() {
         const selectedName = this.value.trim();
-        
+
         // Check if the entered value matches an option in the datalist
         const datalistOptions = document.querySelectorAll('#employeesList option');
-        const matchingOption = Array.from(datalistOptions).find(option => 
+        const matchingOption = Array.from(datalistOptions).find(option =>
           option.value === selectedName
         );
-        
+
         if (matchingOption && selectedName) {
           // Auto-fill received by field
           receivedByInput.value = selectedName;
-          
+
           // Show brief success indicator
           const successIndicator = document.createElement('span');
           successIndicator.className = 'text-success ms-2';
           successIndicator.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
           successIndicator.style.fontSize = '0.875rem';
-          
+
           // Remove any existing indicators
           const existingIndicator = receivedByInput.parentNode.querySelector('.text-success');
           if (existingIndicator) {
             existingIndicator.remove();
           }
-          
+
           // Add new indicator
           receivedByInput.parentNode.appendChild(successIndicator);
-          
+
           // Remove indicator after 2 seconds
           setTimeout(() => {
             if (successIndicator.parentNode) {
@@ -428,7 +432,7 @@ if (!empty($_SESSION['flash'])) {
           }, 2000);
         }
       });
-      
+
       // Also listen for change event (when user selects from datalist)
       toOfficerInput.addEventListener('change', function() {
         const selectedName = this.value.trim();
@@ -444,16 +448,16 @@ if (!empty($_SESSION['flash'])) {
 
     // Handle preselected asset from URL parameters
     <?php if ($preselected_asset): ?>
-    const preselectedAssetId = '<?= $preselected_asset['id'] ?>';
-    selectedAssetIds.add(preselectedAssetId);
-    const preselectedOption = document.querySelector(`#assetsList option[data-id="${preselectedAssetId}"]`);
-    if (preselectedOption) preselectedOption.style.display = 'none';
-    const firstRow = table.querySelector('tr');
-    if (firstRow) {
-      const descriptionInput = firstRow.querySelector('input[name="description[]"]');
-      if (descriptionInput) descriptionInput.dataset.selectedAssetId = preselectedAssetId;
-    }
-    <?php endif; ?>
+      const preselectedAssetId = '<?= $preselected_asset['id'] ?>';
+      selectedAssetIds.add(preselectedAssetId);
+      const preselectedOption = document.querySelector(`#assetsList option[data-id="${preselectedAssetId}"]`);
+      if (preselectedOption) preselectedOption.style.display = 'none';
+      const firstRow = table.querySelector('tr');
+      if (firstRow) {
+        const descriptionInput = firstRow.querySelector('input[name="description[]"]');
+        if (descriptionInput) descriptionInput.dataset.selectedAssetId = preselectedAssetId;
+      }
+    <?php endif;?>
 
     function clearAssetRow(row) {
       const descriptionInput = row.querySelector('input[name="description[]"]');
@@ -464,12 +468,16 @@ if (!empty($_SESSION['flash'])) {
         if (option) option.style.display = '';
         delete descriptionInput.dataset.selectedAssetId;
       }
-      row.querySelectorAll('input').forEach(input => input.value = '');
+      row.querySelectorAll('input').forEach(input => {
+        if (input.name === 'item_no[]') return; // keep item numbering
+        input.value = '';
+      });
     }
 
     // Helper function to map asset status to PPE condition
     function getConditionFromStatus(status) {
-      switch (status?.toLowerCase()) {
+      const s = (status || '').toLowerCase();
+      switch (s) {
         case 'available':
         case 'serviceable':
           return 'Serviceable';
@@ -485,43 +493,64 @@ if (!empty($_SESSION['flash'])) {
     }
 
     function onDescriptionSelected(input) {
-  const val = input.value;
-  const option = Array.from(document.getElementById('assetsList').options)
-                      .find(opt => opt.value === val);
-  if (option) {
-    const assetId = option.dataset.id;
+      const val = input.value;
+      const option = Array.from(document.getElementById('assetsList').options)
+        .find(opt => opt.value === val);
+      if (option) {
+        const assetId = option.dataset.id;
 
-    // Prevent duplicate selection
-    if (selectedAssetIds.has(assetId)) {
-      alert('This asset has already been selected in another row.');
-      input.value = '';
-      return;
+        // Prevent duplicate selection
+        if (selectedAssetIds.has(assetId)) {
+          alert('This asset has already been selected in another row.');
+          input.value = '';
+          return;
+        }
+
+        // Update hidden input with asset_id
+        const row = input.closest('tr');
+        const assetIdInput = row.querySelector('input[name="asset_id[]"]');
+        if (assetIdInput) assetIdInput.value = assetId;
+
+        // Fill other fields from selected option
+        const dateInput = row.querySelector('input[name="date_acquired[]"]');
+        const propInput = row.querySelector('input[name="property_no[]"]');
+        const amountInput = row.querySelector('input[name="amount[]"]');
+        if (dateInput) dateInput.value = option.dataset.acquisition_date || '';
+        if (propInput) propInput.value = option.dataset.property_no || '';
+        if (amountInput) amountInput.value = option.dataset.value || '';
+
+        // Set condition based on asset status
+        row.querySelector('input[name="condition_of_PPE[]"]').value = getConditionFromStatus(option.dataset.status);
+
+        // Track selected
+        input.dataset.selectedAssetId = assetId;
+        option.style.display = 'none';
+        selectedAssetIds.add(assetId);
+      }
     }
 
-    // Update hidden input with asset_id
-    const row = input.closest('tr');
-    row.querySelector('input[name="asset_id[]"]').value = assetId;
+    // Renumber Item No. based on current row order (1-based)
+    function renumberItemNos() {
+      const rows = table.querySelectorAll('tr');
+      rows.forEach((row, index) => {
+        const input = row.querySelector('input[name="item_no[]"]');
+        if (input) input.value = String(index + 1);
+      });
+    }
 
-    // Fill other fields
-    row.querySelector('input[name="date_acquired[]"]').value = option.dataset.acquisition_date || '';
-    row.querySelector('input[name="property_no[]"]').value = option.dataset.property_no || '';
-    row.querySelector('input[name="amount[]"]').value = option.dataset.value || '';
-    row.querySelector('input[name="condition_of_PPE[]"]').value = getConditionFromStatus(option.dataset.status);
-    
-    // Track selected
-    input.dataset.selectedAssetId = assetId;
-    option.style.display = 'none';
-    selectedAssetIds.add(assetId);
-  }
-}
-
+    // Initial numbering
+    renumberItemNos();
 
     document.getElementById('addRow').addEventListener('click', function() {
       const newRow = document.createElement('tr');
       newRow.innerHTML = `
         <td><input type="date" name="date_acquired[]" class="form-control shadow"></td>
+        <td><input type="text" name="item_no[]" class="form-control shadow" value=""></td>
         <td><input type="text" name="property_no[]" class="form-control property-search shadow"></td>
-        <td><input type="text" name="description[]" class="form-control asset-search shadow" list="assetsList" placeholder="Search description or property no"></td>
+        <td>
+          <input type="hidden" name="asset_id[]" value="">
+          <input type="text" name="description[]" class="form-control asset-search shadow" list="assetsList" placeholder="Search description or property no">
+        </td>
         <td><input type="number" step="0.01" name="amount[]" class="form-control shadow"></td>
         <td><input type="text" name="condition_of_PPE[]" class="form-control shadow"></td>
         <td>
@@ -534,6 +563,7 @@ if (!empty($_SESSION['flash'])) {
         </td>
       `;
       table.appendChild(newRow);
+      renumberItemNos();
     });
 
     table.addEventListener('click', function(e) {
@@ -547,6 +577,7 @@ if (!empty($_SESSION['flash'])) {
           // Clear any selected asset data before removing
           clearAssetRow(row);
           row.remove();
+          renumberItemNos();
         } else {
           // If it's the last row, just clear it instead of removing
           clearAssetRow(row);
