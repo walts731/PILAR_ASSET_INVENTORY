@@ -142,6 +142,14 @@ if (!empty($par['items'])) {
           <td>' . number_format((float)($item['amount'] ?? 0), 2) . '</td>
         </tr>';
     }
+    
+    // Add "nothing follows" row if there are items
+    if (!empty($par['items'])) {
+        $html .= '
+        <tr>
+          <td colspan="7" style="text-align: center; font-style: italic; padding: 6px 0; border-top: 1px solid #000;">— NOTHING FOLLOWS —</td>
+        </tr>';
+    }
 } else {
     $html .= '<tr><td colspan="7">No items found.</td></tr>';
 }
