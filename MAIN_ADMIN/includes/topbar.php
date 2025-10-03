@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../connect.php';
 
 // Get current file name without extension
@@ -264,35 +264,7 @@ $low_stock_count = count($low_stock_items);
               <span class="mx-1 text-muted"> &gt; </span>
               <span class="text-dark">Create Red Tag</span>
             </h5>';
-    } elseif ($current_page === 'create_mr') {
-      // Show PAR breadcrumb if par_id present; otherwise default to ICS breadcrumb
-      $formId = isset($_GET['form_id']) ? intval($_GET['form_id']) : 0;
-      $parId = isset($_GET['par_id']) ? intval($_GET['par_id']) : 0;
-      $assetId = isset($_GET['asset_id']) ? intval($_GET['asset_id']) : 0;
-      if ($parId > 0) {
-        $cmrLink = 'create_mr.php?asset_id=' . $assetId . '&par_id=' . $parId . '&form_id=' . $formId;
-        echo '<h5 class="m-0 text-center text-sm-start">
-                <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
-                <span class="mx-1 text-muted"> &gt; </span>
-                <a href="saved_par.php?id=' . $formId . '" class="text-decoration-none text-primary">Saved PAR</a>
-                <span class="mx-1 text-muted"> &gt; </span>
-                <a href="view_par.php?id=' . $parId . '&form_id=' . $formId . '" class="text-decoration-none text-primary">View PAR</a>
-                <span class="mx-1 text-muted"> &gt; </span>
-                <span class="text-dark">Create Property Tag</span>
-              </h5>';
-      } else {
-        $icsId = isset($_GET['ics_id']) ? intval($_GET['ics_id']) : 0;
-        echo '<h5 class="m-0 text-center text-sm-start">
-                <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
-                <span class="mx-1 text-muted"> &gt; </span>
-                <a href="saved_ics.php?id=' . $formId . '" class="text-decoration-none text-primary">Saved ICS</a>
-                <span class="mx-1 text-muted"> &gt; </span>
-                <a href="view_ics.php?id=' . $icsId . '&form_id=' . $formId . '" class="text-decoration-none text-primary">View ICS</a>
-                <span class="mx-1 text-muted"> &gt; </span>
-                <span class="text-dark">Create Property Tag</span>
-              </h5>';
-      }
-    } elseif ($current_page === 'saved_ris') {
+    }  elseif ($current_page === 'saved_ris') {
       $formId = isset($_GET['id']) ? intval($_GET['id']) : 0;
       echo '<h5 class="m-0 text-center text-sm-start">
               <a href="forms.php?id=' . $formId . '" class="text-decoration-none text-primary">Forms</a>
@@ -400,7 +372,7 @@ $low_stock_count = count($low_stock_items);
       </ul>
     </div>
 
-    
+
   </div>
 </div>
 
@@ -408,206 +380,183 @@ $low_stock_count = count($low_stock_items);
 <?php include 'modals/change_password_modal.php'; ?>
 
 <script>
-  document.getElementById('showPasswordToggle')?.addEventListener('change', function() {
-    const type = this.checked ? 'text' : 'password';
-    document.getElementById('currentPassword').type = type;
-    document.getElementById('newPassword').type = type;
-    document.getElementById('confirmPassword').type = type;
+// ================= Password Toggle =================
+document.getElementById('showPasswordToggle')?.addEventListener('change', function() {
+  const type = this.checked ? 'text' : 'password';
+  ['currentPassword','newPassword','confirmPassword'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.type = type;
   });
+});
 
-  // Bootstrap validation
-  (() => {
-    'use strict';
-    const forms = document.querySelectorAll('.needs-validation');
-    Array.from(forms).forEach(form => {
-      form.addEventListener('submit', event => {
-        if (!form.checkValidity()) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-        form.classList.add('was-validated');
-      }, false);
-    });
-  })();
-
-  // Theme Toggle Functionality
-  document.addEventListener('DOMContentLoaded', function() {
-    // Theme Toggle
-    const themeToggle = document.getElementById('themeToggle');
-    const themeIcon = document.getElementById('themeIcon');
-
-    if (themeToggle && themeIcon) {
-      // Handle theme toggle click
-      themeToggle.addEventListener('click', function() {
-        fetch('../includes/dark_mode_helper.php', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'toggle_dark_mode=1'
-          })
-          .then(response => response.json())
-          .then(data => {
-            // Toggle dark mode class on body and html
-            document.body.classList.toggle('dark-mode', data.dark_mode);
-            document.documentElement.classList.toggle('dark-mode', data.dark_mode);
-
-            // Update the icon and title
-            updateThemeIcon(themeToggle, themeIcon, data.dark_mode);
-          })
-          .catch(error => {
-            console.error('Error toggling dark mode:', error);
-          });
-      });
-
-      // Initialize theme icon based on current mode
-      const isDarkMode = document.body.classList.contains('dark-mode');
-      updateThemeIcon(themeToggle, themeIcon, isDarkMode);
-    }
-
-    // Low stock notification
-    const lowStockCard = document.getElementById('lowStockCard');
-    const consumablesTab = document.querySelector('#consumables-tab');
-
-    if (lowStockCard && consumablesTab) {
-      const tab = new bootstrap.Tab(consumablesTab);
-      lowStockCard.addEventListener('click', function() {
-        tab.show();
-        setTimeout(() => {
-          const lowStockRow = document.querySelector('#consumablesTable tbody tr[data-stock="low"]');
-          if (lowStockRow) {
-            lowStockRow.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center'
-            });
-            lowStockRow.classList.add('highlight-row');
-            setTimeout(() => {
-              lowStockRow.classList.remove('highlight-row');
-            }, 2000);
-          }
-        }, 300);
-      });
-    }
-
-    // Helper function to update theme icon and title
-    function updateThemeIcon(toggle, icon, isDark) {
-      if (isDark) {
-        icon.classList.remove('bi-moon-fill');
-        icon.classList.add('bi-sun-fill');
-        toggle.title = 'Switch to Light Mode';
-      } else {
-        icon.classList.remove('bi-sun-fill');
-        icon.classList.add('bi-moon-fill');
-        toggle.title = 'Switch to Dark Mode';
+// ================= Bootstrap Form Validation =================
+(() => {
+  'use strict';
+  const forms = document.querySelectorAll('.needs-validation');
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
       }
-    }
+      form.classList.add('was-validated');
+    }, false);
   });
+})();
 
-  // ================= Global Search =================
-  (function() {
-    const input = document.getElementById('globalSearchInput');
-    const box = document.getElementById('globalSearchResults');
-    if (!input || !box) return;
+// ================= Theme Toggle + Notifications =================
+document.addEventListener('DOMContentLoaded', function() {
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
 
-    let timer = null;
-    let lastQ = '';
-    const esc = (v) => (v == null ? '' : String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+  if (themeToggle && themeIcon) {
+    themeToggle.addEventListener('click', function() {
+      fetch('../includes/dark_mode_helper.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'toggle_dark_mode=1'
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.body.classList.toggle('dark-mode', data.dark_mode);
+        document.documentElement.classList.toggle('dark-mode', data.dark_mode);
+        updateThemeIcon(themeToggle, themeIcon, data.dark_mode);
+      })
+      .catch(err => console.error('Error toggling dark mode:', err));
+    });
 
-    function render(list) {
-      if (!list || list.length === 0) {
-        box.innerHTML = '<div class="p-2 text-muted small">No results</div>';
-      } else {
-        box.innerHTML = list.map(it => {
-          // NEW: show Property No specifically (and ICS/PAR)
-const line2 = [
-  (it.property_no ? ('Property No: ' + esc(it.property_no)) : 'Property No: —'),
-  (it.ics_no ? ('ICS: ' + esc(it.ics_no)) : null),
-  (it.par_no ? ('PAR: ' + esc(it.par_no)) : null)
-].filter(Boolean).join(' • ');
-          return `<a href="#" class="list-group-item list-group-item-action global-search-item" data-id="${it.id}">
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    updateThemeIcon(themeToggle, themeIcon, isDarkMode);
+  }
+
+  // Low stock card shortcut
+  const lowStockCard = document.getElementById('lowStockCard');
+  const consumablesTab = document.querySelector('#consumables-tab');
+  if (lowStockCard && consumablesTab) {
+    const tab = new bootstrap.Tab(consumablesTab);
+    lowStockCard.addEventListener('click', function() {
+      tab.show();
+      setTimeout(() => {
+        const lowStockRow = document.querySelector('#consumablesTable tbody tr[data-stock="low"]');
+        if (lowStockRow) {
+          lowStockRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          lowStockRow.classList.add('highlight-row');
+          setTimeout(() => lowStockRow.classList.remove('highlight-row'), 2000);
+        }
+      }, 300);
+    });
+  }
+
+  function updateThemeIcon(toggle, icon, isDark) {
+    if (isDark) {
+      icon.classList.remove('bi-moon-fill');
+      icon.classList.add('bi-sun-fill');
+      toggle.title = 'Switch to Light Mode';
+    } else {
+      icon.classList.remove('bi-sun-fill');
+      icon.classList.add('bi-moon-fill');
+      toggle.title = 'Switch to Dark Mode';
+    }
+  }
+});
+
+// ================= Global Search =================
+(function() {
+  const input = document.getElementById('globalSearchInput');
+  const box = document.getElementById('globalSearchResults');
+  if (!input || !box) return;
+
+  let timer = null;
+  let lastQ = '';
+
+  const esc = (v) => (v == null ? '' : String(v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;'));
+
+  function render(list) {
+    if (!list || list.length === 0) {
+      box.innerHTML = '<div class="p-2 text-muted small">No results</div>';
+    } else {
+      box.innerHTML = list.map(it => {
+        const line2 = [
+          it.property_no ? 'Property No: ' + esc(it.property_no) : 'Property No: —',
+          it.ics_no ? 'ICS: ' + esc(it.ics_no) : null,
+          it.par_no ? 'PAR: ' + esc(it.par_no) : null
+        ].filter(Boolean).join(' • ');
+        return `<a href="#" class="list-group-item list-group-item-action global-search-item" data-id="${it.id}">
                   <div class="fw-semibold">${esc(it.description)}</div>
                   <div class="small text-muted">${esc(line2)}</div>
                 </a>`;
-        }).join('');
-      }
-      box.style.display = 'block';
+      }).join('');
     }
+    box.style.display = 'block';
+  }
 
-    function search(q) {
-      if (!q || q.length < 2) {
-        box.style.display = 'none';
-        return;
-      }
-      fetch('search_assets.php?q=' + encodeURIComponent(q))
-        .then(r => r.json())
-        .then(data => render(Array.isArray(data.results) ? data.results : []))
-        .catch(() => render([]));
-    }
-
-    input.addEventListener('input', () => {
-      const q = input.value.trim();
-      if (q === lastQ) return;
-      lastQ = q;
-      clearTimeout(timer);
-      timer = setTimeout(() => search(q), 250);
-    });
-
-    input.addEventListener('focus', () => {
-      if (box.innerHTML) box.style.display = 'block';
-    });
-    input.addEventListener('blur', () => setTimeout(() => {
+  function search(q) {
+    if (!q || q.length < 2) {
       box.style.display = 'none';
-    }, 250));
+      return;
+    }
+    fetch('search_assets.php?q=' + encodeURIComponent(q))
+      .then(r => r.json())
+      .then(data => render(Array.isArray(data.results) ? data.results : []))
+      .catch(() => render([]));
+  }
 
-    box.addEventListener('mousedown', (e) => {
-        // Prevent input blur from hiding results before click handler runs
-        e.preventDefault();
-      });
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    if (q === lastQ) return;
+    lastQ = q;
+    clearTimeout(timer);
+    timer = setTimeout(() => search(q), 250);
+  });
 
-    box.addEventListener('click', (e) => {
-      const a = e.target.closest('.global-search-item');
-      if (!a) return;
-      e.preventDefault();
+  input.addEventListener('focus', () => {
+    if (box.innerHTML) box.style.display = 'block';
+  });
+  input.addEventListener('blur', () => setTimeout(() => {
+    box.style.display = 'none';
+  }, 250));
 
-      const id = a.getAttribute('data-id');
-      const content = document.getElementById('globalAssetContent');
-      if (content) content.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border text-primary"></div><div>Loading...</div></div>';
+  box.addEventListener('mousedown', (e) => e.preventDefault());
 
-      // Reuse existing details endpoint
-      fetch('get_asset_details.php?id=' + encodeURIComponent(id))
-        .then(r => r.json())
-        .then(resp => {
-          const d = (resp && resp.asset) ? resp.asset : resp;
-          if (!d || d.error) {
-            content.innerHTML = '<div class="text-danger">Failed to load details.</div>';
-            return;
-          }
-          // Build professional, organized details view
-const statusBadge = (() => {
-  const s = (d.status || '').toLowerCase();
-  const map = { available: 'success', borrowed: 'warning', unserviceable: 'danger', red_tagged: 'danger' };
-  const cls = map[s] || 'secondary';
-  return `<span class="badge bg-${cls} text-uppercase">${esc(d.status || 'N/A')}</span>`;
-})();
+  box.addEventListener('click', (e) => {
+    const a = e.target.closest('.global-search-item');
+    if (!a) return;
+    e.preventDefault();
 
-const chips = (label, value) => {
-  if (!value) return '';
-  return `<span class="badge rounded-pill text-bg-light border me-1">${label}: ${esc(value)}</span>`;
-};
+    const id = a.getAttribute('data-id');
+    const content = document.getElementById('globalAssetContent');
+    if (content) {
+      content.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border text-primary"></div><div>Loading...</div></div>';
+    }
 
-const img = d.image
-  ? `<img src="../img/assets/${esc(d.image)}"
-           class="img-fluid rounded border"
-           style="width:100%;max-height:300px;object-fit:cover;"
-           alt="Asset">`
-  : `<div class="border rounded d-flex align-items-center justify-content-center bg-light"
-           style="width:100%;height:300px;">
-       <i class="bi bi-image text-muted" style="font-size:3rem;"></i>
-     </div>`;
+    fetch('get_asset_details.php?id=' + encodeURIComponent(id))
+      .then(r => r.json())
+      .then(resp => {
+        const d = (resp && resp.asset) ? resp.asset : resp;
+        if (!d || d.error) {
+          if (content) content.innerHTML = '<div class="text-danger">Failed to load details.</div>';
+          return;
+        }
 
-content.innerHTML = `
+        const statusBadge = (() => {
+          const s = (d.status || '').toLowerCase();
+          const map = { available: 'success', borrowed: 'warning', unserviceable: 'danger', red_tagged: 'danger' };
+          return `<span class="badge bg-${map[s] || 'secondary'} text-uppercase">${esc(d.status || 'N/A')}</span>`;
+        })();
+
+        const chips = (label, value) => value ? `<span class="badge rounded-pill text-bg-light border me-1">${label}: ${esc(value)}</span>` : '';
+
+        const img = d.image
+          ? `<img src="../img/assets/${esc(d.image)}" class="img-fluid rounded border" style="width:100%;max-height:300px;object-fit:cover;" alt="Asset">`
+          : `<div class="border rounded d-flex align-items-center justify-content-center bg-light" style="width:100%;height:300px;">
+               <i class="bi bi-image text-muted" style="font-size:3rem;"></i>
+             </div>`;
+
+        content.innerHTML = `
   <div class="container-fluid">
-    <!-- Header -->
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
       <div>
         <h5 class="mb-1">${esc(d.description || 'Unnamed Asset')}</h5>
@@ -620,143 +569,86 @@ content.innerHTML = `
     </div>
 
     <div class="row g-3">
-      <!-- Left: Image -->
       <div class="col-md-5">
-        <div class="card h-100">
-          <div class="card-body p-2">
-            ${img}
-          </div>
-        </div>
+        <div class="card h-100"><div class="card-body p-2">${img}</div></div>
       </div>
 
-      <!-- Right: Details -->
       <div class="col-md-7">
         <div class="card mb-3">
-          <div class="card-header bg-light fw-semibold">
-            Identification
-          </div>
+          <div class="card-header bg-light fw-semibold">Identification</div>
           <div class="card-body">
             <div class="row g-2">
-              <div class="col-sm-6">
-                <div class="small text-muted">Property No.</div>
-                <div class="fw-semibold">${esc(d.property_no || '—')}</div>
-              </div>
-              <div class="col-sm-6">
-                <div class="small text-muted">Inventory Tag</div>
-                <div class="fw-semibold">${esc(d.inventory_tag || '—')}</div>
-              </div>
-              <div class="col-sm-6">
-                <div class="small text-muted">Brand</div>
-                <div class="fw-semibold">${esc(d.brand || '—')}</div>
-              </div>
-              <div class="col-sm-6">
-                <div class="small text-muted">Model</div>
-                <div class="fw-semibold">${esc(d.model || '—')}</div>
-              </div>
-              <div class="col-sm-6">
-                <div class="small text-muted">Serial No.</div>
-                <div class="fw-semibold">${esc(d.serial_no || '—')}</div>
-              </div>
-              <div class="col-sm-6">
-                <div class="small text-muted">Unit / Quantity</div>
-                <div class="fw-semibold">${esc(d.unit || '—')} • ${esc(d.quantity || '0')}</div>
-              </div>
+              <div class="col-sm-6"><div class="small text-muted">Property No.</div><div class="fw-semibold">${esc(d.property_no || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Inventory Tag</div><div class="fw-semibold">${esc(d.inventory_tag || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Brand</div><div class="fw-semibold">${esc(d.brand || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Model</div><div class="fw-semibold">${esc(d.model || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Serial No.</div><div class="fw-semibold">${esc(d.serial_no || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Unit / Quantity</div><div class="fw-semibold">${esc(d.unit || '—')} • ${esc(d.quantity || '0')}</div></div>
             </div>
           </div>
         </div>
 
         <div class="card mb-3">
-          <div class="card-header bg-light fw-semibold">
-            Assignment
-          </div>
+          <div class="card-header bg-light fw-semibold">Assignment</div>
           <div class="card-body">
             <div class="row g-2">
-              <div class="col-sm-6">
-                <div class="small text-muted">Office</div>
-                <div class="fw-semibold">${esc(d.office_name || '—')}</div>
-              </div>
-              <div class="col-sm-6">
-                <div class="small text-muted">Person Accountable</div>
-                <div class="fw-semibold">${esc(d.employee_name || d.person_accountable || '—')}</div>
-              </div>
-              <div class="col-sm-6">
-                <div class="small text-muted">End User</div>
-                <div class="fw-semibold">${esc(d.end_user || '—')}</div>
-              </div>
+              <div class="col-sm-6"><div class="small text-muted">Office</div><div class="fw-semibold">${esc(d.office_name || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Person Accountable</div><div class="fw-semibold">${esc(d.employee_name || d.person_accountable || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">End User</div><div class="fw-semibold">${esc(d.end_user || '—')}</div></div>
             </div>
           </div>
         </div>
 
         <div class="card mb-3">
-          <div class="card-header bg-light fw-semibold">
-            Documentation
-          </div>
+          <div class="card-header bg-light fw-semibold">Documentation</div>
           <div class="card-body">
-            <div class="mb-2">
-              ${chips('ICS', d.ics_no)}${chips('PAR', d.par_no)}
-            </div>
+            <div class="mb-2">${chips('ICS', d.ics_no)}${chips('PAR', d.par_no)}</div>
             <div class="row g-2">
-              <div class="col-sm-6">
-                <div class="small text-muted">Acquisition Date</div>
-                <div class="fw-semibold">
-                  ${d.acquisition_date ? new Date(d.acquisition_date).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—'}
-                </div>
-              </div>
-              <div class="col-sm-6">
-                <div class="small text-muted">Last Updated</div>
-                <div class="fw-semibold">
-                  ${d.last_updated ? new Date(d.last_updated).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—'}
-                </div>
-              </div>
-              <div class="col-12">
-                <div class="small text-muted">Unit Value</div>
-                <div class="fw-semibold">₱${(parseFloat(d.value||0)||0).toLocaleString(undefined,{minimumFractionDigits:2})}</div>
-              </div>
+              <div class="col-sm-6"><div class="small text-muted">Acquisition Date</div><div class="fw-semibold">${d.acquisition_date ? new Date(d.acquisition_date).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—'}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Last Updated</div><div class="fw-semibold">${d.last_updated ? new Date(d.last_updated).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—'}</div></div>
+              <div class="col-12"><div class="small text-muted">Unit Value</div><div class="fw-semibold">₱${(parseFloat(d.value||0)||0).toLocaleString(undefined,{minimumFractionDigits:2})}</div></div>
             </div>
           </div>
         </div>
 
         <div class="d-flex flex-wrap gap-2">
-          <a class="btn btn-outline-primary btn-sm" href="create_mr.php?asset_id=${d.id}" target="_blank" title="Create/Edit Property Tag">
-            <i class="bi bi-tag"></i> Property Tag
-          </a>
-          <a class="btn btn-outline-secondary btn-sm" href="forms.php?id=2" target="_blank" title="Open Forms">
-            <i class="bi bi-journal-text"></i> Forms
-          </a>
+          <a class="btn btn-outline-primary btn-sm" href="create_mr.php?asset_id=${d.id}" target="_blank"><i class="bi bi-tag"></i> Property Tag</a>
+          <a class="btn btn-outline-secondary btn-sm" href="forms.php?id=2" target="_blank"><i class="bi bi-journal-text"></i> Forms</a>
         </div>
       </div>
     </div>
   </div>`;
-          const modal = new bootstrap.Modal(document.getElementById('globalAssetModal'));
-          modal.show();
-        })
-        .catch(() => {
-          if (content) content.innerHTML = '<div class="text-danger">Failed to load details.</div>';
-        });
-    });
-  })();
-  // ================= End Global Search =================
+
+        const modal = new bootstrap.Modal(document.getElementById('globalAssetModal'));
+        modal.show();
+      })
+      .catch(() => {
+        if (content) content.innerHTML = '<div class="text-danger">Failed to load details.</div>';
+      });
+  });
+})();
 </script>
+
 
 <!-- Global Asset Details Modal -->
 <div class="modal fade" id="globalAssetModal" tabindex="-1" aria-labelledby="globalAssetModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="globalAssetModalLabel">Asset Details</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div id="globalAssetContent">
-              <div class="text-center text-muted py-4">
-                <div class="spinner-border text-primary"></div>
-                <div>Loading...</div>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="globalAssetModalLabel">Asset Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="globalAssetContent">
+          <div class="text-center text-muted py-4">
+            <div class="spinner-border text-primary"></div>
+            <div>Loading...</div>
           </div>
         </div>
       </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
     </div>
+  </div>
+</div>
