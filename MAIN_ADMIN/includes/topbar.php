@@ -612,8 +612,10 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
 
         <div class="d-flex flex-wrap gap-2">
-          <a class="btn btn-outline-primary btn-sm" href="create_mr.php?asset_id=${d.id}" target="_blank"><i class="bi bi-tag"></i> Property Tag</a>
-          <a class="btn btn-outline-secondary btn-sm" href="forms.php?id=2" target="_blank"><i class="bi bi-journal-text"></i> Forms</a>
+          <a class="btn btn-outline-primary btn-sm" href="create_MR.php?asset_id=${d.id}" target="_blank"><i class="bi bi-tag"></i> Property Tag</a>
+          ${d.ics_id ? `<a class="btn btn-outline-info btn-sm" href="view_ics.php?id=${d.ics_id}&form_id=4" target="_blank"><i class="bi bi-file-earmark-text"></i> View ICS</a>` : ''}
+          ${d.par_id ? `<a class="btn btn-outline-success btn-sm" href="view_par.php?id=${d.par_id}&form_id=3" target="_blank"><i class="bi bi-file-earmark-check"></i> View PAR</a>` : ''}
+          
         </div>
       </div>
     </div>

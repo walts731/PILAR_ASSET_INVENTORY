@@ -27,6 +27,8 @@ if (isset($_GET['id'])) {
     a.brand,
     a.inventory_tag,
     a.end_user,                 -- add this if it's a text/varchar column
+    a.ics_id,                   -- ICS form ID
+    a.par_id,                   -- PAR form ID
     c.category_name,
     c.type AS category_type,
     o.office_name,
