@@ -482,12 +482,12 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       box.innerHTML = list.map(it => {
         const line2 = [
-  it.property_no ? 'Property No: ' + esc(it.property_no) : 'Property No: â€”',
-  it.inventory_tag ? 'Inventory Tag: ' + esc(it.inventory_tag) : null,
-  it.serial_no ? 'Serial No: ' + esc(it.serial_no) : null,
-  it.ics_no ? 'ICS: ' + esc(it.ics_no) : null,
-  it.par_no ? 'PAR: ' + esc(it.par_no) : null
-].filter(Boolean).join(' â€¢ ');
+          it.property_no ? 'Property No: ' + esc(it.property_no) : 'Property No: —',
+          it.inventory_tag ? 'Inventory Tag: ' + esc(it.inventory_tag) : null,
+          it.serial_no ? 'Serial No: ' + esc(it.serial_no) : null,
+          it.ics_no ? 'ICS: ' + esc(it.ics_no) : null,
+          it.par_no ? 'PAR: ' + esc(it.par_no) : null
+        ].filter(Boolean).join(' • ');
         return `<a href="#" class="list-group-item list-group-item-action global-search-item" data-id="${it.id}">
                   <div class="fw-semibold">${esc(it.description)}</div>
                   <div class="small text-muted">${esc(line2)}</div>
@@ -566,7 +566,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <h5 class="mb-1">${esc(d.description || 'Unnamed Asset')}</h5>
         <div class="text-muted small">
           ${esc(d.category_name || 'Uncategorized')}
-          ${d.code ? ' ï¿½ Code: ' + esc(d.code) : ''}
+          ${d.code ? ' • Code: ' + esc(d.code) : ''}
         </div>
       </div>
       <div>${statusBadge}</div>
@@ -582,12 +582,12 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="card-header bg-light fw-semibold">Identification</div>
           <div class="card-body">
             <div class="row g-2">
-              <div class="col-sm-6"><div class="small text-muted">Property No.</div><div class="fw-semibold">${esc(d.property_no || 'ï¿½')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Inventory Tag</div><div class="fw-semibold">${esc(d.inventory_tag || 'ï¿½')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Brand</div><div class="fw-semibold">${esc(d.brand || 'ï¿½')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Model</div><div class="fw-semibold">${esc(d.model || 'ï¿½')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Serial No.</div><div class="fw-semibold">${esc(d.serial_no || 'ï¿½')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Unit / Quantity</div><div class="fw-semibold">${esc(d.unit || 'ï¿½')} ï¿½ ${esc(d.quantity || '0')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Property No.</div><div class="fw-semibold">${esc(d.property_no || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Inventory Tag</div><div class="fw-semibold">${esc(d.inventory_tag || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Brand</div><div class="fw-semibold">${esc(d.brand || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Model</div><div class="fw-semibold">${esc(d.model || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Serial No.</div><div class="fw-semibold">${esc(d.serial_no || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Unit / Quantity</div><div class="fw-semibold">${esc(d.unit || '—')} • ${esc(d.quantity || '0')}</div></div>
             </div>
           </div>
         </div>
@@ -596,9 +596,9 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="card-header bg-light fw-semibold">Assignment</div>
           <div class="card-body">
             <div class="row g-2">
-              <div class="col-sm-6"><div class="small text-muted">Office</div><div class="fw-semibold">${esc(d.office_name || 'ï¿½')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Person Accountable</div><div class="fw-semibold">${esc(d.employee_name || d.person_accountable || 'ï¿½')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">End User</div><div class="fw-semibold">${esc(d.end_user || 'ï¿½')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Office</div><div class="fw-semibold">${esc(d.office_name || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Person Accountable</div><div class="fw-semibold">${esc(d.employee_name || d.person_accountable || '—')}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">End User</div><div class="fw-semibold">${esc(d.end_user || '—')}</div></div>
             </div>
           </div>
         </div>
@@ -608,8 +608,8 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="card-body">
             <div class="mb-2">${chips('ICS', d.ics_no)}${chips('PAR', d.par_no)}</div>
             <div class="row g-2">
-              <div class="col-sm-6"><div class="small text-muted">Acquisition Date</div><div class="fw-semibold">${d.acquisition_date ? new Date(d.acquisition_date).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : 'ï¿½'}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Last Updated</div><div class="fw-semibold">${d.last_updated ? new Date(d.last_updated).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : 'ï¿½'}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Acquisition Date</div><div class="fw-semibold">${d.acquisition_date ? new Date(d.acquisition_date).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—'}</div></div>
+              <div class="col-sm-6"><div class="small text-muted">Last Updated</div><div class="fw-semibold">${d.last_updated ? new Date(d.last_updated).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—'}</div></div>
               <div class="col-12"><div class="small text-muted">Unit Value</div><div class="fw-semibold">?${(parseFloat(d.value||0)||0).toLocaleString(undefined,{minimumFractionDigits:2})}</div></div>
             </div>
           </div>
