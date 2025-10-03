@@ -480,12 +480,14 @@ if (!empty($_SESSION['flash'])) {
 
       employeeAssets.forEach(asset => {
         const option = document.createElement('option');
-        option.value = `${asset.description} (${asset.property_no || 'No Property No'})`;
+        option.value = asset.description; // Only description for insertion
+        option.label = `${asset.description} (${asset.property_no || 'No Property No'})`; // Display text with property no
         option.dataset.id = asset.id;
         option.dataset.property_no = asset.property_no || '';
         option.dataset.acquisition_date = asset.acquisition_date || '';
         option.dataset.value = asset.value || '';
         option.dataset.status = asset.status || '';
+        option.dataset.displayText = `${asset.description} (${asset.property_no || 'No Property No'})`; // For display reference
         assetsDatalist.appendChild(option);
       });
 
@@ -703,9 +705,22 @@ if (!empty($_SESSION['flash'])) {
     }
 
     function onDescriptionSelected(input) {
-      const val = input.value;
-      const option = Array.from(document.getElementById('assetsList').options)
-        .find(opt => opt.value === val);
+      const val = input.value.trim();
+      const options = Array.from(document.getElementById('assetsList').options);
+      
+      // Try exact match first (description only)
+      let option = options.find(opt => opt.value === val);
+      
+      // If no exact match, try to find by display text (description + property no)
+      if (!option) {
+        option = options.find(opt => opt.dataset.displayText === val);
+      }
+      
+      // If still no match, try partial match on description
+      if (!option) {
+        option = options.find(opt => opt.value.toLowerCase().includes(val.toLowerCase()));
+      }
+      
       if (option) {
         const assetId = option.dataset.id;
 
@@ -715,6 +730,9 @@ if (!empty($_SESSION['flash'])) {
           input.value = '';
           return;
         }
+
+        // Set the input value to just the description (clean)
+        input.value = option.value;
 
         // Update hidden input with asset_id
         const row = input.closest('tr');
@@ -726,7 +744,17 @@ if (!empty($_SESSION['flash'])) {
         const propInput = row.querySelector('input[name="property_no[]"]');
         const amountInput = row.querySelector('input[name="amount[]"]');
         if (dateInput) dateInput.value = option.dataset.acquisition_date || '';
-        if (propInput) propInput.value = option.dataset.property_no || '';
+        
+        // Format property number as ICS/PAR based on value
+        if (propInput) {
+          const assetValue = parseFloat(option.dataset.value || 0);
+          const propertyNo = option.dataset.property_no || '';
+          if (propertyNo) {
+            const icsParFormat = assetValue >= 50000 ? `PAR: ${propertyNo}` : `ICS: ${propertyNo}`;
+            propInput.value = icsParFormat;
+          }
+        }
+        
         if (amountInput) amountInput.value = option.dataset.value || '';
 
         // Set condition based on asset status
