@@ -100,7 +100,7 @@ if ($result && $result->num_rows > 0) {
   <script>
     $(document).ready(function () {
       $('#risTable').DataTable({
-        order: [[6, 'desc']] // sort by Date column
+        order: [[6, 'asc']] // sort by Date column
       });
     });
   </script>

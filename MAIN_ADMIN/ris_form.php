@@ -129,7 +129,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
       <?php for ($i = 0; $i < 1; $i++): ?>
         <tr>
           <input type="hidden" name="asset_id[]">
-          <td><input type="text" class="form-control shadow" name="stock_no[]"></td>
+          <td><input type="text" class="form-control shadow" name="stock_no[]" value="1" readonly></td>
           <td>
             <select name="unit[]" class="form-select shadow">
               <option value="" disabled selected>Select Unit</option>
@@ -309,17 +309,14 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
             assetIdInput.value = option ? option.dataset.id : "";
           }
 
-          // Autofill stock_no (property_no)
-          if (stockNoInput && option.dataset.property) {
-            stockNoInput.value = option.dataset.property;
-          }
+          // Stock number is auto-incremental, no need to fill from property
 
         } else {
           reqQtyInput.removeAttribute("max");
           reqQtyInput.placeholder = "";
           unitSelect.value = "";
           if (priceInput) priceInput.value = "";
-          if (stockNoInput) stockNoInput.value = "";
+          // Keep stock number as is (incremental)
         }
 
         updateDatalist();
@@ -329,34 +326,50 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
     // Add Row button click - clones structure consistent with the first row
     function addRow() {
       const newRow = document.createElement("tr");
+      
+      // Get the unit options from the existing select
+      const existingSelect = document.querySelector("select[name='unit[]']");
+      const unitOptions = existingSelect ? existingSelect.innerHTML : '<option value="" disabled selected>Select Unit</option>';
+      
       newRow.innerHTML = `
-        <input type=\"hidden\" name=\"asset_id[]\">\n
-        <td><input type=\"text\" class=\"form-control shadow\" name=\"stock_no[]\"></td>\n
-        <td>\n
-          <select name=\"unit[]\" class=\"form-select shadow\">\n
-            <option value=\"\" disabled selected>Select Unit</option>\n
-            ${document.querySelector("select[name='unit[]']").innerHTML.split('\n').slice(1).join('\n')}\n
-          </select>\n
-        </td>\n
-        <td style=\"position: relative;\">\n
-          <div class=\"input-group\">\n
-            <input type=\"text\" class=\"form-control description-input shadow\" name=\"description[]\" autocomplete=\"off\">\n
-            <button type=\"button\" class=\"btn btn-link p-0 ms-1 text-danger clear-description\" style=\"border: none;\">&times;</button>\n
-          </div>\n
-        </td>\n
-        <td><input type=\"number\" class=\"form-control shadow\" name=\"req_quantity[]\" min=\"1\"></td>\n
-        <td><input type=\"number\" step=\"0.01\" class=\"form-control shadow\" name=\"price[]\"></td>\n
-        <td><input type=\"text\" class=\"form-control total shadow\" name=\"total[]\" readonly></td>\n
-        <td><button type=\"button\" class=\"btn btn-outline-danger btn-sm remove-row\">Remove</button></td>\n
+        <input type="hidden" name="asset_id[]">
+        <td><input type="text" class="form-control shadow" name="stock_no[]" readonly></td>
+        <td>
+          <select name="unit[]" class="form-select shadow">
+            ${unitOptions}
+          </select>
+        </td>
+        <td style="position: relative;">
+          <div class="input-group">
+            <input type="text" class="form-control description-input shadow" name="description[]" autocomplete="off">
+            <button type="button" class="btn btn-link p-0 ms-1 text-danger clear-description" style="border: none;">&times;</button>
+          </div>
+        </td>
+        <td><input type="number" class="form-control shadow" name="req_quantity[]" min="1"></td>
+        <td><input type="number" step="0.01" class="form-control shadow" name="price[]"></td>
+        <td><input type="text" class="form-control total shadow" name="total[]" readonly></td>
+        <td><button type="button" class="btn btn-outline-danger btn-sm remove-row">Remove</button></td>
       `;
-      tableBody.appendChild(newRow);
+      
+      document.querySelector("table tbody").appendChild(newRow);
+      
+      // Set incremental stock number
+      updateStockNumbers();
+      
       bindRowEvents(newRow);
       updateDatalist();
     }
 
+    // Function to update stock numbers sequentially
+    function updateStockNumbers() {
+      const stockInputs = document.querySelectorAll("input[name='stock_no[]']");
+      stockInputs.forEach((input, index) => {
+        input.value = index + 1;
+      });
+    }
+
     // Initial bind for existing rows
     document.querySelectorAll("tbody tr").forEach(row => bindRowEvents(row));
-    
     const addBtn = document.getElementById("addRowBtn");
     if (addBtn) addBtn.addEventListener("click", addRow);
 
@@ -377,7 +390,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         reqQtyInput.value = "";
         unitSelect.value = "";
         priceInput.value = "";
-        if (stockNoInput) stockNoInput.value = "";
+        // Keep stock number as is (incremental)
         if (totalField) totalField.value = "";
 
         descInput.dispatchEvent(new Event("input"));
@@ -394,6 +407,8 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
       const rows = tableBody.querySelectorAll('tr');
       if (rows.length > 1) {
         row.remove();
+        // Update stock numbers after removing a row
+        updateStockNumbers();
       } else {
         // Clear the single remaining row
         let descInput = row.querySelector('.description-input');
@@ -407,7 +422,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         if (reqQtyInput) { reqQtyInput.removeAttribute('max'); reqQtyInput.placeholder=''; reqQtyInput.value = ''; }
         if (unitSelect) unitSelect.value = '';
         if (priceInput) priceInput.value = '';
-        if (stockNoInput) stockNoInput.value = '';
+        if (stockNoInput) stockNoInput.value = '1';
         if (totalField) totalField.value = '';
       }
     });
