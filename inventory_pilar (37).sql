@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 29, 2025 at 05:16 PM
+-- Generation Time: Oct 03, 2025 at 03:04 PM
 -- Server version: 10.6.15-MariaDB
 -- PHP Version: 8.2.12
 
@@ -58,6 +58,18 @@ INSERT INTO `activity_log` (`log_id`, `user_id`, `activity`, `timestamp`, `modul
 (8, 1, 'Borrowed 5 IT Equipment', '2025-04-02 04:15:00', 'Inventory Management'),
 (9, 1, 'Transferred 10 Office Supplies to Admin', '2025-04-02 05:20:00', 'Inventory Management'),
 (10, 1, 'Added 30 IT Equipment to inventory', '2025-04-02 06:25:00', 'Inventory Management');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `app_settings`
+--
+
+CREATE TABLE `app_settings` (
+  `key` varchar(64) NOT NULL,
+  `value` varchar(255) DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -145,7 +157,7 @@ INSERT INTO `assets` (`id`, `asset_name`, `category`, `description`, `quantity`,
 (5, 'Battey AA', NULL, 'Battey AA', 9, 9, 'pcs', 'available', '2025-09-29', 4, NULL, NULL, 0, '2025-09-29 12:01:38', 85.00, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, '', NULL, 0, 1, 0, 0),
 (6, 'Battery AAA', NULL, 'Battery AAA', 9, 9, 'pcs', 'available', '2025-09-29', 4, NULL, NULL, 0, '2025-09-29 12:01:38', 75.00, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, '', NULL, 0, 1, 0, 0),
 (7, 'Bond paper long S-20', NULL, 'Bond paper long S-20', 22, 22, 'reams', 'available', '2025-09-29', 4, NULL, NULL, 0, '2025-09-29 12:01:38', 330.00, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, '', NULL, 0, 1, 0, 0),
-(8, 'Wheel Chair', 1, 'Wheel Chair', 1, 0, 'unit', 'unserviceable', '2025-09-29', 4, 12, 'Roberto Cruz', 0, '2025-09-29 12:35:10', 6650.00, '8.png', 'asset', '', '', '2025-OFFEQ-0001', 'PN-2019-05-02-0001-01', '', '', 1, NULL, 1, 'PS-5S-03-F02-01-01', NULL, 0, 1, 0, 0),
+(8, 'Wheel Chair', 1, 'Wheel Chair', 1, 0, 'unit', 'unserviceable', '2025-09-29', 4, 65, 'John Kenneth Litana', 0, '2025-10-02 09:16:07', 6650.00, '8.png', 'asset', '', '', '2025-OFFEQ-0001', 'PN-2019-05-02-0001-01', '', '', 1, NULL, 1, 'PS-5S-03-F02-01-01', NULL, 0, 1, 0, 0),
 (9, 'Wheel Chair', NULL, 'Wheel Chair', 1, 0, 'unit', 'available', '2025-09-29', 4, NULL, NULL, 0, '2025-09-29 12:15:52', 6650.00, '9.png', 'asset', '', '', '', NULL, '', '', 1, NULL, 1, NULL, NULL, 0, 1, 0, 0),
 (10, 'Wheel Chair', NULL, 'Wheel Chair', 1, 0, 'unit', 'available', '2025-09-29', 4, NULL, NULL, 0, '2025-09-29 12:15:52', 6650.00, '10.png', 'asset', '', '', '', NULL, '', '', 1, NULL, 1, NULL, NULL, 0, 1, 0, 0),
 (11, 'Wheel Chair', NULL, 'Wheel Chair', 1, 0, 'unit', 'available', '2025-09-29', 4, NULL, NULL, 0, '2025-09-29 12:15:52', 6650.00, '11.png', 'asset', '', '', '', NULL, '', '', 1, NULL, 1, NULL, NULL, 0, 1, 0, 0),
@@ -175,7 +187,42 @@ INSERT INTO `assets` (`id`, `asset_name`, `category`, `description`, `quantity`,
 (35, 'Wheel Chair', NULL, 'Wheel Chair', 1, 0, 'unit', 'available', '2025-09-29', 4, NULL, NULL, 0, '2025-09-29 12:15:52', 6650.00, '35.png', 'asset', '', '', '', NULL, '', '', 1, NULL, 1, NULL, NULL, 0, 1, 0, 0),
 (36, 'Wheel Chair', NULL, 'Wheel Chair', 1, 0, 'unit', 'available', '2025-09-29', 4, NULL, NULL, 0, '2025-09-29 12:15:52', 6650.00, '36.png', 'asset', '', '', '', NULL, '', '', 1, NULL, 1, NULL, NULL, 0, 1, 0, 0),
 (37, 'Wheel Chair', NULL, 'Wheel Chair', 1, 0, 'unit', 'available', '2025-09-29', 4, NULL, NULL, 0, '2025-09-29 12:15:52', 6650.00, '37.png', 'asset', '', '', '', NULL, '', '', 1, NULL, 1, NULL, NULL, 0, 1, 0, 0),
-(38, 'Notebook i7', NULL, 'Notebook i7', 1, 0, 'unit', 'available', '2025-09-29', 4, NULL, NULL, 0, '2025-09-29 13:24:36', 80245.00, '38.png', 'asset', '', '', '', NULL, '', '', NULL, 2, 2, NULL, NULL, 0, 1, 0, 0);
+(38, 'Notebook i7', 6, 'Notebook i7', 1, 0, 'unit', 'available', '2025-09-29', 4, 13, 'Angela Rizal', 0, '2025-09-30 02:23:42', 80245.00, '38.png', 'asset', '', '', '2025-ICT-0001', 'PN-2019-05-02-0001-01', '', '', NULL, 2, 2, 'PS-5S-03-F02-01-01', NULL, 0, 1, 0, 0),
+(39, 'Laptop AMD Ryzen', 6, 'Laptop AMD Ryzen', 1, 0, 'unit', 'unserviceable', '2025-09-30', 4, 12, 'Roberto Cruz', 1, '2025-09-30 03:04:15', 45000.00, '39.png', 'asset', '', 'SN-DC-2025-0001', '2025-ICT-0001', 'PN-2019-05-02-0001-01', 'Latitude 5430', 'Lenovo', 2, NULL, 3, 'PS-5S-03-F02-01-01', NULL, 0, 1, 0, 0),
+(40, 'Ballpen ', NULL, 'Ballpen ', 3, 3, 'box', 'available', '2025-09-30', 4, NULL, NULL, 0, '2025-09-30 03:09:02', 340.00, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, '', NULL, 0, 1, 0, 0),
+(41, 'Bond paper', NULL, 'Bond paper', 2, 2, 'reams', 'available', '2025-09-30', 4, NULL, NULL, 0, '2025-09-30 03:09:02', 300.00, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, '', NULL, 0, 1, 0, 0),
+(42, 'Tissue', NULL, 'Tissue', 3, 3, 'pcs', 'available', '2025-09-30', 4, NULL, NULL, 0, '2025-09-30 03:09:02', 50.00, '', 'consumable', '', '', '', '', '', '', NULL, NULL, NULL, '', NULL, 0, 1, 0, 0),
+(43, 'Laptop Acer', 6, 'Laptop Acer Aspire 7', 1, 0, 'unit', 'serviceable', '2025-09-30', 4, 86, 'John Kenneth Litana', 0, '2025-09-30 05:09:58', 50000.00, '43.png', 'asset', 'asset_43_1759208840.jpg', 'SN-A7-2025-00001', '2025-ICT-0001', 'PN-2025-0001', 'Aspire 7', 'Acer', NULL, NULL, 4, 'PS-5S-03-F02-01-01', NULL, 0, 1, 0, 0),
+(44, 'Grass cutter', 5, 'Grass cutter', 1, 0, 'unit', 'available', '2025-09-30', 4, 15, 'John Kenneth Litana', 0, '2025-10-01 11:14:57', 18000.00, '44.png', 'asset', '', '', '2025-MACH-0001', 'PN-2019-05-02-0001-01', '', '', 3, NULL, 5, 'PS-5S-03-F02-01-01', NULL, 0, 1, 0, 0),
+(45, 'Grass cutter', NULL, 'Grass cutter', 1, 0, 'unit', 'available', '2025-09-30', 4, NULL, NULL, 0, '2025-09-30 15:34:51', 18000.00, '45.png', 'asset', '', '', '', NULL, '', '', 3, NULL, 5, NULL, NULL, 0, 1, 0, 0),
+(46, 'Power Drill (corded)', 5, 'Power Drill (corded)', 1, 0, 'unit', 'available', '2025-09-30', 4, 61, 'John Legend', 0, '2025-10-03 05:56:37', 3500.00, '46.png', 'asset', '', '', '2025-MACH-0001', 'PN-2019-05-02-0001-01', '', '', 3, NULL, 6, 'PS-5S-03-F02-01-01', NULL, 0, 1, 0, 0),
+(47, 'Printer Epson', NULL, 'Printer Epson', 1, 0, 'unit', 'available', '2025-10-01', 34, NULL, NULL, 0, '2025-10-01 04:00:32', 4500.00, '47.png', 'asset', '', '', '', NULL, '', '', 5, NULL, 7, NULL, NULL, 0, 1, 0, 0),
+(48, 'Ink', NULL, 'Ink', 10, 10, 'pcs', 'available', '2025-10-01', 4, NULL, NULL, 0, '2025-10-01 05:53:42', 58.00, '', 'consumable', '', '', '', '1', '', '', NULL, NULL, NULL, '', NULL, 0, 1, 0, 0),
+(50, 'HP Pavilion', NULL, 'HP Pavilion', 1, 0, 'unit', 'available', '2025-10-01', 7, NULL, NULL, 0, '2025-10-01 15:00:32', 53000.00, '50.png', 'asset', '', '', '', NULL, '', '', NULL, 3, 8, NULL, NULL, 0, 1, 0, 0),
+(51, 'Medical X-Ray Machine', NULL, 'Medical X-Ray Machine', 1, 0, 'unit', 'available', '2025-10-01', 7, NULL, NULL, 0, '2025-10-01 15:00:32', 120000.00, '51.png', 'asset', '', '', '', NULL, '', '', NULL, 3, 9, NULL, NULL, 0, 1, 0, 0),
+(52, 'Conference Table', 2, 'Conference Table', 1, 0, 'unit', 'available', '2025-10-02', 33, 14, 'John Legend', 0, '2025-10-02 10:41:40', 42000.00, '52.png', 'asset', '', 'SN-DC-2025-0001324347', '2025-FUR-0002', 'PN-2019-05-02-0001-01', 'Mesh Back', 'Fursys', 6, NULL, 10, 'PS-5S-03-F02-01-01', NULL, 0, 1, 0, 0),
+(53, 'conference table', 2, 'conference table', 1, 0, 'unit', 'unserviceable', '2025-10-02', 33, 25, 'Jake Paul', 1, '2025-10-02 11:23:27', 10000.00, '53.png', 'asset', '', 'SN-DC-2025-00013243', '2025-FUR-0001', 'PN-2019-05-02-0001-01', 'Mesh Back', '', 7, NULL, 11, 'PS-5S-03-F02-01-01', NULL, 0, 1, 0, 0),
+(54, 'Laptop i7', NULL, 'Laptop i7', 1, 0, 'unit', 'available', '2025-10-02', 7, NULL, NULL, 0, '2025-10-02 10:02:16', 70000.00, '54.png', 'asset', '', '', '', NULL, '', '', NULL, 4, 12, NULL, NULL, 0, 1, 0, 0),
+(55, 'computer desktop', NULL, 'computer desktop', 1, 0, 'unit', 'available', '2025-10-02', 19, NULL, NULL, 0, '2025-10-02 12:21:33', 52000.00, '55.png', 'asset', '', '', '', NULL, '', '', 8, NULL, 13, NULL, NULL, 0, 1, 0, 0),
+(56, 'Lappy', NULL, 'Lappy', 1, 0, 'unit', 'available', '2025-10-02', 24, NULL, NULL, 0, '2025-10-02 12:25:57', 54000.00, '56.png', 'asset', '', '', '', NULL, '', '', 9, NULL, 14, NULL, NULL, 0, 1, 0, 0),
+(57, 'Hilux Van', NULL, 'Hilux Van', 1, 0, 'unit', 'available', '2025-10-02', 7, NULL, NULL, 0, '2025-10-02 12:37:37', 2000000.00, '57.png', 'asset', '', '', '', NULL, '', '', NULL, 5, 15, NULL, NULL, 0, 1, 0, 0),
+(58, 'Office chair', NULL, 'Office chair', 1, 0, 'pcs', 'available', '2025-10-03', 14, NULL, NULL, 0, '2025-10-03 09:01:06', 230.00, '58.png', 'asset', '', '', '', NULL, '', '', 10, NULL, 16, NULL, NULL, 0, 1, 0, 0),
+(59, 'Office chair', NULL, 'Office chair', 1, 0, 'pcs', 'available', '2025-10-03', 14, NULL, NULL, 0, '2025-10-03 09:01:06', 230.00, '59.png', 'asset', '', '', '', NULL, '', '', 10, NULL, 16, NULL, NULL, 0, 1, 0, 0),
+(60, 'Office chair', NULL, 'Office chair', 1, 0, 'pcs', 'available', '2025-10-03', 14, NULL, NULL, 0, '2025-10-03 09:01:06', 230.00, '60.png', 'asset', '', '', '', NULL, '', '', 10, NULL, 16, NULL, NULL, 0, 1, 0, 0),
+(61, 'Office chair', NULL, 'Office chair', 1, 0, 'pcs', 'available', '2025-10-03', 14, NULL, NULL, 0, '2025-10-03 09:01:06', 230.00, '61.png', 'asset', '', '', '', NULL, '', '', 10, NULL, 16, NULL, NULL, 0, 1, 0, 0),
+(62, 'Office chair', NULL, 'Office chair', 1, 0, 'pcs', 'available', '2025-10-03', 14, NULL, NULL, 0, '2025-10-03 09:01:06', 230.00, '62.png', 'asset', '', '', '', NULL, '', '', 10, NULL, 16, NULL, NULL, 0, 1, 0, 0),
+(63, 'AA Battery', NULL, 'AA Battery', 1, 1, 'box', 'available', '2025-10-03', 1, NULL, NULL, 0, '2025-10-03 09:29:25', 405.00, '', 'consumable', '', '', '', '1', '', '', NULL, NULL, NULL, '', NULL, 0, 1, 0, 0),
+(64, 'AAA Battery', NULL, 'AAA Battery', 3, 3, 'box', 'available', '2025-10-03', 1, NULL, NULL, 0, '2025-10-03 09:29:25', 560.00, '', 'consumable', '', '', '', '2', '', '', NULL, NULL, NULL, '', NULL, 0, 1, 0, 0),
+(65, 'Monoblock', 6, 'Monoblock', 1, 0, 'pcs', 'available', '2025-10-03', 24, 82, 'Jake Paul', 0, '2025-10-03 12:38:18', 230.00, '65.png', 'asset', '', '25-SN-000001', '25-ICT-0001', '', '', '', 11, NULL, 17, 'INV-0020', NULL, 0, 1, 0, 0),
+(66, 'Monoblock', NULL, 'Monoblock', 1, 0, 'pcs', 'available', '2025-10-03', 24, NULL, NULL, 0, '2025-10-03 11:30:27', 230.00, '66.png', 'asset', '', '', '', NULL, '', '', 11, NULL, 17, NULL, NULL, 0, 1, 0, 0),
+(67, 'Monoblock', NULL, 'Monoblock', 1, 0, 'pcs', 'available', '2025-10-03', 24, NULL, NULL, 0, '2025-10-03 11:30:27', 230.00, '67.png', 'asset', '', '', '', NULL, '', '', 11, NULL, 17, NULL, NULL, 0, 1, 0, 0),
+(68, 'Monoblock', NULL, 'Monoblock', 1, 0, 'pcs', 'available', '2025-10-03', 24, NULL, NULL, 0, '2025-10-03 11:30:27', 230.00, '68.png', 'asset', '', '', '', NULL, '', '', 11, NULL, 17, NULL, NULL, 0, 1, 0, 0),
+(69, 'Monoblock', NULL, 'Monoblock', 1, 0, 'pcs', 'available', '2025-10-03', 24, NULL, NULL, 0, '2025-10-03 11:30:27', 230.00, '69.png', 'asset', '', '', '', NULL, '', '', 11, NULL, 17, NULL, NULL, 0, 1, 0, 0),
+(70, 'Monoblock', NULL, 'Monoblock', 1, 0, 'pcs', 'available', '2025-10-03', 24, NULL, NULL, 0, '2025-10-03 11:30:27', 230.00, '70.png', 'asset', '', '', '', NULL, '', '', 11, NULL, 17, NULL, NULL, 0, 1, 0, 0),
+(71, 'Monoblock', NULL, 'Monoblock', 1, 0, 'pcs', 'available', '2025-10-03', 24, NULL, NULL, 0, '2025-10-03 11:30:27', 230.00, '71.png', 'asset', '', '', '', NULL, '', '', 11, NULL, 17, NULL, NULL, 0, 1, 0, 0),
+(72, 'Monoblock', NULL, 'Monoblock', 1, 0, 'pcs', 'available', '2025-10-03', 24, NULL, NULL, 0, '2025-10-03 11:30:27', 230.00, '72.png', 'asset', '', '', '', NULL, '', '', 11, NULL, 17, NULL, NULL, 0, 1, 0, 0),
+(73, 'Monoblock', NULL, 'Monoblock', 1, 0, 'pcs', 'available', '2025-10-03', 24, NULL, NULL, 0, '2025-10-03 11:30:27', 230.00, '73.png', 'asset', '', '', '', NULL, '', '', 11, NULL, 17, NULL, NULL, 0, 1, 0, 0),
+(74, 'Monoblock', NULL, 'Monoblock', 1, 0, 'pcs', 'available', '2025-10-03', 24, NULL, NULL, 0, '2025-10-03 11:30:27', 230.00, '74.png', 'asset', '', '', '', NULL, '', '', 11, NULL, 17, NULL, NULL, 0, 1, 0, 0);
 
 --
 -- Triggers `assets`
@@ -232,7 +279,8 @@ INSERT INTO `assets_archive` (`archive_id`, `id`, `asset_name`, `category`, `des
 (6, 89, '0', NULL, 'Desktop Computer (Core i5)', 1, 'unit', 'available', '2025-09-24', 4, 0, '2025-09-24 07:18:16', 546740.00, '64.png', 'asset', '2025-09-27 15:01:48'),
 (7, 62, '0', NULL, 'Mouse', 1, 'unit', 'available', '2025-09-24', 4, 0, '2025-09-24 07:16:25', 453.00, '62.png', 'asset', '2025-09-27 15:03:27'),
 (8, 35, '0', NULL, 'Lenovo AMD Ryzen 7', 1, 'unit', 'unserviceable', '2025-09-22', 4, 1, '2025-09-22 10:04:13', 75000.00, '35.png', 'asset', '2025-09-27 15:04:51'),
-(9, 90, '0', NULL, 'Desktop Computer (Core i5)', 1, 'unit', 'available', '2025-09-24', 4, 0, '2025-09-24 07:18:16', 546740.00, '65.png', 'asset', '2025-09-28 06:32:58');
+(9, 90, '0', NULL, 'Desktop Computer (Core i5)', 1, 'unit', 'available', '2025-09-24', 4, 0, '2025-09-24 07:18:16', 546740.00, '65.png', 'asset', '2025-09-28 06:32:58'),
+(31, 49, '0', NULL, 'HP Pavilion', 1, 'unit', 'available', '2025-10-01', 7, 0, '2025-10-01 15:00:32', 53000.00, '49.png', 'asset', '2025-10-02 01:08:08');
 
 -- --------------------------------------------------------
 
@@ -258,7 +306,62 @@ CREATE TABLE `assets_new` (
 
 INSERT INTO `assets_new` (`id`, `description`, `quantity`, `unit_cost`, `unit`, `office_id`, `par_id`, `ics_id`, `date_created`) VALUES
 (1, 'Wheel Chair', 30, 6650.00, 'unit', 4, NULL, 1, '2025-09-29 17:15:52'),
-(2, 'Notebook i7', 1, 80245.00, 'unit', 4, 2, NULL, '2025-09-29 18:24:35');
+(2, 'Notebook i7', 1, 80245.00, 'unit', 4, 2, NULL, '2025-09-29 18:24:35'),
+(3, 'Laptop AMD Ryzen', 1, 45000.00, 'unit', 4, NULL, 2, '2025-09-30 10:46:36'),
+(4, 'Laptop Acer', 1, 50000.00, 'unit', 4, NULL, NULL, '2025-09-30 13:06:19'),
+(5, 'Grass cutter', 2, 18000.00, 'unit', 4, NULL, 3, '2025-09-30 23:34:51'),
+(6, 'Power Drill (corded)', 1, 3500.00, 'unit', 4, NULL, 3, '2025-09-30 23:34:51'),
+(7, 'Printer Epson', 1, 4500.00, 'unit', 34, NULL, 5, '2025-10-01 12:00:32'),
+(8, 'HP Pavilion', 1, 53000.00, 'unit', 7, 3, NULL, '2025-10-01 23:00:32'),
+(9, 'Medical X-Ray Machine', 1, 120000.00, 'unit', 7, 3, NULL, '2025-10-01 23:00:32'),
+(10, 'Conference Table', 1, 42000.00, 'unit', 33, NULL, 6, '2025-10-02 17:55:12'),
+(11, 'conference table', 1, 10000.00, 'unit', 33, NULL, 7, '2025-10-02 18:00:30'),
+(12, 'Laptop i7', 1, 70000.00, 'unit', 7, 4, NULL, '2025-10-02 18:02:16'),
+(13, 'computer desktop', 1, 52000.00, 'unit', 19, NULL, 8, '2025-10-02 20:21:33'),
+(14, 'Lappy', 1, 54000.00, 'unit', 24, NULL, 9, '2025-10-02 20:25:57'),
+(15, 'Hilux Van', 1, 2000000.00, 'unit', 7, 5, NULL, '2025-10-02 20:37:37'),
+(16, 'Office chair', 5, 230.00, 'pcs', 14, NULL, 10, '2025-10-03 17:01:06'),
+(17, 'Monoblock', 10, 230.00, 'pcs', 24, NULL, 11, '2025-10-03 19:30:27');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `asset_lifecycle_events`
+--
+
+CREATE TABLE `asset_lifecycle_events` (
+  `id` int(11) NOT NULL,
+  `asset_id` int(11) NOT NULL,
+  `event_type` enum('ACQUIRED','ASSIGNED','TRANSFERRED','DISPOSAL_LISTED','DISPOSED','RED_TAGGED') NOT NULL,
+  `ref_table` varchar(64) DEFAULT NULL,
+  `ref_id` int(11) DEFAULT NULL,
+  `from_employee_id` int(11) DEFAULT NULL,
+  `to_employee_id` int(11) DEFAULT NULL,
+  `from_office_id` int(11) DEFAULT NULL,
+  `to_office_id` int(11) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `asset_lifecycle_events`
+--
+
+INSERT INTO `asset_lifecycle_events` (`id`, `asset_id`, `event_type`, `ref_table`, `ref_id`, `from_employee_id`, `to_employee_id`, `from_office_id`, `to_office_id`, `notes`, `created_at`) VALUES
+(1, 53, 'ACQUIRED', 'ics_form', 7, NULL, NULL, NULL, 33, 'ICS ICS-2025-0009; Qty 1; UnitCost ₱10000.00; Total ₱10000.00', '2025-10-02 10:00:30'),
+(2, 54, 'ACQUIRED', 'par_form', 4, NULL, NULL, NULL, 7, 'PAR LGU-PAR-2025-0009; Qty 1; UnitCost ₱70000.00; Amount ₱70000.00', '2025-10-02 10:02:16'),
+(3, 53, 'ASSIGNED', 'mr_details', NULL, NULL, 16, 33, NULL, 'MR create; PA: James Taylor; InvTag: PS-5S-03-F02-01-01', '2025-10-02 10:03:43'),
+(4, 52, 'ASSIGNED', 'mr_details', NULL, NULL, 14, 33, NULL, 'MR create; PA: David Anderson; InvTag: PS-5S-03-F02-01-01', '2025-10-02 10:41:40'),
+(5, 53, 'TRANSFERRED', 'itr_form', 16, 16, 25, NULL, NULL, 'ITR ITR-2025-0011; Reason: reass; To: Amelia Lewis', '2025-10-02 11:15:05'),
+(6, 53, 'DISPOSAL_LISTED', 'iirup_form', 3, NULL, NULL, NULL, NULL, 'IIRUP #3; Remarks: Unserviceable; Method: N/A', '2025-10-02 11:16:35'),
+(7, 53, 'RED_TAGGED', 'red_tags', 2, NULL, NULL, NULL, NULL, 'Removal: Broken; Action: For Disposal; Location: Supply Office', '2025-10-02 11:23:27'),
+(8, 55, 'ACQUIRED', 'ics_form', 8, NULL, NULL, NULL, 19, 'ICS ICS-2025-00041; Qty 1; UnitCost ₱52000.00; Total ₱52000.00', '2025-10-02 12:21:33'),
+(9, 56, 'ACQUIRED', 'ics_form', 9, NULL, NULL, NULL, 24, 'ICS ICS-2025-00022; Qty 1; UnitCost ₱54000.00; Total ₱54000.00', '2025-10-02 12:25:57'),
+(10, 57, 'ACQUIRED', 'par_form', 5, NULL, NULL, NULL, 7, 'PAR PAR-00051; Qty 1; UnitCost ₱2000000.00; Amount ₱2000000.00', '2025-10-02 12:37:37'),
+(11, 46, 'TRANSFERRED', 'itr_form', 17, 2, 61, NULL, NULL, 'ITR ITR-2025-00113; Reason: Reason; To: Leo Peterson', '2025-10-03 05:56:37'),
+(12, 58, 'ACQUIRED', 'ics_form', 10, NULL, NULL, NULL, 14, 'ICS ICS-00001-FINAL-00001-25; Qty 5; UnitCost ₱230.00; Total ₱1150.00', '2025-10-03 09:01:06'),
+(13, 65, 'ACQUIRED', 'ics_form', 11, NULL, NULL, NULL, 24, 'ICS ICS-00001-25; Qty 10; UnitCost ₱230.00; Total ₱2300.00', '2025-10-03 11:30:27'),
+(14, 65, 'ASSIGNED', 'mr_details', NULL, NULL, 82, 24, NULL, 'MR create; PA: Lillian Foster; InvTag: INV-0020', '2025-10-03 12:38:18');
 
 -- --------------------------------------------------------
 
@@ -669,7 +772,240 @@ INSERT INTO `audit_logs` (`id`, `user_id`, `username`, `action`, `module`, `deta
 (350, 32, 'michael', 'LOGOUT', 'Authentication', 'User \'michael\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-29 14:47:58'),
 (352, 32, 'michael', 'LOGIN', 'Authentication', 'User \'michael\' logged in successfully (Role: office_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-29 15:04:04'),
 (353, 32, 'michael', 'LOGOUT', 'Authentication', 'User \'michael\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-29 15:05:23'),
-(355, 32, 'michael', 'LOGIN', 'Authentication', 'User \'michael\' logged in successfully (Role: office_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-29 15:14:37');
+(355, 32, 'michael', 'LOGIN', 'Authentication', 'User \'michael\' logged in successfully (Role: office_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-29 15:14:37'),
+(357, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 02:19:50'),
+(358, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Form', 'Created new ICS form: ICS-2025-0001 - LGU PILAR (Destination: Supply Office)', 'ics_form', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 02:46:36'),
+(359, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Items', 'Added item to ICS ICS-2025-0001: Laptop AMD Ryzen (Qty: 1, Unit Cost: ₱45,000.00, Total: ₱45,000.00)', 'ics_items', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 02:46:36'),
+(360, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Form', 'Updated ICS form: ICS-2025-0001 - LGU PILAR', 'ics_form', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 02:47:19'),
+(361, 17, 'Mark Jayson Namia', 'BULK_PRINT', 'Bulk Operations', 'Bulk PRINT: 3 items (MR Records)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 02:49:47'),
+(362, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated IIRUP PDF report with filters: IIRUP ID: 2, Office: Supply Office', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 02:59:04'),
+(363, 17, 'Mark Jayson Namia', 'CREATE', 'Red Tags', 'Created Red Tag: PS-5S-03-F01-01-01 for asset: Laptop AMD Ryzen (Reason: Broken, Action: For Disposal)', 'red_tags', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 03:04:15'),
+(364, 17, 'Mark Jayson Namia', 'CREATE', 'ITR Form', 'Created new ITR form: ITR-2025-001 - LGU PILAR', 'itr_form', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 03:41:24');
+INSERT INTO `audit_logs` (`id`, `user_id`, `username`, `action`, `module`, `details`, `affected_table`, `affected_id`, `ip_address`, `user_agent`, `created_at`) VALUES
+(365, 17, 'Mark Jayson Namia', 'CREATE', 'ITR Items', 'Added item to ITR ITR-2025-001: Wheel Chair (PN-2019-05-02-0001-01) (Property No: PN-2019-05-02-0001-01, Amount: ₱6,650.00)', 'itr_items', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 03:41:24'),
+(366, 17, 'Mark Jayson Namia', 'UPDATE', 'Assets', 'Transferred asset ID 8 to employee: Grace Mitchell via ITR ITR-2025-001', 'assets', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 03:41:24'),
+(367, 17, 'Mark Jayson Namia', 'UPDATE', 'MR Details', 'Updated person_accountable to \'Grace Mitchell\' and end_user to \'Roberto Cruz\' for asset ID 8 via ITR ITR-2025-001', 'mr_details', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 03:41:24'),
+(368, 17, 'Mark Jayson Namia', 'CREATE', 'ITR Form', 'Created new ITR form: ITR-2025-001 - LGU PILAR', 'itr_form', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 03:48:27'),
+(369, 17, 'Mark Jayson Namia', 'CREATE', 'ITR Items', 'Added item to ITR ITR-2025-001: Laptop AMD Ryzen (PN-2019-05-02-0001-01) (Property No: PN-2019-05-02-0001-01, Amount: ₱45,000.00)', 'itr_items', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 03:48:27'),
+(370, 17, 'Mark Jayson Namia', 'UPDATE', 'Assets', 'Transferred asset ID 8 to employee: Grace Mitchell via ITR ITR-2025-001', 'assets', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 03:48:27'),
+(371, 17, 'Mark Jayson Namia', 'UPDATE', 'MR Details', 'Updated person_accountable to \'Grace Mitchell\' and end_user to \'Angela Rizal\' for asset ID 8 via ITR ITR-2025-001', 'mr_details', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 03:48:27'),
+(372, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 04:01:33'),
+(373, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 04:01:41'),
+(374, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 04:11:42'),
+(375, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 04:11:49'),
+(376, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 04:57:14'),
+(377, 17, 'Mark Jayson Namia', 'CREATE', 'Assets', 'CREATE asset: Laptop Acer (Qty: 1, Value: ₱50,000.00, Office: Supply Office)', 'assets', 0, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 05:06:19'),
+(378, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 05:47:40'),
+(379, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 14:18:54'),
+(380, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 14:42:36'),
+(381, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 14:42:49'),
+(382, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 14:44:53'),
+(383, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 14:45:03'),
+(384, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 14:58:58'),
+(385, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 14:59:28'),
+(386, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 14:59:36'),
+(387, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 15:04:43'),
+(388, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 15:08:01'),
+(389, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Form', 'Created new ICS form: ICS-2025-0001 - LGU PILAR (Destination: Supply Office)', 'ics_form', 3, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 15:34:51'),
+(390, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Items', 'Added item to ICS ICS-2025-0001: Grass cutter (Qty: 2, Unit Cost: ₱18,000.00, Total: ₱36,000.00)', 'ics_items', 3, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 15:34:51'),
+(391, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Items', 'Added item to ICS ICS-2025-0001: Power Drill (corded) (Qty: 1, Unit Cost: ₱3,500.00, Total: ₱3,500.00)', 'ics_items', 4, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 15:34:51'),
+(392, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Form', 'Created new ICS form: ICS-2025-0001 - LGU PILAR (Destination: MDRRMO)', 'ics_form', 4, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-09-30 15:45:59'),
+(393, NULL, 'nami', 'LOGIN_FAILED', 'Authentication', 'Failed login attempt for username \'nami\' - incorrect password', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 01:31:12'),
+(394, NULL, 'nami', 'LOGIN_FAILED', 'Authentication', 'Failed login attempt for username \'nami\' - incorrect password', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 01:31:21'),
+(395, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 01:31:33'),
+(396, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 01:35:03'),
+(397, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 01:35:11'),
+(398, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 01:36:39'),
+(399, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 01:36:45'),
+(400, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 01:46:47'),
+(401, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 01:47:37'),
+(402, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Form', 'Updated ICS form: ICS-2025-0001 - LGU PILAR', 'ics_form', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 01:47:49'),
+(403, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 01:47:51'),
+(404, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 01:51:55'),
+(405, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:15:18'),
+(406, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:17:12'),
+(407, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:17:17'),
+(408, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:19:11'),
+(409, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:19:38'),
+(410, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:21:23'),
+(411, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:21:34'),
+(412, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:23:03'),
+(413, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:26:38'),
+(414, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:29:18'),
+(415, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:32:10'),
+(416, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:37:49'),
+(417, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:38:42'),
+(418, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:43:06'),
+(419, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:43:23'),
+(420, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF (Alt) report with filters: ICS: ICS-2025-0001 (Alt Format)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:50:53'),
+(421, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF (Alt) report with filters: ICS: ICS-2025-0001 (Alt Format)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:51:55'),
+(422, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 02:53:01'),
+(423, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 03:04:12'),
+(424, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 03:08:00'),
+(425, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 03:08:25'),
+(426, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 03:10:16'),
+(427, NULL, 'System', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0001, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 03:35:02'),
+(428, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 03:45:29'),
+(429, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Form', 'Created new ICS form: ICS-2025-0002 - LGU PILAR (Destination: MTC)', 'ics_form', 5, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 04:00:32'),
+(430, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Items', 'Added item to ICS ICS-2025-0002: Printer Epson (Qty: 1, Unit Cost: ₱4,500.00, Total: ₱4,500.00)', 'ics_items', 5, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 04:00:32'),
+(431, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 04:15:51'),
+(432, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 04:16:02'),
+(433, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 04:17:09'),
+(434, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 04:17:17'),
+(435, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 05:28:10'),
+(436, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 10:44:49'),
+(437, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 14:18:00'),
+(438, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated PAR PDF report with filters: PAR: LGU-PAR-2025-0001, Entity: RHU', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-01 15:57:28'),
+(439, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 01:05:05'),
+(440, 17, 'Mark Jayson Namia', 'DELETE', 'Assets', 'DELETE asset: HP Pavilion (Qty: 1, Value: ₱53,000.00, Office: RHU Office, Category: No Category, Source: No Property Tag Tab)', 'assets', 49, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 01:08:08'),
+(441, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 01:17:47'),
+(442, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 01:20:33'),
+(443, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated IIRUP PDF report with filters: IIRUP ID: 2, Office: Supply Office', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 02:15:51'),
+(444, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated IIRUP PDF report with filters: IIRUP ID: 2, Office: Supply Office', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 02:57:06'),
+(445, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated IIRUP PDF report with filters: IIRUP ID: 2, Office: Supply Office', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 03:01:33'),
+(446, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated IIRUP PDF report with filters: IIRUP ID: 2, Office: Supply Office', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 03:11:48'),
+(447, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated IIRUP PDF report with filters: IIRUP ID: 2, Office: Supply Office', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 03:12:29'),
+(448, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 04:31:32'),
+(449, 17, 'Mark Jayson Namia', 'CREATE', 'ITR Form', 'Created new ITR form: ITR-2025-001 - LGU PILAR', 'itr_form', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:08:32'),
+(450, 17, 'Mark Jayson Namia', 'CREATE', 'ITR Items', 'Added item to ITR ITR-2025-001: Power Drill (corded) (PN-2019-05-02-0001-01) (Property No: PN-2019-05-02-0001-01, Amount: ₱3,500.00)', 'itr_items', 3, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:08:32'),
+(451, 17, 'Mark Jayson Namia', 'UPDATE', 'Assets', 'Updated asset ID 8 via ITR ITR-2025-001: employee_id to 73 (Scarlett Jenkins) end_user to \'Jack Robertson\'', 'assets', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:08:32'),
+(452, 17, 'Mark Jayson Namia', 'UPDATE', 'MR Details', 'Updated person_accountable to \'Scarlett Jenkins\' and end_user to \'Jack Robertson\' for asset ID 8 via ITR ITR-2025-001', 'mr_details', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:08:32'),
+(453, 17, 'Mark Jayson Namia', 'CREATE', 'ITR Form', 'Created new ITR form: ITR-2025-002 - LGU PILAR', 'itr_form', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:15:08'),
+(454, 17, 'Mark Jayson Namia', 'CREATE', 'ITR Items', 'Added item to ITR ITR-2025-002: Power Drill (corded) (PN-2019-05-02-0001-01) (Property No: PN-2019-05-02-0001-01, Amount: ₱3,500.00)', 'itr_items', 4, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:15:08'),
+(455, 17, 'Mark Jayson Namia', 'UPDATE', 'Assets', 'Updated asset ID 8 via ITR ITR-2025-002: employee_id to 41 (Hannah Phillips) end_user to \'Roberto Cruz\'', 'assets', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:15:08'),
+(456, 17, 'Mark Jayson Namia', 'UPDATE', 'MR Details', 'Updated person_accountable to \'Hannah Phillips\' and end_user to \'Roberto Cruz\' for asset ID 8 via ITR ITR-2025-002', 'mr_details', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:15:08'),
+(457, 17, 'Mark Jayson Namia', 'CREATE', 'ITR Form', 'Created new ITR form: ITR-2025-001 - LGU PILAR', 'itr_form', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:27:01'),
+(458, 17, 'Mark Jayson Namia', 'CREATE', 'ITR Items', 'Added item to ITR ITR-2025-001: Notebook i7 (PN-2019-05-02-0001-01) (Property No: PN-2019-05-02-0001-01, Amount: ₱80,245.00)', 'itr_items', 5, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:27:01'),
+(459, 17, 'Mark Jayson Namia', 'UPDATE', 'Assets', 'Updated asset ID 8 via ITR ITR-2025-001: employee_id to 9 (John Smith) end_user to \'Jake Paul\'', 'assets', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:27:01'),
+(460, 17, 'Mark Jayson Namia', 'UPDATE', 'MR Details', 'Updated person_accountable to \'John Smith\' and end_user to \'Jake Paul\' for asset ID 8 via ITR ITR-2025-001', 'mr_details', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:27:01'),
+(461, 17, 'Mark Jayson Namia', 'CREATE', 'ITR Form', 'Created new ITR form: ITR-2025-002 - INVENTORY', 'itr_form', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:35:44'),
+(462, 17, 'Mark Jayson Namia', 'CREATE', 'ITR Items', 'Added item to ITR ITR-2025-002: Power Drill (corded) (PN-2019-05-02-0001-01) (Property No: PN-2019-05-02-0001-01, Amount: ₱3,500.00)', 'itr_items', 6, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:35:44'),
+(463, 17, 'Mark Jayson Namia', 'UPDATE', 'Assets', 'Transferred asset ID 8 to employee: Leo Peterson via ITR ITR-2025-002', 'assets', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:35:44'),
+(464, 17, 'Mark Jayson Namia', 'UPDATE', 'MR Details', 'Updated person_accountable to \'Leo Peterson\' and end_user to \'Angela Rizal\' for asset ID 8 via ITR ITR-2025-002', 'mr_details', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 05:35:44'),
+(465, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 07:14:26'),
+(466, 17, 'nami', 'LOGIN_WITH_REMEMBER', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 07:31:55'),
+(467, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 07:32:36'),
+(468, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 07:39:58'),
+(469, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Form', 'Created new ICS form: ICS-2025-0006 - OMM (Destination: OMM)', 'ics_form', 6, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 09:55:12'),
+(470, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Items', 'Added item to ICS ICS-2025-0006: Conference Table (Qty: 1, Unit Cost: ₱42,000.00, Total: ₱42,000.00)', 'ics_items', 6, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 09:55:13'),
+(471, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Form', 'Created new ICS form: ICS-2025-0009 - OMM (Destination: OMM)', 'ics_form', 7, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 10:00:30'),
+(472, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Items', 'Added item to ICS ICS-2025-0009: conference table (Qty: 1, Unit Cost: ₱10,000.00, Total: ₱10,000.00)', 'ics_items', 7, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 10:00:30'),
+(473, 17, 'nami', 'AUTO_LOGIN', 'Authentication', 'User \'nami\' auto-logged in via remember token (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 10:38:55'),
+(474, 17, 'Mark Jayson Namia', 'CREATE', 'Red Tags', 'Created Red Tag: PS-5S-03-F01-01-01 for asset: conference table (Reason: Broken, Action: For Disposal)', 'red_tags', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 11:23:27'),
+(475, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 12:16:48'),
+(476, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 12:17:04'),
+(477, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 12:17:59'),
+(478, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 12:18:06'),
+(479, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Form', 'Created new ICS form: ICS-2025-00041 - GAD (Destination: GAD)', 'ics_form', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 12:21:33'),
+(480, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Items', 'Added item to ICS ICS-2025-00041: computer desktop (Qty: 1, Unit Cost: ₱52,000.00, Total: ₱52,000.00)', 'ics_items', 8, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 12:21:33'),
+(481, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Form', 'Created new ICS form: ICS-2025-00022 - KALAHI (Destination: KALAHI)', 'ics_form', 9, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 12:25:57'),
+(482, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Items', 'Added item to ICS ICS-2025-00022: Lappy (Qty: 1, Unit Cost: ₱54,000.00, Total: ₱54,000.00)', 'ics_items', 9, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-02 12:25:57'),
+(483, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 00:59:20'),
+(484, 17, 'Mark Jayson Namia', 'DEACTIVATE', 'User Management', 'DEACTIVATE user: geely (Full Name: Geely Mitsubishi, Status changed to: inactive)', 'users', 19, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 02:12:38'),
+(485, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 04:46:01'),
+(486, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:07:04'),
+(487, 32, 'michael', 'LOGIN', 'Authentication', 'User \'michael\' logged in successfully (Role: office_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:07:14'),
+(488, 32, 'michael', 'LOGOUT', 'Authentication', 'User \'michael\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:08:33'),
+(490, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:09:07'),
+(491, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:09:14'),
+(492, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:09:20'),
+(493, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:19:21'),
+(494, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:19:27'),
+(495, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:21:16'),
+(496, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:21:24'),
+(497, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:21:29'),
+(498, NULL, 'ompdc', 'LOGIN_FAILED', 'Authentication', 'Failed login attempt for username \'ompdc\' - incorrect password', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:21:36'),
+(499, NULL, 'nami', 'LOGIN_FAILED', 'Authentication', 'Failed login attempt for username \'nami\' - incorrect password', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:21:46'),
+(500, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:21:54'),
+(501, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:22:30'),
+(502, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 05:22:36'),
+(503, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 06:02:46'),
+(504, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 06:02:53'),
+(505, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 06:03:13'),
+(506, NULL, 'nami', 'LOGIN_FAILED', 'Authentication', 'Failed login attempt for username \'nami\' - incorrect password', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 06:03:20'),
+(507, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 06:03:26'),
+(508, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ITR PDF report with filters: ITR: ITR-2025-001, Entity: LGU', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 07:13:08'),
+(509, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ITR PDF report with filters: ITR: ITR-2025-001, Entity: LGU', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 07:18:25'),
+(510, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ITR PDF report with filters: ITR: ITR-2025-001, Entity: LGU', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 07:20:58'),
+(511, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ITR PDF report with filters: ITR: ITR-2025-001, Entity: LGU', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 07:23:55'),
+(512, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ITR PDF report with filters: ITR: ITR-2025-001, Entity: LGU', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 07:24:00'),
+(513, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 07:33:44'),
+(514, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated IIRUP PDF report with filters: IIRUP ID: 3, Office: Supply Office', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 07:56:42'),
+(515, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0002, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 07:57:22'),
+(516, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ITR PDF report with filters: ITR: ITR-2025-001, Entity: LGU', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 07:57:33'),
+(517, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated PAR PDF report with filters: PAR: LGU-PAR-2025-0001, Entity: RHU', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 07:57:49'),
+(518, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated PAR PDF report with filters: PAR: LGU-PAR-2025-0001, Entity: RHU', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 08:00:53'),
+(519, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated IIRUP PDF report with filters: IIRUP ID: 3, Office: Supply Office', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 08:01:20'),
+(520, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated ICS PDF report with filters: ICS: ICS-2025-0002, Entity: LGU PILAR', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 08:01:50'),
+(521, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 08:06:17'),
+(522, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 08:06:25'),
+(523, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 08:49:36'),
+(524, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 08:49:42'),
+(525, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 08:52:16'),
+(526, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 08:52:30'),
+(527, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 08:59:47'),
+(528, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 08:59:52'),
+(529, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Form', 'Created new ICS form: ICS-00001-FINAL-00001-25 - COA (Destination: COA)', 'ics_form', 10, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 09:01:06'),
+(530, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Items', 'Added item to ICS ICS-00001-FINAL-00001-25: Office chair (Qty: 5, Unit Cost: ₱230.00, Total: ₱1,150.00)', 'ics_items', 10, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 09:01:06'),
+(531, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated IIRUP PDF report with filters: IIRUP ID: 3, Office: Supply Office', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 09:04:39'),
+(532, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 09:14:59'),
+(533, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 09:15:09'),
+(534, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 09:15:50'),
+(535, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 09:15:55'),
+(536, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:11:59'),
+(537, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:23:03'),
+(538, 32, 'michael', 'LOGIN', 'Authentication', 'User \'michael\' logged in successfully (Role: office_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:23:15'),
+(539, 32, 'michael', 'LOGOUT', 'Authentication', 'User \'michael\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:24:40'),
+(540, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:24:47'),
+(541, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:27:29'),
+(542, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:27:36'),
+(543, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:28:52'),
+(544, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:29:00'),
+(545, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Form', 'Created new ICS form: ICS-00001-25 - KALAHI (Destination: KALAHI)', 'ics_form', 11, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:30:27');
+INSERT INTO `audit_logs` (`id`, `user_id`, `username`, `action`, `module`, `details`, `affected_table`, `affected_id`, `ip_address`, `user_agent`, `created_at`) VALUES
+(546, 17, 'Mark Jayson Namia', 'CREATE', 'ICS Items', 'Added item to ICS ICS-00001-25: Monoblock (Qty: 10, Unit Cost: ₱230.00, Total: ₱2,300.00)', 'ics_items', 11, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:30:27'),
+(547, 17, 'Mark Jayson Namia', 'GENERATE', 'Reports', 'Generated PAR PDF report with filters: PAR: LGU-PAR-2025-0001, Entity: RHU', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:31:07'),
+(548, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:32:46'),
+(549, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:32:54'),
+(550, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:38:18'),
+(551, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:38:34'),
+(552, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:48:33'),
+(553, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:48:40'),
+(554, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:54:36'),
+(555, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:54:44'),
+(556, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:55:39'),
+(557, NULL, 'nami', 'LOGIN_FAILED', 'Authentication', 'Failed login attempt for username \'nami\' - incorrect password', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:56:14'),
+(558, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:56:23'),
+(559, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:59:24'),
+(560, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 11:59:33'),
+(561, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:00:24'),
+(562, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:00:31'),
+(563, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:07:20'),
+(564, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:08:54'),
+(565, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:09:36'),
+(566, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:09:41'),
+(567, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:15:44'),
+(568, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:15:51'),
+(569, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:17:26'),
+(570, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:17:34'),
+(571, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:17:58'),
+(572, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:18:06'),
+(573, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:32:09'),
+(574, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:32:15'),
+(575, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:33:05'),
+(576, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:33:13'),
+(577, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:42:08'),
+(578, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:42:28'),
+(579, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:46:20'),
+(580, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:46:26'),
+(581, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:47:02'),
+(582, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:47:21'),
+(583, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:48:17'),
+(584, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:48:22'),
+(585, 17, 'nami', 'LOGOUT', 'Authentication', 'User \'nami\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:49:02'),
+(586, 1, 'ompdc', 'LOGIN', 'Authentication', 'User \'ompdc\' logged in successfully (Role: super_admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:49:09'),
+(587, 1, 'OMPDC', 'LOGOUT', 'Authentication', 'User \'OMPDC\' logged out successfully', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:58:31'),
+(588, 17, 'nami', 'LOGIN', 'Authentication', 'User \'nami\' logged in successfully (Role: admin)', NULL, NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', '2025-10-03 12:58:36');
 
 -- --------------------------------------------------------
 
@@ -1101,11 +1437,31 @@ CREATE TABLE `forms` (
 --
 
 INSERT INTO `forms` (`id`, `form_title`, `category`, `file_path`, `created_at`) VALUES
-(3, 'PROPERTY ACKNOWLEDGEMENT RECEIPT', 'PAR', 'par_form.php', '2025-08-05 02:17:00'),
-(4, 'INVENTORY CUSTODIAN SLIP', 'ICS', 'ics_form.php', '2025-08-05 02:17:00'),
-(6, 'REQUISITION & INVENTORY SLIP', 'RIS', 'ris_form.php', '2025-08-05 02:17:00'),
-(7, 'INVENTORY & INSPECTION REPORT OF UNSERVICEABLE PROPERTY', 'IIRUP', 'iirup_form.php', '2025-08-12 12:53:40'),
-(9, 'INVENTORY TRANFER RECEIPT', 'ITR', 'itr_form.php\r\n', '2025-09-24 08:32:02');
+(3, 'Property Acknowledgement Receipt (PAR)', 'PAR', 'par_form.php', '2025-08-05 02:17:00'),
+(4, 'Inventory Custodian Slip (ICS)', 'ICS', 'ics_form.php', '2025-08-05 02:17:00'),
+(6, 'Requisition & Issue Slip (RIS)', 'RIS', 'ris_form.php', '2025-08-05 02:17:00'),
+(7, 'Inventory & Inspection Report of Unserviceable Property (IIRUP)', 'IIRUP', 'iirup_form.php', '2025-08-12 12:53:40'),
+(9, 'Inventory Transfer Receipt (ITR)', 'ITR', 'itr_form.php\r\n', '2025-09-24 08:32:02');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `form_thresholds`
+--
+
+CREATE TABLE `form_thresholds` (
+  `id` int(11) NOT NULL,
+  `ics_max` decimal(15,2) NOT NULL DEFAULT 50000.00,
+  `par_min` decimal(15,2) NOT NULL DEFAULT 50000.00,
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `form_thresholds`
+--
+
+INSERT INTO `form_thresholds` (`id`, `ics_max`, `par_min`, `updated_at`) VALUES
+(1, 50000.00, 50000.00, '2025-10-03 06:03:10');
 
 -- --------------------------------------------------------
 
@@ -1332,7 +1688,12 @@ INSERT INTO `generated_reports` (`id`, `user_id`, `office_id`, `filename`, `temp
 (101, 17, 4, 'consumables_export_20250928_095324.csv', 0, '2025-09-28 12:53:24'),
 (102, 17, 4, 'unserviceable_report_20250928_100359.pdf', 0, '2025-09-28 13:04:00'),
 (103, 17, 4, 'unserviceable_report_20250928_100413.pdf', 0, '2025-09-28 13:04:13'),
-(104, 17, 4, 'Employee_MR_Report_20250928_113351.pdf', 0, '2025-09-28 14:33:52');
+(104, 17, 4, 'Employee_MR_Report_20250928_113351.pdf', 0, '2025-09-28 14:33:52'),
+(105, 17, 4, 'fuel_log_export_20250930_070737.csv', 0, '2025-09-30 13:07:37'),
+(106, 17, 4, 'fuel_log_report_20250930_070740.pdf', 0, '2025-09-30 13:07:40'),
+(107, 17, 4, 'fuel_log_export_20250930_074817.csv', 0, '2025-09-30 13:48:17'),
+(108, 17, 4, 'fuel_log_report_20250930_074821.pdf', 0, '2025-09-30 13:48:23'),
+(109, 17, 4, 'assets_report_20251001_044350.pdf', 0, '2025-10-01 10:43:51');
 
 -- --------------------------------------------------------
 
@@ -1404,7 +1765,17 @@ CREATE TABLE `ics_form` (
 --
 
 INSERT INTO `ics_form` (`id`, `header_image`, `entity_name`, `fund_cluster`, `ics_no`, `received_from_name`, `received_from_position`, `received_by_name`, `received_by_position`, `created_at`, `office_id`) VALUES
-(1, 'ics_header_1759148152_257b5989.png', 'LGU PILAR', '', 'ICS-2025-0001', 'IVAN CHRISTOPHER R. MILLABAS', 'DESIGNATE-SUPPLY OFFICER/OMM', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-29 12:15:52', 4);
+(1, 'ics_header_1759148152_257b5989.png', 'LGU PILAR', '', 'ICS-2025-0001', 'IVAN CHRISTOPHER R. MILLABAS', 'DESIGNATE-SUPPLY OFFICER/OMM', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-29 12:15:52', 4),
+(2, 'ics_header_1759148152_257b5989.png', 'LGU PILAR', 'FC-2025-001', 'ICS-2025-0001', 'IVAN CHRISTOPHER R. MILLABAS', 'DESIGNATE-SUPPLY OFFICER/OMM', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-30 02:46:36', 4),
+(3, 'ics_header_1759148152_257b5989.png', 'LGU PILAR', 'FC-2025-002', 'ICS-2025-0001', 'IVAN CHRISTOPHER R. MILLABAS', 'DESIGNATE-SUPPLY OFFICER/OMM', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-30 15:34:51', 4),
+(4, 'ics_header_1759148152_257b5989.png', 'LGU PILAR', 'FC-2025-002', 'ICS-2025-0001', 'IVAN CHRISTOPHER R. MILLABAS', 'DESIGNATE-SUPPLY OFFICER/OMM', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-09-30 15:45:59', 30),
+(5, 'ics_header_1759148152_257b5989.png', 'LGU PILAR', 'FC-2025-002', 'ICS-2025-0002', 'IVAN CHRISTOPHER R. MILLABAS', 'DESIGNATE-SUPPLY OFFICER/OMM', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-10-01 04:00:32', 34),
+(6, 'ics_header_1759148152_257b5989.png', 'OMM', 'FC-2025-002', 'ICS-2025-0006', 'IVAN CHRISTOPHER R. MILLABAS', 'DESIGNATE-SUPPLY OFFICER/OMM', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-10-02 09:55:12', 33),
+(7, 'ics_header_1759148152_257b5989.png', 'OMM', 'FC-2025-001', 'ICS-2025-0009', 'IVAN CHRISTOPHER R. MILLABAS', 'DESIGNATE-SUPPLY OFFICER/OMM', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-10-02 10:00:30', 33),
+(8, 'ics_header_1759148152_257b5989.png', 'GAD', 'FC-2025-0011', 'ICS-2025-00041', 'IVAN CHRISTOPHER R. MILLABAS', 'DESIGNATE-SUPPLY OFFICER/OMM', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-10-02 12:21:33', 19),
+(9, 'ics_header_1759148152_257b5989.png', 'KALAHI', 'FC-2025-001', 'ICS-2025-00022', 'IVAN CHRISTOPHER R. MILLABAS', 'DESIGNATE-SUPPLY OFFICER/OMM', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-10-02 12:25:57', 24),
+(10, 'ics_header_1759148152_257b5989.png', 'COA', 'fc-001', 'ICS-00001-FINAL-00001-25', 'IVAN CHRISTOPHER R. MILLABAS', 'DESIGNATE-SUPPLY OFFICER/OMM', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-10-03 09:01:06', 14),
+(11, 'ics_header_1759148152_257b5989.png', 'KALAHI', 'FC-2025-0021', 'ICS-00001-25', 'IVAN CHRISTOPHER R. MILLABAS', 'DESIGNATE-SUPPLY OFFICER/OMM', 'MARK JAYSON NAMIA', 'PROPERTY CUSTODIAN', '2025-10-03 11:30:27', 24);
 
 -- --------------------------------------------------------
 
@@ -1432,7 +1803,17 @@ CREATE TABLE `ics_items` (
 --
 
 INSERT INTO `ics_items` (`item_id`, `ics_id`, `asset_id`, `ics_no`, `quantity`, `unit`, `unit_cost`, `total_cost`, `description`, `item_no`, `estimated_useful_life`, `created_at`) VALUES
-(1, 1, 8, '', 30, 'unit', 6650.00, 199500.00, 'Wheel Chair', '', '2 years', '2025-09-29 12:15:52');
+(1, 1, 8, '', 30, 'unit', 6650.00, 199500.00, 'Wheel Chair', '', '2 years', '2025-09-29 12:15:52'),
+(2, 2, 39, 'ICS-2025-0001', 2, 'unit', 45000.00, 90000.00, 'Laptop AMD Ryzen', '', '3 years', '2025-09-30 02:46:36'),
+(3, 3, 44, 'ICS-2025-0001', 2, 'unit', 18000.00, 36000.00, 'Grass cutter', '', '2 years', '2025-09-30 15:34:51'),
+(4, 3, 46, 'ICS-2025-0001', 1, 'unit', 3500.00, 3500.00, 'Power Drill (corded)', '', '3 years', '2025-09-30 15:34:51'),
+(5, 5, 47, 'ICS-2025-0002', 1, 'unit', 4500.00, 4500.00, 'Printer Epson', '1', '2 years', '2025-10-01 04:00:32'),
+(6, 6, 52, 'ICS-2025-0006', 1, 'unit', 42000.00, 42000.00, 'Conference Table', 'ITM-55-1', '5 years', '2025-10-02 09:55:13'),
+(7, 7, 53, 'ICS-2025-0009', 1, 'unit', 10000.00, 10000.00, 'conference table', '2022-0003', '5 years', '2025-10-02 10:00:30'),
+(8, 8, 55, 'ICS-2025-00041', 1, 'unit', 52000.00, 52000.00, 'computer desktop', 'PROP-00031', '3 years', '2025-10-02 12:21:33'),
+(9, 9, 56, 'ICS-2025-00022', 1, 'unit', 54000.00, 54000.00, 'Lappy', 'STOCK-00172', '3 years', '2025-10-02 12:25:57'),
+(10, 10, 58, 'ICS-00001-FINAL-00001-25', 5, 'pcs', 230.00, 1150.00, 'Office chair', '1', '3 years', '2025-10-03 09:01:06'),
+(11, 11, 65, 'ICS-00001-25', 10, 'pcs', 230.00, 2300.00, 'Monoblock', '1', '5 years', '2025-10-03 11:30:27');
 
 -- --------------------------------------------------------
 
@@ -1458,7 +1839,9 @@ CREATE TABLE `iirup_form` (
 --
 
 INSERT INTO `iirup_form` (`id`, `header_image`, `accountable_officer`, `designation`, `office`, `footer_accountable_officer`, `footer_authorized_official`, `footer_designation_officer`, `footer_designation_official`, `created_at`) VALUES
-(1, 'iirup_header_1759149310_f782115c_iirup.png', 'IVAN CHRISTOPER MILLABAS', 'OFFICE', 'Supply Office', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-29 12:35:10');
+(1, 'iirup_header_1759149310_f782115c_iirup.png', 'IVAN CHRISTOPER MILLABAS', 'OFFICE', 'Supply Office', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-29 12:35:10'),
+(2, 'iirup_header_1759149310_f782115c_iirup.png', 'IVAN CHRISTOPER MILLABAS', 'OFFICE', 'Supply Office', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-09-30 02:56:39'),
+(3, 'iirup_header_1759149310_f782115c_iirup.png', 'IVAN CHRISTOPER MILLABAS', 'OFFICE', 'Supply Office', 'MA. ANNIE L. PERETE', 'CAROLYN C. SY-REYES', 'Public Information Officer III', 'Municipal Mayor', '2025-10-02 11:16:35');
 
 -- --------------------------------------------------------
 
@@ -1500,7 +1883,9 @@ CREATE TABLE `iirup_items` (
 --
 
 INSERT INTO `iirup_items` (`item_id`, `iirup_id`, `asset_id`, `date_acquired`, `particulars`, `property_no`, `qty`, `unit_cost`, `total_cost`, `accumulated_depreciation`, `accumulated_impairment_losses`, `carrying_amount`, `remarks`, `sale`, `transfer`, `destruction`, `others`, `total`, `appraised_value`, `or_no`, `amount`, `dept_office`, `code`, `red_tag`, `date_received`, `created_at`) VALUES
-(1, 1, 8, '2025-09-29', 'Wheel Chair', '', 1, 6650.00, 6650.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-29', '2025-09-29 12:35:10');
+(1, 1, 8, '2025-09-29', 'Wheel Chair', '', 1, 6650.00, 6650.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-29', '2025-09-29 12:35:10'),
+(2, 2, 39, '2025-09-30', 'Laptop AMD Ryzen', '', 1, 45000.00, 45000.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'Supply Office', '', '', '2025-09-30', '2025-09-30 02:56:39'),
+(3, 3, 53, '2025-10-02', 'conference table', 'PS-5S-03-F02-01-01', 1, 10000.00, 10000.00, 0.00, 0.00, 0.00, 'Unserviceable', '', '', '', '', 0.00, 0.00, '', 0.00, 'OMM', '', '', '2025-10-02', '2025-10-02 11:16:35');
 
 -- --------------------------------------------------------
 
@@ -1594,6 +1979,28 @@ CREATE TABLE `itr_form` (
   `received_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `itr_form`
+--
+
+INSERT INTO `itr_form` (`itr_id`, `header_image`, `entity_name`, `fund_cluster`, `from_accountable_officer`, `to_accountable_officer`, `itr_no`, `date`, `transfer_type`, `reason_for_transfer`, `approved_by`, `approved_designation`, `approved_date`, `released_by`, `released_designation`, `released_date`, `received_by`, `received_designation`, `received_date`) VALUES
+(1, '1759292224_ITR.png', 'LGU PILAR', 'FC-2025-001', 'MARK JAYSON NAMIA', 'Madison Brooks', 'ITR-2025-002', '2025-09-30', 'reassignment', 'unserviceable', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Madison Brooks', 'OFFICE', '0000-00-00'),
+(2, '1759292224_ITR.png', 'LGU PILAR', 'FC-2025-001', 'MARK JAYSON NAMIA', 'Nora Powell', 'ITR-2025-002', '2025-09-30', 'reassignment', 'reassignment', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Nora Powell', 'OFFICE', '0000-00-00'),
+(3, '1759292224_ITR.png', 'LGU PILAR', 'FC-2025-001', 'MARK JAYSON NAMIA', 'John Smith', 'ITR-2025-002', '2025-09-30', 'reassignment', 'reassignment', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'John Smith', 'OFFICE', '0000-00-00'),
+(4, '1759292224_ITR.png', 'RHU', 'FC-2025-001', 'MARK JAYSON NAMIA', 'Mason Young', 'ITR-2025-002', '2025-09-30', 'reassignment', 'reassignment', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Mason Young', 'OFFICE', '0000-00-00'),
+(5, '1759292224_ITR.png', 'LGU PILAR', 'FC-2025-001', 'MARK JAYSON NAMIA', 'Madison Brooks', 'ITR-2025-001', '2025-09-30', 'reassignment', 'reassignment', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Madison Brooks', 'OFFICE', '0000-00-00'),
+(6, '1759292224_ITR.png', 'LGU PILAR', 'FC-2025-001', 'MARK JAYSON NAMIA', 'Maria Santos', 'ITR-2025-001', '2025-09-30', 'reassignment', 'to person accountable', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Maria Santos', 'OFFICE', '0000-00-00'),
+(7, '1759292224_ITR.png', 'RHU', 'FC-2025-001', 'MARK JAYSON NAMIA', 'Nora Powell', 'ITR-2025-002', '2025-09-30', 'reassignment', 'Reason', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Nora Powell', 'OFFICE', '0000-00-00'),
+(8, '1759292224_ITR.png', 'LGU PILAR', 'FC-2025-001', 'MARK JAYSON NAMIA', 'Madison Brooks', 'ITR-2025-002', '2025-09-30', 'reassignment', 'reason', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Madison Brooks', 'OFFICE', '0000-00-00'),
+(9, '1759292224_ITR.png', 'LGU PILAR', 'FC-2025-001', 'MARK JAYSON NAMIA', 'Leo Peterson', 'ITR-2025-002', '2025-09-30', 'reassignment', 'reeason', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Leo Peterson', 'OFFICE', '0000-00-00'),
+(11, '1759292224_ITR.png', 'DepEd', 'FC-2025-001', 'MARK JAYSON NAMIA', 'Mason Young', 'ITR-2025-001', '2025-09-30', 'reassignment', 'reason', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Mason Young', 'OFFICE', '0000-00-00'),
+(12, '1759292224_ITR.png', 'RHU', 'FC-2025-001', 'MARK JAYSON NAMIA', 'Owen Perez', 'ITR-2025-002', '2025-09-30', 'reassignment', 're', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Owen Perez', 'OFFICE', '0000-00-00'),
+(13, '1759292224_ITR.png', 'RHU', 'fc-001', 'MARK JAYSON NAMIA', 'Lillian Foster', 'ITR-2025-002', '2025-09-30', 'reassignment', 're', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Lillian Foster', 'OFFICE', '0000-00-00'),
+(14, '1759292224_ITR.png', 'LGU', 'FC-2025-001', 'MARK JAYSON NAMIA', 'Madison Brooks', 'ITR-2025-001', '2025-09-30', 'reassignment', 'reassignment for', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Madison Brooks', 'OFFICE', '0000-00-00'),
+(15, '1759292224_ITR.png', 'INVENTORY', 'FC-2025-001', 'MARK JAYSON NAMIA', 'Maria Santos', 'ITR-2025-002', '2025-09-30', 'reassignment', 're', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Maria Santos', 'OFFICE', '0000-00-00'),
+(16, '1759468945_Screenshot_2025-10-03_132112.png', 'LGU PILAR', 'FC-2025-0011', 'MARK JAYSON NAMIA', 'Amelia Lewis', 'ITR-2025-0011', '2025-09-30', 'reassignment', 'reass', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Amelia Lewis', 'OFFICE', '0000-00-00'),
+(17, '1759468945_Screenshot_2025-10-03_132112.png', 'INVENTORY', 'fc-001', 'Maria Santos', 'Leo Peterson', 'ITR-2025-00113', '2025-09-30', 'reassignment', 'Reason', 'CAROLYN SY-REYES', 'OFFICE', '2025-09-30', 'MARK JAYSON NAMIA', 'OFFICE', '2025-09-30', 'Leo Peterson', 'OFFICE', '0000-00-00');
+
 -- --------------------------------------------------------
 
 --
@@ -1603,6 +2010,7 @@ CREATE TABLE `itr_form` (
 CREATE TABLE `itr_items` (
   `item_id` int(11) NOT NULL,
   `itr_id` int(10) UNSIGNED NOT NULL,
+  `item_no` int(11) DEFAULT 1,
   `date_acquired` date DEFAULT NULL,
   `property_no` varchar(100) DEFAULT NULL,
   `asset_id` int(11) NOT NULL,
@@ -1610,6 +2018,28 @@ CREATE TABLE `itr_items` (
   `amount` decimal(12,2) DEFAULT NULL,
   `condition_of_PPE` varchar(150) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `itr_items`
+--
+
+INSERT INTO `itr_items` (`item_id`, `itr_id`, `item_no`, `date_acquired`, `property_no`, `asset_id`, `description`, `amount`, `condition_of_PPE`) VALUES
+(8, 1, 1, '2025-09-29', 'PN-2019-05-02-0001-01', 8, 'Notebook i7 (PN-2019-05-02-0001-01)', 80245.00, 'Serviceable'),
+(9, 2, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 8, 'Grass cutter (PN-2019-05-02-0001-01)', 18000.00, 'Serviceable'),
+(10, 3, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 8, 'Power Drill (corded) (PN-2019-05-02-0001-01)', 3500.00, 'Serviceable'),
+(11, 4, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 8, 'Power Drill (corded) (PN-2019-05-02-0001-01)', 3500.00, 'Serviceable'),
+(12, 5, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 8, 'Power Drill (corded) (PN-2019-05-02-0001-01)', 3500.00, 'Serviceable'),
+(13, 6, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 8, 'Power Drill (corded) (PN-2019-05-02-0001-01)', 3500.00, 'Serviceable'),
+(14, 7, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 8, 'Power Drill (corded) (PN-2019-05-02-0001-01)', 3500.00, 'Serviceable'),
+(15, 8, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 8, 'Power Drill (corded) (PN-2019-05-02-0001-01)', 3500.00, 'Serviceable'),
+(16, 9, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 8, 'Power Drill (corded) (PN-2019-05-02-0001-01)', 3500.00, 'Serviceable'),
+(17, 11, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 8, 'Power Drill (corded) (PN-2019-05-02-0001-01)', 3500.00, 'Serviceable'),
+(18, 12, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 8, 'Power Drill (corded) (PN-2019-05-02-0001-01)', 3500.00, 'Serviceable'),
+(19, 13, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 8, 'Power Drill (corded) (PN-2019-05-02-0001-01)', 3500.00, 'Serviceable'),
+(20, 14, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 8, 'Power Drill (corded) (PN-2019-05-02-0001-01)', 3500.00, 'Serviceable'),
+(21, 15, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 46, 'Power Drill (corded) (PN-2019-05-02-0001-01)', 3500.00, 'Serviceable'),
+(22, 16, 1, '2025-10-02', 'PN-2019-05-02-0001-01', 53, 'conference table (PN-2019-05-02-0001-01)', 10000.00, 'Serviceable'),
+(23, 17, 1, '2025-09-30', 'PN-2019-05-02-0001-01', 46, 'Power Drill (corded) (PN-2019-05-02-0001-01)', 3500.00, 'Serviceable');
 
 -- --------------------------------------------------------
 
@@ -1699,7 +2129,15 @@ CREATE TABLE `mr_details` (
 --
 
 INSERT INTO `mr_details` (`mr_id`, `item_id`, `office_location`, `description`, `model_no`, `serial_no`, `serviceable`, `unserviceable`, `unit_quantity`, `unit`, `acquisition_date`, `acquisition_cost`, `person_accountable`, `end_user`, `acquired_date`, `counted_date`, `created_at`, `asset_id`, `inventory_tag`) VALUES
-(1, 1, 'Supply Office', 'Wheel Chair', '', '', 0, 1, 1.00, 'unit', '2025-09-29', 6650.00, 'Daniel Wilson', 'Roberto Cruz', '2025-09-29', '2025-09-29', '2025-09-29 12:23:42', 8, 'PS-5S-03-F02-01-01');
+(1, 1, 'Supply Office', 'Wheel Chair', '', '', 0, 1, 1.00, 'unit', '2025-09-29', 6650.00, 'Madison Brooks', 'John Kenneth Litana', '2025-09-29', '2025-09-29', '2025-09-29 12:23:42', 8, 'PS-5S-03-F02-01-01'),
+(2, NULL, 'Supply Office', 'Notebook i7', '', '', 1, 0, 1.00, 'unit', '2025-09-29', 80245.00, 'Sophia Martinez', 'Angela Rizal', '0000-00-00', '0000-00-00', '2025-09-30 02:23:42', 38, 'PS-5S-03-F02-01-01'),
+(3, 2, 'Supply Office', 'Laptop AMD Ryzen', 'Latitude 5430', 'SN-DC-2025-0001', 0, 1, 1.00, 'unit', '2025-09-30', 45000.00, 'Daniel Wilson', 'Roberto Cruz', '2025-09-30', '2025-09-30', '2025-09-30 02:48:41', 39, 'PS-5S-03-F02-01-01'),
+(4, NULL, 'Supply Office', 'Laptop Acer Aspire 7', 'Aspire 7', 'SN-A7-2025-00001', 1, 0, 1.00, 'unit', '2025-09-30', 50000.00, 'Aaron Griffin', 'John Kenneth Litana', '0000-00-00', '0000-00-00', '2025-09-30 05:06:19', 43, 'PS-5S-03-F02-01-01'),
+(5, 3, 'Supply Office', 'Grass cutter', '', '', 1, 0, 1.00, 'unit', '2025-09-30', 18000.00, 'Olivia Thomas', 'John Kenneth Litana', '2025-10-01', '2025-10-01', '2025-10-01 11:14:57', 44, 'PS-5S-03-F02-01-01'),
+(6, 4, 'Supply Office', 'Power Drill (corded)', '', '', 1, 0, 1.00, 'unit', '2025-09-30', 3500.00, 'Leo Peterson', 'John Legend', '2025-10-02', '2025-10-02', '2025-10-02 05:06:55', 46, 'PS-5S-03-F02-01-01'),
+(7, 7, 'OMM', 'conference table', 'Mesh Back', 'SN-DC-2025-00013243', 0, 1, 1.00, 'unit', '2025-10-02', 10000.00, 'Amelia Lewis', 'Jake Paul', '2025-10-02', '2025-10-02', '2025-10-02 10:03:43', 53, 'PS-5S-03-F02-01-01'),
+(8, 6, 'OMM', 'Conference Table', 'Mesh Back', 'SN-DC-2025-0001324347', 1, 0, 1.00, 'unit', '2025-10-02', 42000.00, 'David Anderson', 'John Legend', '2025-10-02', '2025-10-02', '2025-10-02 10:41:40', 52, 'PS-5S-03-F02-01-01'),
+(9, 11, 'KALAHI', 'Monoblock', '', '25-SN-000001', 1, 0, 1.00, 'pcs', '2025-10-03', 230.00, 'Lillian Foster', 'Jake Paul', '0000-00-00', '0000-00-00', '2025-10-03 12:38:18', 65, 'INV-0020');
 
 -- --------------------------------------------------------
 
@@ -1847,7 +2285,10 @@ CREATE TABLE `par_form` (
 
 INSERT INTO `par_form` (`id`, `form_id`, `office_id`, `received_by_name`, `issued_by_name`, `position_office_left`, `position_office_right`, `header_image`, `entity_name`, `fund_cluster`, `par_no`, `created_at`, `date_received_left`, `date_received_right`) VALUES
 (1, 3, 33, NULL, NULL, '', '', '1759151204_Screenshot 2025-09-29 180628.png', '', '', 'PAR-0001', '2025-09-29 13:06:44', NULL, NULL),
-(2, 0, 4, 'MICHAEL JACKSON', 'MARK JAYSON NAMIA', 'OFFICER', 'PROPERTY CUSTODIAN', '1759151204_Screenshot 2025-09-29 180628.png', 'LGU PILAR', '', 'PAR-2025-0001', '2025-09-29 13:24:35', '2025-09-29', '2025-09-29');
+(2, 0, 4, 'MICHAEL JACKSON', 'MARK JAYSON NAMIA', 'OFFICER', 'PROPERTY CUSTODIAN', '1759151204_Screenshot 2025-09-29 180628.png', 'LGU PILAR', '', 'PAR-2025-0001', '2025-09-29 13:24:35', '2025-09-29', '2025-09-29'),
+(3, 0, 7, 'MICHAEL JACKSON', 'MARK JAYSON NAMIA', 'OFFICER', 'PROPERTY CUSTODIAN', '1759151204_Screenshot 2025-09-29 180628.png', 'RHU', 'FC-2025-001', 'LGU-PAR-2025-0001', '2025-10-01 15:00:32', '0000-00-00', '0000-00-00'),
+(4, 0, 7, 'MICHAEL JACKSON', 'MARK JAYSON NAMIA', 'OFFICER', 'PROPERTY CUSTODIAN', '1759151204_Screenshot 2025-09-29 180628.png', 'RHU', 'FC-2025-002', 'LGU-PAR-2025-0009', '2025-10-02 10:02:16', '0000-00-00', '0000-00-00'),
+(5, 0, 7, 'MICHAEL JACKSON', 'MARK JAYSON NAMIA', 'OFFICER', 'PROPERTY CUSTODIAN', '1759151204_Screenshot 2025-09-29 180628.png', 'LGU PILAR', 'FC-2025-0021', 'PAR-00051', '2025-10-02 12:37:37', '0000-00-00', '0000-00-00');
 
 -- --------------------------------------------------------
 
@@ -1873,7 +2314,68 @@ CREATE TABLE `par_items` (
 --
 
 INSERT INTO `par_items` (`item_id`, `form_id`, `asset_id`, `quantity`, `unit`, `description`, `property_no`, `date_acquired`, `unit_price`, `amount`) VALUES
-(1, 2, 38, 1, 'unit', 'Notebook i7', 'SPO21A-2', '2025-09-29', 80245.00, 80245.00);
+(1, 2, 38, 1, 'unit', 'Notebook i7', 'SPO21A-2', '2025-09-29', 80245.00, 80245.00),
+(2, 3, 49, 2, 'unit', 'HP Pavilion', 'LGU-2025-ICT-0001', '2025-10-01', 53000.00, 106000.00),
+(3, 3, 51, 1, 'unit', 'Medical X-Ray Machine', 'XR-0078', '2025-10-01', 120000.00, 120000.00),
+(4, 4, 54, 1, 'unit', 'Laptop i7', 'PROP-0009', '2025-10-02', 70000.00, 70000.00),
+(5, 5, 57, 1, 'unit', 'Hilux Van', 'LGU-2025-ICT-00013', '2025-10-02', 2000000.00, 2000000.00);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `permissions`
+--
+
+CREATE TABLE `permissions` (
+  `id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `description` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `permission_audit_log`
+--
+
+CREATE TABLE `permission_audit_log` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL COMMENT 'User whose permissions changed',
+  `changed_by` int(11) NOT NULL COMMENT 'Admin who made the change',
+  `action` enum('GRANT','REVOKE','ROLE_CHANGE') NOT NULL,
+  `permission_id` int(11) DEFAULT NULL COMMENT 'Permission that was changed',
+  `old_value` varchar(100) DEFAULT NULL,
+  `new_value` varchar(100) DEFAULT NULL,
+  `reason` text DEFAULT NULL COMMENT 'Reason for permission change',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Audit trail for permission changes';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `permission_levels`
+--
+
+CREATE TABLE `permission_levels` (
+  `id` int(11) NOT NULL,
+  `level_name` varchar(50) NOT NULL COMMENT 'Level name (none, view, edit, delete, approve, manage)',
+  `level_weight` int(11) NOT NULL COMMENT 'Weight for hierarchy (1=lowest, 5=highest)',
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Permission level hierarchy';
+
+--
+-- Dumping data for table `permission_levels`
+--
+
+INSERT INTO `permission_levels` (`id`, `level_name`, `level_weight`, `description`, `created_at`) VALUES
+(1, 'none', 0, 'No access to module', '2025-10-03 02:25:48'),
+(2, 'view', 1, 'Can view/read data only', '2025-10-03 02:25:48'),
+(3, 'edit', 2, 'Can view and create/edit data', '2025-10-03 02:25:48'),
+(4, 'delete', 3, 'Can view, edit, and delete data', '2025-10-03 02:25:48'),
+(5, 'approve', 4, 'Can approve/reject actions (for workflows)', '2025-10-03 02:25:48'),
+(6, 'manage', 5, 'Full control including permissions management', '2025-10-03 02:25:48');
 
 -- --------------------------------------------------------
 
@@ -1896,6 +2398,14 @@ CREATE TABLE `red_tags` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `red_tags`
+--
+
+INSERT INTO `red_tags` (`id`, `red_tag_number`, `asset_id`, `iirup_id`, `date_received`, `tagged_by`, `item_location`, `description`, `removal_reason`, `action`, `status`, `created_at`, `updated_at`) VALUES
+(1, 'PS-5S-03-F01-01-01', 39, 2, '2025-09-30', 17, 'Supply Office', 'Laptop AMD Ryzen (PN-2019-05-02-0001-01)', 'Broken', 'For Disposal', 'Pending', '2025-09-30 03:04:15', '2025-09-30 03:04:15'),
+(2, 'PS-5S-03-F01-01-01', 53, 3, '2025-10-02', 17, 'Supply Office', 'conference table (PN-2019-05-02-0001-01)', 'Broken', 'For Disposal', 'Pending', '2025-10-02 11:23:27', '2025-10-02 11:23:27');
 
 -- --------------------------------------------------------
 
@@ -2037,7 +2547,10 @@ INSERT INTO `ris_form` (`id`, `form_id`, `office_id`, `header_image`, `division`
 (2, 6, 4, '1759143582_Screenshot_2025-09-19_112710.png', '', '', '', 'RIS-2025-0001', 'SAI-2025-0002', '2025-09-29', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-29', 'MICHAEL JACKSON', 'CLERK', '2025-09-29', '2025-09-29', 'For air freshening in supply office', '2025-09-29 11:53:18', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-29', 'MARK JAYSON NAMIA', 'SUPPLY OFFICER', '2025-09-29'),
 (3, 6, 4, '1759143582_Screenshot_2025-09-19_112710.png', '', '', '', 'RIS-2025-0001', 'SAI-2025-0003', '2025-09-29', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-29', 'MICHAEL JACKSON', 'CLERK', '2025-09-29', '2025-09-29', 'For air freshening in supply office', '2025-09-29 11:56:18', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-29', 'MARK JAYSON NAMIA', 'SUPPLY OFFICER', '2025-09-29'),
 (4, 6, 4, '1759143582_Screenshot_2025-09-19_112710.png', '', '', '', 'RIS-2025-0001', 'SAI-2025-0004', '2025-09-29', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-29', 'MICHAEL JACKSON', 'CLERK', '2025-09-29', '2025-09-29', 'For air freshening in supply office', '2025-09-29 11:57:55', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-29', 'MARK JAYSON NAMIA', 'SUPPLY OFFICER', '2025-09-29'),
-(5, 6, 4, '1759143582_Screenshot_2025-09-19_112710.png', '', '', '', 'RIS-2025-0001', 'SAI-2025-0005', '2025-09-29', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-29', 'MICHAEL JACKSON', 'CLERK', '2025-09-29', '2025-09-29', 'For air freshening in supply office', '2025-09-29 12:01:38', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-29', 'MARK JAYSON NAMIA', 'SUPPLY OFFICER', '2025-09-29');
+(5, 6, 4, '1759143582_Screenshot_2025-09-19_112710.png', '', '', '', 'RIS-2025-0001', 'SAI-2025-0005', '2025-09-29', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-29', 'MICHAEL JACKSON', 'CLERK', '2025-09-29', '2025-09-29', 'For air freshening in supply office', '2025-09-29 12:01:38', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-29', 'MARK JAYSON NAMIA', 'SUPPLY OFFICER', '2025-09-29'),
+(6, 6, 4, '1759143582_Screenshot_2025-09-19_112710.png', '', '', '', 'RIS-2025-0001', 'SAI-2025-0006', '2025-09-30', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-30', 'MICHAEL JACKSON', 'CLERK', '2025-09-30', '2025-09-29', 'For supplies in supply office', '2025-09-30 03:09:02', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-09-30', 'MARK JAYSON NAMIA', 'SUPPLY OFFICER', '2025-09-30'),
+(7, 6, 4, '1759143582_Screenshot_2025-09-19_112710.png', '', '', '', 'RIS-2025-0001', 'SAI-2025-0007', '2025-10-01', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-10-01', 'MICHAEL JACKSON', 'CLERK', '2025-10-01', '2025-09-29', 'For supplies in supply office', '2025-10-01 05:53:42', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '2025-10-01', 'MARK JAYSON NAMIA', 'SUPPLY OFFICER', '2025-10-01'),
+(8, 6, 1, NULL, '', '', '', 'RIS-0001', '', '2025-10-03', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '0000-00-00', 'JOHN DOE', 'CLERK', '0000-00-00', '2025-09-29', 'For MPDC supplies', '2025-10-03 09:29:25', 'CAROLYN C. SY-REYES', 'MUNICIPAL MAYOR', '0000-00-00', 'MARK JAYSON NAMIA', 'SUPPLY OFFICER', '0000-00-00');
 
 -- --------------------------------------------------------
 
@@ -2067,7 +2580,182 @@ INSERT INTO `ris_items` (`id`, `ris_form_id`, `stock_no`, `unit`, `description`,
 (4, 4, '', '2', 'Ballpen HBW Matrix 50\'s black', 3, 223.63, 670.89),
 (5, 5, '', '1', 'Battey AA', 9, 85.00, 765.00),
 (6, 5, '', '1', 'Battery AAA', 9, 75.00, 675.00),
-(7, 5, '', '22', 'Bond paper long S-20', 22, 330.00, 7260.00);
+(7, 5, '', '22', 'Bond paper long S-20', 22, 330.00, 7260.00),
+(8, 6, '', '2', 'Ballpen ', 3, 340.00, 1020.00),
+(9, 6, '', '22', 'Bond paper', 2, 300.00, 600.00),
+(10, 6, '', '1', 'Tissue', 3, 50.00, 150.00),
+(11, 7, '1', '1', 'Ink', 10, 58.00, 580.00),
+(12, 8, '1', '2', 'AA Battery', 1, 405.00, 405.00),
+(13, 8, '2', '2', 'AAA Battery', 3, 560.00, 1680.00);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `roles`
+--
+
+CREATE TABLE `roles` (
+  `id` int(11) NOT NULL,
+  `name` varchar(50) NOT NULL,
+  `description` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `roles`
+--
+
+INSERT INTO `roles` (`id`, `name`, `description`, `created_at`, `updated_at`) VALUES
+(1, 'SYSTEM_ADMIN', 'Has full access to all system features and configurations', '2025-10-03 05:05:48', '2025-10-03 05:05:48'),
+(2, 'MAIN_ADMIN', 'Can manage assets, users, and basic system settings', '2025-10-03 05:05:48', '2025-10-03 05:05:48'),
+(3, 'MAIN_EMPLOYEE', 'Can view and borrow assets', '2025-10-03 05:05:48', '2025-10-03 05:05:48'),
+(4, 'MAIN_USER', 'Basic user with limited access', '2025-10-03 05:05:48', '2025-10-03 05:05:48');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `role_permissions`
+--
+
+CREATE TABLE `role_permissions` (
+  `id` int(11) NOT NULL,
+  `role` enum('MAIN_ADMIN','SYSTEM_ADMIN','OFFICE_ADMIN','MAIN_USER') NOT NULL COMMENT 'Role name',
+  `permission_id` int(11) NOT NULL COMMENT 'Permission ID',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Default permissions for each role';
+
+--
+-- Dumping data for table `role_permissions`
+--
+
+INSERT INTO `role_permissions` (`id`, `role`, `permission_id`, `created_at`) VALUES
+(1, 'MAIN_ADMIN', 47, '2025-10-03 02:25:48'),
+(2, 'MAIN_ADMIN', 48, '2025-10-03 02:25:48'),
+(3, 'MAIN_ADMIN', 49, '2025-10-03 02:25:48'),
+(4, 'MAIN_ADMIN', 50, '2025-10-03 02:25:48'),
+(5, 'MAIN_ADMIN', 1, '2025-10-03 02:25:48'),
+(6, 'MAIN_ADMIN', 2, '2025-10-03 02:25:48'),
+(7, 'MAIN_ADMIN', 3, '2025-10-03 02:25:48'),
+(8, 'MAIN_ADMIN', 4, '2025-10-03 02:25:48'),
+(9, 'MAIN_ADMIN', 5, '2025-10-03 02:25:48'),
+(10, 'MAIN_ADMIN', 51, '2025-10-03 02:25:48'),
+(11, 'MAIN_ADMIN', 52, '2025-10-03 02:25:48'),
+(12, 'MAIN_ADMIN', 53, '2025-10-03 02:25:48'),
+(13, 'MAIN_ADMIN', 6, '2025-10-03 02:25:48'),
+(14, 'MAIN_ADMIN', 7, '2025-10-03 02:25:48'),
+(15, 'MAIN_ADMIN', 8, '2025-10-03 02:25:48'),
+(16, 'MAIN_ADMIN', 9, '2025-10-03 02:25:48'),
+(17, 'MAIN_ADMIN', 10, '2025-10-03 02:25:48'),
+(18, 'MAIN_ADMIN', 59, '2025-10-03 02:25:48'),
+(19, 'MAIN_ADMIN', 60, '2025-10-03 02:25:48'),
+(20, 'MAIN_ADMIN', 21, '2025-10-03 02:25:48'),
+(21, 'MAIN_ADMIN', 22, '2025-10-03 02:25:48'),
+(22, 'MAIN_ADMIN', 23, '2025-10-03 02:25:48'),
+(23, 'MAIN_ADMIN', 24, '2025-10-03 02:25:48'),
+(24, 'MAIN_ADMIN', 29, '2025-10-03 02:25:48'),
+(25, 'MAIN_ADMIN', 30, '2025-10-03 02:25:48'),
+(26, 'MAIN_ADMIN', 31, '2025-10-03 02:25:48'),
+(27, 'MAIN_ADMIN', 32, '2025-10-03 02:25:48'),
+(28, 'MAIN_ADMIN', 33, '2025-10-03 02:25:48'),
+(29, 'MAIN_ADMIN', 11, '2025-10-03 02:25:48'),
+(30, 'MAIN_ADMIN', 12, '2025-10-03 02:25:48'),
+(31, 'MAIN_ADMIN', 13, '2025-10-03 02:25:48'),
+(32, 'MAIN_ADMIN', 14, '2025-10-03 02:25:48'),
+(33, 'MAIN_ADMIN', 15, '2025-10-03 02:25:48'),
+(34, 'MAIN_ADMIN', 61, '2025-10-03 02:25:48'),
+(35, 'MAIN_ADMIN', 62, '2025-10-03 02:25:48'),
+(36, 'MAIN_ADMIN', 25, '2025-10-03 02:25:48'),
+(37, 'MAIN_ADMIN', 26, '2025-10-03 02:25:48'),
+(38, 'MAIN_ADMIN', 27, '2025-10-03 02:25:48'),
+(39, 'MAIN_ADMIN', 28, '2025-10-03 02:25:48'),
+(40, 'MAIN_ADMIN', 44, '2025-10-03 02:25:48'),
+(41, 'MAIN_ADMIN', 45, '2025-10-03 02:25:48'),
+(42, 'MAIN_ADMIN', 46, '2025-10-03 02:25:48'),
+(43, 'MAIN_ADMIN', 34, '2025-10-03 02:25:48'),
+(44, 'MAIN_ADMIN', 35, '2025-10-03 02:25:48'),
+(45, 'MAIN_ADMIN', 36, '2025-10-03 02:25:48'),
+(46, 'MAIN_ADMIN', 37, '2025-10-03 02:25:48'),
+(47, 'MAIN_ADMIN', 38, '2025-10-03 02:25:48'),
+(48, 'MAIN_ADMIN', 39, '2025-10-03 02:25:48'),
+(49, 'MAIN_ADMIN', 40, '2025-10-03 02:25:48'),
+(50, 'MAIN_ADMIN', 41, '2025-10-03 02:25:48'),
+(51, 'MAIN_ADMIN', 42, '2025-10-03 02:25:48'),
+(52, 'MAIN_ADMIN', 43, '2025-10-03 02:25:48'),
+(53, 'MAIN_ADMIN', 54, '2025-10-03 02:25:48'),
+(54, 'MAIN_ADMIN', 55, '2025-10-03 02:25:48'),
+(55, 'MAIN_ADMIN', 56, '2025-10-03 02:25:48'),
+(56, 'MAIN_ADMIN', 57, '2025-10-03 02:25:48'),
+(57, 'MAIN_ADMIN', 58, '2025-10-03 02:25:48'),
+(58, 'MAIN_ADMIN', 16, '2025-10-03 02:25:48'),
+(59, 'MAIN_ADMIN', 17, '2025-10-03 02:25:48'),
+(60, 'MAIN_ADMIN', 18, '2025-10-03 02:25:48'),
+(61, 'MAIN_ADMIN', 19, '2025-10-03 02:25:48'),
+(62, 'MAIN_ADMIN', 20, '2025-10-03 02:25:48'),
+(64, 'SYSTEM_ADMIN', 52, '2025-10-03 02:25:48'),
+(65, 'SYSTEM_ADMIN', 53, '2025-10-03 02:25:48'),
+(66, 'SYSTEM_ADMIN', 51, '2025-10-03 02:25:48'),
+(67, 'SYSTEM_ADMIN', 60, '2025-10-03 02:25:48'),
+(68, 'SYSTEM_ADMIN', 59, '2025-10-03 02:25:48'),
+(69, 'SYSTEM_ADMIN', 62, '2025-10-03 02:25:48'),
+(70, 'SYSTEM_ADMIN', 61, '2025-10-03 02:25:48'),
+(71, 'SYSTEM_ADMIN', 27, '2025-10-03 02:25:48'),
+(72, 'SYSTEM_ADMIN', 26, '2025-10-03 02:25:48'),
+(73, 'SYSTEM_ADMIN', 28, '2025-10-03 02:25:48'),
+(74, 'SYSTEM_ADMIN', 25, '2025-10-03 02:25:48'),
+(75, 'SYSTEM_ADMIN', 41, '2025-10-03 02:25:48'),
+(76, 'SYSTEM_ADMIN', 39, '2025-10-03 02:25:48'),
+(77, 'SYSTEM_ADMIN', 56, '2025-10-03 02:25:48'),
+(78, 'SYSTEM_ADMIN', 55, '2025-10-03 02:25:48'),
+(79, 'SYSTEM_ADMIN', 58, '2025-10-03 02:25:48'),
+(80, 'SYSTEM_ADMIN', 57, '2025-10-03 02:25:48'),
+(81, 'SYSTEM_ADMIN', 54, '2025-10-03 02:25:48'),
+(82, 'SYSTEM_ADMIN', 18, '2025-10-03 02:25:48'),
+(83, 'SYSTEM_ADMIN', 17, '2025-10-03 02:25:48'),
+(84, 'SYSTEM_ADMIN', 20, '2025-10-03 02:25:48'),
+(85, 'SYSTEM_ADMIN', 19, '2025-10-03 02:25:48'),
+(86, 'SYSTEM_ADMIN', 16, '2025-10-03 02:25:48'),
+(95, 'OFFICE_ADMIN', 49, '2025-10-03 02:25:48'),
+(96, 'OFFICE_ADMIN', 48, '2025-10-03 02:25:48'),
+(97, 'OFFICE_ADMIN', 47, '2025-10-03 02:25:48'),
+(98, 'OFFICE_ADMIN', 3, '2025-10-03 02:25:48'),
+(99, 'OFFICE_ADMIN', 2, '2025-10-03 02:25:48'),
+(100, 'OFFICE_ADMIN', 4, '2025-10-03 02:25:48'),
+(101, 'OFFICE_ADMIN', 1, '2025-10-03 02:25:48'),
+(102, 'OFFICE_ADMIN', 8, '2025-10-03 02:25:48'),
+(103, 'OFFICE_ADMIN', 7, '2025-10-03 02:25:48'),
+(104, 'OFFICE_ADMIN', 9, '2025-10-03 02:25:48'),
+(105, 'OFFICE_ADMIN', 6, '2025-10-03 02:25:48'),
+(106, 'OFFICE_ADMIN', 60, '2025-10-03 02:25:48'),
+(107, 'OFFICE_ADMIN', 59, '2025-10-03 02:25:48'),
+(108, 'OFFICE_ADMIN', 23, '2025-10-03 02:25:48'),
+(109, 'OFFICE_ADMIN', 22, '2025-10-03 02:25:48'),
+(110, 'OFFICE_ADMIN', 21, '2025-10-03 02:25:48'),
+(111, 'OFFICE_ADMIN', 32, '2025-10-03 02:25:48'),
+(112, 'OFFICE_ADMIN', 31, '2025-10-03 02:25:48'),
+(113, 'OFFICE_ADMIN', 30, '2025-10-03 02:25:48'),
+(114, 'OFFICE_ADMIN', 29, '2025-10-03 02:25:48'),
+(115, 'OFFICE_ADMIN', 12, '2025-10-03 02:25:48'),
+(116, 'OFFICE_ADMIN', 14, '2025-10-03 02:25:48'),
+(117, 'OFFICE_ADMIN', 11, '2025-10-03 02:25:48'),
+(118, 'OFFICE_ADMIN', 61, '2025-10-03 02:25:48'),
+(119, 'OFFICE_ADMIN', 46, '2025-10-03 02:25:48'),
+(120, 'OFFICE_ADMIN', 45, '2025-10-03 02:25:48'),
+(121, 'OFFICE_ADMIN', 44, '2025-10-03 02:25:48'),
+(122, 'OFFICE_ADMIN', 36, '2025-10-03 02:25:48'),
+(123, 'OFFICE_ADMIN', 35, '2025-10-03 02:25:48'),
+(124, 'OFFICE_ADMIN', 37, '2025-10-03 02:25:48'),
+(125, 'OFFICE_ADMIN', 34, '2025-10-03 02:25:48'),
+(126, 'OFFICE_ADMIN', 41, '2025-10-03 02:25:48'),
+(127, 'OFFICE_ADMIN', 40, '2025-10-03 02:25:48'),
+(128, 'OFFICE_ADMIN', 39, '2025-10-03 02:25:48'),
+(158, 'MAIN_USER', 1, '2025-10-03 02:25:48'),
+(159, 'MAIN_USER', 6, '2025-10-03 02:25:48'),
+(160, 'MAIN_USER', 59, '2025-10-03 02:25:48'),
+(161, 'MAIN_USER', 29, '2025-10-03 02:25:48'),
+(162, 'MAIN_USER', 61, '2025-10-03 02:25:48'),
+(163, 'MAIN_USER', 45, '2025-10-03 02:25:48'),
+(164, 'MAIN_USER', 44, '2025-10-03 02:25:48');
 
 -- --------------------------------------------------------
 
@@ -2124,7 +2812,7 @@ CREATE TABLE `system` (
 --
 
 INSERT INTO `system` (`id`, `logo`, `system_title`, `default_user_password`) VALUES
-(1, '1755868631_158e7711-e186-42d4-ad9f-547bffbad174.jpg', 'Pilar Inventory Management System', 'PilarINVENTORY@1');
+(1, '1759282594_logo.png', 'Pilar Inventory Management System', 'PilarINVENTORY@1');
 
 -- --------------------------------------------------------
 
@@ -2180,26 +2868,74 @@ INSERT INTO `system_logs` (`id`, `user_id`, `office_id`, `module`, `action`, `ip
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `tag_counters`
+--
+
+CREATE TABLE `tag_counters` (
+  `id` int(11) NOT NULL,
+  `tag_type` enum('red_tag','ics_no','itr_no','par_no','ris_no','inventory_tag','asset_code','serial_no') DEFAULT NULL,
+  `year_period` varchar(10) NOT NULL COMMENT 'Year or period (e.g., 2025)',
+  `prefix_hash` varchar(32) NOT NULL COMMENT 'MD5 hash of current prefix for reset detection',
+  `current_count` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tag_counters`
+--
+
+INSERT INTO `tag_counters` (`id`, `tag_type`, `year_period`, `prefix_hash`, `current_count`, `created_at`, `updated_at`) VALUES
+(1, 'red_tag', '2025', 'bdff4249657cb5c4a8513161435a8a8e', 0, '2025-10-03 08:46:29', '2025-10-03 08:46:29'),
+(2, 'ics_no', '2025', 'e5d9346982a55968ea3b22a01dac13b5', 0, '2025-10-03 08:46:29', '2025-10-03 08:46:29'),
+(3, 'itr_no', '2025', 'f5f9c7790bcc99b43b568aa63986e2c0', 0, '2025-10-03 08:46:29', '2025-10-03 08:46:29'),
+(4, 'par_no', '2025', '438b5836351c383ce45c52e870edab78', 0, '2025-10-03 08:46:29', '2025-10-03 08:46:29'),
+(5, 'ris_no', '2025', 'b601fa317a2a3d4f7860d95d06fe6c6b', 0, '2025-10-03 08:46:29', '2025-10-03 08:46:29'),
+(7, 'red_tag', 'global', '73debfcaea0af900d0b2d69faba25d93', 0, '2025-10-03 08:56:22', '2025-10-03 08:56:22'),
+(8, 'ics_no', 'global', '059d8400ee29e46df1145dbdff55eafa', 1, '2025-10-03 08:56:22', '2025-10-03 11:30:27'),
+(9, 'itr_no', 'global', '4cc6d846d5327e1355419fc2767b8bbf', 0, '2025-10-03 08:56:22', '2025-10-03 08:56:22'),
+(10, 'par_no', 'global', 'a22337bcfc865f130fb4177e9d4e40df', 0, '2025-10-03 08:56:22', '2025-10-03 08:56:22'),
+(11, 'ris_no', 'global', 'b222f0296897fbec7d2f734d844e887b', 1, '2025-10-03 08:56:22', '2025-10-03 09:29:25'),
+(14, 'asset_code', 'global', '0de69e1a11fba287732cc85647f1083d', 1, '2025-10-03 12:04:56', '2025-10-03 12:04:56'),
+(15, 'asset_code', 'global', 'd41d8cd98f00b204e9800998ecf8427e', 0, '2025-10-03 12:08:55', '2025-10-03 12:08:55'),
+(16, '', 'global', '08054846bbc9933fd0395f8be516a9f9', 0, '2025-10-03 12:18:28', '2025-10-03 12:18:28'),
+(17, 'serial_no', 'global', '92666505ce75444ee14be2ebc2f10a60', 1, '2025-10-03 12:32:17', '2025-10-03 12:38:18'),
+(19, 'inventory_tag', 'global', 'b64d0fc24a6aed24f5297319a28b91bd', 2, '2025-10-03 12:48:04', '2025-10-03 12:58:45');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `tag_formats`
 --
 
 CREATE TABLE `tag_formats` (
   `id` int(11) NOT NULL,
-  `tag_type` varchar(50) NOT NULL,
-  `format_code` varchar(100) NOT NULL,
-  `created_by` int(11) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `tag_type` enum('red_tag','ics_no','itr_no','par_no','ris_no','inventory_tag','asset_code','serial_no') DEFAULT NULL,
+  `format_template` varchar(255) NOT NULL COMMENT 'Template like PAR-{YYYY}-{####}',
+  `current_number` int(11) DEFAULT 1 COMMENT 'Current increment number',
+  `prefix` varchar(100) DEFAULT '' COMMENT 'Static prefix part',
+  `suffix` varchar(100) DEFAULT '' COMMENT 'Static suffix part',
+  `increment_digits` int(11) DEFAULT 4 COMMENT 'Number of digits for increment (e.g., 4 = 0001)',
+  `date_format` varchar(50) DEFAULT 'YYYY' COMMENT 'Date format in template (YYYY, MM, DD)',
+  `reset_on_change` tinyint(1) DEFAULT 1 COMMENT 'Reset counter when prefix/format changes',
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tag_formats`
 --
 
-INSERT INTO `tag_formats` (`id`, `tag_type`, `format_code`, `created_by`, `created_at`) VALUES
-(1, 'Red Tag', 'PS-5S-03-F01-01-01', 1, '2025-09-23 16:19:49'),
-(2, 'Property Tag', 'PS-5S-03-F02-01-01', 1, '2025-09-24 00:41:02'),
-(3, 'Property No', 'PN-2019-05-02-0001-01', 1, '2025-09-24 04:12:50'),
-(4, 'Code', 'YYYY-CODE-XXXX', 1, '2025-09-24 04:14:42');
+INSERT INTO `tag_formats` (`id`, `tag_type`, `format_template`, `current_number`, `prefix`, `suffix`, `increment_digits`, `date_format`, `reset_on_change`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'red_tag', 'RT-{####}', 1, 'RT-', '', 4, '', 1, 1, '2025-10-03 08:23:18', '2025-10-03 08:53:59'),
+(2, 'ics_no', '{YY}-ICS-{#####}', 1, 'ICS-', '', 5, 'YY', 1, 1, '2025-10-03 08:23:18', '2025-10-03 12:17:21'),
+(3, 'itr_no', 'ITR-{####}', 1, 'ITR-', '', 4, '', 1, 1, '2025-10-03 08:23:18', '2025-10-03 08:53:59'),
+(4, 'par_no', 'PAR-{####}', 1, 'PAR-', '', 4, '', 1, 1, '2025-10-03 08:23:18', '2025-10-03 08:53:59'),
+(5, 'ris_no', 'RIS-{####}', 1, 'RIS-', '', 4, 'YY', 1, 1, '2025-10-03 08:23:18', '2025-10-03 08:56:47'),
+(6, 'inventory_tag', 'PS-5S-03-F02-01-{##}-{##}', 1, 'PS-5S-03-F02-01', '', 3, '', 1, 1, '2025-10-03 08:23:18', '2025-10-03 12:58:27'),
+(9, 'asset_code', '{YY}-{CODE}-{####}', 1, '', '', 4, 'YY', 1, 1, '2025-10-03 12:04:46', '2025-10-03 12:32:32'),
+(11, 'serial_no', '{YY}-SN-{######}', 1, 'SN', '', 6, 'YY', 1, 1, '2025-10-03 12:24:32', '2025-10-03 12:32:57');
 
 -- --------------------------------------------------------
 
@@ -2281,7 +3017,7 @@ INSERT INTO `users` (`id`, `username`, `fullname`, `email`, `password`, `role`, 
 (16, 'elton', 'Elton John B. Moises', 'ejbm@bicol-u.edu.ph', '$2y$10$Botz5wCa9biZrVT7IdEDau.uVBcw3ByoD75pX2BYYe7dtutigluY.', 'user', 'inactive', '2025-04-13 06:01:46', NULL, NULL, 9, 'profile_16_1749816479.jpg', 600),
 (17, 'nami', 'Mark Jayson Namia', 'mjn@gmail.com', '$2y$10$2MIZlmP380wS0sj/cOfqbe20HkPz234S49cJEj2omrrTjBasHVqyO', 'admin', 'active', '2025-04-13 15:43:51', NULL, NULL, 4, 'default_profile.png', 1800),
 (18, 'kiimon', 'Seynatour Kiimon', 'sk@gmail.com', '$2y$10$UGpyMRA79O2OKhKfZDEf5O9CyXkMFlhDsVpWdELXMYnMtdFIV0mSC', 'office_user', 'deleted', '2025-04-20 21:36:04', '6687598406441374aeffbc338a60f728', '2025-04-21 06:36:04', 4, 'default_profile.png', 1800),
-(19, 'geely', 'Geely Mitsubishi', 'waltielappy123@gmail.com', '$2y$10$uVrAvdjC3GsGheiqmZSuF.r.oBbcHdOceQaV.E5LChrNNc/p20/FC', 'user', 'active', '2025-06-24 06:54:34', NULL, NULL, 4, 'default_profile.png', 1800),
+(19, 'geely', 'Geely Mitsubishi', 'waltielappy123@gmail.com', '$2y$10$uVrAvdjC3GsGheiqmZSuF.r.oBbcHdOceQaV.E5LChrNNc/p20/FC', 'user', 'inactive', '2025-06-24 06:54:34', NULL, NULL, 4, 'default_profile.png', 1800),
 (21, 'miki', 'Miki Matsubara', 'mikimat@gmail.com', '$2y$10$hE2SgXv.RQahXlmHCv4MEeBfBLqkaY7/w9OVyZbnuy83LMMPrFDHa', 'user', 'active', '2025-06-24 07:01:30', NULL, NULL, NULL, 'default_profile.png', 1800),
 (22, 'Toyoki', 'Toyota Suzuki', 'toyoki@gmail.com', '$2y$10$dLNw4hqEJbKpB5Hc7Mmhr.AjH4dOiMIUg9BqGDkiLnnx3rw89KBfS', 'user', 'active', '2025-06-24 07:23:43', NULL, NULL, NULL, 'default_profile.png', 1800),
 (23, 'jet', 'Jet Kawasaki', 'kawaisaki@gmail.com', '$2y$10$JmxsfOnmMH/nJbxWUbuSqODWoHTMx8RZn/Zxg38EFpGlvhqCtP3b6', 'user', 'active', '2025-06-24 07:24:56', NULL, NULL, NULL, 'default_profile.png', 1800),
@@ -2376,6 +3112,12 @@ ALTER TABLE `activity_log`
   ADD KEY `user_id` (`user_id`);
 
 --
+-- Indexes for table `app_settings`
+--
+ALTER TABLE `app_settings`
+  ADD PRIMARY KEY (`key`);
+
+--
 -- Indexes for table `archives`
 --
 ALTER TABLE `archives`
@@ -2408,6 +3150,15 @@ ALTER TABLE `assets_new`
   ADD KEY `idx_description` (`description`),
   ADD KEY `idx_assets_new_office_id` (`office_id`),
   ADD KEY `idx_assets_new_par_id` (`par_id`);
+
+--
+-- Indexes for table `asset_lifecycle_events`
+--
+ALTER TABLE `asset_lifecycle_events`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_asset` (`asset_id`),
+  ADD KEY `idx_type` (`event_type`),
+  ADD KEY `idx_ref` (`ref_table`,`ref_id`);
 
 --
 -- Indexes for table `asset_requests`
@@ -2531,6 +3282,12 @@ ALTER TABLE `employees`
 -- Indexes for table `forms`
 --
 ALTER TABLE `forms`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `form_thresholds`
+--
+ALTER TABLE `form_thresholds`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -2704,6 +3461,32 @@ ALTER TABLE `par_items`
   ADD KEY `asset_id` (`asset_id`);
 
 --
+-- Indexes for table `permissions`
+--
+ALTER TABLE `permissions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `name` (`name`);
+
+--
+-- Indexes for table `permission_audit_log`
+--
+ALTER TABLE `permission_audit_log`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `permission_id` (`permission_id`),
+  ADD KEY `idx_user_id` (`user_id`),
+  ADD KEY `idx_changed_by` (`changed_by`),
+  ADD KEY `idx_action` (`action`),
+  ADD KEY `idx_created_at` (`created_at`);
+
+--
+-- Indexes for table `permission_levels`
+--
+ALTER TABLE `permission_levels`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `level_name` (`level_name`),
+  ADD UNIQUE KEY `unique_level_weight` (`level_weight`);
+
+--
 -- Indexes for table `red_tags`
 --
 ALTER TABLE `red_tags`
@@ -2761,6 +3544,22 @@ ALTER TABLE `ris_items`
   ADD KEY `ris_form_id` (`ris_form_id`);
 
 --
+-- Indexes for table `roles`
+--
+ALTER TABLE `roles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `name` (`name`);
+
+--
+-- Indexes for table `role_permissions`
+--
+ALTER TABLE `role_permissions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_role_permission` (`role`,`permission_id`),
+  ADD KEY `permission_id` (`permission_id`),
+  ADD KEY `idx_role` (`role`);
+
+--
 -- Indexes for table `rpcppe_form`
 --
 ALTER TABLE `rpcppe_form`
@@ -2793,11 +3592,18 @@ ALTER TABLE `system_logs`
   ADD KEY `office_id` (`office_id`);
 
 --
+-- Indexes for table `tag_counters`
+--
+ALTER TABLE `tag_counters`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_tag_year_prefix` (`tag_type`,`year_period`,`prefix_hash`);
+
+--
 -- Indexes for table `tag_formats`
 --
 ALTER TABLE `tag_formats`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `format_code` (`format_code`);
+  ADD UNIQUE KEY `tag_type` (`tag_type`);
 
 --
 -- Indexes for table `unit`
@@ -2857,19 +3663,25 @@ ALTER TABLE `archives`
 -- AUTO_INCREMENT for table `assets`
 --
 ALTER TABLE `assets`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
 -- AUTO_INCREMENT for table `assets_archive`
 --
 ALTER TABLE `assets_archive`
-  MODIFY `archive_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `archive_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `assets_new`
 --
 ALTER TABLE `assets_new`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+
+--
+-- AUTO_INCREMENT for table `asset_lifecycle_events`
+--
+ALTER TABLE `asset_lifecycle_events`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `asset_requests`
@@ -2881,7 +3693,7 @@ ALTER TABLE `asset_requests`
 -- AUTO_INCREMENT for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=356;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=589;
 
 --
 -- AUTO_INCREMENT for table `backups`
@@ -2950,6 +3762,12 @@ ALTER TABLE `forms`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
+-- AUTO_INCREMENT for table `form_thresholds`
+--
+ALTER TABLE `form_thresholds`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `fuel_out`
 --
 ALTER TABLE `fuel_out`
@@ -2971,31 +3789,31 @@ ALTER TABLE `fuel_types`
 -- AUTO_INCREMENT for table `generated_reports`
 --
 ALTER TABLE `generated_reports`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=105;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=110;
 
 --
 -- AUTO_INCREMENT for table `ics_form`
 --
 ALTER TABLE `ics_form`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `ics_items`
 --
 ALTER TABLE `ics_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `iirup_form`
 --
 ALTER TABLE `iirup_form`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `iirup_items`
 --
 ALTER TABLE `iirup_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `infrastructure_inventory`
@@ -3019,13 +3837,13 @@ ALTER TABLE `inventory_actions`
 -- AUTO_INCREMENT for table `itr_form`
 --
 ALTER TABLE `itr_form`
-  MODIFY `itr_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `itr_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `itr_items`
 --
 ALTER TABLE `itr_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `legal_documents`
@@ -3043,7 +3861,7 @@ ALTER TABLE `legal_document_history`
 -- AUTO_INCREMENT for table `mr_details`
 --
 ALTER TABLE `mr_details`
-  MODIFY `mr_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `mr_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `notifications`
@@ -3067,25 +3885,43 @@ ALTER TABLE `offices`
 -- AUTO_INCREMENT for table `par_form`
 --
 ALTER TABLE `par_form`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `par_items`
 --
 ALTER TABLE `par_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `permissions`
+--
+ALTER TABLE `permissions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `permission_audit_log`
+--
+ALTER TABLE `permission_audit_log`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `permission_levels`
+--
+ALTER TABLE `permission_levels`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `red_tags`
 --
 ALTER TABLE `red_tags`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `remember_tokens`
 --
 ALTER TABLE `remember_tokens`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `report_generation_settings`
@@ -3109,13 +3945,25 @@ ALTER TABLE `returned_assets`
 -- AUTO_INCREMENT for table `ris_form`
 --
 ALTER TABLE `ris_form`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `ris_items`
 --
 ALTER TABLE `ris_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- AUTO_INCREMENT for table `roles`
+--
+ALTER TABLE `roles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `role_permissions`
+--
+ALTER TABLE `role_permissions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=165;
 
 --
 -- AUTO_INCREMENT for table `rpcppe_form`
@@ -3142,10 +3990,16 @@ ALTER TABLE `system_logs`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
+-- AUTO_INCREMENT for table `tag_counters`
+--
+ALTER TABLE `tag_counters`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+
+--
 -- AUTO_INCREMENT for table `tag_formats`
 --
 ALTER TABLE `tag_formats`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `unit`
@@ -3196,6 +4050,12 @@ ALTER TABLE `assets`
 --
 ALTER TABLE `assets_new`
   ADD CONSTRAINT `fk_assets_new_par` FOREIGN KEY (`par_id`) REFERENCES `par_form` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `asset_lifecycle_events`
+--
+ALTER TABLE `asset_lifecycle_events`
+  ADD CONSTRAINT `fk_lifecycle_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `audit_logs`
@@ -3257,10 +4117,24 @@ ALTER TABLE `offices`
   ADD CONSTRAINT `fk_offices_head_user` FOREIGN KEY (`head_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
+-- Constraints for table `permission_audit_log`
+--
+ALTER TABLE `permission_audit_log`
+  ADD CONSTRAINT `permission_audit_log_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `permission_audit_log_ibfk_2` FOREIGN KEY (`changed_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `permission_audit_log_ibfk_3` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE SET NULL;
+
+--
 -- Constraints for table `remember_tokens`
 --
 ALTER TABLE `remember_tokens`
   ADD CONSTRAINT `remember_tokens_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `role_permissions`
+--
+ALTER TABLE `role_permissions`
+  ADD CONSTRAINT `role_permissions_ibfk_1` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `user_notifications`
