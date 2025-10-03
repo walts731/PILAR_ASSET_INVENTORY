@@ -158,23 +158,27 @@ $stmt->close();
                         </td>
                         <td>
                           <input type="number" step="1" min="0" class="form-control form-control-sm text-center shadow" name="items[<?= (int)$item['item_id'] ?>][item_no]" value="<?= htmlspecialchars($item['item_no']) ?>">
-                        </td>
-                        <td>
                           <input type="text" class="form-control form-control-sm text-center shadow" name="items[<?= (int)$item['item_id'] ?>][estimated_useful_life]" value="<?= htmlspecialchars($item['estimated_useful_life']) ?>">
                         </td>
                        
                       </tr>
                     <?php endforeach; ?>
+                    <!-- Nothing follows row -->
+                    <?php if (!empty($ics['items'])): ?>
+                      <tr>
+                        <td colspan="7" style="text-align: center; font-style: italic; padding: 8px 0; border-top: 1px solid #000;">— NOTHING FOLLOWS —</td>
+                      </tr>
+                    <?php endif; ?>
                   <?php else: ?>
                     <tr>
-                      <td colspan="8" class="text-muted">No items found.</td>
+                      <td colspan="7" class="text-muted">No items found.</td>
                     </tr>
                   <?php endif; ?>
                 </tbody>
               </table>
             </div>
 
-            <!-- Signatories -->
+{{ ... }}
             <div class="row mt-4">
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Received from - Name</label>
