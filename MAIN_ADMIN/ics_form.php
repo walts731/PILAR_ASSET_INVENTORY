@@ -242,7 +242,7 @@ if ($thrRes && $thrRes->num_rows > 0) {
     ">&times;</button>
                             </td>
 
-                            <td><input type="text" class="form-control shadow" name="item_no[]" required></td>
+                            <td><input type="text" class="form-control shadow item-no-field" name="item_no[]" value="1" readonly required></td>
                             <td><input type="text" class="form-control shadow" name="estimated_useful_life[]" required></td>
                             <td>
                                 <button type="button" class="btn btn-outline-danger btn-sm remove-row">
@@ -431,7 +431,11 @@ if ($thrRes && $thrRes->num_rows > 0) {
             } else {
                 // Clear inputs/selects for the last remaining row instead of removing
                 row.querySelectorAll('input').forEach(el => {
-                    el.value = '';
+                    if (el.classList.contains('item-no-field')) {
+                        el.value = '1'; // Keep item number as 1 for the first row
+                    } else {
+                        el.value = '';
+                    }
                     el.removeAttribute('max');
                     el.placeholder = '';
                     if (typeof el.setCustomValidity === 'function') el.setCustomValidity('');
@@ -441,8 +445,9 @@ if ($thrRes && $thrRes->num_rows > 0) {
                 });
             }
 
-            // Recalculate totals
+            // Recalculate totals and update item numbers
             updateGrandTotal();
+            updateItemNumbers();
         });
 
         // Add row (clone)
@@ -464,6 +469,10 @@ if ($thrRes && $thrRes->num_rows > 0) {
                         }
                     }
                     if (!set) el.selectedIndex = 0;
+                } else if (el.classList.contains('item-no-field')) {
+                    // Keep item number field readonly and it will be updated by updateItemNumbers()
+                    el.readOnly = true;
+                    el.value = ''; // Will be set by updateItemNumbers()
                 } else {
                     el.value = '';
                 }
@@ -477,6 +486,26 @@ if ($thrRes && $thrRes->num_rows > 0) {
 
         // initial total calc
         updateGrandTotal();
+
+        // Function to update item numbers sequentially
+        function updateItemNumbers() {
+            const itemNoFields = tableBody.querySelectorAll('.item-no-field');
+            itemNoFields.forEach((field, index) => {
+                field.value = index + 1;
+            });
+        }
+
+        // Initialize item numbers on page load
+        updateItemNumbers();
+
+        // Update item numbers when rows are added
+        const originalAddRowHandler = addRowBtn.onclick;
+        addRowBtn.addEventListener('click', function() {
+            // Small delay to ensure row is added first
+            setTimeout(() => {
+                updateItemNumbers();
+            }, 10);
+        });
 
         // Add destination and entity name handler
         const destinationOffice = document.getElementById('destinationOffice');
