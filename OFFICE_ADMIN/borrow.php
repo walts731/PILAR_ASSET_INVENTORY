@@ -13,12 +13,11 @@ $pageTitle = 'Borrow Assets - PILAR Asset Inventory';
 // Include header with dark mode support
 require_once '../includes/header.php';
 
-// Initialize cart if it doesn't exist
+// Initialize cart count for borrowing
 if (!isset($_SESSION['borrow_cart'])) {
     $_SESSION['borrow_cart'] = [];
 }
 $cart_count = count($_SESSION['borrow_cart']);
-
 // Get filters from GET request
 $search_query = $_GET['search'] ?? '';
 $category_filter = $_GET['category'] ?? '';
@@ -297,16 +296,17 @@ $available_assets = $stmt->get_result();
 
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h3>Available Assets for Borrowing</h3>
-                <a href="view_cart.php" class="btn btn-primary position-relative">
-                    <i class="bi bi-cart3"></i> View Cart
+                <a href="view_inter_dept_cart.php" class="btn btn-primary position-relative">
+                    <i class="bi bi-cart3"></i> View Box
                     <span id="cart-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        <?= $cart_count ?>
+                        <?= $cart_count ? $cart_count : '' ?>
                     </span>
                 </a>
             </div>
 
             <!-- Filter and Search Form -->
             <div class="card shadow-sm mb-4">
+{{ ... }}
                 <div class="card-body">
                     <form method="GET" class="row g-3 align-items-center">
                         <div class="col-md-6">
@@ -355,7 +355,7 @@ $available_assets = $stmt->get_result();
             <!-- Borrowing Cart -->
             <div class="card mb-4">
                 <div class="card-body">
-                    <h5 class="card-title">Borrowing Cart</h5>
+                    <h5 class="card-title">Borrowing Box</h5>
                     <?php if (!empty($_SESSION['borrow_cart'])): ?>
                         <ul class="list-group mb-3">
                             <?php foreach ($_SESSION['borrow_cart'] as $asset_id => $item): ?>
@@ -369,7 +369,7 @@ $available_assets = $stmt->get_result();
                             Proceed to Checkout
                         </button>
                     <?php else: ?>
-                        <p class="text-muted">Your cart is empty</p>
+                        <p class="text-muted">Your box is empty</p>
                     <?php endif; ?>
                 </div>
             </div>
@@ -467,13 +467,14 @@ $available_assets = $stmt->get_result();
             $.post('cart_actions.php', formData, function(response) {
                 if (response.status === 'success') {
                     // Update cart badge
-                    $('#cart-badge').text(response.cart_count);
+                    const cartBadge = $('#cart-badge');
+                    cartBadge.text(response.cart_count > 0 ? response.cart_count : '');
                     // Show success alert
                     showAlert(response.message, 'success');
                 } else {
                     showAlert(response.message, 'danger');
                 }
-            }, 'json').fail(function(xhr, status, error) {
+            }).fail(function(xhr, status, error) {
                 showAlert('Error: ' + error, 'danger');
             });
         });
