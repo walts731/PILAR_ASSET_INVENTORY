@@ -9,15 +9,19 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['office_id'])) {
 
 $user_id = $_SESSION['user_id'];
 $office_id = $_SESSION['office_id'];
-$pageTitle = 'Inter-Department Borrowing Cart - PILAR Asset Inventory';
+$pageTitle = 'Inter-Department Borrowing - PILAR Asset Inventory';
 
-// Include header
+// Include header with dark mode support
 require_once '../includes/header.php';
+
+// Set active page for sidebar highlighting
+$sidebarActive = 'view_inter_dept_cart';
 
 // Initialize cart if it doesn't exist
 if (!isset($_SESSION['inter_dept_cart'])) {
     $_SESSION['inter_dept_cart'] = [];
 }
+
 $cart = &$_SESSION['inter_dept_cart'];
 $cart_count = count($cart);
 
@@ -172,7 +176,78 @@ if (isset($_POST['submit_request'])) {
 }
 ?>
 
-<div class="container-fluid">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $pageTitle; ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css" />
+    <style>
+        .cart-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .cart-item:hover {
+            background-color: #f8f9fa;
+        }
+        .item-img-container {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .item-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .quantity-input {
+            width: 70px;
+            text-align: center;
+        }
+        .summary-card {
+            position: sticky;
+            top: 20px;
+        }
+        @media (max-width: 991.98px) {
+            .summary-card {
+                position: static;
+                margin-top: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <?php include 'includes/sidebar.php' ?>
+
+    <div class="main">
+        <?php include 'includes/topbar.php' ?>
+
+        <?php if (isset($_SESSION['success_message'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <?= htmlspecialchars($_SESSION['success_message']); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php unset($_SESSION['success_message']); ?>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['error_message'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <?= htmlspecialchars($_SESSION['error_message']); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php unset($_SESSION['error_message']); ?>
+        <?php endif; ?>
+
+        <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0">Inter-Department Borrowing Cart</h1>
         <div>
@@ -194,7 +269,7 @@ if (isset($_POST['submit_request'])) {
         <div class="card">
             <div class="card-body text-center py-5">
                 <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
-                <h4>Your cart is empty</h4>
+                <h4>Your box is empty</h4>
                 <p class="text-muted">Add items from other departments to get started.</p>
                 <a href="inter_department_borrow.php" class="btn btn-primary">
                     <i class="fas fa-search me-1"></i> Browse Assets
@@ -206,7 +281,7 @@ if (isset($_POST['submit_request'])) {
             <div class="col-lg-8">
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0">Items in Cart (<?= $cart_count ?>)</h5>
+                        <h5 class="mb-0">Items in Box (<?= $cart_count ?>)</h5>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -268,61 +343,138 @@ if (isset($_POST['submit_request'])) {
                         <h5 class="mb-0">Request Summary</h5>
                     </div>
                     <div class="card-body">
-                        <form method="POST" id="submitRequestForm">
+                        <form method="POST" id="submitRequestForm" class="needs-validation" novalidate>
                             <div class="mb-3">
-                                <label for="purpose" class="form-label">Purpose of Borrowing</label>
-                                <textarea class="form-control" id="purpose" name="purpose" rows="3" required></textarea>
+                                <label for="purpose" class="form-label">
+                                    Purpose of Borrowing <span class="text-danger">*</span>
+                                    <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" title="Please specify the reason for borrowing these items"></i>
+                                </label>
+                                <select class="form-select" id="purpose" name="purpose" required>
+                                    <option value="" selected disabled>Select a purpose...</option>
+                                    <option value="Temporary Project">Temporary Project</option>
+                                    <option value="Event/Meeting">Event/Meeting</option>
+                                    <option value="Departmental Need">Departmental Need</option>
+                                    <option value="Equipment Failure">Equipment Failure</option>
+                                    <option value="Other">Other (please specify)</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a purpose for borrowing.
+                                </div>
+                            </div>
+                            
+                            <div id="otherPurposeContainer" class="mb-3 d-none">
+                                <label for="other_purpose" class="form-label">Please specify <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="other_purpose" name="other_purpose">
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="requested_return_date" class="form-label">
+                                        Expected Return Date <span class="text-danger">*</span>
+                                        <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" title="Select the date when you expect to return the items"></i>
+                                    </label>
+                                    <input type="date" class="form-control" id="requested_return_date" 
+                                           name="requested_return_date" 
+                                           min="<?= date('Y-m-d', strtotime('+1 day')) ?>" 
+                                           value="<?= date('Y-m-d', strtotime('+7 days')) ?>" 
+                                           required>
+                                    <div class="invalid-feedback">
+                                        Please select a valid return date.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="priority" class="form-label">
+                                        Priority Level
+                                        <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" title="Indicate how urgently you need these items"></i>
+                                    </label>
+                                    <select class="form-select" id="priority" name="priority">
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                        <option value="urgent">Urgent</option>
+                                    </select>
+                                </div>
                             </div>
                             
                             <div class="mb-3">
-                                <label for="requested_return_date" class="form-label">Expected Return Date</label>
-                                <input type="date" class="form-control" id="requested_return_date" 
-                                       name="requested_return_date" 
-                                       min="<?= date('Y-m-d', strtotime('+1 day')) ?>" required>
+                                <label for="notes" class="form-label">
+                                    Additional Notes
+                                    <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" title="Add any special instructions or additional information"></i>
+                                </label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Any special handling instructions or additional information..."></textarea>
+                                <div class="form-text text-end">500 characters remaining</div>
                             </div>
                             
-                            <hr>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                By submitting this request, you agree to be responsible for the borrowed items until they are returned.
+                            </div>
                             
-                            <div class="d-grid">
+                            <div class="d-grid gap-2">
                                 <button type="submit" name="submit_request" class="btn btn-primary">
-                                    <i class="fas fa-paper-plane me-1"></i> Submit Request
+                                    <i class="fas fa-paper-plane me-2"></i>Submit Borrow Request
                                 </button>
+                                <a href="inter_department_borrow.php" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Assets
+                                </a>
                             </div>
                         </form>
                     </div>
                 </div>
-            </div>
-        </div>
-    <?php endif; ?>
 </div>
 
-<?php include '../includes/footer.php'; ?>
-
-<script>
-$(document).ready(function() {
-    // Form validation
-    $('#submitRequestForm').on('submit', function(e) {
-        const purpose = $('#purpose').val().trim();
-        const returnDate = $('#requested_return_date').val();
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.umd.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    
+    <script>
+    $(document).ready(function() {
+        // Enable tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        const priority = $(this).val();
+        const $select = $(this);
         
-        if (!purpose) {
-            e.preventDefault();
-            showAlert('danger', 'Please enter the purpose of borrowing.');
-            return false;
+        // Remove all priority classes
+        $select.removeClass('border-danger border-warning border-info border-success');
+        
+        // Add appropriate class based on priority
+        switch(priority) {
+            case 'low':
+                $select.addClass('border-success');
+                break;
+            case 'medium':
+                $select.addClass('border-info');
+                break;
+            case 'high':
+                $select.addClass('border-warning');
+                break;
+            case 'urgent':
+                $select.addClass('border-danger');
+                break;
         }
+    }).trigger('change');
+    
+    // Character counter for notes
+    $('#notes').on('input', function() {
+        const maxLength = 500;
+        const currentLength = $(this).val().length;
+        const remaining = maxLength - currentLength;
         
-        if (!returnDate) {
-            e.preventDefault();
-            showAlert('danger', 'Please select an expected return date.');
-            return false;
+        const counter = $(this).next('.form-text');
+        counter.text(remaining + ' characters remaining');
+        
+        if (remaining < 0) {
+            counter.addClass('text-danger');
+            $(this).addClass('is-invalid');
+        } else {
+            counter.removeClass('text-danger');
+            $(this).removeClass('is-invalid');
         }
-        
-        // Show loading state
-        const submitBtn = $(this).find('button[type="submit"]');
-        const originalText = submitBtn.html();
-        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...');
-        
-        return true;
     });
     
     // Helper function to show alerts
@@ -337,3 +489,56 @@ $(document).ready(function() {
     }
 });
 </script>
+
+<style>
+/* Main content area */
+.main {
+    margin-left: 250px;
+    padding: 20px;
+    transition: all 0.3s;
+}
+
+/* Sidebar collapsed state */
+.sidebar-collapsed .main {
+    margin-left: 60px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .main {
+        margin-left: 0;
+        padding: 10px;
+    }
+    
+    .sidebar-collapsed .main {
+        margin-left: 0;
+    }
+}
+
+/* Custom styling for the form */
+.form-control:focus, .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+}
+
+/* Priority indicator dots */
+.priority-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.priority-low { background-color: #28a745; }
+.priority-medium { background-color: #17a2b8; }
+.priority-high { background-color: #ffc107; }
+.priority-urgent { background-color: #dc3545; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+}
+</style>

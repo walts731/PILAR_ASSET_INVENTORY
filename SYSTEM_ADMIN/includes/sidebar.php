@@ -242,7 +242,6 @@ $page = basename($_SERVER['PHP_SELF'], ".php");
             <a href="../SYSTEM_ADMIN/manage_legal_documents.php" class="<?= ($page == 'manage_legal_documents') ? 'active' : '' ?>">
                 <i class="bi bi-file-text-fill"></i> Legal Documents
             </a>
-
             <a href="../SYSTEM_ADMIN/par_ics_settings.php" class="<?= ($page == 'par_ics_settings') ? 'active' : '' ?>">
                 <i class="bi bi-sliders"></i> PAR/ICS Settings
             </a>
@@ -251,10 +250,9 @@ $page = basename($_SERVER['PHP_SELF'], ".php");
                 <i class="bi bi-gear"></i> System
             </a>
 
-        </nav>
-        <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#logoutModal">
-            <i class="bi bi-box-arrow-right"></i> Logout
-        </a>
+            <a href="../SYSTEM_ADMIN/user_roles.php" class="<?= ($page == 'user_roles') ? 'active' : '' ?>">
+                <i class="bi bi-people"></i> User Roles
+            </a>
     </div>
 </div>
 

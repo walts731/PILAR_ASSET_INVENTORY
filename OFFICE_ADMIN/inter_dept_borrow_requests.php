@@ -11,8 +11,15 @@ $user_id = $_SESSION['user_id'];
 $office_id = $_SESSION['office_id'];
 $pageTitle = 'Inter-Department Borrowing Requests - PILAR Asset Inventory';
 
-// Include header
+// Include header with dark mode support
 require_once '../includes/header.php';
+
+// Set active page for sidebar highlighting
+$sidebarActive = 'inter_dept_borrow_requests';
+
+// Include sidebar and topbar
+require_once 'includes/sidebar.php';
+require_once 'includes/topbar.php';
 
 // Handle request actions (approve/reject)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -277,7 +284,111 @@ $my_requests = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 ?>
 
-<div class="container-fluid">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $pageTitle; ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css" />
+    <style>
+        .request-card {
+            transition: all 0.2s ease-in-out;
+            margin-bottom: 1rem;
+        }
+        .request-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.35em 0.65em;
+            font-weight: 500;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 1.5rem 0;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e9ecef;
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+            padding-left: 1.5rem;
+        }
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+        .timeline-badge {
+            position: absolute;
+            left: -0.5rem;
+            top: 0.25rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 50%;
+            background-color: #fff;
+            border: 2px solid #0d6efd;
+            z-index: 1;
+        }
+        .timeline-panel {
+            background: #fff;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        .timeline-time {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+        .action-buttons .btn {
+            min-width: 100px;
+        }
+        @media (max-width: 768px) {
+            .action-buttons .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            .action-buttons .btn:last-child {
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <?php include 'includes/sidebar.php' ?>
+
+    <div class="main">
+        <?php include 'includes/topbar.php' ?>
+
+        <?php if (isset($_SESSION['success_message'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <?= htmlspecialchars($_SESSION['success_message']); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php unset($_SESSION['success_message']); ?>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['error_message'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <?= htmlspecialchars($_SESSION['error_message']); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php unset($_SESSION['error_message']); ?>
+        <?php endif; ?>
+
+        <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0">Inter-Department Borrowing</h1>
         <div>
@@ -479,10 +590,11 @@ $stmt->close();
                 </div>
             <?php endif; ?>
         </div>
+            </div>
+        </div>
     </div>
-</div>
 
-<!-- Approval Modal -->
+    <!-- Approval Modal -->
 <div class="modal fade" id="approvalModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -537,7 +649,9 @@ $stmt->close();
     </div>
 </div>
 
-<?php include '../includes/footer.php'; ?>
+    <?php include '../includes/footer.php'; ?>
+</body>
+</html>
 
 <script>
 $(document).ready(function() {
@@ -781,11 +895,11 @@ $(document).ready(function() {
         `;
         $('.container-fluid').prepend(alertHtml);
     }
-});
-</script>
+    });
+    </script>
 
-<style>
-.timeline {
+    <style>
+    .timeline {
     position: relative;
     padding-left: 1.5rem;
 }
