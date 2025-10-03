@@ -113,43 +113,16 @@ if ($mr_item_id) {
     $stmt_check2->bind_param("i", $asset_id);
     $stmt_check2->execute();
     $res_check2 = $stmt_check2->get_result();
-    if ($res_check2 && $res_check2->num_rows > 0) {
-        $existing_mr_check = true;
-    }
     $stmt_check2->close();
 }
 
-// Determine Inventory Tag by fetching format_code for 'Property Tag' from tag_formats
-$inventory_tag = '';
-$fmt_stmt = $conn->prepare("SELECT format_code FROM tag_formats WHERE tag_type = ? LIMIT 1");
-$tag_type_prop = 'Property Tag';
-$fmt_stmt->bind_param('s', $tag_type_prop);
-$fmt_stmt->execute();
-$fmt_res = $fmt_stmt->get_result();
-if ($fmt_row = $fmt_res->fetch_assoc()) {
-    $inventory_tag = $fmt_row['format_code'];
-} else {
-    // If not configured, leave as empty string
-    $inventory_tag = '';
-}
-$fmt_stmt->close();
+// Generate automatic inventory tag using the new tag format system
+require_once '../includes/tag_format_helper.php';
+$inventory_tag = generateTag('inventory_tag');
 
-// Fetch format patterns for Property No and Code from tag_formats
+// Format patterns are now handled by the tag format system
 $property_no_format = '';
 $code_format = '';
-if ($stmt_tf = $conn->prepare("SELECT tag_type, format_code FROM tag_formats WHERE tag_type IN ('Property No','Code')")) {
-    $stmt_tf->execute();
-    $res_tf = $stmt_tf->get_result();
-    while ($r = $res_tf->fetch_assoc()) {
-        if ($r['tag_type'] === 'Property No') {
-            $property_no_format = trim((string)$r['format_code']);
-        }
-        if ($r['tag_type'] === 'Code') {
-            $code_format = trim((string)$r['format_code']);
-        }
-    }
-    $stmt_tf->close();
-}
 
 // Ensure database columns for End User exist (assets.end_user, mr_details.end_user)
 try {
@@ -194,7 +167,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $acquisition_date = $_POST['acquisition_date'];
     $acquisition_cost = $_POST['acquisition_cost'];
 
-    // Use the fetched format_code as the inventory_tag for saving as well
+    // Use the auto-generated inventory_tag for saving
     $inventory_tag_gen = $inventory_tag;
 
     $person_accountable_name = $_POST['person_accountable_name'];
@@ -561,7 +534,7 @@ if (isset($asset_details['employee_id'])) {
 
 // Fetch employees for datalist
 $employees = [];
-$sql_employees = "SELECT employee_id, employee_no, name FROM employees";
+$sql_employees = "SELECT employee_id, employee_no, name FROM employees WHERE status = 'permanent' ORDER BY name ASC";
 $result_employees = $conn->query($sql_employees);
 
 if ($result_employees && $result_employees->num_rows > 0) {
