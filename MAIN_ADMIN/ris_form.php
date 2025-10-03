@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/tag_format_helper.php';
 
 $form_id = $_GET['id'] ?? '';
 
@@ -62,9 +63,14 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
       <input type="text" class="form-control shadow" id="responsibility_center" name="responsibility_center" placeholder="Enter Responsibility Center">
     </div>
     <div class="col-md-3">
-      <label for="ris_no" class="form-label fw-semibold">RIS No.</label>
-      <input type="text" class="form-control shadow" id="ris_no" name="ris_no"
-        placeholder="Enter RIS No.">
+      <label for="ris_no" class="form-label fw-semibold">RIS No. (Auto-generated)</label>
+      <div class="input-group">
+        <input type="text" class="form-control shadow" id="ris_no" name="ris_no" value="<?= previewTag('ris_no') ?>" readonly>
+        <span class="input-group-text">
+          <i class="bi bi-magic" title="Auto-generated"></i>
+        </span>
+      </div>
+      <small class="text-muted">This number will be automatically assigned when you save the form.</small>
     </div>
     <div class="col-md-3">
       <label for="date" class="form-label fw-semibold">Date</label>

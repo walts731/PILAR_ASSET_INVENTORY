@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/tag_format_helper.php';
 
 // Start session to access flash messages
 if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -156,8 +157,14 @@ if ($thrRes && $thrRes->num_rows > 0) {
 
                 <!-- ICS NO -->
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">ICS NO. <span style="color: red;">*</span></label>
-                    <input type="text" class="form-control shadow" name="ics_no" required>
+                    <label class="form-label fw-semibold">ICS NO. (Auto-generated)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control shadow" name="ics_no" value="<?= previewTag('ics_no') ?>" readonly>
+                        <span class="input-group-text">
+                            <i class="bi bi-magic" title="Auto-generated"></i>
+                        </span>
+                    </div>
+                    <small class="text-muted">This number will be automatically assigned when you save the form.</small>
                 </div>
             </div>
 

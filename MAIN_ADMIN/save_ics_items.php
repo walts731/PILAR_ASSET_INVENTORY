@@ -3,6 +3,7 @@ require_once '../connect.php';
 require_once '../phpqrcode/qrlib.php';
 require_once '../includes/audit_logger.php';
 require_once '../includes/lifecycle_helper.php';
+require_once '../includes/tag_format_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -17,7 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $header_image = $_POST['header_image'] ?? '';
     $entity_name = $_POST['entity_name'] ?? '';
     $fund_cluster = $_POST['fund_cluster'] ?? '';
-    $ics_no = $_POST['ics_no'] ?? '';
+    // Generate automatic ICS number
+    $ics_no = generateTag('ics_no');
     $received_from_name = $_POST['received_from_name'] ?? '';
     $received_from_position = $_POST['received_from_position'] ?? '';
     $received_by_name = $_POST['received_by_name'] ?? '';

@@ -224,13 +224,12 @@ $page = basename($_SERVER['PHP_SELF'], ".php");
             <a href="../SYSTEM_ADMIN/manage_units.php" class="<?= ($page == 'manage_units') ? 'active' : '' ?>">
                 <i class="bi bi-bounding-box"></i> Units
             </a>
-
             <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'super_admin'): ?>
             <a href="../SYSTEM_ADMIN/manage_categories.php" class="<?= ($page == 'manage_categories') ? 'active' : '' ?>">
                 <i class="bi bi-tags"></i> Categories
             </a>
-            <a href="../SYSTEM_ADMIN/tag_formats.php" class="<?= ($page == 'tag_formats') ? 'active' : '' ?>">
-                <i class="bi bi-tags"></i> Tag Formats
+            <a href="../SYSTEM_ADMIN/manage_tag_format.php" class="<?= ($page == 'manage_tag_format') ? 'active' : '' ?>">
+                <i class="bi bi-tags"></i> Manage Tag Format
             </a>
             <a href="../SYSTEM_ADMIN/simple_backup.php" class="<?= ($page == 'simple_backup') ? 'active' : '' ?>">
                 <i class="bi bi-hdd"></i> Backup

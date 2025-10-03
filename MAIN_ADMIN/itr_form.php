@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/tag_format_helper.php';
 
 
 if (!isset($_SESSION['user_id'])) {
@@ -247,8 +248,14 @@ if (!empty($_SESSION['flash'])) {
         </div>
 
         <div class="col-md-6">
-          <label for="itr_no" class="form-label">ITR No. <span style="color: red;">*</span></label>
-          <input type="text" id="itr_no" name="itr_no" class="form-control shadow" placeholder="Enter ITR number" required>
+          <label for="itr_no" class="form-label">ITR No. (Auto-generated)</label>
+          <div class="input-group">
+            <input type="text" id="itr_no" name="itr_no" class="form-control shadow" value="<?= previewTag('itr_no') ?>" readonly>
+            <span class="input-group-text">
+              <i class="bi bi-magic" title="Auto-generated"></i>
+            </span>
+          </div>
+          <small class="text-muted">This number will be automatically assigned when you save the form.</small>
         </div>
 
         <!-- End User Field -->

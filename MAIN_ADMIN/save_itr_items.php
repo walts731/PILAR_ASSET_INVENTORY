@@ -2,6 +2,7 @@
 require_once '../connect.php';
 require_once '../includes/audit_logger.php';
 require_once '../includes/lifecycle_helper.php';
+require_once '../includes/tag_format_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -21,7 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fund_cluster = $_POST['fund_cluster'] ?? '';
         $from_accountable_officer = trim($_POST['from_accountable_officer'] ?? '');
         $to_accountable_officer = trim($_POST['to_accountable_officer'] ?? '');
-        $itr_no = trim($_POST['itr_no'] ?? '');
+        // Generate automatic ITR number
+        $itr_no = generateTag('itr_no');
         $date = $_POST['date'] ?? '';
         $transfer_type = $_POST['transfer_type'] ?? '';
         $transfer_type_other = $_POST['transfer_type_other'] ?? '';
