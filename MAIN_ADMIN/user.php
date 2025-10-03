@@ -268,9 +268,6 @@ $stmt->close();
               <?php endwhile; ?>
             </select>
           </form>
-          <a href="#" class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#addOfficeModal">
-            <i class="bi bi-plus-circle me-1"></i> New Office
-          </a>
 
           <a href="#" class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#addUserModal">
             <i class="bi bi-person-plus-fill me-1"></i> New User
@@ -364,19 +361,7 @@ $stmt->close();
                     </form>
                   <?php endif; ?>
 
-                  <!-- Delete Button: only show if role is NOT admin -->
-                  <?php if ($user['role'] !== 'admin'): ?>
-                    <button
-                      class="btn btn-sm btn-outline-dark rounded-pill deleteUserBtn"
-                      data-id="<?= $user['id'] ?>"
-                      data-fullname="<?= htmlspecialchars($user['fullname']) ?>"
-                      data-office="<?= $selected_office ?>"
-                      data-bs-toggle="modal"
-                      data-bs-target="#confirmDeleteUserModal"
-                      title="Delete User">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  <?php endif; ?>
+                  
 
                 </td>
               </tr>
