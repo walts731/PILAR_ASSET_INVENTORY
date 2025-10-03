@@ -46,12 +46,6 @@ while ($row = $low_stock_result->fetch_assoc()) {
 $low_stock_count = count($low_stock_items);
 ?>
 <style>
-  /* custom.css */
-.navbar {
-  padding-top: 0.25rem !important;
-  padding-bottom: 0.25rem !important;
-  min-height: 50px !important;
-}
 
 
   /* Global Search dropdown: force readable colors inside topbar */
