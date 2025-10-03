@@ -69,11 +69,11 @@ if ($result && $result->num_rows > 0) {
 
 // Load ICS max threshold for client-side hints/validation
 $ics_max = 50000.00; // default fallback
-$thrRes = $conn->query("SELECT max_amount FROM form_thresholds WHERE form_type = 'ics' ORDER BY id ASC LIMIT 1");
+$thrRes = $conn->query("SELECT ics_max FROM form_thresholds ORDER BY id ASC LIMIT 1");
 if ($thrRes && $thrRes->num_rows > 0) {
     $thrRow = $thrRes->fetch_assoc();
-    if (isset($thrRow['max_amount'])) { 
-        $ics_max = (float)$thrRow['max_amount']; 
+    if (isset($thrRow['ics_max'])) { 
+        $ics_max = (float)$thrRow['ics_max']; 
     }
 }
 
