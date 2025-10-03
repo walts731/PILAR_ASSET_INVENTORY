@@ -114,8 +114,8 @@ if ($result && $result->num_rows > 0) {
                         <a href="view_itr.php?id=<?= $itr['itr_id'] ?><?= $form_id ? '&form_id=' . $form_id : '' ?>" class="btn btn-sm btn-primary">
                           <i class="bi bi-eye"></i> View
                         </a>
-                        <a href="print_itr.php?id=<?= $itr['itr_id'] ?>" class="btn btn-sm btn-success" target="_blank">
-                          <i class="bi bi-printer"></i> Print
+                        <a href="generate_itr_pdf.php?id=<?= $itr['itr_id'] ?>" class="btn btn-sm btn-success" target="_blank">
+                          <i class="bi bi-file-earmark-pdf"></i> PDF
                         </a>
                       </td>
                     </tr>
