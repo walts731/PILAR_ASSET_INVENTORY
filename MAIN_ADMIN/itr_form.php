@@ -138,6 +138,14 @@ if (!empty($_SESSION['flash'])) {
 }
 ?>
 
+<!-- Header with Saved ITR Button -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Inventory Transfer Receipt (ITR) Form</h4>
+  <a href="saved_itr.php" class="btn btn-outline-primary">
+    <i class="bi bi-file-earmark-text me-2"></i>Saved ITR
+  </a>
+</div>
+
 <form id="itrItemsForm" method="POST" action="save_itr_items.php" enctype="multipart/form-data" class="mb-4">
   <input type="hidden" name="itr_id" value="<?= (int)$itr_id ?>">
   <input type="hidden" name="form_id" value="<?= (int)$form_id ?>">
