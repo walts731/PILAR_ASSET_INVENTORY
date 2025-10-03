@@ -17,12 +17,18 @@ require_once '../includes/header.php';
 // Set active page for sidebar highlighting
 $sidebarActive = 'view_inter_dept_cart';
 
-// Initialize cart if it doesn't exist
+// Initialize carts if they don't exist
 if (!isset($_SESSION['inter_dept_cart'])) {
     $_SESSION['inter_dept_cart'] = [];
 }
+if (!isset($_SESSION['borrow_cart'])) {
+    $_SESSION['borrow_cart'] = [];
+}
 
-$cart = &$_SESSION['inter_dept_cart'];
+// Determine which cart to use based on referring page
+$is_borrow_cart = strpos($_SERVER['HTTP_REFERER'] ?? '', 'borrow.php') !== false;
+$cart = $is_borrow_cart ? $_SESSION['borrow_cart'] : $_SESSION['inter_dept_cart'];
+$cart_key = $is_borrow_cart ? 'borrow_cart' : 'inter_dept_cart';
 $cart_count = count($cart);
 
 // Handle item removal
@@ -159,11 +165,17 @@ if (isset($_POST['submit_request'])) {
         // If we got here, everything was successful
         $conn->commit();
         
-        // Clear the cart
-        $_SESSION['inter_dept_cart'] = [];
+        // Clear the appropriate cart after successful submission
+        $_SESSION[$cart_key] = [];
         
-        $_SESSION['success_message'] = 'Your inter-department borrow request has been submitted successfully.';
-        header('Location: inter_dept_borrow_requests.php');
+        $success_message = $is_borrow_cart 
+            ? 'Your borrow request has been submitted successfully.'
+            : 'Your inter-department borrow request has been submitted successfully.';
+            
+        $_SESSION['success_message'] = $success_message;
+        
+        $redirect_url = $is_borrow_cart ? 'borrow_requests.php' : 'inter_dept_borrow_requests.php';
+        header("Location: $redirect_url");
         exit();
         
     } catch (Exception $e) {
@@ -413,7 +425,7 @@ if (isset($_POST['submit_request'])) {
                             
                             <div class="d-grid gap-2">
                                 <button type="submit" name="submit_request" class="btn btn-primary">
-                                    <i class="fas fa-paper-plane me-2"></i>Submit Borrow Request
+                                    <i class="fas fa-paper-plane me-2"></i>Submit <?= $is_borrow_cart ? 'Borrow' : 'Inter-Department Borrow' ?> Request
                                 </button>
                                 <a href="inter_department_borrow.php" class="btn btn-outline-secondary">
                                     <i class="fas fa-arrow-left me-2"></i>Back to Assets
@@ -422,7 +434,10 @@ if (isset($_POST['submit_request'])) {
                         </form>
                     </div>
                 </div>
-</div>
+            </div>
+        </div>
+    </div>
+    <!-- End of Main Content -->
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -542,3 +557,6 @@ if (isset($_POST['submit_request'])) {
     }
 }
 </style>
+
+</body>
+</html>
