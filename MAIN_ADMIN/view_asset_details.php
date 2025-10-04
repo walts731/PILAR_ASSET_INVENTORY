@@ -385,6 +385,8 @@ usort($lifecycle_events, function($a, $b) {
                                            class="btn btn-outline-primary" target="_blank">
                                             <i class="bi bi-tag me-2"></i>Manage Property Tag
                                         </a>
+                                        <!-- Transfer Button - Only show if asset has inventory tag -->
+                                        <?php if (!empty($asset['inventory_tag'])): ?>
                                         <button class="btn btn-outline-info transfer-asset" 
                                                 data-asset-id="<?= $asset['id'] ?>" 
                                                 data-inventory-tag="<?= htmlspecialchars($asset['inventory_tag'] ?? '') ?>" 
@@ -397,6 +399,7 @@ usort($lifecycle_events, function($a, $b) {
                                                 data-employee-name="<?= htmlspecialchars($asset['employee_name'] ?? '') ?>">
                                             <i class="bi bi-arrow-left-right me-2"></i>Transfer Asset
                                         </button>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
