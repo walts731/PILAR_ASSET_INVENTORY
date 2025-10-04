@@ -723,7 +723,7 @@ if ($baseProp !== '') {
         <?php include 'includes/topbar.php'; ?>
 
         <!-- Form for MR Asset -->
-        <div class="container mt-4">
+        <div class="container mt-2">
             <?php
             // Display success or error messages
             if (isset($_SESSION['success_message'])) {
@@ -746,63 +746,31 @@ if ($baseProp !== '') {
             }
             ?>
 
-            <!-- Professional Header Section -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card border-0 shadow-lg bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                        <div class="card-body text-white p-4">
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <div class="d-flex align-items-center">
-                                        <div class="bg-white bg-opacity-20 rounded-circle p-3 me-3">
-                                            <i class="bi bi-clipboard-data fs-2"></i>
-                                        </div>
-                                        <div>
-                                            <h3 class="mb-1 fw-bold">
-                                                <?= $existing_mr_check ? 'Edit Property Tag' : 'Create Property Tag' ?>
-                                            </h3>
-                                            <p class="mb-0 opacity-90">
-                                                <?= $existing_mr_check ? 'Update existing asset property information' : 'Generate new government property documentation' ?>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 text-end">
-                                    <a href="saved_mr.php" class="btn btn-light btn-lg shadow-sm">
-                                        <i class="bi bi-folder-check me-2"></i>View Saved Tags
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Government Property Header -->
-            <div class="card border-0 shadow-sm mb-4">
+            <div class="card border-0 shadow-sm mb-2">
                 <div class="card-body bg-light">
                     <div class="row align-items-center">
                         <div class="col-md-2 text-center">
                             <img id="municipalLogoImg" src="<?= $logo_path ?>" alt="Municipal Logo" 
-                                 class="img-fluid rounded shadow-sm" style="max-height: 80px;">
+                                 class="img-fluid rounded shadow-sm" style="max-height: 60px;">
                         </div>
                         <div class="col-md-6 text-center">
-                            <h4 class="mb-1 text-uppercase fw-bold text-primary">Government Property</h4>
+                            <h6 class="mb-1 text-uppercase fw-bold text-primary">Government Property</h6>
                             <p class="mb-0 text-muted">Official Asset Documentation</p>
                         </div>
                         <div class="col-md-2 text-center">
-                            <div class="bg-primary bg-opacity-10 rounded p-3">
-                                <h6 class="mb-1 text-primary fw-bold">Inventory Tag</h6>
-                                <span class="badge bg-primary fs-6"><?= $inventory_tag ?></span>
+                            <div class="bg-primary bg-opacity-10 rounded p-2">
+                                <small class="text-primary fw-bold d-block">Inventory Tag</small>
+                                <span class="badge bg-primary small"><?= $inventory_tag ?></span>
                             </div>
                         </div>
                         <div class="col-md-2 text-center">
                             <?php if (isset($asset_details['qr_code']) && !empty($asset_details['qr_code'])): ?>
                                 <img id="viewQrCode" src="../img/<?= $asset_details['qr_code'] ?>" alt="QR Code" 
-                                     class="img-fluid rounded shadow-sm" style="max-height: 80px;">
+                                     class="img-fluid rounded shadow-sm" style="max-height: 60px;">
                             <?php else: ?>
-                                <div class="bg-secondary bg-opacity-10 rounded p-3">
-                                    <i class="bi bi-qr-code fs-2 text-muted"></i>
+                                <div class="bg-secondary bg-opacity-10 rounded p-2">
+                                    <i class="bi bi-qr-code fs-4 text-muted"></i>
                                     <p class="mb-0 small text-muted">QR Code</p>
                                 </div>
                             <?php endif; ?>
@@ -812,26 +780,26 @@ if ($baseProp !== '') {
             </div>
 
             <!-- Main Form Card -->
-            <div class="card border-0 shadow-lg">
-                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
                     <div class="row">
                         <div class="col-12">
                             <!-- Progress Steps -->
-                            <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div class="d-flex align-items-center">
-                                    <div class="step-indicator active me-3">
+                                    <div class="step-indicator active me-1">
                                         <span class="step-number">1</span>
                                     </div>
                                     <span class="text-primary fw-semibold">Asset Information</span>
                                 </div>
                                 <div class="d-flex align-items-center">
-                                    <div class="step-indicator me-3">
+                                    <div class="step-indicator me-1">
                                         <span class="step-number">2</span>
                                     </div>
                                     <span class="text-muted">Property Details</span>
                                 </div>
                                 <div class="d-flex align-items-center">
-                                    <div class="step-indicator me-3">
+                                    <div class="step-indicator me-1">
                                         <span class="step-number">3</span>
                                     </div>
                                     <span class="text-muted">Accountability</span>
@@ -852,21 +820,21 @@ if ($baseProp !== '') {
 
                         <!-- Step 1: Basic Asset Information -->
                         <div class="form-step active" id="step1">
-                            <div class="step-header bg-primary bg-opacity-10 p-4 border-bottom">
+                            <div class="step-header bg-primary bg-opacity-10 p-2 border-bottom">
                                 <h5 class="mb-1 text-primary">
-                                    <i class="bi bi-info-circle me-2"></i>Basic Asset Information
+                                    <i class="bi bi-info-circle me-1"></i>Basic Asset Information
                                 </h5>
                                 <p class="mb-0 text-muted">Enter the fundamental details about this asset</p>
                             </div>
-                            <div class="p-4">
+                            <div class="p-2">
                                 <!-- Office Location -->
-                                <div class="row mb-4">
+                                <div class="row mb-3">
                                     <div class="col-md-8">
                                         <label for="office_location" class="form-label fw-semibold">
                                             <i class="bi bi-building me-1 text-primary"></i>Office Location
                                             <span class="text-danger">*</span>
                                         </label>
-                                        <select class="form-select form-select-lg" name="office_location" required>
+                                        <select class="form-select" name="office_location" required>
                                             <option value="" disabled <?= empty($office_name) ? 'selected' : '' ?>>Select Office Location</option>
                                             <?php foreach ($offices as $office): ?>
                                                 <option value="<?= htmlspecialchars($office['office_name']) ?>" 
@@ -881,26 +849,26 @@ if ($baseProp !== '') {
                                 </div>
 
                                 <!-- Description -->
-                                <div class="row mb-4">
+                                <div class="row mb-3">
                                     <div class="col-md-12">
                                         <label for="description" class="form-label fw-semibold">
                                             <i class="bi bi-card-text me-1 text-primary"></i>Asset Description
                                             <span class="text-danger">*</span>
                                         </label>
-                                        <textarea class="form-control form-control-lg" name="description" rows="3"
+                                        <textarea class="form-control" name="description" rows="2"
                                             required placeholder="Provide a detailed description of the asset"><?= isset($asset_details['description']) ? htmlspecialchars($asset_details['description']) : '' ?></textarea>
                                         <div class="form-text">Include make, model, specifications, and any distinguishing features</div>
                                     </div>
                                 </div>
 
                                 <!-- Category Selection -->
-                                <div class="row mb-4">
+                                <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="category_id" class="form-label fw-semibold">
                                             <i class="bi bi-tags me-1 text-primary"></i>Asset Category
                                             <span class="text-danger">*</span>
                                         </label>
-                                        <select name="category_id" id="category_id" class="form-select form-select-lg" required>
+                                        <select name="category_id" id="category_id" class="form-select" required>
                                             <option value="">Choose asset category...</option>
                                             <?php foreach ($all_categories as $cat): ?>
                                                 <option value="<?= (int)$cat['id'] ?>" data-code="<?= htmlspecialchars($cat['category_code'] ?? '') ?>" 
@@ -915,7 +883,7 @@ if ($baseProp !== '') {
                                         <label for="brand" class="form-label fw-semibold">
                                             <i class="bi bi-award me-1 text-primary"></i>Brand/Manufacturer
                                         </label>
-                                        <input type="text" class="form-control form-control-lg" name="brand"
+                                        <input type="text" class="form-control" name="brand"
                                             value="<?= isset($asset_details['brand']) ? htmlspecialchars($asset_details['brand']) : '' ?>"
                                             placeholder="Enter brand or manufacturer name">
                                         <div class="form-text">Brand name or manufacturer of the asset</div>
@@ -926,20 +894,20 @@ if ($baseProp !== '') {
 
                         <!-- Step 2: Property Details -->
                         <div class="form-step" id="step2">
-                            <div class="step-header bg-success bg-opacity-10 p-4 border-bottom">
+                            <div class="step-header bg-success bg-opacity-10 p-2 border-bottom">
                                 <h5 class="mb-1 text-success">
-                                    <i class="bi bi-gear me-2"></i>Technical Specifications
+                                    <i class="bi bi-gear me-1"></i>Technical Specifications
                                 </h5>
                                 <p class="mb-0 text-muted">Define technical details and property identifiers</p>
                             </div>
-                            <div class="p-4">
+                            <div class="p-2">
                                 <!-- Model and Serial Numbers -->
-                                <div class="row mb-4">
+                                <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="model_no" class="form-label fw-semibold">
                                             <i class="bi bi-cpu me-1 text-success"></i>Model
                                         </label>
-                                        <input type="text" class="form-control form-control-lg" name="model_no"
+                                        <input type="text" class="form-control" name="model_no"
                                             value="<?= isset($asset_details['model']) ? htmlspecialchars($asset_details['model']) : '' ?>"
                                             placeholder="Enter model number or identifier">
                                         <div class="form-text">Manufacturer's model or product identifier</div>
@@ -948,7 +916,7 @@ if ($baseProp !== '') {
                                         <label for="serial_no" class="form-label fw-semibold">
                                             <i class="bi bi-hash me-1 text-success"></i>Serial Number
                                         </label>
-                                        <input type="text" class="form-control form-control-lg" name="serial_no"
+                                        <input type="text" class="form-control" name="serial_no"
                                             value="<?= isset($asset_details['serial_no']) ? htmlspecialchars($asset_details['serial_no']) : '' ?>"
                                             placeholder="Auto-generated or enter custom serial" id="serial_no">
                                         <div class="form-text">
@@ -963,12 +931,12 @@ if ($baseProp !== '') {
                                 </div>
 
                                 <!-- Property Codes -->
-                                <div class="row mb-4">
+                                <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="code" class="form-label fw-semibold">
                                             <i class="bi bi-upc me-1 text-success"></i>Asset Code
                                         </label>
-                                        <input type="text" class="form-control form-control-lg" name="code" id="code"
+                                        <input type="text" class="form-control" name="code" id="code"
                                             value="<?= isset($asset_details['code']) ? htmlspecialchars($asset_details['code']) : '' ?>"
                                             placeholder="Auto-generated based on category">
                                         <div class="form-text">
@@ -981,7 +949,7 @@ if ($baseProp !== '') {
                                         <label for="property_no" class="form-label fw-semibold">
                                             <i class="bi bi-card-heading me-1 text-success"></i>Property Number
                                         </label>
-                                        <input type="text" class="form-control form-control-lg" name="property_no" id="property_no"
+                                        <input type="text" class="form-control" name="property_no" id="property_no"
                                             placeholder="<?= htmlspecialchars($property_no_format ?: 'YYYY-CODE-0001') ?>"
                                             value="<?= htmlspecialchars($generated_property_no) ?>">
                                         <div class="form-text">Official government property number</div>
@@ -989,7 +957,7 @@ if ($baseProp !== '') {
                                 </div>
 
                                 <!-- Asset Status -->
-                                <div class="row mb-4">
+                                <div class="row mb-3">
                                     <div class="col-md-12">
                                         <label class="form-label fw-semibold">
                                             <i class="bi bi-check-circle me-1 text-success"></i>Asset Condition Status
@@ -1002,7 +970,7 @@ if ($baseProp !== '') {
                                                             <input class="form-check-input" type="radio" name="asset_status" value="serviceable" id="serviceable"
                                                                 <?= $mr_serviceable == 1 ? 'checked' : '' ?>>
                                                             <label class="form-check-label fw-semibold text-success" for="serviceable">
-                                                                <i class="bi bi-check-circle-fill me-2"></i>Serviceable
+                                                                <i class="bi bi-check-circle-fill me-1"></i>Serviceable
                                                             </label>
                                                             <div class="form-text">Asset is in good working condition</div>
                                                         </div>
@@ -1012,7 +980,7 @@ if ($baseProp !== '') {
                                                             <input class="form-check-input" type="radio" name="asset_status" value="unserviceable" id="unserviceable"
                                                                 <?= $mr_unserviceable == 1 ? 'checked' : '' ?>>
                                                             <label class="form-check-label fw-semibold text-warning" for="unserviceable">
-                                                                <i class="bi bi-exclamation-triangle-fill me-2"></i>Unserviceable
+                                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Unserviceable
                                                             </label>
                                                             <div class="form-text">Asset requires repair or replacement</div>
                                                         </div>
@@ -1027,20 +995,20 @@ if ($baseProp !== '') {
 
                         <!-- Step 3: Financial & Accountability Information -->
                         <div class="form-step" id="step3">
-                            <div class="step-header bg-warning bg-opacity-10 p-4 border-bottom">
+                            <div class="step-header bg-warning bg-opacity-10 p-2 border-bottom">
                                 <h5 class="mb-1 text-warning">
-                                    <i class="bi bi-people me-2"></i>Financial & Accountability
+                                    <i class="bi bi-people me-1"></i>Financial & Accountability
                                 </h5>
                                 <p class="mb-0 text-muted">Set acquisition details and assign responsibility</p>
                             </div>
-                            <div class="p-4">
+                            <div class="p-2">
                                 <!-- Quantity, Unit, and Financial Information -->
-                                <div class="row mb-4">
+                                <div class="row mb-3">
                                     <div class="col-md-3">
                                         <label for="unit_quantity" class="form-label fw-semibold">
                                             <i class="bi bi-123 me-1 text-warning"></i>Quantity
                                         </label>
-                                        <input type="number" class="form-control form-control-lg" name="unit_quantity"
+                                        <input type="number" class="form-control" name="unit_quantity"
                                             value="1" min="1" required readonly style="background-color: #f8f9fa;"
                                             title="Quantity is fixed at 1 for individual asset records">
                                         <div class="form-text">Fixed at 1 for individual assets</div>
@@ -1049,7 +1017,7 @@ if ($baseProp !== '') {
                                         <label for="unit" class="form-label fw-semibold">
                                             <i class="bi bi-box me-1 text-warning"></i>Unit
                                         </label>
-                                        <select name="unit" class="form-select form-select-lg" required>
+                                        <select name="unit" class="form-select" required>
                                             <?php
                                             $unit_rows = [];
                                             $res_units = $conn->query("SELECT unit_name FROM unit");
@@ -1072,7 +1040,7 @@ if ($baseProp !== '') {
                                         <label for="acquisition_date" class="form-label fw-semibold">
                                             <i class="bi bi-calendar me-1 text-warning"></i>Acquisition Date
                                         </label>
-                                        <input type="date" class="form-control form-control-lg" name="acquisition_date"
+                                        <input type="date" class="form-control" name="acquisition_date"
                                             value="<?= isset($asset_details['acquisition_date']) ? htmlspecialchars($asset_details['acquisition_date']) : '' ?>" required>
                                         <div class="form-text">Date when asset was acquired</div>
                                     </div>
@@ -1080,20 +1048,20 @@ if ($baseProp !== '') {
                                         <label for="acquisition_cost" class="form-label fw-semibold">
                                             <i class="bi bi-currency-dollar me-1 text-warning"></i>Acquisition Cost
                                         </label>
-                                        <input type="number" class="form-control form-control-lg" name="acquisition_cost" step="0.01"
+                                        <input type="number" class="form-control" name="acquisition_cost" step="0.01"
                                             value="<?= isset($asset_details['value']) ? htmlspecialchars($asset_details['value']) : '' ?>" required>
                                         <div class="form-text">Total cost of acquisition</div>
                                     </div>
                                 </div>
 
                                 <!-- Person Accountable & End User -->
-                                <div class="row mb-4">
+                                <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="person_accountable" class="form-label fw-semibold">
                                             <i class="bi bi-person-check me-1 text-warning"></i>Person Accountable
                                             <span class="text-danger">*</span>
                                         </label>
-                                        <input type="text" class="form-control form-control-lg" name="person_accountable_name" id="person_accountable" required
+                                        <input type="text" class="form-control" name="person_accountable_name" id="person_accountable" required
                                             list="employeeList" placeholder="Type to search employee" autocomplete="off"
                                             value="<?= htmlspecialchars($person_accountable_name) ?>">
                                         <input type="hidden" name="employee_id" id="employee_id" value="<?= isset($employee_id) ? htmlspecialchars($employee_id) : '' ?>">
@@ -1108,7 +1076,7 @@ if ($baseProp !== '') {
                                         <label for="end_user" class="form-label fw-semibold">
                                             <i class="bi bi-person me-1 text-warning"></i>End User
                                         </label>
-                                        <input type="text" class="form-control form-control-lg" name="end_user" id="end_user"
+                                        <input type="text" class="form-control" name="end_user" id="end_user"
                                             placeholder="Enter end user name"
                                             value="<?= isset($asset_details['end_user']) ? htmlspecialchars($asset_details['end_user']) : '' ?>">
                                         <div class="form-text">Person who will actually use this asset</div>
@@ -1116,12 +1084,12 @@ if ($baseProp !== '') {
                                 </div>
 
                                 <!-- Acquired Date & Counted Date -->
-                                <div class="row mb-4">
+                                <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="acquired_date" class="form-label fw-semibold">
                                             <i class="bi bi-calendar-check me-1 text-warning"></i>Date Acquired
                                         </label>
-                                        <input type="date" class="form-control form-control-lg" name="acquired_date"
+                                        <input type="date" class="form-control" name="acquired_date"
                                             value="<?= isset($asset_details['last_updated']) ? htmlspecialchars($asset_details['last_updated']) : '' ?>">
                                         <div class="form-text">Date when asset was officially acquired</div>
                                     </div>
@@ -1129,7 +1097,7 @@ if ($baseProp !== '') {
                                         <label for="counted_date" class="form-label fw-semibold">
                                             <i class="bi bi-calendar-event me-1 text-warning"></i>Date Counted
                                         </label>
-                                        <input type="date" class="form-control form-control-lg" name="counted_date">
+                                        <input type="date" class="form-control" name="counted_date">
                                         <div class="form-text">Date when asset was physically counted</div>
                                     </div>
                                 </div>
@@ -1138,32 +1106,32 @@ if ($baseProp !== '') {
 
                         <!-- Step 4: Asset Documentation -->
                         <div class="form-step" id="step4">
-                            <div class="step-header bg-info bg-opacity-10 p-4 border-bottom">
+                            <div class="step-header bg-info bg-opacity-10 p-2 border-bottom">
                                 <h5 class="mb-1 text-info">
-                                    <i class="bi bi-camera me-2"></i>Asset Documentation
+                                    <i class="bi bi-camera me-1"></i>Asset Documentation
                                 </h5>
                                 <p class="mb-0 text-muted">Upload photos and review information before submission</p>
                             </div>
-                            <div class="p-4">
+                            <div class="p-2">
                                 <!-- Upload Asset Photo -->
-                                <div class="row mb-4">
+                                <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="asset_image" class="form-label fw-semibold">
                                             <i class="bi bi-camera me-1 text-info"></i>Upload Asset Photo
                                         </label>
-                                        <input type="file" class="form-control form-control-lg" name="asset_image" id="asset_image" accept="image/*">
+                                        <input type="file" class="form-control" name="asset_image" id="asset_image" accept="image/*">
                                         <div class="form-text">Accepted: JPG, JPEG, PNG, GIF. Maximum size: 5MB</div>
                                     </div>
                                     <div class="col-md-6 text-center">
                                         <label class="form-label fw-semibold d-block">
                                             <i class="bi bi-eye me-1 text-info"></i>Photo Preview
                                         </label>
-                                        <div class="border rounded p-3 bg-light" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+                                        <div class="border rounded p-2 bg-light" style="min-height: 150px; display: flex; align-items: center; justify-content: center;">
                                             <img id="asset_image_preview" 
                                                 src="<?= !empty($asset_details['image']) ? '../img/assets/' . htmlspecialchars($asset_details['image']) : '' ?>" 
                                                 alt="Asset Image Preview" 
                                                 class="img-fluid rounded shadow-sm" 
-                                                style="max-height: 180px; object-fit: contain; <?= empty($asset_details['image']) ? 'display: none;' : '' ?>">
+                                                style="max-height: 130px; object-fit: contain; <?= empty($asset_details['image']) ? 'display: none;' : '' ?>">
                                             <div id="preview_placeholder" class="text-center text-muted <?= !empty($asset_details['image']) ? 'd-none' : '' ?>">
                                                 <i class="bi bi-image fs-1 mb-2"></i>
                                                 <p class="mb-0">Photo preview will appear here</p>
@@ -1183,12 +1151,12 @@ if ($baseProp !== '') {
                                 }
                                 ?>
                                 <?php if (!empty($asset_details['image']) || !empty($additional_images)): ?>
-                                    <div class="row mb-4">
+                                    <div class="row mb-3">
                                         <div class="col-12">
                                             <div class="card border-0 bg-light">
                                                 <div class="card-header bg-transparent border-0 pb-0">
                                                     <h6 class="mb-0 text-info fw-semibold">
-                                                        <i class="bi bi-images me-2"></i>Existing Asset Images
+                                                        <i class="bi bi-images me-1"></i>Existing Asset Images
                                                         <small class="text-muted ms-2">
                                                             (<?= (!empty($asset_details['image']) ? 1 : 0) + count($additional_images) ?> image<?= ((!empty($asset_details['image']) ? 1 : 0) + count($additional_images)) > 1 ? 's' : '' ?>)
                                                         </small>
@@ -1203,7 +1171,7 @@ if ($baseProp !== '') {
                                                                     <div class="position-relative overflow-hidden rounded-top">
                                                                         <img src="../img/assets/<?= htmlspecialchars($asset_details['image']) ?>"
                                                                             class="card-img-top"
-                                                                            style="height: 160px; object-fit: cover; cursor: pointer; transition: transform 0.3s;"
+                                                                            style="height: 120px; object-fit: cover; cursor: pointer; transition: transform 0.3s;"
                                                                             onclick="showImageModal('../img/assets/<?= htmlspecialchars($asset_details['image']) ?>', 'Main Asset Image')"
                                                                             onmouseover="this.style.transform='scale(1.05)'"
                                                                             onmouseout="this.style.transform='scale(1)'"
@@ -1234,7 +1202,7 @@ if ($baseProp !== '') {
                                                                         <div class="position-relative overflow-hidden rounded-top">
                                                                             <img src="../img/assets/<?= htmlspecialchars($imageName) ?>"
                                                                                 class="card-img-top"
-                                                                                style="height: 160px; object-fit: cover; cursor: pointer; transition: transform 0.3s;"
+                                                                                style="height: 120px; object-fit: cover; cursor: pointer; transition: transform 0.3s;"
                                                                                 onclick="showImageModal('../img/assets/<?= htmlspecialchars($imageName) ?>', 'Additional Image <?= $index + 1 ?>')"
                                                                                 onmouseover="this.style.transform='scale(1.05)'"
                                                                                 onmouseout="this.style.transform='scale(1)'"
@@ -1272,7 +1240,7 @@ if ($baseProp !== '') {
                             </div>
                         <?php else: ?>
                             <!-- No Images Available -->
-                            <div class="row mb-4">
+                            <div class="row mb-3">
                                 <div class="col-12">
                                     <div class="card border-0 bg-light">
                                         <div class="card-body text-center py-4">
@@ -1290,7 +1258,7 @@ if ($baseProp !== '') {
                         </div>
 
                         <!-- Form Navigation and Submission -->
-                        <div class="card-footer bg-white border-top p-4">
+                        <div class="card-footer bg-white border-top p-2">
                             <div class="row align-items-center">
                                 <div class="col-md-6">
                                     <div class="d-flex gap-2">
@@ -1303,13 +1271,13 @@ if ($baseProp !== '') {
                                     </div>
                                 </div>
                                 <div class="col-md-6 text-end">
-                                    <button type="submit" class="btn btn-success btn-lg shadow-sm" id="submitBtn" style="display: none;">
-                                        <i class="bi bi-check-circle me-2"></i>
+                                    <button type="submit" class="btn btn-success shadow-sm" id="submitBtn" style="display: none;">
+                                        <i class="bi bi-check-circle me-1"></i>
                                         <?= $existing_mr_check ? 'Update Property Tag' : 'Create Property Tag' ?>
                                     </button>
                                     <?php if ($existing_mr_check): ?>
-                                        <a href="print_mr.php?asset_id=<?= htmlspecialchars($asset_id) ?>" class="btn btn-info btn-lg ms-2 shadow-sm">
-                                            <i class="bi bi-printer me-2"></i>Print Tag
+                                        <a href="print_mr.php?asset_id=<?= htmlspecialchars($asset_id) ?>" class="btn btn-info ms-2 shadow-sm">
+                                            <i class="bi bi-printer me-1"></i>Print Tag
                                         </a>
                                     <?php endif; ?>
                                 </div>
@@ -1323,8 +1291,8 @@ if ($baseProp !== '') {
         <!-- Custom CSS for Step Indicators and Form Steps -->
         <style>
             .step-indicator {
-                width: 40px;
-                height: 40px;
+                width: 32px;
+                height: 32px;
                 border-radius: 50%;
                 background-color: #e9ecef;
                 display: flex;
@@ -1349,7 +1317,7 @@ if ($baseProp !== '') {
             
             .step-number {
                 font-weight: bold;
-                font-size: 14px;
+                font-size: 12px;
             }
             
             .form-step {
@@ -1481,7 +1449,7 @@ if ($baseProp !== '') {
                     // Show error message
                     const alertHtml = `
                         <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <i class="bi bi-exclamation-triangle me-1"></i>
                             Please fill in all required fields before proceeding.
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
@@ -1719,17 +1687,17 @@ if ($baseProp !== '') {
                                 <div class="modal-content">
                                     <div class="modal-header bg-primary text-white">
                                         <h5 class="modal-title" id="imageViewModalLabel">
-                                            <i class="bi bi-image me-2"></i>Asset Image Viewer
+                                            <i class="bi bi-image me-1"></i>Asset Image Viewer
                                         </h5>
                                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
-                                    <div class="modal-body text-center p-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                                    <div class="modal-body text-center p-2" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
                                         <div class="mb-3">
                                             <h6 id="imageTitle" class="text-primary mb-2"></h6>
                                         </div>
                                         <div class="position-relative d-inline-block">
                                             <img id="modalImage" src="" alt="Asset Image" 
-                                                 class="img-fluid rounded shadow-lg" 
+                                                 class="img-fluid rounded shadow-sm" 
                                                  style="max-height: 75vh; max-width: 100%; object-fit: contain; transition: transform 0.3s;">
                                             <div class="position-absolute top-0 end-0 m-2">
                                                 <button class="btn btn-sm btn-dark bg-opacity-75 border-0" 
