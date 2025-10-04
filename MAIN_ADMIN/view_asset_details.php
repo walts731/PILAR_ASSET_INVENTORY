@@ -385,6 +385,18 @@ usort($lifecycle_events, function($a, $b) {
                                            class="btn btn-outline-primary" target="_blank">
                                             <i class="bi bi-tag me-2"></i>Manage Property Tag
                                         </a>
+                                        <button class="btn btn-outline-info transfer-asset" 
+                                                data-asset-id="<?= $asset['id'] ?>" 
+                                                data-inventory-tag="<?= htmlspecialchars($asset['inventory_tag'] ?? '') ?>" 
+                                                data-current-employee-id="<?= $asset['employee_id'] ?? '' ?>"
+                                                data-description="<?= htmlspecialchars($asset['description'] ?? '') ?>"
+                                                data-acquisition-date="<?= $asset['acquisition_date'] ?? '' ?>"
+                                                data-property-no="<?= htmlspecialchars($asset['property_no'] ?? '') ?>"
+                                                data-unit-price="<?= $asset['value'] ?? '' ?>"
+                                                data-status="<?= $asset['status'] ?? '' ?>"
+                                                data-employee-name="<?= htmlspecialchars($asset['employee_name'] ?? '') ?>">
+                                            <i class="bi bi-arrow-left-right me-2"></i>Transfer Asset
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -430,6 +442,39 @@ usort($lifecycle_events, function($a, $b) {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    
+    <script>
+    $(document).ready(function() {
+        $(document).on('click', '.transfer-asset', function (e) {
+            e.preventDefault(); // Prevent default button behavior
+            console.log('Transfer button clicked'); // Debug log
+            
+            // Get asset data
+            const assetId = $(this).data('asset-id');
+            const inventoryTag = $(this).data('inventory-tag');
+            const currentEmployeeId = $(this).data('current-employee-id');
+            const description = $(this).data('description');
+            const acquisitionDate = $(this).data('acquisition-date');
+            const propertyNo = $(this).data('property-no');
+            const unitPrice = $(this).data('unit-price');
+            const status = $(this).data('status');
+            const employeeName = $(this).data('employee-name');
+            
+            console.log('Asset data:', { 
+                assetId, inventoryTag, currentEmployeeId, description, 
+                acquisitionDate, propertyNo, unitPrice, status, employeeName 
+            }); // Debug log
+            
+            // Redirect to forms.php with ITR form ID 9 and all asset parameters
+            const ITR_FORM_ID = 9;
+            const url = `forms.php?id=${ITR_FORM_ID}&asset_id=${assetId}&inventory_tag=${encodeURIComponent(inventoryTag)}&current_employee_id=${currentEmployeeId}&description=${encodeURIComponent(description)}&acquisition_date=${acquisitionDate}&property_no=${encodeURIComponent(propertyNo)}&unit_price=${unitPrice}&status=${status}&employee_name=${encodeURIComponent(employeeName)}`;
+            console.log('Redirecting to:', url); // Debug log
+            
+            window.location.href = url;
+        });
+    });
+    </script>
 </body>
 </html>
 <?php
