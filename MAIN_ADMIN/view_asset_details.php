@@ -40,7 +40,46 @@ $stmt->close();
 
 // Maintenance records removed - focusing on asset details only
 
-// Removed transfer history, red tag, and IIRUP queries - focusing on asset details only
+// Fetch lifecycle events for the asset
+$lifecycle_events = [];
+
+// 1. Asset acquisition event
+if ($asset['acquisition_date']) {
+    $lifecycle_events[] = [
+        'type' => 'acquired',
+        'date' => $asset['acquisition_date'],
+        'title' => 'Asset Acquired',
+        'description' => 'Asset was acquired and added to inventory',
+        'icon' => 'bi-plus-circle'
+    ];
+}
+
+// 2. Assignment events
+if ($asset['employee_name']) {
+    $lifecycle_events[] = [
+        'type' => 'assigned',
+        'date' => $asset['last_updated'] ?? $asset['acquisition_date'],
+        'title' => 'Asset Assigned',
+        'description' => 'Assigned to ' . $asset['employee_name'] . ' at ' . ($asset['office_name'] ?? 'Unknown Office'),
+        'icon' => 'bi-person-check'
+    ];
+}
+
+// 3. Status change events
+if ($asset['status'] === 'unserviceable') {
+    $lifecycle_events[] = [
+        'type' => 'status-change',
+        'date' => $asset['last_updated'] ?? date('Y-m-d'),
+        'title' => 'Status Changed',
+        'description' => 'Asset marked as unserviceable',
+        'icon' => 'bi-exclamation-triangle'
+    ];
+}
+
+// Sort events by date
+usort($lifecycle_events, function($a, $b) {
+    return strtotime($a['date']) - strtotime($b['date']);
+});
 
 // Don't close connection here - topbar.php needs it
 ?>
@@ -56,10 +95,29 @@ $stmt->close();
     <link rel="stylesheet" href="css/dashboard.css" />
     <style>
         .asset-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg,rgb(45, 64, 149) 0%,rgb(64, 74, 188) 100%);
             color: white;
             padding: 2rem 0;
             margin-bottom: 2rem;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .asset-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: -1;
         }
         .info-card {
             border: none;
@@ -105,6 +163,58 @@ $stmt->close();
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             color: white;
         }
+        .lifecycle-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+        }
+        .lifecycle-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        .lifecycle-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.75rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #007bff, #6610f2);
+        }
+        .lifecycle-event {
+            position: relative;
+            margin-bottom: 1.5rem;
+            padding-left: 1rem;
+        }
+        .lifecycle-event::before {
+            content: '';
+            position: absolute;
+            left: -0.5rem;
+            top: 0.25rem;
+            width: 12px;
+            height: 12px;
+            background: #007bff;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .lifecycle-event.status-change::before {
+            background: #ffc107;
+        }
+        .lifecycle-event.red-tagged::before {
+            background: #dc3545;
+        }
+        .lifecycle-event.iirup-created::before {
+            background: #fd7e14;
+        }
+        .lifecycle-event.assigned::before {
+            background: #20c997;
+        }
     </style>
 </head>
 <body>
@@ -134,6 +244,42 @@ $stmt->close();
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Asset Lifecycle -->
+                <div class="lifecycle-container">
+                    <div class="d-flex align-items-center mb-3">
+                        <h4 class="mb-0 text-primary">
+                            <i class="bi bi-clock-history me-2"></i>Asset Lifecycle
+                        </h4>
+                        <span class="badge bg-light text-dark ms-2"><?= count($lifecycle_events) ?> Events</span>
+                    </div>
+                    
+                    <?php if (!empty($lifecycle_events)): ?>
+                    <div class="lifecycle-timeline">
+                        <?php foreach ($lifecycle_events as $event): ?>
+                        <div class="lifecycle-event <?= $event['type'] ?>">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold text-dark">
+                                        <i class="<?= $event['icon'] ?> me-2 text-primary"></i>
+                                        <?= htmlspecialchars($event['title']) ?>
+                                    </h6>
+                                    <p class="mb-1 text-muted"><?= htmlspecialchars($event['description']) ?></p>
+                                </div>
+                                <small class="text-muted ms-3">
+                                    <?= date('M j, Y', strtotime($event['date'])) ?>
+                                </small>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php else: ?>
+                    <div class="text-center py-4">
+                        <i class="bi bi-clock-history display-4 text-muted mb-3"></i>
+                        <p class="text-muted">No lifecycle events recorded for this asset.</p>
+                    </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="container-fluid">
