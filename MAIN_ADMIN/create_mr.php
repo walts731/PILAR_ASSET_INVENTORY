@@ -203,6 +203,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $category_id = isset($_POST['category_id']) && $_POST['category_id'] !== '' ? (int)$_POST['category_id'] : null;
 
     $asset_status = $_POST['asset_status'] ?? 'serviceable';
+    // Enforce: if the current asset record is already unserviceable, lock it server-side
+    if (!empty($asset_id_form)) {
+        if ($st_status = $conn->prepare("SELECT status FROM assets WHERE id = ?")) {
+            $st_status->bind_param("i", $asset_id_form);
+            $st_status->execute();
+            $rs_status = $st_status->get_result();
+            if ($rs_status && ($row_s = $rs_status->fetch_assoc())) {
+                if (strtolower((string)$row_s['status']) === 'unserviceable') {
+                    $asset_status = 'unserviceable';
+                }
+            }
+            $st_status->close();
+        }
+    }
     $serviceable = ($asset_status === 'serviceable') ? 1 : 0;
     $unserviceable = ($asset_status === 'unserviceable') ? 1 : 0;
     $unit_quantity = $_POST['unit_quantity'];
@@ -265,6 +279,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Server-side validation for required fields
     if ($category_id === null || trim((string)$person_accountable_name) === '') {
         $_SESSION['error_message'] = 'Please select a Category and specify the Person Accountable.';
+        header("Location: create_mr.php?asset_id=" . urlencode((string)$asset_id_form));
+        exit();
+    }
+
+    // Required field validation (server-side)
+    if (trim((string)$serial_no) === '' || trim((string)$code) === '' || trim((string)$property_no) === '') {
+        $_SESSION['error_message'] = 'Serial number, Asset code, and Property number are required.';
         header("Location: create_mr.php?asset_id=" . urlencode((string)$asset_id_form));
         exit();
     }
