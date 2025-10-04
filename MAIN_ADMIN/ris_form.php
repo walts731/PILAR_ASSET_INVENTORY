@@ -141,7 +141,7 @@ $stmt->close();
           </td>
           <td style="position: relative;">
             <div class="input-group">
-              <input type="text" class="form-control description-input shadow" name="description[]" autocomplete="off" list="asset_list">
+              <input type="text" class="form-control description-input shadow" name="description[]" autocomplete="off">
               <button type="button" class="btn btn-link p-0 ms-1 text-danger clear-description">&times;</button>
             </div>
           </td>
@@ -153,28 +153,6 @@ $stmt->close();
           </td>
         </tr>
       <?php endfor; ?>
-      <datalist id="asset_list">
-        <?php
-        $assets_query = $conn->query("
-    SELECT a.id, a.description, a.quantity, a.unit, a.value, a.property_no, o.office_name
-    FROM assets a
-    LEFT JOIN offices o ON a.office_id = o.id
-    WHERE a.quantity > 0 AND a.type = 'consumable'
-    ORDER BY a.description ASC
-");
-        while ($asset = $assets_query->fetch_assoc()):
-        ?>
-          <option
-            value="<?= htmlspecialchars($asset['description'] . ' (' . $asset['office_name'] . ')') ?>"
-            data-id="<?= $asset['id'] ?>"
-            data-stock="<?= $asset['quantity'] ?>"
-            data-unit="<?= htmlspecialchars($asset['unit']) ?>"
-            data-price="<?= $asset['value'] ?>"
-            data-property="<?= htmlspecialchars($asset['property_no']) ?>">
-          </option>
-
-        <?php endwhile; ?>
-      </datalist>
     </tbody>
   </table>
   <button type="button" id="addRowBtn" class="btn btn-primary mb-3"><i class="bi bi-plus-circle"></i> Add Row</button>
@@ -234,92 +212,6 @@ $stmt->close();
 <script>
   document.addEventListener("DOMContentLoaded", function() {
     const tableBody = document.querySelector("tbody");
-    const allOptions = Array.from(document.querySelectorAll("#asset_list option"));
-
-    function updateDatalist() {
-      const selectedDescriptions = Array.from(document.querySelectorAll(".description-input"))
-        .map(input => input.value.trim())
-        .filter(val => val !== "");
-
-      document.querySelectorAll(".description-input").forEach(descInput => {
-        const listId = "asset_list_" + Math.random().toString(36).substring(2, 9);
-        let datalist = document.createElement("datalist");
-        datalist.id = listId;
-
-        const optionsHTML = allOptions
-          .filter(opt => !selectedDescriptions.includes(opt.value.trim()) || opt.value.trim() === descInput.value.trim())
-          .map(opt => `<option value="${opt.value}" 
-                        data-id="${opt.dataset.id}" 
-                        data-stock="${opt.dataset.stock}" 
-                        data-unit="${opt.dataset.unit}"
-                        data-price="${opt.dataset.price}"
-                        data-property="${opt.dataset.property}"></option>`)
-          .join("");
-
-        datalist.innerHTML = optionsHTML;
-        document.body.appendChild(datalist);
-        descInput.setAttribute("list", listId);
-      });
-    }
-
-    function bindRowEvents(row) {
-      const descInput = row.querySelector(".description-input");
-      const reqQtyInput = row.querySelector("input[name='req_quantity[]']");
-      const unitSelect = row.querySelector("select[name='unit[]']");
-      const priceInput = row.querySelector("input[name='price[]']");
-      const stockNoInput = row.querySelector("input[name='stock_no[]']");
-
-      if (!descInput) return;
-
-      descInput.addEventListener("input", function() {
-        const val = this.value;
-        const option = allOptions.find(opt => opt.value === val);
-
-        if (option) {
-          // Max quantity
-          const maxStock = option.dataset.stock || "";
-          if (maxStock) {
-            reqQtyInput.max = maxStock;
-            reqQtyInput.placeholder = `Max: ${maxStock}`;
-          } else {
-            reqQtyInput.removeAttribute("max");
-            reqQtyInput.placeholder = "";
-          }
-
-          // Autofill unit
-          const unitName = option.dataset.unit || "";
-          if (unitName) {
-            const matchOption = Array.from(unitSelect.options)
-              .find(opt => opt.text.trim().toLowerCase() === unitName.trim().toLowerCase());
-            if (matchOption) {
-              unitSelect.value = matchOption.value;
-            }
-          }
-
-          // Autofill price
-          if (priceInput && option.dataset.price) {
-            priceInput.value = option.dataset.price;
-          }
-
-          // Autofill asset_id hidden field
-          const assetIdInput = row.querySelector("input[name='asset_id[]']");
-          if (assetIdInput) {
-            assetIdInput.value = option ? option.dataset.id : "";
-          }
-
-          // Stock number is auto-incremental, no need to fill from property
-
-        } else {
-          reqQtyInput.removeAttribute("max");
-          reqQtyInput.placeholder = "";
-          unitSelect.value = "";
-          if (priceInput) priceInput.value = "";
-          // Keep stock number as is (incremental)
-        }
-
-        updateDatalist();
-      });
-    }
 
     // Add Row button click - clones structure consistent with the first row
     function addRow() {
@@ -353,9 +245,6 @@ $stmt->close();
       
       // Set incremental stock number
       updateStockNumbers();
-      
-      bindRowEvents(newRow);
-      updateDatalist();
     }
 
     // Function to update stock numbers sequentially
@@ -366,8 +255,7 @@ $stmt->close();
       });
     }
 
-    // Initial bind for existing rows
-    document.querySelectorAll("tbody tr").forEach(row => bindRowEvents(row));
+    // Add Row button event listener
     const addBtn = document.getElementById("addRowBtn");
     if (addBtn) addBtn.addEventListener("click", addRow);
 
@@ -390,8 +278,6 @@ $stmt->close();
         priceInput.value = "";
         // Keep stock number as is (incremental)
         if (totalField) totalField.value = "";
-
-        descInput.dispatchEvent(new Event("input"));
       }
     });
 
@@ -434,7 +320,5 @@ $stmt->close();
         row.querySelector('.total').value = (qty * price).toFixed(2);
       }
     });
-
-    updateDatalist();
   });
 </script>
