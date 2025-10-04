@@ -19,7 +19,7 @@ if ($asset_id <= 0) {
 // Ensure lifecycle table exists
 ensureLifecycleTable($conn);
 
-// Fetch asset details from the assets table including red tag status
+// Fetch asset details from the assets table including red tag status and additional images
 $sql = "SELECT a.*, c.category_name, o.office_name, e.name AS employee_name,
                CASE WHEN rt.id IS NOT NULL THEN 1 ELSE 0 END as has_red_tag,
                ii.iirup_id
@@ -330,9 +330,48 @@ $stmt->close();
                                 <div class="card-body text-center">
                                     <img src="../img/assets/<?= htmlspecialchars($asset['image']) ?>" 
                                          alt="Asset Image" 
-                                         class="asset-image img-fluid">
+                                         class="asset-image img-fluid rounded border"
+                                         style="cursor: pointer; max-height: 300px; object-fit: cover;"
+                                         onclick="showImageModal('<?= htmlspecialchars($asset['image']) ?>', 'Main Asset Image')">
                                 </div>
                             </div>
+                            <?php endif; ?>
+
+                            <!-- Additional Images -->
+                            <?php if (!empty($asset['additional_images'])): ?>
+                            <?php 
+                            $additional_images = json_decode($asset['additional_images'], true);
+                            if (is_array($additional_images) && count($additional_images) > 0): 
+                            ?>
+                            <div class="card info-card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="bi bi-images me-2"></i>Additional Images</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        <?php foreach ($additional_images as $index => $image): ?>
+                                        <div class="col-6">
+                                            <div class="position-relative">
+                                                <img src="../img/assets/<?= htmlspecialchars($image) ?>" 
+                                                     alt="Additional Image <?= $index + 1 ?>" 
+                                                     class="img-fluid rounded border additional-image"
+                                                     style="width: 100%; height: 120px; object-fit: cover; cursor: pointer;"
+                                                     onclick="showImageModal('<?= htmlspecialchars($image) ?>', 'Additional Image <?= $index + 1 ?>')">
+                                                <div class="position-absolute top-0 end-0 m-1">
+                                                    <span class="badge bg-dark bg-opacity-75"><?= $index + 1 ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <?php if (count($additional_images) > 4): ?>
+                                    <div class="text-center mt-2">
+                                        <small class="text-muted">+<?= count($additional_images) - 4 ?> more images</small>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
                             <?php endif; ?>
 
                             <!-- Quick Actions -->
@@ -686,7 +725,38 @@ $stmt->close();
         const url = `create_red_tag.php?asset_id=${assetId}&iirup_id=${iirupId}`;
         window.open(url, '_blank');
     }
+    
+    // Show image in modal
+    function showImageModal(imagePath, title) {
+        const modal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalTitle = document.getElementById('imageModalLabel');
+        
+        modalImage.src = '../img/assets/' + imagePath;
+        modalTitle.textContent = title;
+        
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    }
     </script>
+
+    <!-- Image Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageModalLabel">Asset Image</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalImage" src="" alt="Asset Image" class="img-fluid rounded">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 <?php
