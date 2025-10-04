@@ -701,6 +701,35 @@ if ($baseProp !== '') {
     $generated_property_no = $property_no_format; // fetched from tag_formats
 }
 
+// Auto-generate serial number using tag format (similar to property number)
+$baseSerial = isset($asset_details['serial_no']) ? trim((string)$asset_details['serial_no']) : '';
+if ($baseSerial !== '') {
+    $generated_serial_no = $baseSerial;
+} else {
+    // Generate serial number from format template
+    $generated_serial_no = $serial_format ?: 'SN-' . date('Y') . '-000001';
+    
+    // Replace placeholders in serial format
+    if (!empty($serial_format)) {
+        $now = new DateTime();
+        $year = $now->format('Y');
+        $month = $now->format('m');
+        $day = $now->format('d');
+        
+        $generated_serial_no = str_replace(
+            ['{YYYY}', '{YY}', '{MM}', '{DD}', '{YYYYMM}', '{YYYYMMDD}'],
+            [$year, substr($year, -2), $month, $day, $year.$month, $year.$month.$day],
+            $serial_format
+        );
+        
+        // Replace digit placeholders with sequential numbers
+        $generated_serial_no = preg_replace_callback('/\{(#+)\}/', function($matches) {
+            $digitCount = strlen($matches[1]);
+            return str_pad('1', $digitCount, '0', STR_PAD_LEFT);
+        }, $generated_serial_no);
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -919,15 +948,12 @@ if ($baseProp !== '') {
                                             <i class="bi bi-hash me-1 text-success"></i>Serial Number
                                         </label>
                                         <input type="text" class="form-control" name="serial_no"
-                                            value="<?= isset($asset_details['serial_no']) ? htmlspecialchars($asset_details['serial_no']) : '' ?>"
-                                            placeholder="Auto-generated or enter custom serial" id="serial_no">
+                                            value="<?= htmlspecialchars($generated_serial_no) ?>"
+                                            placeholder="Auto-generated from tag format" readonly id="serial_no">
                                         <div class="form-text">
                                             <i class="bi bi-info-circle me-1"></i>
-                                            Unique serial number - Format managed in 
+                                            Auto-generated unique serial number - Format managed in 
                                             <strong>System Admin → Manage Tag Format</strong>
-                                            <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="generateSerialNumber()" title="Generate Serial Number">
-                                                <i class="bi bi-arrow-clockwise me-1"></i>Generate
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -1638,45 +1664,6 @@ if ($baseProp !== '') {
                 }
             })();
 
-            // Global function for serial number generation (called by button)
-            function generateSerialNumber() {
-                const serialInput = document.getElementById('serial_no');
-                if (serialInput) {
-                    const serialFormatTemplate = <?= json_encode($serial_format ?? '') ?>;
-                    
-                    let template = (serialFormatTemplate || '').trim();
-                    if (!template) {
-                        template = 'SN-{YYYY}-{######}';
-                    }
-
-                    let output = template;
-                    const now = new Date();
-                    const year = now.getFullYear();
-                    const month = String(now.getMonth() + 1).padStart(2, '0');
-                    const day = String(now.getDate()).padStart(2, '0');
-                    
-                    output = output.replace(/\{YYYY\}|YYYY/g, year.toString());
-                    output = output.replace(/\{YY\}|YY/g, year.toString().slice(-2));
-                    output = output.replace(/\{MM\}|MM/g, month);
-                    output = output.replace(/\{DD\}|DD/g, day);
-                    output = output.replace(/\{YYYYMM\}|YYYYMM/g, year.toString() + month);
-                    output = output.replace(/\{YYYYMMDD\}|YYYYMMDD/g, year.toString() + month + day);
-                    
-                    // Enhanced flexible digit replacement - supports any number of # symbols
-                    output = output.replace(/\{(#+)\}/g, function(match, hashes) {
-                        const digitCount = hashes.length;
-                        return '0'.repeat(Math.max(1, digitCount - 1)) + '1';
-                    });
-                    
-                    serialInput.value = output;
-                    
-                    // Add visual feedback
-                    serialInput.style.background = '#d4edda';
-                    setTimeout(() => {
-                        serialInput.style.background = '';
-                    }, 1000);
-                }
-            }
 
             // Function to show image in modal with enhanced features
             function showImageModal(imageSrc, imageTitle) {
