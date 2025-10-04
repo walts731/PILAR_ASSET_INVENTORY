@@ -519,106 +519,16 @@ document.addEventListener('DOMContentLoaded', function() {
     e.preventDefault();
 
     const id = a.getAttribute('data-id');
-    const content = document.getElementById('globalAssetContent');
-    if (content) {
-      content.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border text-primary"></div><div>Loading...</div></div>';
-    }
-
-    fetch('get_asset_details.php?id=' + encodeURIComponent(id))
-      .then(r => r.json())
-      .then(resp => {
-        const d = (resp && resp.asset) ? resp.asset : resp;
-        if (!d || d.error) {
-          if (content) content.innerHTML = '<div class="text-danger">Failed to load details.</div>';
-          return;
-        }
-
-        const statusBadge = (() => {
-          const s = (d.status || '').toLowerCase();
-          const map = { available: 'success', borrowed: 'warning', unserviceable: 'danger', red_tagged: 'danger' };
-          return `<span class="badge bg-${map[s] || 'secondary'} text-uppercase">${esc(d.status || 'N/A')}</span>`;
-        })();
-
-        const chips = (label, value) => value ? `<span class="badge rounded-pill text-bg-light border me-1">${label}: ${esc(value)}</span>` : '';
-
-        const img = d.image
-          ? `<img src="../img/assets/${esc(d.image)}" class="img-fluid rounded border" style="width:100%;max-height:300px;object-fit:cover;" alt="Asset">`
-          : `<div class="border rounded d-flex align-items-center justify-content-center bg-light" style="width:100%;height:300px;">
-               <i class="bi bi-image text-muted" style="font-size:3rem;"></i>
-             </div>`;
-
-        content.innerHTML = `
-  <div class="container-fluid">
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
-      <div>
-        <h5 class="mb-1">${esc(d.description || 'Unnamed Asset')}</h5>
-        <div class="text-muted small">
-          ${esc(d.category_name || 'Uncategorized')}
-          ${d.code ? ' � Code: ' + esc(d.code) : ''}
-        </div>
-      </div>
-      <div>${statusBadge}</div>
-    </div>
-
-    <div class="row g-3">
-      <div class="col-md-5">
-        <div class="card h-100"><div class="card-body p-2">${img}</div></div>
-      </div>
-
-      <div class="col-md-7">
-        <div class="card mb-3">
-          <div class="card-header bg-light fw-semibold">Identification</div>
-          <div class="card-body">
-            <div class="row g-2">
-              <div class="col-sm-6"><div class="small text-muted">Property No.</div><div class="fw-semibold">${esc(d.property_no || '�')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Inventory Tag</div><div class="fw-semibold">${esc(d.inventory_tag || '�')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Brand</div><div class="fw-semibold">${esc(d.brand || '�')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Model</div><div class="fw-semibold">${esc(d.model || '�')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Serial No.</div><div class="fw-semibold">${esc(d.serial_no || '�')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Unit / Quantity</div><div class="fw-semibold">${esc(d.unit || '�')} � ${esc(d.quantity || '0')}</div></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card mb-3">
-          <div class="card-header bg-light fw-semibold">Assignment</div>
-          <div class="card-body">
-            <div class="row g-2">
-              <div class="col-sm-6"><div class="small text-muted">Office</div><div class="fw-semibold">${esc(d.office_name || '�')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Person Accountable</div><div class="fw-semibold">${esc(d.employee_name || d.person_accountable || '�')}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">End User</div><div class="fw-semibold">${esc(d.end_user || '�')}</div></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card mb-3">
-          <div class="card-header bg-light fw-semibold">Documentation</div>
-          <div class="card-body">
-            <div class="mb-2">${chips('ICS', d.ics_no)}${chips('PAR', d.par_no)}</div>
-            <div class="row g-2">
-              <div class="col-sm-6"><div class="small text-muted">Acquisition Date</div><div class="fw-semibold">${d.acquisition_date ? new Date(d.acquisition_date).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '�'}</div></div>
-              <div class="col-sm-6"><div class="small text-muted">Last Updated</div><div class="fw-semibold">${d.last_updated ? new Date(d.last_updated).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '�'}</div></div>
-              <div class="col-12"><div class="small text-muted">Unit Value</div><div class="fw-semibold">?${(parseFloat(d.value||0)||0).toLocaleString(undefined,{minimumFractionDigits:2})}</div></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="d-flex flex-wrap gap-2">
-          <a class="btn btn-outline-primary btn-sm" href="create_MR.php?asset_id=${d.id}" target="_blank"><i class="bi bi-tag"></i> Property Tag</a>
-          ${d.ics_id ? `<a class="btn btn-outline-info btn-sm" href="view_ics.php?id=${d.ics_id}&form_id=4" target="_blank"><i class="bi bi-file-earmark-text"></i> View ICS</a>` : ''}
-          ${d.par_id ? `<a class="btn btn-outline-success btn-sm" href="view_par.php?id=${d.par_id}&form_id=3" target="_blank"><i class="bi bi-file-earmark-check"></i> View PAR</a>` : ''}
-          
-        </div>
-      </div>
-    </div>
-  </div>`;
-
-        const modal = new bootstrap.Modal(document.getElementById('globalAssetModal'));
-        modal.show();
-      })
-      .catch(() => {
-        if (content) content.innerHTML = '<div class="text-danger">Failed to load details.</div>';
-      });
+    
+    // Hide search results
+    box.style.display = 'none';
+    
+    // Clear search input
+    input.value = '';
+    lastQ = '';
+    
+    // Redirect to view_asset_details.php
+    window.location.href = `view_asset_details.php?id=${encodeURIComponent(id)}`;
   });
 })();
 </script>

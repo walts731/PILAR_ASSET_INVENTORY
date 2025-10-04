@@ -218,28 +218,6 @@ $stmt->close();
                     </div>
                 </div>
 
-                <!-- Asset Lifecycle -->
-                <div class="lifecycle-container">
-                    <div class="d-flex align-items-center mb-3">
-                        <h4 class="mb-0 text-primary">
-                            <i class="bi bi-clock-history me-2"></i>Asset Lifecycle
-                        </h4>
-                        <span class="badge bg-light text-dark ms-2" id="lifecycleEventCount">Loading...</span>
-                        <button class="btn btn-sm btn-outline-primary ms-auto" onclick="refreshLifecycle()">
-                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-                        </button>
-                    </div>
-                    
-                    <div id="lifecycleContent">
-                        <div class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading lifecycle events...</span>
-                            </div>
-                            <p class="text-muted mt-2">Loading lifecycle events...</p>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="container-fluid">
                     <div class="row">
                         <!-- Left Column -->
@@ -414,6 +392,28 @@ $stmt->close();
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Asset Lifecycle -->
+                <div class="lifecycle-container">
+                    <div class="d-flex align-items-center mb-3">
+                        <h4 class="mb-0 text-primary">
+                            <i class="bi bi-clock-history me-2"></i>Asset Lifecycle
+                        </h4>
+                        <span class="badge bg-light text-dark ms-2" id="lifecycleEventCount">Loading...</span>
+                        <button class="btn btn-sm btn-outline-primary ms-auto" onclick="refreshLifecycle()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                        </button>
+                    </div>
+                    
+                    <div id="lifecycleContent">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading lifecycle events...</span>
+                            </div>
+                            <p class="text-muted mt-2">Loading lifecycle events...</p>
                         </div>
                     </div>
                 </div>
