@@ -187,6 +187,31 @@ $stmt->close();
         .lifecycle-event.default::before {
             background: #6f42c1;
         }
+        .lifecycle-event a {
+            color: inherit !important;
+            text-decoration: none !important;
+            border-bottom: 1px dotted currentColor;
+            transition: all 0.2s ease;
+        }
+        .lifecycle-event a:hover {
+            border-bottom-style: solid;
+            opacity: 0.8;
+        }
+        .lifecycle-event .text-primary a {
+            color: #0d6efd !important;
+        }
+        .lifecycle-event .text-success a {
+            color: #198754 !important;
+        }
+        .lifecycle-event .text-info a {
+            color: #0dcaf0 !important;
+        }
+        .lifecycle-event .text-warning a {
+            color: #ffc107 !important;
+        }
+        .lifecycle-event .text-danger a {
+            color: #dc3545 !important;
+        }
     </style>
 </head>
 <body>
@@ -202,9 +227,9 @@ $stmt->close();
                             <div>
                                 <h1 class="h2 mb-2"><?= htmlspecialchars($asset['description']) ?></h1>
                                 <p class="mb-0 opacity-75">
-                                    <i class="bi bi-tag me-2"></i><?= htmlspecialchars($asset['inventory_tag'] ?? 'No Inventory Tag') ?>
+                                    <i class="bi bi-tag me-2"></i>Inventory Tag  <?= htmlspecialchars($asset['inventory_tag'] ?? 'No Inventory Tag') ?>
                                     <?php if ($asset['property_no']): ?>
-                                        | <i class="bi bi-hash me-1"></i><?= htmlspecialchars($asset['property_no']) ?>
+                                        | <i class="bi bi-hash me-1"></i> Property Number <?= htmlspecialchars($asset['property_no']) ?>
                                     <?php endif; ?>
                                 </p>
                             </div>
@@ -511,7 +536,7 @@ $stmt->close();
                                 <i class="${eventIcon} me-2 text-primary"></i>
                                 ${getEventTitle(event.event_type)}
                             </h6>
-                            <p class="mb-1 text-muted">${getEventDescription(event)}</p>
+                            <div class="mb-1 text-muted">${getEventDescription(event)}</div>
                             ${event.notes ? `<small class="text-muted"><strong>Notes:</strong> ${event.notes}</small>` : ''}
                         </div>
                         <small class="text-muted ms-3">${eventDate}</small>
@@ -565,22 +590,48 @@ $stmt->close();
     
     // Get description for event
     function getEventDescription(event) {
+        let description = '';
+        let formLinks = '';
+        
         switch (event.event_type) {
             case 'ACQUIRED':
-                return 'Asset was acquired and added to inventory';
+                description = 'Asset was acquired and added to inventory';
+                break;
             case 'ASSIGNED':
-                return `Assigned to ${event.to_employee || 'employee'} at ${event.to_office || 'office'}`;
+                description = `Assigned to ${event.to_employee || 'employee'} at ${event.to_office || 'office'}`;
+                // Check for PAR or ICS forms
+                if (event.ref_table === 'par_form' && event.ref_id) {
+                    formLinks = `<br><small class="text-success"><i class="bi bi-file-earmark-check me-1"></i><a href="view_par.php?id=${event.ref_id}&form_id=3" target="_blank" class="text-decoration-none">View PAR Form #${event.ref_id}</a></small>`;
+                } else if (event.ref_table === 'ics_form' && event.ref_id) {
+                    formLinks = `<br><small class="text-info"><i class="bi bi-file-earmark-text me-1"></i><a href="view_ics.php?id=${event.ref_id}&form_id=4" target="_blank" class="text-decoration-none">View ICS Form #${event.ref_id}</a></small>`;
+                }
+                break;
             case 'TRANSFERRED':
-                return `Transferred from ${event.from_employee || 'previous employee'} to ${event.to_employee || 'new employee'}`;
+                description = `Transferred from ${event.from_employee || 'previous employee'} to ${event.to_employee || 'new employee'}`;
+                if (event.ref_table === 'itr_form' && event.ref_id) {
+                    formLinks = `<br><small class="text-primary"><i class="bi bi-file-earmark-text me-1"></i><a href="view_itr.php?id=${event.ref_id}" target="_blank" class="text-decoration-none">View ITR Form #${event.ref_id}</a></small>`;
+                }
+                break;
             case 'RED_TAGGED':
-                return 'Asset was red tagged for disposal or repair';
+                description = 'Asset was red tagged for disposal or repair';
+                if (event.ref_table === 'red_tags' && event.ref_id) {
+                    formLinks = `<br><small class="text-danger"><i class="bi bi-tag me-1"></i><a href="view_red_tag.php?id=${event.ref_id}" target="_blank" class="text-decoration-none">View Red Tag #${event.ref_id}</a></small>`;
+                }
+                break;
             case 'DISPOSAL_LISTED':
-                return 'Asset was listed for disposal through IIRUP form';
+                description = 'Asset was listed for disposal through IIRUP form';
+                if (event.ref_table === 'iirup_items' && event.ref_id) {
+                    formLinks = `<br><small class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i><a href="view_iirup.php?id=${event.ref_id}&form_id=7" target="_blank" class="text-decoration-none">View IIRUP Form #${event.ref_id}</a></small>`;
+                }
+                break;
             case 'DISPOSED':
-                return 'Asset was disposed of';
+                description = 'Asset was disposed of';
+                break;
             default:
-                return event.notes || 'Lifecycle event recorded';
+                description = event.notes || 'Lifecycle event recorded';
         }
+        
+        return description + formLinks;
     }
     
     // Update event count badge
