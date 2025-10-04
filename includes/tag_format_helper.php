@@ -15,7 +15,7 @@ class TagFormatHelper {
     
     /**
      * Generate next tag number for a specific type
-     * @param string $tagType - Type of tag (red_tag, ics_no, itr_no, par_no, ris_no, inventory_tag, asset_code)
+     * @param string $tagType - Type of tag (red_tag, ics_no, itr_no, par_no, ris_no, inventory_tag, asset_code, sai_no)
      * @return string|false - Generated tag or false on error
      */
     public function generateNextTag($tagType) {

@@ -15,14 +15,6 @@ $stmt->close();
 // Note: RIS No. should NOT be auto-generated. It will be fetched from the latest record (if any)
 // via $ris_data above and shown as an editable field.
 
-// Auto-generate SAI No.
-$sai_prefix = "SAI-" . date("Y") . "-";
-$sai_stmt = $conn->prepare("SELECT COUNT(*) as count FROM ris_form");
-$sai_stmt->execute();
-$sai_result = $sai_stmt->get_result()->fetch_assoc();
-$sai_count = $sai_result['count'] + 1;
-$auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
-
 ?>
 <?php if (isset($_GET['add']) && $_GET['add'] === 'success'): ?>
   <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
@@ -98,8 +90,14 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
       <input type="text" class="form-control shadow" id="responsibility_code" name="responsibility_code" placeholder="Enter Code">
     </div>
     <div class="col-md-3">
-      <label for="sai_no" class="form-label fw-semibold">SAI No.</label>
-      <input type="text" class="form-control shadow" id="sai_no" name="sai_no" placeholder="Enter SAI No.">
+      <label for="sai_no" class="form-label fw-semibold">SAI No. (Auto-generated)</label>
+      <div class="input-group">
+        <input type="text" class="form-control shadow" id="sai_no" name="sai_no" value="<?= previewTag('sai_no') ?>" readonly>
+        <span class="input-group-text">
+          <i class="bi bi-magic" title="Auto-generated"></i>
+        </span>
+      </div>
+      <small class="text-muted">This number will be automatically assigned when you save the form.</small>
     </div>
     <div class="col-md-3">
       <label for="date" class="form-label fw-semibold">Date</label>

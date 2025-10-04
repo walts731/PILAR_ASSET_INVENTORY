@@ -6,12 +6,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // HEADER + FOOTER fields
     $division = $_POST['division'] ?? '';
     $responsibility_center = $_POST['responsibility_center'] ?? '';
-    // Generate automatic RIS number
+    // Generate automatic RIS number and SAI number
     $ris_no = generateTag('ris_no');
+    $sai_no = generateTag('sai_no');
     $date = $_POST['date'] ?? date('Y-m-d');
     $office_id = $_POST['office_id'] ?? '';
     $responsibility_code = $_POST['responsibility_code'] ?? '';
-    $sai_no = $_POST['sai_no'] ?? '';
     $purpose = $_POST['purpose'] ?? '';
 
     // ✅ Handle header image upload with fallback to existing
