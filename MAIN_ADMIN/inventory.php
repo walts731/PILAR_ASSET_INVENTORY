@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../connect.php';
 session_start();
 
@@ -889,7 +889,7 @@ echo $displayNo;
                         </td>
                         <td>
                           <span class="text-success fw-medium">
-                            ₱<?= number_format((float)$row['value'], 2) ?>
+                            â‚±<?= number_format((float)$row['value'], 2) ?>
                           </span>
                         </td>
                         <td>
@@ -1312,8 +1312,11 @@ echo $displayNo;
                     <td>${it.status ?? ''}</td>
                     <td>${it.date_acquired ? new Date(it.date_acquired).toLocaleDateString('en-US') : ''}</td>
                     <td class="text-nowrap d-flex gap-1">
+                      <a class="btn btn-sm btn-outline-info" href="view_asset_details.php?id=${it.item_id}" target="_blank" title="View Full Details">
+                        <i class="bi bi-eye"></i>
+                      </a>
                       <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="${(it.property_no && it.property_no.trim()) ? 'Edit Property Tag' : 'Create Property Tag'}">
-                        <i class="bi bi-tag"></i> ${ (it.property_no && it.property_no.trim()) ? 'Edit Property Tag' : 'Create Property Tag' }
+                        <i class="bi bi-tag"></i>
                       </a>
                     </td>
                   `;
@@ -1557,8 +1560,11 @@ echo $displayNo;
                     <td>${it.status ?? ''}</td>
                     <td>${it.date_acquired ? new Date(it.date_acquired).toLocaleDateString('en-US') : ''}</td>
                     <td class="text-nowrap d-flex gap-1">
+                      <a class="btn btn-sm btn-outline-info" href="view_asset_details.php?id=${it.item_id ?? data.id}" target="_blank" title="View Full Details">
+                        <i class="bi bi-eye"></i>
+                      </a>
                       <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id ?? data.id}" target="_blank" title="${(it.property_no && it.property_no.trim()) ? 'View Property Tag' : 'Create Property Tag'}">
-                        <i class="bi bi-tag"></i> ${(it.property_no && it.property_no.trim()) ? 'View Property Tag' : 'Create Property Tag'}
+                        <i class="bi bi-tag"></i>
                       </a>
                     </td>`;
                   itemsBody.appendChild(tr);
@@ -1572,8 +1578,11 @@ echo $displayNo;
                   <td>${data.status ?? ''}</td>
                   <td>${data.acquisition_date ? new Date(data.acquisition_date).toLocaleDateString('en-US') : ''}</td>
                   <td class="text-nowrap d-flex gap-1">
+                    <a class="btn btn-sm btn-outline-info" href="view_asset_details.php?id=${data.id}" target="_blank" title="View Full Details">
+                      <i class="bi bi-eye"></i>
+                    </a>
                     <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${data.id}" target="_blank" title="${(data.property_no && String(data.property_no).trim()) ? 'Edit Property Tag' : 'Create Property Tag'}">
-                      <i class="bi bi-tag"></i> ${(data.property_no && String(data.property_no).trim()) ? 'Edit Property Tag' : 'Create Property Tag'}
+                      <i class="bi bi-tag"></i>
                     </a>
                   </td>`;
                 itemsBody.appendChild(tr);
@@ -1589,11 +1598,11 @@ echo $displayNo;
       if (!el) return;
       const s = (status || '').toLowerCase();
       el.className = 'badge ' + (s === 'available' ? 'bg-success' : 'bg-secondary');
-      el.textContent = status ? (status.charAt(0).toUpperCase() + status.slice(1)) : '—';
+      el.textContent = status ? (status.charAt(0).toUpperCase() + status.slice(1)) : 'â€”';
     }
 
     function fmtDate(dateStr) {
-      if (!dateStr) return '—';
+      if (!dateStr) return 'â€”';
       const d = new Date(dateStr);
       return d.toLocaleDateString('en-US', {
         year: 'numeric',
@@ -1614,19 +1623,19 @@ echo $displayNo;
             }
 
             // Populate basic fields
-            document.getElementById('consDescription').textContent = data.description ?? '—';
-            document.getElementById('consOffice').textContent = data.office_name ?? '—';
-            document.getElementById('consPropertyNo').textContent = data.property_no ?? '—';
+            document.getElementById('consDescription').textContent = data.description ?? 'â€”';
+            document.getElementById('consOffice').textContent = data.office_name ?? 'â€”';
+            document.getElementById('consPropertyNo').textContent = data.property_no ?? 'â€”';
             document.getElementById('consQuantity').textContent = parseInt(data.quantity ?? 0);
             document.getElementById('consAddedStock').textContent = parseInt(data.added_stock ?? 0);
-            document.getElementById('consUnit').textContent = data.unit ?? '—';
+            document.getElementById('consUnit').textContent = data.unit ?? 'â€”';
             setBadge(document.getElementById('consStatus'), data.status ?? '');
 
             const value = parseFloat(data.value ?? 0) || 0;
             const qty = parseInt(data.quantity ?? 0) || 0;
             document.getElementById('consValue').textContent = value.toFixed(2);
             document.getElementById('consTotalValue').textContent = data.total_value ? parseFloat(data.total_value).toFixed(2) : (value * qty).toFixed(2);
-            document.getElementById('consLastUpdated').textContent = data.last_updated_formatted ?? '—';
+            document.getElementById('consLastUpdated').textContent = data.last_updated_formatted ?? 'â€”';
 
             // Image
             const imgEl = document.getElementById('consImage');
@@ -1687,8 +1696,11 @@ echo $displayNo;
                 <td>${it.status ?? ''}</td>
                 <td>${it.date_acquired ? new Date(it.date_acquired).toLocaleDateString('en-US') : ''}</td>
                 <td class="text-nowrap d-flex gap-1">
+                  <a class="btn btn-sm btn-outline-info" href="view_asset_details.php?id=${it.item_id}" target="_blank" title="View Full Details">
+                    <i class="bi bi-eye"></i>
+                  </a>
                   <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="Create/Edit Property Tag">
-                    <i class="bi bi-tag"></i> ${ (it.property_no && it.property_no.trim()) ? 'Edit Property Tag' : 'Create Property Tag' }
+                    <i class="bi bi-tag"></i>
                   </a>
                   <button type="button" class="btn btn-sm btn-outline-primary" title="Edit Asset" data-bs-toggle="modal" data-bs-target="#updateAssetModal" onclick="openAssetAction('edit', ${it.item_id})"><i class="bi bi-pencil"></i></button>
                   <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Asset" data-bs-toggle="modal" data-bs-target="#deleteAssetModal" onclick="openAssetAction('delete', ${it.item_id})"><i class="bi bi-trash"></i></button>
@@ -1977,7 +1989,7 @@ echo $displayNo;
             <table class="table table-sm">
               <tr><td class="fw-medium">Status:</td><td><span class="badge bg-${asset.status === 'available' ? 'success' : asset.status === 'borrowed' ? 'warning' : 'danger'}">${asset.status || 'N/A'}</span></td></tr>
               <tr><td class="fw-medium">Quantity:</td><td>${asset.quantity || '0'} ${asset.unit || ''}</td></tr>
-              <tr><td class="fw-medium">Value:</td><td>₱${asset.value ? parseFloat(asset.value).toLocaleString('en-US', {minimumFractionDigits: 2}) : '0.00'}</td></tr>
+              <tr><td class="fw-medium">Value:</td><td>â‚±${asset.value ? parseFloat(asset.value).toLocaleString('en-US', {minimumFractionDigits: 2}) : '0.00'}</td></tr>
               <tr><td class="fw-medium">Red Tagged:</td><td><span class="badge bg-${asset.red_tagged == 1 ? 'danger' : 'success'}">${asset.red_tagged == 1 ? 'Yes' : 'No'}</span></td></tr>
               <tr><td class="fw-medium">Acquisition Date:</td><td>${asset.acquisition_date || 'N/A'}</td></tr>
               <tr><td class="fw-medium">Last Updated:</td><td>${asset.last_updated ? new Date(asset.last_updated).toLocaleDateString() : 'N/A'}</td></tr>
@@ -2305,8 +2317,8 @@ document.querySelectorAll('.viewLifecycleBtn').forEach(btn => {
             .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
           tableBody.innerHTML = events.map(ev => {
             const ref = ev.ref_table ? `${escapeHtml(ev.ref_table)} #${escapeHtml(ev.ref_id ?? '')}` : '';
-            const fromStr = [ev.from_office, ev.from_employee].filter(Boolean).map(escapeHtml).join(' • ');
-            const toStr = [ev.to_office, ev.to_employee].filter(Boolean).map(escapeHtml).join(' • ');
+            const fromStr = [ev.from_office, ev.from_employee].filter(Boolean).map(escapeHtml).join(' â€¢ ');
+            const toStr = [ev.to_office, ev.to_employee].filter(Boolean).map(escapeHtml).join(' â€¢ ');
             const t = (ev.event_type || '').toUpperCase();
             const color = { ACQUIRED: 'success', ASSIGNED: 'primary', TRANSFERRED: 'info', DISPOSAL_LISTED: 'warning', DISPOSED: 'secondary', RED_TAGGED: 'danger' }[t] || 'light';
             const typeBadge = `<span class="badge bg-${color}">${escapeHtml(t)}</span>`;
@@ -2409,3 +2421,5 @@ document.querySelectorAll('.viewLifecycleBtn').forEach(btn => {
 </body>
 
 </html>
+
+
