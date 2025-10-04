@@ -596,6 +596,12 @@ $stmt->close();
         switch (event.event_type) {
             case 'ACQUIRED':
                 description = 'Asset was acquired and added to inventory';
+                // Check for PAR or ICS forms
+                if (event.ref_table === 'par_form' && event.ref_id) {
+                    formLinks = `<br><small class="text-success"><i class="bi bi-file-earmark-check me-1"></i><a href="view_par.php?id=${event.ref_id}&form_id=3" target="_blank" class="text-decoration-none">View PAR Form #${event.ref_id}</a></small>`;
+                } else if (event.ref_table === 'ics_form' && event.ref_id) {
+                    formLinks = `<br><small class="text-info"><i class="bi bi-file-earmark-text me-1"></i><a href="view_ics.php?id=${event.ref_id}&form_id=4" target="_blank" class="text-decoration-none">View ICS Form #${event.ref_id}</a></small>`;
+                }
                 break;
             case 'ASSIGNED':
                 description = `Assigned to ${event.to_employee || 'employee'} at ${event.to_office || 'office'}`;
@@ -615,12 +621,13 @@ $stmt->close();
             case 'RED_TAGGED':
                 description = 'Asset was red tagged for disposal or repair';
                 if (event.ref_table === 'red_tags' && event.ref_id) {
-                    formLinks = `<br><small class="text-danger"><i class="bi bi-tag me-1"></i><a href="view_red_tag.php?id=${event.ref_id}" target="_blank" class="text-decoration-none">View Red Tag #${event.ref_id}</a></small>`;
+                    // Use the same approach as inventory.php - direct link with asset_id and iirup_id
+                    formLinks = `<br><small class="text-danger"><i class="bi bi-tag me-1"></i><a href="#" onclick="openRedTagEditSimple(${assetId})" class="text-decoration-none">Edit Red Tag #${event.ref_id}</a></small>`;
                 }
                 break;
             case 'DISPOSAL_LISTED':
                 description = 'Asset was listed for disposal through IIRUP form';
-                if (event.ref_table === 'iirup_items' && event.ref_id) {
+                if (event.ref_table === 'iirup_form' && event.ref_id) {
                     formLinks = `<br><small class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i><a href="view_iirup.php?id=${event.ref_id}&form_id=7" target="_blank" class="text-decoration-none">View IIRUP Form #${event.ref_id}</a></small>`;
                 }
                 break;
@@ -663,6 +670,21 @@ $stmt->close();
         `;
         document.getElementById('lifecycleEventCount').textContent = 'Loading...';
         loadLifecycleEvents();
+    }
+    
+    // Open red tag for editing - simple approach like inventory.php
+    function openRedTagEditSimple(assetId) {
+        // Use the iirup_id from the asset data we already have
+        const iirupId = <?= $asset['iirup_id'] ?? 'null' ?>;
+        
+        if (!iirupId) {
+            alert('No IIRUP form found for this asset. Please create an IIRUP form first.');
+            return;
+        }
+        
+        // Direct redirect like inventory.php red tag button
+        const url = `create_red_tag.php?asset_id=${assetId}&iirup_id=${iirupId}`;
+        window.open(url, '_blank');
     }
     </script>
 </body>
