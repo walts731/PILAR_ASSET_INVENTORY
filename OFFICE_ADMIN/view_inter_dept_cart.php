@@ -289,7 +289,8 @@ if (isset($_POST['submit_request'])) {
             </div>
         </div>
     <?php else: ?>
-        <div class="row">
+        <div class="container-fluid">
+            <div class="row">
             <div class="col-lg-8">
                 <div class="card mb-4">
                     <div class="card-header">
@@ -433,10 +434,10 @@ if (isset($_POST['submit_request'])) {
                             </div>
                         </form>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                    </div> <!-- Close col-lg-8 -->
+                </div> <!-- Close row -->
+            </div> <!-- Close container-fluid -->
+        </div> <!-- Close main -->
     <!-- End of Main Content -->
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -451,28 +452,31 @@ if (isset($_POST['submit_request'])) {
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
-        const priority = $(this).val();
-        const $select = $(this);
-        
-        // Remove all priority classes
-        $select.removeClass('border-danger border-warning border-info border-success');
-        
-        // Add appropriate class based on priority
-        switch(priority) {
-            case 'low':
-                $select.addClass('border-success');
-                break;
-            case 'medium':
-                $select.addClass('border-info');
-                break;
-            case 'high':
-                $select.addClass('border-warning');
-                break;
-            case 'urgent':
-                $select.addClass('border-danger');
-                break;
-        }
-    }).trigger('change');
+
+        // Handle priority selection
+        $('.priority-select').each(function() {
+            const $select = $(this);
+            const priority = $select.val();
+            
+            // Remove all priority classes
+            $select.removeClass('border-danger border-warning border-info border-success');
+            
+            // Add appropriate class based on priority
+            switch(priority) {
+                case 'low':
+                    $select.addClass('border-success');
+                    break;
+                case 'medium':
+                    $select.addClass('border-info');
+                    break;
+                case 'high':
+                    $select.addClass('border-warning');
+                    break;
+                case 'urgent':
+                    $select.addClass('border-danger');
+                    break;
+            }
+        });
     
     // Character counter for notes
     $('#notes').on('input', function() {
@@ -502,6 +506,21 @@ if (isset($_POST['submit_request'])) {
         `;
         $('.container-fluid').prepend(alertHtml);
     }
+});
+
+// Initialize date picker
+const picker = new easepick.create({
+    element: document.getElementById('requested_return_date'),
+    css: [
+        'https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.css',
+    ],
+    zIndex: 10,
+    format: 'YYYY-MM-DD',
+    minDate: new Date(),
+    plugins: ['RangePlugin', 'LockPlugin'],
+    LockPlugin: {
+        minDate: new Date(),
+    },
 });
 </script>
 
