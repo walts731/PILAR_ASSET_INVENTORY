@@ -400,6 +400,11 @@ usort($lifecycle_events, function($a, $b) {
                                             <i class="bi bi-arrow-left-right me-2"></i>Transfer Asset
                                         </button>
                                         <?php endif; ?>
+                                        <!-- Create IIRUP Button -->
+                                        <a href="forms.php?id=7&asset_id=<?= $asset['id'] ?>" 
+                                           class="btn btn-outline-warning" target="_blank">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>Create IIRUP
+                                        </a>
                                     </div>
                                 </div>
                             </div>
