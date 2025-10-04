@@ -269,12 +269,7 @@ $stmt->close();
                                 <?php endif; ?>
                             </p>
                         </div>
-                        <div>
-                            <a href="inventory.php" class="back-button">
-                                <i class="bi bi-arrow-left"></i>
-                                Back to Inventory
-                            </a>
-                        </div>
+                        
                     </div>
                 </div>
             </div>
