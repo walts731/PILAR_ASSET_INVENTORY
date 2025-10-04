@@ -101,22 +101,17 @@ if (!$asset) {
 }
 
 // Determine Red Tag number
-// Use existing number when editing, otherwise fetch format_code from tag_formats (tag_type = 'Red Tag')
+// Use existing number when editing, otherwise generate new red tag number
 if ($existing_red_tag_check && $existing_red_tag_data) {
     $red_tag_number = $existing_red_tag_data['red_tag_number'];
 } else {
-    $fmt_stmt = $conn->prepare("SELECT format_code FROM tag_formats WHERE tag_type = ? LIMIT 1");
-    $tag_type = 'Red Tag';
-    $fmt_stmt->bind_param('s', $tag_type);
-    $fmt_stmt->execute();
-    $fmt_res = $fmt_stmt->get_result();
-    if ($fmt_row = $fmt_res->fetch_assoc()) {
-        $red_tag_number = $fmt_row['format_code'];
-    } else {
-        // If not configured, default to empty string (displayed as-is)
-        $red_tag_number = '';
+    // Generate new red tag number using tag format system
+    require_once '../includes/tag_format_helper.php';
+    $red_tag_number = generateTag('red_tag');
+    if (!$red_tag_number) {
+        // If generation fails, use a fallback format
+        $red_tag_number = 'RT-' . str_pad(1, 4, '0', STR_PAD_LEFT);
     }
-    $fmt_stmt->close();
 }
 
 // Handle form submission
