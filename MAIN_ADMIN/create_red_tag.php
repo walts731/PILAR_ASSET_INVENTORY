@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Tagged by: prefer posted user id if provided, else fallback to current user
     $tagged_by = isset($_POST['tagged_by']) ? (int)$_POST['tagged_by'] : $user_id;
     
-    $description = $asset['description'] . ' (' . $asset['property_no'] . ')';
+    $description = $asset['description'];
     
     // Handle multiple image uploads
     $uploaded_images = [];
@@ -480,7 +480,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="mb-3">
                     <label class="form-label">Description:</label>
-                    <textarea class="form-control" rows="3" readonly><?= htmlspecialchars($asset['description'] . ' (' . $asset['property_no'] . ')') ?></textarea>
+                    <textarea class="form-control" rows="3" readonly><?= htmlspecialchars($asset['description']) ?></textarea>
                 </div>
 
                 <div class="mb-3">
