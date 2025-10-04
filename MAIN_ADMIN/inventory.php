@@ -838,7 +838,7 @@ echo $displayNo;
           </div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-hover" id="noRedTagTable">
+              <table class="table table-hover" id="noRedTagRegularTable">
                 <thead class="table-light">
                   <tr>
                     <th>Property No</th>
@@ -1038,7 +1038,7 @@ echo $displayNo;
           </div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-hover" id="allUnserviceableTable">
+              <table class="table table-hover" id="allUnserviceableRegularTable">
                 <thead class="table-light">
                   <tr>
                     <th style="width:32px;"><input type="checkbox" id="selectAllUnserv"></th>
@@ -1338,64 +1338,61 @@ echo $displayNo;
 
     // ================= Unserviceable Tab: DataTable, Filters, and Bulk Select =================
     (function() {
-      const $table = $('#allUnserviceableTable');
+      const $table = $('#allUnserviceableRegularTable');
       if ($table.length === 0) return;
 
-      // Initialize DataTable (guard against double initialization)
-      const dt = $.fn.DataTable.isDataTable($table) ?
-        $table.DataTable() :
-        $table.DataTable({
-          order: [
-            [6, 'desc']
-          ], // Last Updated column index after adding checkbox
-          columnDefs: [{
-              targets: 0,
-              orderable: false,
-              searchable: false
-            }, // checkbox column
-            {
-              targets: -1,
-              orderable: false,
-              searchable: false
-            } // actions column
-          ]
-        });
+      // DataTable initialization removed - using regular table instead
+      const dt = null;
 
-      // Search box hookup
+      // Search box hookup - using regular table search
       const $search = $('#unservSearch');
       if ($search.length) {
         $search.on('keyup change', function() {
-          dt.search(this.value).draw();
+          const val = this.value.toLowerCase();
+          $table.find('tbody tr').each(function() {
+            const row = $(this);
+            const text = row.text().toLowerCase();
+            row.toggle(text.indexOf(val) > -1);
+          });
         });
       }
 
-      // Custom filter for month/year using each row's data-updated attribute
+      // Custom filter for month/year using regular table filtering
       const typeSel = document.getElementById('unservReportType');
       const monthSel = document.getElementById('unservMonth');
       const yearSel = document.getElementById('unservYear');
 
-      $.fn.dataTable.ext.search.push(function(settings, rowData, rowIndex, rowNodes) {
-        if (settings.nTable !== $table.get(0)) return true; // only apply to this table
-        const tr = dt.row(rowIndex).node();
-        const raw = tr && tr.getAttribute('data-updated');
-        if (!raw) return true; // no date -> include
-        const d = new Date(raw);
-        if (isNaN(d)) return true;
-
+      const applyDateFilter = () => {
         const selType = typeSel ? typeSel.value : 'monthly';
-        const selYear = yearSel ? parseInt(yearSel.value, 10) : d.getFullYear();
-        if (selType === 'yearly') {
-          return d.getFullYear() === selYear;
-        } else {
-          const selMonth = monthSel ? parseInt(monthSel.value, 10) : (d.getMonth() + 1);
-          return d.getFullYear() === selYear && (d.getMonth() + 1) === selMonth;
-        }
-      });
+        const selYear = yearSel ? parseInt(yearSel.value, 10) : new Date().getFullYear();
+        const selMonth = monthSel ? parseInt(monthSel.value, 10) : (new Date().getMonth() + 1);
 
-      const triggerFilter = () => dt.draw();
-      if (typeSel) typeSel.addEventListener('change', triggerFilter);
-      if (monthSel) monthSel.addEventListener('change', triggerFilter);
-      if (yearSel) yearSel.addEventListener('change', triggerFilter);
+        $table.find('tbody tr').each(function() {
+          const row = $(this);
+          const raw = this.getAttribute('data-updated');
+          if (!raw) {
+            row.show();
+            return;
+          }
+          const d = new Date(raw);
+          if (isNaN(d)) {
+            row.show();
+            return;
+          }
+
+          let showRow = true;
+          if (selType === 'yearly') {
+            showRow = d.getFullYear() === selYear;
+          } else {
+            showRow = d.getFullYear() === selYear && (d.getMonth() + 1) === selMonth;
+          }
+          row.toggle(showRow);
+        });
+      };
+
+      if (typeSel) typeSel.addEventListener('change', applyDateFilter);
+      if (monthSel) monthSel.addEventListener('change', applyDateFilter);
+      if (yearSel) yearSel.addEventListener('change', applyDateFilter);
 
       // Month visibility toggle (reuse if exists)
       const monthWrap = document.getElementById('unservMonthWrap');
@@ -1410,37 +1407,20 @@ echo $displayNo;
       const $count = $('#unservSelectedCount');
       const updateCount = () => $count.text(selected.size);
 
-      // Apply selection state when table draws (pagination, filtering, etc.)
-      $table.on('draw.dt', function() {
-        dt.rows({
-          search: 'applied'
-        }).every(function() {
-          const node = this.node();
-          const cb = node.querySelector('input.unserv-checkbox');
-          if (cb) cb.checked = selected.has(cb.value);
-        });
-      });
-
-      // Row checkbox handler
+      // Row checkbox handler - using regular table
       $table.on('change', 'input.unserv-checkbox', function() {
         if (this.checked) selected.add(this.value);
         else selected.delete(this.value);
         updateCount();
       });
 
-      // Select All for filtered rows
+      // Select All for visible rows
       $('#selectAllUnserv').on('change', function() {
         const checked = this.checked;
-        dt.rows({
-          search: 'applied'
-        }).every(function() {
-          const node = this.node();
-          const cb = node.querySelector('input.unserv-checkbox');
-          if (cb) {
-            cb.checked = checked;
-            if (checked) selected.add(cb.value);
-            else selected.delete(cb.value);
-          }
+        $table.find('tbody tr:visible input.unserv-checkbox').each(function() {
+          this.checked = checked;
+          if (checked) selected.add(this.value);
+          else selected.delete(this.value);
         });
         updateCount();
       });

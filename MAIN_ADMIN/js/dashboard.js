@@ -20,46 +20,12 @@ function updateDateTime() {
         responsive: true,
         pageLength: 10,
         language: {
-          search: "Search assets:",
           lengthMenu: "Show _MENU_ entries",
           info: "Showing _START_ to _END_ of _TOTAL_ assets"
         }
       });
       
-      // Initialize DataTable for No Red Tag Only assets
-      $('#noRedTagTable').DataTable({
-        responsive: true,
-        pageLength: 10,
-        order: [[7, 'desc']], // Sort by Last Updated column (index 7) in descending order
-        language: {
-          search: "Search assets without red tags:",
-          lengthMenu: "Show _MENU_ entries",
-          info: "Showing _START_ to _END_ of _TOTAL_ assets without red tags",
-          emptyTable: "No unserviceable assets without red tags found"
-        },
-        columnDefs: [
-          { orderable: false, targets: [8] } // Disable sorting on Actions column
-        ]
-      });
-      
-      // Initialize DataTable for all unserviceable assets (guard against double init)
-      if ($('#allUnserviceableTable').length && !$.fn.DataTable.isDataTable('#allUnserviceableTable')) {
-        $('#allUnserviceableTable').DataTable({
-          responsive: true,
-          pageLength: 10,
-          // Table has 8 columns (0-7). Last Updated is index 6
-          order: [[6, 'desc']],
-          language: {
-            search: "Search all unserviceable assets:",
-            lengthMenu: "Show _MENU_ entries",
-            info: "Showing _START_ to _END_ of _TOTAL_ unserviceable assets",
-            emptyTable: "No unserviceable assets found"
-          },
-          columnDefs: [
-            { orderable: false, targets: [0, 7] } // Disable sorting on Checkbox and Actions columns
-          ]
-        });
-      }
+      // DataTables removed for No Red Tag and Unserviceable tabs - using regular tables instead
     });
 
     const toggleBtn = document.getElementById('toggleSidebar');
@@ -67,10 +33,11 @@ function updateDateTime() {
     const main = document.querySelector('.main');
     const icon = document.getElementById('toggleIcon');
 
-    toggleBtn.addEventListener('click', () => {
-      // Toggle sidebar visibility
-      sidebar.classList.toggle('sidebar-hidden');
-      main.classList.toggle('main-expanded');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        // Toggle sidebar visibility
+        sidebar.classList.toggle('sidebar-hidden');
+        main.classList.toggle('main-expanded');
 
       // Toggle icon direction
       if (sidebar.classList.contains('sidebar-hidden')) {
@@ -81,6 +48,7 @@ function updateDateTime() {
         icon.classList.add('bi-chevron-left');
       }
     });
+    }
 
     document.addEventListener("DOMContentLoaded", function() {
       const table = $('#consumablesTable').DataTable({
