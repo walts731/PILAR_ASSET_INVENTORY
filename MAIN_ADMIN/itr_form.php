@@ -51,48 +51,101 @@ $items = [];
 
 // Handle asset pre-selection from URL parameters (from employee transfer)
 $preselected_asset = null;
+$preselected_employee_name = '';
+
+// Helper function to map status to PPE condition
+function getConditionFromStatus($status)
+{
+  switch (strtolower($status)) {
+    case 'available':
+    case 'serviceable':
+      return 'Serviceable';
+    case 'unserviceable':
+      return 'Unserviceable';
+    case 'borrowed':
+      return 'On Loan';
+    case 'red_tagged':
+      return 'For Disposal';
+    default:
+      return 'Fair';
+  }
+}
+
 if (isset($_GET['asset_id']) && !empty($_GET['asset_id'])) {
   $asset_id = intval($_GET['asset_id']);
-  $stmt = $conn->prepare("SELECT id, description, property_no, value, acquisition_date, status FROM assets WHERE id = ? LIMIT 1");
-  $stmt->bind_param('i', $asset_id);
-  $stmt->execute();
-  $result = $stmt->get_result();
-  if ($row = $result->fetch_assoc()) {
-    $preselected_asset = $row;
-
-    // Helper function to map status to PPE condition
-    function getConditionFromStatus($status)
-    {
-      switch (strtolower($status)) {
-        case 'available':
-        case 'serviceable':
-          return 'Serviceable';
-        case 'unserviceable':
-          return 'Unserviceable';
-        case 'borrowed':
-          return 'On Loan';
-        case 'red_tagged':
-          return 'For Disposal';
-        default:
-          return 'Fair';
-      }
+  
+  // Get additional parameters from URL if available
+  $url_description = $_GET['description'] ?? '';
+  $url_acquisition_date = $_GET['acquisition_date'] ?? '';
+  $url_property_no = $_GET['property_no'] ?? '';
+  $url_unit_price = $_GET['unit_price'] ?? '';
+  $url_status = $_GET['status'] ?? '';
+  $preselected_employee_name = $_GET['employee_name'] ?? '';
+  
+  // Use URL parameters if available, otherwise fetch from database
+  if (!empty($url_description) && !empty($url_acquisition_date)) {
+    // Use data from URL parameters (from QR scan)
+    $preselected_asset = [
+      'id' => $asset_id,
+      'description' => $url_description,
+      'property_no' => $url_property_no,
+      'value' => $url_unit_price,
+      'acquisition_date' => $url_acquisition_date,
+      'status' => $url_status
+    ];
+  } else {
+    // Fallback to database query
+    $stmt = $conn->prepare("SELECT id, description, property_no, value, acquisition_date, status FROM assets WHERE id = ? LIMIT 1");
+    $stmt->bind_param('i', $asset_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+      $preselected_asset = $row;
     }
-
-    // If no existing items, add the preselected asset as first item
-    if (empty($items)) {
-      $items[] = [
-        'item_id' => 0,
-        'itr_id' => $itr_id,
-        'date_acquired' => $row['acquisition_date'] ?? '',
-        'property_no' => $row['property_no'] ?? '',
-        'asset_id' => $row['id'],
-        'description' => $row['description'] . ' (' . $row['property_no'] . ')',
-        'amount' => $row['value'] ?? '',
-        'condition_of_PPE' => getConditionFromStatus($row['status'] ?? '')
-      ];
-    }
+    $stmt->close();
   }
-  $stmt->close();
+  
+  // Add the preselected asset as first item if we have asset data
+  if ($preselected_asset && empty($items)) {
+    // Use ICS/PAR number instead of property number if available
+    $display_property_no = $preselected_asset['property_no'] ?? '';
+    
+    // Determine if this should be ICS or PAR based on value
+    $asset_value = floatval($preselected_asset['value'] ?? 0);
+    $ics_par_display = '';
+    if ($asset_value >= 50000) {
+      $ics_par_display = 'PAR: ' . $display_property_no;
+    } else {
+      $ics_par_display = 'ICS: ' . $display_property_no;
+    }
+    
+    $items[] = [
+      'item_id' => 0,
+      'itr_id' => $itr_id,
+      'date_acquired' => $preselected_asset['acquisition_date'] ?? '',
+      'property_no' => $ics_par_display, // Use ICS/PAR format instead of property_no
+      'asset_id' => $preselected_asset['id'],
+      'description' => $preselected_asset['description'],
+      'amount' => $preselected_asset['value'] ?? '',
+      'condition_of_PPE' => getConditionFromStatus($preselected_asset['status'] ?? '')
+    ];
+  }
+  
+  // Pre-populate the "From Accountable Officer" field if employee name is provided
+  if (!empty($preselected_employee_name)) {
+    $itr['from_accountable_officer'] = $preselected_employee_name;
+  }
+}
+
+// Debug output (remove in production)
+if (isset($_GET['asset_id']) && !empty($_GET['asset_id'])) {
+  echo "<!-- DEBUG: Asset ID: " . htmlspecialchars($_GET['asset_id'] ?? 'none') . " -->\n";
+  echo "<!-- DEBUG: Employee Name: " . htmlspecialchars($preselected_employee_name) . " -->\n";
+  echo "<!-- DEBUG: From Accountable Officer: " . htmlspecialchars($itr['from_accountable_officer']) . " -->\n";
+  if (!empty($items)) {
+    echo "<!-- DEBUG: First Item Description: " . htmlspecialchars($items[0]['description'] ?? 'none') . " -->\n";
+    echo "<!-- DEBUG: First Item Property No: " . htmlspecialchars($items[0]['property_no'] ?? 'none') . " -->\n";
+  }
 }
 
 
@@ -185,7 +238,7 @@ if (!empty($_SESSION['flash'])) {
         <div class="col-md-6">
           <label for="from_accountable_officer" class="form-label">From Accountable Officer <span style="color: red;">*</span></label>
           <div class="input-group">
-            <input type="text" id="from_accountable_officer" name="from_accountable_officer" class="form-control shadow" list="employeesWithAssetsList" placeholder="Select employee with MR assets..." required>
+            <input type="text" id="from_accountable_officer" name="from_accountable_officer" class="form-control shadow" list="employeesWithAssetsList" placeholder="Select employee with MR assets..." value="<?= htmlspecialchars($itr['from_accountable_officer']) ?>" required>
             <button type="button" class="btn btn-outline-secondary" id="clear_from_accountable" title="Clear field" aria-label="Clear From Accountable Officer">
               <i class="bi bi-x-circle"></i>
             </button>
@@ -276,7 +329,7 @@ if (!empty($_SESSION['flash'])) {
             <th style="width:15%">Date Acquired</th>
             <th style="width:10%">Item No.</th>
             <th style="width:20%">ICS & PAR No./Date</th>
-            <th style="width:35%">Description / Property No</th>
+            <th style="width:35%">Description</th>
             <th style="width:15%">Unit Price</th>
             <th style="width:10%">Condition of Inventory</th>
             <th style="width:5%">Actions</th>
@@ -293,11 +346,12 @@ if (!empty($_SESSION['flash'])) {
               <td><input type="text" name="item_no[]" class="form-control shadow" value="1" required></td>
               <td><input type="text" name="property_no[]" class="form-control property-search shadow" value="<?= htmlspecialchars($item['property_no']) ?>" required></td>
               <td>
-                <input type="hidden" name="asset_id[]" value="">
+                <input type="hidden" name="asset_id[]" value="<?= htmlspecialchars($item['asset_id'] ?? '') ?>">
                 <input type="text" name="description[]"
                   class="form-control asset-search shadow"
                   list="assetsList"
-                  placeholder="Search description or property no" required>
+                  placeholder="Search description or property no" 
+                  value="<?= htmlspecialchars($item['description']) ?>" required>
               </td>
 
               <td><input type="number" step="0.01" name="amount[]" class="form-control shadow" value="<?= htmlspecialchars($item['amount']) ?>" required></td>
@@ -426,12 +480,14 @@ if (!empty($_SESSION['flash'])) {
 
       employeeAssets.forEach(asset => {
         const option = document.createElement('option');
-        option.value = `${asset.description} (${asset.property_no || 'No Property No'})`;
+        option.value = asset.description; // Only description for insertion
+        option.label = `${asset.description} (${asset.property_no || 'No Property No'})`; // Display text with property no
         option.dataset.id = asset.id;
         option.dataset.property_no = asset.property_no || '';
         option.dataset.acquisition_date = asset.acquisition_date || '';
         option.dataset.value = asset.value || '';
         option.dataset.status = asset.status || '';
+        option.dataset.displayText = `${asset.description} (${asset.property_no || 'No Property No'})`; // For display reference
         assetsDatalist.appendChild(option);
       });
 
@@ -579,6 +635,7 @@ if (!empty($_SESSION['flash'])) {
 
     // Handle preselected asset from URL parameters
     <?php if ($preselected_asset): ?>
+      console.log('DEBUG: Preselected asset found:', '<?= $preselected_asset['id'] ?>');
       const preselectedAssetId = '<?= $preselected_asset['id'] ?>';
       selectedAssetIds.add(preselectedAssetId);
       const preselectedOption = document.querySelector(`#assetsList option[data-id="${preselectedAssetId}"]`);
@@ -586,9 +643,19 @@ if (!empty($_SESSION['flash'])) {
       const firstRow = table.querySelector('tr');
       if (firstRow) {
         const descriptionInput = firstRow.querySelector('input[name="description[]"]');
-        if (descriptionInput) descriptionInput.dataset.selectedAssetId = preselectedAssetId;
+        if (descriptionInput) {
+          console.log('DEBUG: Description input value before:', descriptionInput.value);
+          descriptionInput.dataset.selectedAssetId = preselectedAssetId;
+          console.log('DEBUG: Description input value after:', descriptionInput.value);
+        }
       }
     <?php endif; ?>
+    
+    // Debug: Check From Accountable Officer field
+    const fromAccountableDebugInput = document.getElementById('from_accountable_officer');
+    if (fromAccountableDebugInput) {
+      console.log('DEBUG: From Accountable Officer value:', fromAccountableDebugInput.value);
+    }
 
     function clearAssetRow(row) {
       const descriptionInput = row.querySelector('input[name="description[]"]');
@@ -638,9 +705,22 @@ if (!empty($_SESSION['flash'])) {
     }
 
     function onDescriptionSelected(input) {
-      const val = input.value;
-      const option = Array.from(document.getElementById('assetsList').options)
-        .find(opt => opt.value === val);
+      const val = input.value.trim();
+      const options = Array.from(document.getElementById('assetsList').options);
+      
+      // Try exact match first (description only)
+      let option = options.find(opt => opt.value === val);
+      
+      // If no exact match, try to find by display text (description + property no)
+      if (!option) {
+        option = options.find(opt => opt.dataset.displayText === val);
+      }
+      
+      // If still no match, try partial match on description
+      if (!option) {
+        option = options.find(opt => opt.value.toLowerCase().includes(val.toLowerCase()));
+      }
+      
       if (option) {
         const assetId = option.dataset.id;
 
@@ -650,6 +730,9 @@ if (!empty($_SESSION['flash'])) {
           input.value = '';
           return;
         }
+
+        // Set the input value to just the description (clean)
+        input.value = option.value;
 
         // Update hidden input with asset_id
         const row = input.closest('tr');
@@ -661,7 +744,17 @@ if (!empty($_SESSION['flash'])) {
         const propInput = row.querySelector('input[name="property_no[]"]');
         const amountInput = row.querySelector('input[name="amount[]"]');
         if (dateInput) dateInput.value = option.dataset.acquisition_date || '';
-        if (propInput) propInput.value = option.dataset.property_no || '';
+        
+        // Format property number as ICS/PAR based on value
+        if (propInput) {
+          const assetValue = parseFloat(option.dataset.value || 0);
+          const propertyNo = option.dataset.property_no || '';
+          if (propertyNo) {
+            const icsParFormat = assetValue >= 50000 ? `PAR: ${propertyNo}` : `ICS: ${propertyNo}`;
+            propInput.value = icsParFormat;
+          }
+        }
+        
         if (amountInput) amountInput.value = option.dataset.value || '';
 
         // Set condition based on asset status

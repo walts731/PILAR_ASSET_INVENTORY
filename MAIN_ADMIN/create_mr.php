@@ -110,46 +110,58 @@ if ($mr_item_id) {
 } elseif (!empty($asset_id)) {
     // Fallback: check by asset_id to prevent duplicates when item mapping is unavailable (e.g., PAR items beyond first)
     $stmt_check2 = $conn->prepare("SELECT 1 FROM mr_details WHERE asset_id = ? LIMIT 1");
-    $stmt_check2->bind_param("i", $asset_id);
     $stmt_check2->execute();
     $res_check2 = $stmt_check2->get_result();
-    if ($res_check2 && $res_check2->num_rows > 0) {
-        $existing_mr_check = true;
-    }
     $stmt_check2->close();
 }
 
-// Determine Inventory Tag by fetching format_code for 'Property Tag' from tag_formats
-$inventory_tag = '';
-$fmt_stmt = $conn->prepare("SELECT format_code FROM tag_formats WHERE tag_type = ? LIMIT 1");
-$tag_type_prop = 'Property Tag';
-$fmt_stmt->bind_param('s', $tag_type_prop);
-$fmt_stmt->execute();
-$fmt_res = $fmt_stmt->get_result();
-if ($fmt_row = $fmt_res->fetch_assoc()) {
-    $inventory_tag = $fmt_row['format_code'];
-} else {
-    // If not configured, leave as empty string
-    $inventory_tag = '';
-}
-$fmt_stmt->close();
+// Generate automatic inventory tag using the new tag format system
+require_once '../includes/tag_format_helper.php';
 
-// Fetch format patterns for Property No and Code from tag_formats
-$property_no_format = '';
-$code_format = '';
-if ($stmt_tf = $conn->prepare("SELECT tag_type, format_code FROM tag_formats WHERE tag_type IN ('Property No','Code')")) {
-    $stmt_tf->execute();
-    $res_tf = $stmt_tf->get_result();
-    while ($r = $res_tf->fetch_assoc()) {
-        if ($r['tag_type'] === 'Property No') {
-            $property_no_format = trim((string)$r['format_code']);
-        }
-        if ($r['tag_type'] === 'Code') {
-            $code_format = trim((string)$r['format_code']);
-        }
+// Check if asset already has an inventory_tag
+$existing_inventory_tag = '';
+if ($asset_id) {
+    $stmt_check_tag = $conn->prepare("SELECT inventory_tag FROM assets WHERE id = ?");
+    $stmt_check_tag->bind_param("i", $asset_id);
+    $stmt_check_tag->execute();
+    $result_check_tag = $stmt_check_tag->get_result();
+    if ($result_check_tag && $row_check_tag = $result_check_tag->fetch_assoc()) {
+        $existing_inventory_tag = $row_check_tag['inventory_tag'] ?? '';
     }
-    $stmt_tf->close();
+    $stmt_check_tag->close();
 }
+
+// Use existing inventory_tag if available, otherwise generate new one
+if (!empty($existing_inventory_tag)) {
+    $inventory_tag = $existing_inventory_tag;
+} else {
+    $inventory_tag = generateTag('inventory_tag');
+}
+
+// Format patterns are now handled by the tag format system
+$property_no_format = '';
+
+// Fetch asset code format from tag_formats table
+$code_format = '';
+$code_stmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'asset_code' AND is_active = 1 LIMIT 1");
+$code_stmt->execute();
+$code_result = $code_stmt->get_result();
+if ($code_result->num_rows > 0) {
+    $code_row = $code_result->fetch_assoc();
+    $code_format = $code_row['format_template'];
+}
+$code_stmt->close();
+
+// Fetch serial number format from tag_formats table
+$serial_format = '';
+$serial_stmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'serial_no' AND is_active = 1 LIMIT 1");
+$serial_stmt->execute();
+$serial_result = $serial_stmt->get_result();
+if ($serial_result->num_rows > 0) {
+    $serial_row = $serial_result->fetch_assoc();
+    $serial_format = $serial_row['format_template'];
+}
+$serial_stmt->close();
 
 // Ensure database columns for End User exist (assets.end_user, mr_details.end_user)
 try {
@@ -194,7 +206,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $acquisition_date = $_POST['acquisition_date'];
     $acquisition_cost = $_POST['acquisition_cost'];
 
-    // Use the fetched format_code as the inventory_tag for saving as well
+    // Use the auto-generated inventory_tag for saving
     $inventory_tag_gen = $inventory_tag;
 
     $person_accountable_name = $_POST['person_accountable_name'];
@@ -202,6 +214,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $end_user = trim($_POST['end_user'] ?? '');
     $acquired_date = $_POST['acquired_date'];
     $counted_date = $_POST['counted_date'];
+
+    // Generate asset code using tag format system if not provided or empty
+    if (empty($code) && $category_id) {
+        // Get category code for asset code generation
+        $cat_stmt = $conn->prepare("SELECT category_code FROM categories WHERE id = ?");
+        $cat_stmt->bind_param("i", $category_id);
+        $cat_stmt->execute();
+        $cat_result = $cat_stmt->get_result();
+        if ($cat_result->num_rows > 0) {
+            $cat_row = $cat_result->fetch_assoc();
+            $category_code = $cat_row['category_code'];
+            
+            if (!empty($category_code)) {
+                // Generate asset code using tag format system
+                $tagHelper = new TagFormatHelper($conn);
+                $generated_code = $tagHelper->generateNextTag('asset_code');
+                
+                if ($generated_code) {
+                    // Replace placeholders with actual values
+                    $code = str_replace('{CODE}', $category_code, $generated_code);
+                    $code = str_replace('CODE', $category_code, $code);
+                } else {
+                    // Fallback to simple format if tag generation fails
+                    $year = date('Y');
+                    $code = $year . '-' . $category_code . '-0001';
+                }
+            }
+        }
+        $cat_stmt->close();
+    }
+
+    // Generate serial number using tag format system if not provided or empty
+    if (empty($serial_no)) {
+        $tagHelper = new TagFormatHelper($conn);
+        $generated_serial = $tagHelper->generateNextTag('serial_no');
+        if ($generated_serial) {
+            $serial_no = $generated_serial;
+        } else {
+            // Fallback to simple format if tag generation fails
+            $year = date('Y');
+            $serial_no = 'SN-' . $year . '-000001';
+        }
+    }
 
     // Server-side validation for required fields
     if ($category_id === null || trim((string)$person_accountable_name) === '') {
@@ -561,7 +616,7 @@ if (isset($asset_details['employee_id'])) {
 
 // Fetch employees for datalist
 $employees = [];
-$sql_employees = "SELECT employee_id, employee_no, name FROM employees";
+$sql_employees = "SELECT employee_id, employee_no, name FROM employees WHERE status = 'permanent' ORDER BY name ASC";
 $result_employees = $conn->query($sql_employees);
 
 if ($result_employees && $result_employees->num_rows > 0) {
@@ -857,12 +912,12 @@ if ($baseProp !== '') {
                                 <div class="row mb-4">
                                     <div class="col-md-6">
                                         <label for="model_no" class="form-label fw-semibold">
-                                            <i class="bi bi-cpu me-1 text-success"></i>Model Number
+                                            <i class="bi bi-cpu me-1 text-success"></i>Model
                                         </label>
                                         <input type="text" class="form-control form-control-lg" name="model_no"
                                             value="<?= isset($asset_details['model']) ? htmlspecialchars($asset_details['model']) : '' ?>"
                                             placeholder="Enter model number or identifier">
-                                        <div class="form-text">Manufacturer's model number or product identifier</div>
+                                        <div class="form-text">Manufacturer's model or product identifier</div>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="serial_no" class="form-label fw-semibold">
@@ -870,8 +925,15 @@ if ($baseProp !== '') {
                                         </label>
                                         <input type="text" class="form-control form-control-lg" name="serial_no"
                                             value="<?= isset($asset_details['serial_no']) ? htmlspecialchars($asset_details['serial_no']) : '' ?>"
-                                            placeholder="Enter unique serial number">
-                                        <div class="form-text">Unique serial number from manufacturer</div>
+                                            placeholder="Auto-generated or enter custom serial" id="serial_no">
+                                        <div class="form-text">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Unique serial number - Format managed in 
+                                            <strong>System Admin → Manage Tag Format</strong>
+                                            <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="generateSerialNumber()" title="Generate Serial Number">
+                                                <i class="bi bi-arrow-clockwise me-1"></i>Generate
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -884,7 +946,11 @@ if ($baseProp !== '') {
                                         <input type="text" class="form-control form-control-lg" name="code" id="code"
                                             value="<?= isset($asset_details['code']) ? htmlspecialchars($asset_details['code']) : '' ?>"
                                             placeholder="Auto-generated based on category">
-                                        <div class="form-text">Internal asset classification code</div>
+                                        <div class="form-text">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Internal asset classification code - Format managed in 
+                                            <strong>System Admin → Manage Tag Format</strong>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="property_no" class="form-label fw-semibold">
@@ -1454,36 +1520,91 @@ if ($baseProp !== '') {
                 });
             }
 
-            // Category code builder
+            // Serial number and asset code generation - Connected to manage tag format system
             (function() {
                 const categorySelect = document.getElementById('category_id');
                 const codeInput = document.getElementById('code');
-                // PHP-provided format for Code tag type
+                const serialInput = document.getElementById('serial_no');
+                
+                // PHP-provided formats from manage tag format
                 const codeFormatTemplate = <?= json_encode($code_format ?? '') ?>;
+                const serialFormatTemplate = <?= json_encode($serial_format ?? '') ?>;
 
+                // Enhanced asset code generation using tag format system
                 function buildCodeFromCategory(catCode) {
                     if (!catCode) return '';
-                    const year = new Date().getFullYear().toString();
-                    const seq = '0001'; // Default sequence placeholder
-
+                    
                     let template = (codeFormatTemplate || '').trim();
-                    let output = '';
-                    const hasBarePlaceholders = template.includes('YYYY') || template.includes('CODE') || template.includes('XXXX');
-                    const hasCurlyPlaceholders = template.includes('{YYYY}') || template.includes('{CODE}') || template.includes('{XXXX}');
-                    if (hasBarePlaceholders || hasCurlyPlaceholders) {
-                        output = template
-                            .replace(/\{YYYY\}|YYYY/g, year)
-                            .replace(/\{CODE\}|CODE/g, catCode)
-                            .replace(/\{XXXX\}|XXXX/g, seq);
-                    } else if (template.length > 0) {
-                        output = `${year}-${template}-${catCode}-${seq}`;
-                    } else {
-                        output = `${year}-${catCode}-${seq}`;
+                    if (!template) {
+                        // Fallback to default format if no template is configured
+                        template = '{YYYY}-{CODE}-{####}';
                     }
+                    
+                    // Replace date placeholders
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    
+                    let output = template;
+                    
+                    // Replace date placeholders (both with and without curly braces)
+                    output = output.replace(/\{YYYY\}|YYYY/g, year.toString());
+                    output = output.replace(/\{YY\}|YY/g, year.toString().slice(-2));
+                    output = output.replace(/\{MM\}|MM/g, month);
+                    output = output.replace(/\{DD\}|DD/g, day);
+                    output = output.replace(/\{YYYYMM\}|YYYYMM/g, year.toString() + month);
+                    output = output.replace(/\{YYYYMMDD\}|YYYYMMDD/g, year.toString() + month + day);
+                    
+                    // Replace category code placeholder
+                    output = output.replace(/\{CODE\}|CODE/g, catCode);
+                    
+                    // Enhanced flexible digit replacement - supports any number of # symbols
+                    output = output.replace(/\{(#+)\}/g, function(match, hashes) {
+                        const digitCount = hashes.length;
+                        return '0'.repeat(Math.max(1, digitCount - 1)) + '1';
+                    });
+                    
+                    // Legacy support for specific patterns
+                    output = output.replace(/\{XXXX\}|XXXX/g, '0001');
+                    
                     return output;
                 }
+                
+                // Serial number generation using tag format system
+                function buildSerialNumber() {
+                    let template = (serialFormatTemplate || '').trim();
+                    if (!template) {
+                        // Fallback to default format if no template is configured
+                        template = 'SN-{YYYY}-{######}';
+                    }
 
+                    let output = template;
+                    
+                    // Replace date placeholders
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    
+                    output = output.replace(/\{YYYY\}|YYYY/g, year.toString());
+                    output = output.replace(/\{YY\}|YY/g, year.toString().slice(-2));
+                    output = output.replace(/\{MM\}|MM/g, month);
+                    output = output.replace(/\{DD\}|DD/g, day);
+                    output = output.replace(/\{YYYYMM\}|YYYYMM/g, year.toString() + month);
+                    output = output.replace(/\{YYYYMMDD\}|YYYYMMDD/g, year.toString() + month + day);
+                    
+                    // Enhanced flexible digit replacement - supports any number of # symbols
+                    output = output.replace(/\{(#+)\}/g, function(match, hashes) {
+                        const digitCount = hashes.length;
+                        return '0'.repeat(Math.max(1, digitCount - 1)) + '1';
+                    });
+                    
+                    return output;
+                }
+                
                 function maybePrefillCode() {
+                    if (!categorySelect || !codeInput) return;
                     const selected = categorySelect.options[categorySelect.selectedIndex];
                     if (!selected) return;
                     const catCode = selected.getAttribute('data-code') || '';
@@ -1493,17 +1614,74 @@ if ($baseProp !== '') {
                 }
 
                 if (categorySelect && codeInput) {
+                    // Clear code when category changes to empty
                     categorySelect.addEventListener('change', function() {
                         const selected = this.options[this.selectedIndex];
                         const catCode = selected ? (selected.getAttribute('data-code') || '') : '';
+                        
                         if (catCode) {
                             codeInput.value = buildCodeFromCategory(catCode);
+                        } else {
+                            codeInput.value = ''; // Clear if no category selected
                         }
                     });
+                    
+                    // Also trigger on input event for datalist
+                    categorySelect.addEventListener('input', function() {
+                        setTimeout(() => {
+                            const selected = this.options[this.selectedIndex];
+                            const catCode = selected ? (selected.getAttribute('data-code') || '') : '';
+                            if (catCode) {
+                                codeInput.value = buildCodeFromCategory(catCode);
+                            }
+                        }, 100);
+                    });
+                    
+                    // Initialize on page load
                     document.addEventListener('DOMContentLoaded', maybePrefillCode);
                     maybePrefillCode();
                 }
             })();
+
+            // Global function for serial number generation (called by button)
+            function generateSerialNumber() {
+                const serialInput = document.getElementById('serial_no');
+                if (serialInput) {
+                    const serialFormatTemplate = <?= json_encode($serial_format ?? '') ?>;
+                    
+                    let template = (serialFormatTemplate || '').trim();
+                    if (!template) {
+                        template = 'SN-{YYYY}-{######}';
+                    }
+
+                    let output = template;
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    
+                    output = output.replace(/\{YYYY\}|YYYY/g, year.toString());
+                    output = output.replace(/\{YY\}|YY/g, year.toString().slice(-2));
+                    output = output.replace(/\{MM\}|MM/g, month);
+                    output = output.replace(/\{DD\}|DD/g, day);
+                    output = output.replace(/\{YYYYMM\}|YYYYMM/g, year.toString() + month);
+                    output = output.replace(/\{YYYYMMDD\}|YYYYMMDD/g, year.toString() + month + day);
+                    
+                    // Enhanced flexible digit replacement - supports any number of # symbols
+                    output = output.replace(/\{(#+)\}/g, function(match, hashes) {
+                        const digitCount = hashes.length;
+                        return '0'.repeat(Math.max(1, digitCount - 1)) + '1';
+                    });
+                    
+                    serialInput.value = output;
+                    
+                    // Add visual feedback
+                    serialInput.style.background = '#d4edda';
+                    setTimeout(() => {
+                        serialInput.style.background = '';
+                    }, 1000);
+                }
+            }
 
             // Function to show image in modal with enhanced features
             function showImageModal(imageSrc, imageTitle) {

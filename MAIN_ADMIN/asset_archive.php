@@ -9,17 +9,24 @@ if (!isset($_SESSION['user_id'])) {
 
 if (!isset($_SESSION['office_id'])) {
     $user_id = $_SESSION['user_id'];
-    $result = $conn->query("SELECT office_id FROM users WHERE user_id = $user_id");
+    $stmt = $conn->prepare("SELECT office_id FROM users WHERE id = ?");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
     if ($row = $result->fetch_assoc()) {
         $_SESSION['office_id'] = $row['office_id'];
     }
+    $stmt->close();
 }
 
 // Handle POST actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['restore_id'])) {
         $restore_id = (int) $_POST['restore_id'];
-        $res = $conn->query("SELECT * FROM assets_archive WHERE archive_id = $restore_id");
+        $stmt = $conn->prepare("SELECT * FROM assets_archive WHERE archive_id = ?");
+        $stmt->bind_param("i", $restore_id);
+        $stmt->execute();
+        $res = $stmt->get_result();
         if ($asset = $res->fetch_assoc()) {
             // Build NULL-safe values
             $asset_name = isset($asset['asset_name']) ? "'" . $conn->real_escape_string($asset['asset_name']) . "'" : 'NULL';
@@ -39,11 +46,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $insert = "INSERT INTO assets (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, red_tagged, last_updated, value, qr_code, type)
                 VALUES ($asset_name, $category, $description, $quantity, $unit, $status, $acq_date, $office_id, $red_tagged, $last_updated, $value, $qr_code, $type)";
             if ($conn->query($insert)) {
-                $conn->query("DELETE FROM assets_archive WHERE archive_id = $restore_id");
+                $delete_stmt = $conn->prepare("DELETE FROM assets_archive WHERE archive_id = ?");
+                $delete_stmt->bind_param("i", $restore_id);
+                $delete_stmt->execute();
+                $delete_stmt->close();
                 header("Location: asset_archive.php?restore=success");
                 exit();
             }
         }
+        $stmt->close();
     }
 
     if (isset($_POST['restore_all']) && isset($_POST['type'])) {

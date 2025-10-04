@@ -15,14 +15,6 @@ $stmt->close();
 // Note: RIS No. should NOT be auto-generated. It will be fetched from the latest record (if any)
 // via $ris_data above and shown as an editable field.
 
-// Auto-generate SAI No.
-$sai_prefix = "SAI-" . date("Y") . "-";
-$sai_stmt = $conn->prepare("SELECT COUNT(*) as count FROM ris_form");
-$sai_stmt->execute();
-$sai_result = $sai_stmt->get_result()->fetch_assoc();
-$sai_count = $sai_result['count'] + 1;
-$auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
-
 ?>
 <?php if (isset($_GET['add']) && $_GET['add'] === 'success'): ?>
   <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
@@ -40,15 +32,15 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
 
   <!-- Header Image (display only) -->
   <div class="mb-3 text-center">
-    <?php if (!empty($ris_data['header_image'])): ?>
-      <img src="../img/<?= htmlspecialchars($ris_data['header_image']) ?>"
-           class="img-fluid mb-2"
-           style="max-width: 100%; height: auto; object-fit: contain;">
-      <!-- Submit existing header image with the form -->
-      <input type="hidden" name="header_image" value="<?= htmlspecialchars($ris_data['header_image']) ?>">
-    <?php else: ?>
-      <p class="text-muted">No header image available</p>
-    <?php endif; ?>
+    <?php 
+    // Use existing header image from database, or fall back to default
+    $header_image = $ris_data['header_image'] ?? 'PILAR LOGO TRANSPARENT.png';
+    ?>
+    <img src="../img/<?= htmlspecialchars($header_image) ?>"
+         class="img-fluid mb-2"
+         style="max-width: 100%; height: auto; object-fit: contain;">
+    <!-- Submit header image with the form -->
+    <input type="hidden" name="existing_header_image" value="<?= htmlspecialchars($header_image) ?>">
   </div>
 
 
@@ -98,8 +90,14 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
       <input type="text" class="form-control shadow" id="responsibility_code" name="responsibility_code" placeholder="Enter Code">
     </div>
     <div class="col-md-3">
-      <label for="sai_no" class="form-label fw-semibold">SAI No.</label>
-      <input type="text" class="form-control shadow" id="sai_no" name="sai_no" placeholder="Enter SAI No.">
+      <label for="sai_no" class="form-label fw-semibold">SAI No. (Auto-generated)</label>
+      <div class="input-group">
+        <input type="text" class="form-control shadow" id="sai_no" name="sai_no" value="<?= previewTag('sai_no') ?>" readonly>
+        <span class="input-group-text">
+          <i class="bi bi-magic" title="Auto-generated"></i>
+        </span>
+      </div>
+      <small class="text-muted">This number will be automatically assigned when you save the form.</small>
     </div>
     <div class="col-md-3">
       <label for="date" class="form-label fw-semibold">Date</label>
@@ -129,7 +127,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
       <?php for ($i = 0; $i < 1; $i++): ?>
         <tr>
           <input type="hidden" name="asset_id[]">
-          <td><input type="text" class="form-control shadow" name="stock_no[]"></td>
+          <td><input type="text" class="form-control shadow" name="stock_no[]" value="1" readonly></td>
           <td>
             <select name="unit[]" class="form-select shadow">
               <option value="" disabled selected>Select Unit</option>
@@ -143,7 +141,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
           </td>
           <td style="position: relative;">
             <div class="input-group">
-              <input type="text" class="form-control description-input shadow" name="description[]" autocomplete="off" list="asset_list">
+              <input type="text" class="form-control description-input shadow" name="description[]" autocomplete="off">
               <button type="button" class="btn btn-link p-0 ms-1 text-danger clear-description">&times;</button>
             </div>
           </td>
@@ -155,28 +153,6 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
           </td>
         </tr>
       <?php endfor; ?>
-      <datalist id="asset_list">
-        <?php
-        $assets_query = $conn->query("
-    SELECT a.id, a.description, a.quantity, a.unit, a.value, a.property_no, o.office_name
-    FROM assets a
-    LEFT JOIN offices o ON a.office_id = o.id
-    WHERE a.quantity > 0 AND a.type = 'consumable'
-    ORDER BY a.description ASC
-");
-        while ($asset = $assets_query->fetch_assoc()):
-        ?>
-          <option
-            value="<?= htmlspecialchars($asset['description'] . ' (' . $asset['office_name'] . ')') ?>"
-            data-id="<?= $asset['id'] ?>"
-            data-stock="<?= $asset['quantity'] ?>"
-            data-unit="<?= htmlspecialchars($asset['unit']) ?>"
-            data-price="<?= $asset['value'] ?>"
-            data-property="<?= htmlspecialchars($asset['property_no']) ?>">
-          </option>
-
-        <?php endwhile; ?>
-      </datalist>
     </tbody>
   </table>
   <button type="button" id="addRowBtn" class="btn btn-primary mb-3"><i class="bi bi-plus-circle"></i> Add Row</button>
@@ -236,127 +212,50 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
 <script>
   document.addEventListener("DOMContentLoaded", function() {
     const tableBody = document.querySelector("tbody");
-    const allOptions = Array.from(document.querySelectorAll("#asset_list option"));
-
-    function updateDatalist() {
-      const selectedDescriptions = Array.from(document.querySelectorAll(".description-input"))
-        .map(input => input.value.trim())
-        .filter(val => val !== "");
-
-      document.querySelectorAll(".description-input").forEach(descInput => {
-        const listId = "asset_list_" + Math.random().toString(36).substring(2, 9);
-        let datalist = document.createElement("datalist");
-        datalist.id = listId;
-
-        const optionsHTML = allOptions
-          .filter(opt => !selectedDescriptions.includes(opt.value.trim()) || opt.value.trim() === descInput.value.trim())
-          .map(opt => `<option value="${opt.value}" 
-                        data-id="${opt.dataset.id}" 
-                        data-stock="${opt.dataset.stock}" 
-                        data-unit="${opt.dataset.unit}"
-                        data-price="${opt.dataset.price}"
-                        data-property="${opt.dataset.property}"></option>`)
-          .join("");
-
-        datalist.innerHTML = optionsHTML;
-        document.body.appendChild(datalist);
-        descInput.setAttribute("list", listId);
-      });
-    }
-
-    function bindRowEvents(row) {
-      const descInput = row.querySelector(".description-input");
-      const reqQtyInput = row.querySelector("input[name='req_quantity[]']");
-      const unitSelect = row.querySelector("select[name='unit[]']");
-      const priceInput = row.querySelector("input[name='price[]']");
-      const stockNoInput = row.querySelector("input[name='stock_no[]']");
-
-      if (!descInput) return;
-
-      descInput.addEventListener("input", function() {
-        const val = this.value;
-        const option = allOptions.find(opt => opt.value === val);
-
-        if (option) {
-          // Max quantity
-          const maxStock = option.dataset.stock || "";
-          if (maxStock) {
-            reqQtyInput.max = maxStock;
-            reqQtyInput.placeholder = `Max: ${maxStock}`;
-          } else {
-            reqQtyInput.removeAttribute("max");
-            reqQtyInput.placeholder = "";
-          }
-
-          // Autofill unit
-          const unitName = option.dataset.unit || "";
-          if (unitName) {
-            const matchOption = Array.from(unitSelect.options)
-              .find(opt => opt.text.trim().toLowerCase() === unitName.trim().toLowerCase());
-            if (matchOption) {
-              unitSelect.value = matchOption.value;
-            }
-          }
-
-          // Autofill price
-          if (priceInput && option.dataset.price) {
-            priceInput.value = option.dataset.price;
-          }
-
-          // Autofill asset_id hidden field
-          const assetIdInput = row.querySelector("input[name='asset_id[]']");
-          if (assetIdInput) {
-            assetIdInput.value = option ? option.dataset.id : "";
-          }
-
-          // Autofill stock_no (property_no)
-          if (stockNoInput && option.dataset.property) {
-            stockNoInput.value = option.dataset.property;
-          }
-
-        } else {
-          reqQtyInput.removeAttribute("max");
-          reqQtyInput.placeholder = "";
-          unitSelect.value = "";
-          if (priceInput) priceInput.value = "";
-          if (stockNoInput) stockNoInput.value = "";
-        }
-
-        updateDatalist();
-      });
-    }
 
     // Add Row button click - clones structure consistent with the first row
     function addRow() {
       const newRow = document.createElement("tr");
+      
+      // Get the unit options from the existing select
+      const existingSelect = document.querySelector("select[name='unit[]']");
+      const unitOptions = existingSelect ? existingSelect.innerHTML : '<option value="" disabled selected>Select Unit</option>';
+      
       newRow.innerHTML = `
-        <input type=\"hidden\" name=\"asset_id[]\">\n
-        <td><input type=\"text\" class=\"form-control shadow\" name=\"stock_no[]\"></td>\n
-        <td>\n
-          <select name=\"unit[]\" class=\"form-select shadow\">\n
-            <option value=\"\" disabled selected>Select Unit</option>\n
-            ${document.querySelector("select[name='unit[]']").innerHTML.split('\n').slice(1).join('\n')}\n
-          </select>\n
-        </td>\n
-        <td style=\"position: relative;\">\n
-          <div class=\"input-group\">\n
-            <input type=\"text\" class=\"form-control description-input shadow\" name=\"description[]\" autocomplete=\"off\">\n
-            <button type=\"button\" class=\"btn btn-link p-0 ms-1 text-danger clear-description\" style=\"border: none;\">&times;</button>\n
-          </div>\n
-        </td>\n
-        <td><input type=\"number\" class=\"form-control shadow\" name=\"req_quantity[]\" min=\"1\"></td>\n
-        <td><input type=\"number\" step=\"0.01\" class=\"form-control shadow\" name=\"price[]\"></td>\n
-        <td><input type=\"text\" class=\"form-control total shadow\" name=\"total[]\" readonly></td>\n
-        <td><button type=\"button\" class=\"btn btn-outline-danger btn-sm remove-row\">Remove</button></td>\n
+        <input type="hidden" name="asset_id[]">
+        <td><input type="text" class="form-control shadow" name="stock_no[]" readonly></td>
+        <td>
+          <select name="unit[]" class="form-select shadow">
+            ${unitOptions}
+          </select>
+        </td>
+        <td style="position: relative;">
+          <div class="input-group">
+            <input type="text" class="form-control description-input shadow" name="description[]" autocomplete="off">
+            <button type="button" class="btn btn-link p-0 ms-1 text-danger clear-description" style="border: none;">&times;</button>
+          </div>
+        </td>
+        <td><input type="number" class="form-control shadow" name="req_quantity[]" min="1"></td>
+        <td><input type="number" step="0.01" class="form-control shadow" name="price[]"></td>
+        <td><input type="text" class="form-control total shadow" name="total[]" readonly></td>
+        <td><button type="button" class="btn btn-outline-danger btn-sm remove-row">Remove</button></td>
       `;
-      tableBody.appendChild(newRow);
-      bindRowEvents(newRow);
-      updateDatalist();
+      
+      document.querySelector("table tbody").appendChild(newRow);
+      
+      // Set incremental stock number
+      updateStockNumbers();
     }
 
-    // Initial bind for existing rows
-    document.querySelectorAll("tbody tr").forEach(row => bindRowEvents(row));
-    
+    // Function to update stock numbers sequentially
+    function updateStockNumbers() {
+      const stockInputs = document.querySelectorAll("input[name='stock_no[]']");
+      stockInputs.forEach((input, index) => {
+        input.value = index + 1;
+      });
+    }
+
+    // Add Row button event listener
     const addBtn = document.getElementById("addRowBtn");
     if (addBtn) addBtn.addEventListener("click", addRow);
 
@@ -377,10 +276,8 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         reqQtyInput.value = "";
         unitSelect.value = "";
         priceInput.value = "";
-        if (stockNoInput) stockNoInput.value = "";
+        // Keep stock number as is (incremental)
         if (totalField) totalField.value = "";
-
-        descInput.dispatchEvent(new Event("input"));
       }
     });
 
@@ -394,6 +291,8 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
       const rows = tableBody.querySelectorAll('tr');
       if (rows.length > 1) {
         row.remove();
+        // Update stock numbers after removing a row
+        updateStockNumbers();
       } else {
         // Clear the single remaining row
         let descInput = row.querySelector('.description-input');
@@ -407,7 +306,7 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         if (reqQtyInput) { reqQtyInput.removeAttribute('max'); reqQtyInput.placeholder=''; reqQtyInput.value = ''; }
         if (unitSelect) unitSelect.value = '';
         if (priceInput) priceInput.value = '';
-        if (stockNoInput) stockNoInput.value = '';
+        if (stockNoInput) stockNoInput.value = '1';
         if (totalField) totalField.value = '';
       }
     });
@@ -421,7 +320,5 @@ $auto_sai_no = $sai_prefix . str_pad($sai_count, 4, "0", STR_PAD_LEFT);
         row.querySelector('.total').value = (qty * price).toFixed(2);
       }
     });
-
-    updateDatalist();
   });
 </script>

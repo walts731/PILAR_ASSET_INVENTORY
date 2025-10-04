@@ -101,22 +101,25 @@ if (!$asset) {
 }
 
 // Determine Red Tag number
-// Use existing number when editing, otherwise fetch format_code from tag_formats (tag_type = 'Red Tag')
+// Use existing number when editing, otherwise generate new red tag number
 if ($existing_red_tag_check && $existing_red_tag_data) {
     $red_tag_number = $existing_red_tag_data['red_tag_number'];
+    $control_no = $existing_red_tag_data['control_no'] ?? '';
 } else {
-    $fmt_stmt = $conn->prepare("SELECT format_code FROM tag_formats WHERE tag_type = ? LIMIT 1");
-    $tag_type = 'Red Tag';
-    $fmt_stmt->bind_param('s', $tag_type);
-    $fmt_stmt->execute();
-    $fmt_res = $fmt_stmt->get_result();
-    if ($fmt_row = $fmt_res->fetch_assoc()) {
-        $red_tag_number = $fmt_row['format_code'];
-    } else {
-        // If not configured, default to empty string (displayed as-is)
-        $red_tag_number = '';
+    // Generate new red tag number using tag format system
+    require_once '../includes/tag_format_helper.php';
+    $red_tag_number = generateTag('red_tag');
+    if (!$red_tag_number) {
+        // If generation fails, use a fallback format
+        $red_tag_number = 'RT-' . str_pad(1, 4, '0', STR_PAD_LEFT);
     }
-    $fmt_stmt->close();
+    
+    // Generate control number
+    $control_no = generateTag('control_no');
+    if (!$control_no) {
+        // If generation fails, use a fallback format
+        $control_no = 'CTRL-' . date('Y') . '-' . str_pad(1, 4, '0', STR_PAD_LEFT);
+    }
 }
 
 // Handle form submission
@@ -138,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Tagged by: prefer posted user id if provided, else fallback to current user
     $tagged_by = isset($_POST['tagged_by']) ? (int)$_POST['tagged_by'] : $user_id;
     
-    $description = $asset['description'] . ' (' . $asset['property_no'] . ')';
+    $description = $asset['description'];
     
     // Handle multiple image uploads
     $uploaded_images = [];
@@ -279,15 +282,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Create new Red Tag
         $insert_query = $conn->prepare("
             INSERT INTO red_tags (
-                red_tag_number, asset_id, iirup_id, date_received, 
+                red_tag_number, control_no, asset_id, iirup_id, date_received, 
                 tagged_by, item_location, description, removal_reason, 
                 action, status
-            ) VALUES (?, ?, ?, CURDATE(), ?, ?, ?, ?, ?, 'Pending')
+            ) VALUES (?, ?, ?, ?, CURDATE(), ?, ?, ?, ?, ?, 'Pending')
         ");
         
         $insert_query->bind_param(
-            'siisssss',
+            'ssiisssss',
             $red_tag_number,
+            $control_no,
             $asset_id,
             $iirup_id,
             $tagged_by,
@@ -456,7 +460,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Control No.:</label>
-                        <input type="text" class="form-control" value="<?= htmlspecialchars($red_tag_number) ?>" readonly>
+                        <input type="text" class="form-control" value="<?= htmlspecialchars($control_no) ?>" readonly>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Date Received:</label>
@@ -485,7 +489,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="mb-3">
                     <label class="form-label">Description:</label>
-                    <textarea class="form-control" rows="3" readonly><?= htmlspecialchars($asset['description'] . ' (' . $asset['property_no'] . ')') ?></textarea>
+                    <textarea class="form-control" rows="3" readonly><?= htmlspecialchars($asset['description']) ?></textarea>
                 </div>
 
                 <div class="mb-3">
@@ -594,9 +598,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <i class="bi bi-printer"></i> Print Red Tag
                         </a>
                         <?php $form_id = isset($_GET['form_id']) ? intval($_GET['form_id']) : 7; ?>
-                        <a href="view_iirup.php?id=<?= $iirup_id ?>&form_id=<?= $form_id ?>" class="btn btn-secondary me-2">
-                            <i class="bi bi-arrow-left"></i> Back to IIRUP
-                        </a>
+                        
                         <button type="submit" class="btn btn-success">
                             <i class="bi bi-check-circle"></i> Update Red Tag
                         </button>

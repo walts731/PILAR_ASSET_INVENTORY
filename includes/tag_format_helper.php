@@ -15,7 +15,7 @@ class TagFormatHelper {
     
     /**
      * Generate next tag number for a specific type
-     * @param string $tagType - Type of tag (red_tag, ics_no, itr_no, par_no, ris_no, inventory_tag)
+     * @param string $tagType - Type of tag (red_tag, ics_no, itr_no, par_no, ris_no, inventory_tag, asset_code, sai_no, control_no)
      * @return string|false - Generated tag or false on error
      */
     public function generateNextTag($tagType) {
@@ -52,8 +52,14 @@ class TagFormatHelper {
         // Replace date placeholders (if any)
         $template = $this->replaceDatePlaceholders($template);
         
-        // For simple prefix+digits format, use a single counter per tag type
-        $prefixHash = md5($format['prefix']);
+        // For asset_code, use template-based counter to handle different formats
+        if ($tagType === 'asset_code') {
+            // Use the template itself as the prefix hash for asset codes
+            $prefixHash = md5($template);
+        } else {
+            // For simple prefix+digits format, use a single counter per tag type
+            $prefixHash = md5($format['prefix']);
+        }
         
         // Get or create counter for this tag type and prefix (no year separation)
         $counter = $this->getOrCreateCounter($tagType, 'global', $prefixHash);
@@ -62,10 +68,21 @@ class TagFormatHelper {
         $nextNumber = $counter + 1;
         $this->updateCounter($tagType, 'global', $prefixHash, $nextNumber);
         
-        // Replace increment placeholder with formatted number
-        $incrementPlaceholder = '{' . str_repeat('#', $format['increment_digits']) . '}';
-        $formattedNumber = str_pad($nextNumber, $format['increment_digits'], '0', STR_PAD_LEFT);
-        $template = str_replace($incrementPlaceholder, $formattedNumber, $template);
+        // Enhanced flexible digit replacement - supports any number of # symbols
+        $template = preg_replace_callback('/\{(#+)\}/', function($matches) use ($nextNumber) {
+            $digitCount = strlen($matches[1]);
+            return str_pad($nextNumber, $digitCount, '0', STR_PAD_LEFT);
+        }, $template);
+        
+        // Legacy support for specific patterns and XXXX format
+        $template = str_replace('{XXXX}', str_pad($nextNumber, 4, '0', STR_PAD_LEFT), $template);
+        $template = str_replace('XXXX', str_pad($nextNumber, 4, '0', STR_PAD_LEFT), $template);
+        
+        // Fallback for database-configured increment_digits
+        if (isset($format['increment_digits']) && $format['increment_digits'] > 0) {
+            $formattedNumber = str_pad($nextNumber, $format['increment_digits'], '0', STR_PAD_LEFT);
+            $template = str_replace('{' . str_repeat('#', $format['increment_digits']) . '}', $formattedNumber, $template);
+        }
         
         return $template;
     }
