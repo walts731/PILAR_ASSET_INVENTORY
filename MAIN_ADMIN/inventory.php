@@ -475,15 +475,7 @@ $stmt->close();
                           data-bs-target="#viewAssetModal">
                           <i class="bi bi-eye"></i>View
                         </button>
-                        <button type="button"
-  class="btn btn-sm btn-outline-secondary rounded-pill viewLifecycleBtn ms-1"
-  data-source="assets_new"
-  data-id="<?= (int)$row['an_id'] ?>"
-  data-bs-toggle="modal"
-  data-bs-target="#viewLifecycleModal"
-  title="View Asset Life Cycle">
-  <i class="bi bi-graph-up"></i> Life Cycle
-</button>
+                        
                       </td>
                     </tr>
                   <?php endwhile; ?>
@@ -1320,8 +1312,8 @@ echo $displayNo;
                     <td>${it.status ?? ''}</td>
                     <td>${it.date_acquired ? new Date(it.date_acquired).toLocaleDateString('en-US') : ''}</td>
                     <td class="text-nowrap d-flex gap-1">
-                      <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="${(it.property_no && it.property_no.trim()) ? 'View Property Tag' : 'Create Property Tag'}">
-                        <i class="bi bi-tag"></i> ${ (it.property_no && it.property_no.trim()) ? 'View Property Tag' : 'Create Property Tag' }
+                      <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="${(it.property_no && it.property_no.trim()) ? 'Edit Property Tag' : 'Create Property Tag'}">
+                        <i class="bi bi-tag"></i> ${ (it.property_no && it.property_no.trim()) ? 'Edit Property Tag' : 'Create Property Tag' }
                       </a>
                     </td>
                   `;

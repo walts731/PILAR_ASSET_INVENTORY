@@ -110,8 +110,12 @@ if ($mr_item_id) {
 } elseif (!empty($asset_id)) {
     // Fallback: check by asset_id to prevent duplicates when item mapping is unavailable (e.g., PAR items beyond first)
     $stmt_check2 = $conn->prepare("SELECT 1 FROM mr_details WHERE asset_id = ? LIMIT 1");
+    $stmt_check2->bind_param("i", $asset_id);
     $stmt_check2->execute();
     $res_check2 = $stmt_check2->get_result();
+    if ($res_check2 && $res_check2->num_rows > 0) {
+        $existing_mr_check = true;
+    }
     $stmt_check2->close();
 }
 
