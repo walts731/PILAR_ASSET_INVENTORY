@@ -104,6 +104,7 @@ if (!$asset) {
 // Use existing number when editing, otherwise generate new red tag number
 if ($existing_red_tag_check && $existing_red_tag_data) {
     $red_tag_number = $existing_red_tag_data['red_tag_number'];
+    $control_no = $existing_red_tag_data['control_no'] ?? '';
 } else {
     // Generate new red tag number using tag format system
     require_once '../includes/tag_format_helper.php';
@@ -111,6 +112,13 @@ if ($existing_red_tag_check && $existing_red_tag_data) {
     if (!$red_tag_number) {
         // If generation fails, use a fallback format
         $red_tag_number = 'RT-' . str_pad(1, 4, '0', STR_PAD_LEFT);
+    }
+    
+    // Generate control number
+    $control_no = generateTag('control_no');
+    if (!$control_no) {
+        // If generation fails, use a fallback format
+        $control_no = 'CTRL-' . date('Y') . '-' . str_pad(1, 4, '0', STR_PAD_LEFT);
     }
 }
 
@@ -274,15 +282,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Create new Red Tag
         $insert_query = $conn->prepare("
             INSERT INTO red_tags (
-                red_tag_number, asset_id, iirup_id, date_received, 
+                red_tag_number, control_no, asset_id, iirup_id, date_received, 
                 tagged_by, item_location, description, removal_reason, 
                 action, status
-            ) VALUES (?, ?, ?, CURDATE(), ?, ?, ?, ?, ?, 'Pending')
+            ) VALUES (?, ?, ?, ?, CURDATE(), ?, ?, ?, ?, ?, 'Pending')
         ");
         
         $insert_query->bind_param(
-            'siisssss',
+            'ssiisssss',
             $red_tag_number,
+            $control_no,
             $asset_id,
             $iirup_id,
             $tagged_by,
@@ -451,7 +460,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Control No.:</label>
-                        <input type="text" class="form-control" value="<?= htmlspecialchars($red_tag_number) ?>" readonly>
+                        <input type="text" class="form-control" value="<?= htmlspecialchars($control_no) ?>" readonly>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Date Received:</label>
