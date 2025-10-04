@@ -829,7 +829,7 @@ if ($baseProp !== '') {
                             <div class="p-2">
                                 <!-- Office Location -->
                                 <div class="row mb-3">
-                                    <div class="col-md-8">
+                                    <div class="col-md-4">
                                         <label for="office_location" class="form-label fw-semibold">
                                             <i class="bi bi-building me-1 text-primary"></i>Office Location
                                             <span class="text-danger">*</span>
@@ -846,11 +846,8 @@ if ($baseProp !== '') {
                                         </select>
                                         <div class="form-text">Select the office, department, or location where this asset is assigned</div>
                                     </div>
-                                </div>
 
-                                <!-- Description -->
-                                <div class="row mb-3">
-                                    <div class="col-md-12">
+                                    <div class="col-md-8">
                                         <label for="description" class="form-label fw-semibold">
                                             <i class="bi bi-card-text me-1 text-primary"></i>Asset Description
                                             <span class="text-danger">*</span>
@@ -859,6 +856,11 @@ if ($baseProp !== '') {
                                             required placeholder="Provide a detailed description of the asset"><?= isset($asset_details['description']) ? htmlspecialchars($asset_details['description']) : '' ?></textarea>
                                         <div class="form-text">Include make, model, specifications, and any distinguishing features</div>
                                     </div>
+                                </div>
+
+                                <!-- Description -->
+                                <div class="row mb-3">
+                                    
                                 </div>
 
                                 <!-- Category Selection -->
