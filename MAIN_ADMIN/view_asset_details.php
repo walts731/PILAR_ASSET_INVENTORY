@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/lifecycle_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -14,6 +15,9 @@ if ($asset_id <= 0) {
     header("Location: inventory.php");
     exit();
 }
+
+// Ensure lifecycle table exists
+ensureLifecycleTable($conn);
 
 // Fetch asset details from the assets table
 $sql = "SELECT a.*, c.category_name, o.office_name, e.name AS employee_name
@@ -35,51 +39,6 @@ if ($result->num_rows === 0) {
 
 $asset = $result->fetch_assoc();
 $stmt->close();
-
-// No need to fetch asset_items - we'll use the main asset data
-
-// Maintenance records removed - focusing on asset details only
-
-// Fetch lifecycle events for the asset
-$lifecycle_events = [];
-
-// 1. Asset acquisition event
-if ($asset['acquisition_date']) {
-    $lifecycle_events[] = [
-        'type' => 'acquired',
-        'date' => $asset['acquisition_date'],
-        'title' => 'Asset Acquired',
-        'description' => 'Asset was acquired and added to inventory',
-        'icon' => 'bi-plus-circle'
-    ];
-}
-
-// 2. Assignment events
-if ($asset['employee_name']) {
-    $lifecycle_events[] = [
-        'type' => 'assigned',
-        'date' => $asset['last_updated'] ?? $asset['acquisition_date'],
-        'title' => 'Asset Assigned',
-        'description' => 'Assigned to ' . $asset['employee_name'] . ' at ' . ($asset['office_name'] ?? 'Unknown Office'),
-        'icon' => 'bi-person-check'
-    ];
-}
-
-// 3. Status change events
-if ($asset['status'] === 'unserviceable') {
-    $lifecycle_events[] = [
-        'type' => 'status-change',
-        'date' => $asset['last_updated'] ?? date('Y-m-d'),
-        'title' => 'Status Changed',
-        'description' => 'Asset marked as unserviceable',
-        'icon' => 'bi-exclamation-triangle'
-    ];
-}
-
-// Sort events by date
-usort($lifecycle_events, function($a, $b) {
-    return strtotime($a['date']) - strtotime($b['date']);
-});
 
 // Don't close connection here - topbar.php needs it
 ?>
@@ -215,6 +174,15 @@ usort($lifecycle_events, function($a, $b) {
         .lifecycle-event.assigned::before {
             background: #20c997;
         }
+        .lifecycle-event.transferred::before {
+            background: #17a2b8;
+        }
+        .lifecycle-event.disposed::before {
+            background: #6c757d;
+        }
+        .lifecycle-event.default::before {
+            background: #6f42c1;
+        }
     </style>
 </head>
 <body>
@@ -252,34 +220,20 @@ usort($lifecycle_events, function($a, $b) {
                         <h4 class="mb-0 text-primary">
                             <i class="bi bi-clock-history me-2"></i>Asset Lifecycle
                         </h4>
-                        <span class="badge bg-light text-dark ms-2"><?= count($lifecycle_events) ?> Events</span>
+                        <span class="badge bg-light text-dark ms-2" id="lifecycleEventCount">Loading...</span>
+                        <button class="btn btn-sm btn-outline-primary ms-auto" onclick="refreshLifecycle()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                        </button>
                     </div>
                     
-                    <?php if (!empty($lifecycle_events)): ?>
-                    <div class="lifecycle-timeline">
-                        <?php foreach ($lifecycle_events as $event): ?>
-                        <div class="lifecycle-event <?= $event['type'] ?>">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1 fw-bold text-dark">
-                                        <i class="<?= $event['icon'] ?> me-2 text-primary"></i>
-                                        <?= htmlspecialchars($event['title']) ?>
-                                    </h6>
-                                    <p class="mb-1 text-muted"><?= htmlspecialchars($event['description']) ?></p>
-                                </div>
-                                <small class="text-muted ms-3">
-                                    <?= date('M j, Y', strtotime($event['date'])) ?>
-                                </small>
+                    <div id="lifecycleContent">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading lifecycle events...</span>
                             </div>
+                            <p class="text-muted mt-2">Loading lifecycle events...</p>
                         </div>
-                        <?php endforeach; ?>
                     </div>
-                    <?php else: ?>
-                    <div class="text-center py-4">
-                        <i class="bi bi-clock-history display-4 text-muted mb-3"></i>
-                        <p class="text-muted">No lifecycle events recorded for this asset.</p>
-                    </div>
-                    <?php endif; ?>
                 </div>
 
                 <div class="container-fluid">
@@ -453,7 +407,12 @@ usort($lifecycle_events, function($a, $b) {
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     
     <script>
+    const assetId = <?= $asset_id ?>;
+    
+    // Load lifecycle events on page load
     $(document).ready(function() {
+        loadLifecycleEvents();
+        
         $(document).on('click', '.transfer-asset', function (e) {
             e.preventDefault(); // Prevent default button behavior
             console.log('Transfer button clicked'); // Debug log
@@ -482,6 +441,161 @@ usort($lifecycle_events, function($a, $b) {
             window.location.href = url;
         });
     });
+    
+    // Load lifecycle events from the API
+    function loadLifecycleEvents() {
+        fetch(`get_asset_lifecycle.php?source=assets&id=${assetId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showLifecycleError(data.error);
+                    return;
+                }
+                
+                displayLifecycleEvents(data.events || []);
+                updateEventCount(data.summary?.count || 0);
+            })
+            .catch(error => {
+                console.error('Error loading lifecycle events:', error);
+                showLifecycleError('Failed to load lifecycle events');
+            });
+    }
+    
+    // Display lifecycle events in the timeline
+    function displayLifecycleEvents(events) {
+        const container = document.getElementById('lifecycleContent');
+        
+        if (!events || events.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-clock-history display-4 text-muted mb-3"></i>
+                    <p class="text-muted">No lifecycle events recorded for this asset.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let timelineHtml = '<div class="lifecycle-timeline">';
+        
+        events.forEach(event => {
+            const eventType = getEventTypeClass(event.event_type);
+            const eventIcon = getEventIcon(event.event_type);
+            const eventDate = new Date(event.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            
+            timelineHtml += `
+                <div class="lifecycle-event ${eventType}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1 fw-bold text-dark">
+                                <i class="${eventIcon} me-2 text-primary"></i>
+                                ${getEventTitle(event.event_type)}
+                            </h6>
+                            <p class="mb-1 text-muted">${getEventDescription(event)}</p>
+                            ${event.notes ? `<small class="text-muted"><strong>Notes:</strong> ${event.notes}</small>` : ''}
+                        </div>
+                        <small class="text-muted ms-3">${eventDate}</small>
+                    </div>
+                </div>
+            `;
+        });
+        
+        timelineHtml += '</div>';
+        container.innerHTML = timelineHtml;
+    }
+    
+    // Get CSS class for event type
+    function getEventTypeClass(eventType) {
+        const classes = {
+            'ACQUIRED': 'acquired',
+            'ASSIGNED': 'assigned',
+            'TRANSFERRED': 'transferred',
+            'RED_TAGGED': 'red-tagged',
+            'DISPOSAL_LISTED': 'iirup-created',
+            'DISPOSED': 'disposed'
+        };
+        return classes[eventType] || 'default';
+    }
+    
+    // Get icon for event type
+    function getEventIcon(eventType) {
+        const icons = {
+            'ACQUIRED': 'bi-plus-circle',
+            'ASSIGNED': 'bi-person-check',
+            'TRANSFERRED': 'bi-arrow-left-right',
+            'RED_TAGGED': 'bi-tag',
+            'DISPOSAL_LISTED': 'bi-exclamation-triangle',
+            'DISPOSED': 'bi-trash'
+        };
+        return icons[eventType] || 'bi-circle';
+    }
+    
+    // Get title for event type
+    function getEventTitle(eventType) {
+        const titles = {
+            'ACQUIRED': 'Asset Acquired',
+            'ASSIGNED': 'Asset Assigned',
+            'TRANSFERRED': 'Asset Transferred',
+            'RED_TAGGED': 'Red Tagged',
+            'DISPOSAL_LISTED': 'Listed for Disposal',
+            'DISPOSED': 'Asset Disposed'
+        };
+        return titles[eventType] || eventType;
+    }
+    
+    // Get description for event
+    function getEventDescription(event) {
+        switch (event.event_type) {
+            case 'ACQUIRED':
+                return 'Asset was acquired and added to inventory';
+            case 'ASSIGNED':
+                return `Assigned to ${event.to_employee || 'employee'} at ${event.to_office || 'office'}`;
+            case 'TRANSFERRED':
+                return `Transferred from ${event.from_employee || 'previous employee'} to ${event.to_employee || 'new employee'}`;
+            case 'RED_TAGGED':
+                return 'Asset was red tagged for disposal or repair';
+            case 'DISPOSAL_LISTED':
+                return 'Asset was listed for disposal through IIRUP form';
+            case 'DISPOSED':
+                return 'Asset was disposed of';
+            default:
+                return event.notes || 'Lifecycle event recorded';
+        }
+    }
+    
+    // Update event count badge
+    function updateEventCount(count) {
+        document.getElementById('lifecycleEventCount').textContent = `${count} Events`;
+    }
+    
+    // Show error message
+    function showLifecycleError(message) {
+        const container = document.getElementById('lifecycleContent');
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-exclamation-triangle display-4 text-warning mb-3"></i>
+                <p class="text-muted">${message}</p>
+            </div>
+        `;
+        document.getElementById('lifecycleEventCount').textContent = 'Error';
+    }
+    
+    // Refresh lifecycle events
+    function refreshLifecycle() {
+        document.getElementById('lifecycleContent').innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading lifecycle events...</span>
+                </div>
+                <p class="text-muted mt-2">Refreshing lifecycle events...</p>
+            </div>
+        `;
+        document.getElementById('lifecycleEventCount').textContent = 'Loading...';
+        loadLifecycleEvents();
+    }
     </script>
 </body>
 </html>
