@@ -598,9 +598,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <i class="bi bi-printer"></i> Print Red Tag
                         </a>
                         <?php $form_id = isset($_GET['form_id']) ? intval($_GET['form_id']) : 7; ?>
-                        <a href="view_iirup.php?id=<?= $iirup_id ?>&form_id=<?= $form_id ?>" class="btn btn-secondary me-2">
-                            <i class="bi bi-arrow-left"></i> Back to IIRUP
-                        </a>
+                        
                         <button type="submit" class="btn btn-success">
                             <i class="bi bi-check-circle"></i> Update Red Tag
                         </button>
