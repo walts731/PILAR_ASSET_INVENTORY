@@ -32,15 +32,15 @@ $stmt->close();
 
   <!-- Header Image (display only) -->
   <div class="mb-3 text-center">
-    <?php if (!empty($ris_data['header_image'])): ?>
-      <img src="../img/<?= htmlspecialchars($ris_data['header_image']) ?>"
-           class="img-fluid mb-2"
-           style="max-width: 100%; height: auto; object-fit: contain;">
-      <!-- Submit existing header image with the form -->
-      <input type="hidden" name="header_image" value="<?= htmlspecialchars($ris_data['header_image']) ?>">
-    <?php else: ?>
-      <p class="text-muted">No header image available</p>
-    <?php endif; ?>
+    <?php 
+    // Use existing header image from database, or fall back to default
+    $header_image = $ris_data['header_image'] ?? 'PILAR LOGO TRANSPARENT.png';
+    ?>
+    <img src="../img/<?= htmlspecialchars($header_image) ?>"
+         class="img-fluid mb-2"
+         style="max-width: 100%; height: auto; object-fit: contain;">
+    <!-- Submit header image with the form -->
+    <input type="hidden" name="existing_header_image" value="<?= htmlspecialchars($header_image) ?>">
   </div>
 
 
