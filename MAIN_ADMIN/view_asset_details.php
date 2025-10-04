@@ -19,12 +19,16 @@ if ($asset_id <= 0) {
 // Ensure lifecycle table exists
 ensureLifecycleTable($conn);
 
-// Fetch asset details from the assets table
-$sql = "SELECT a.*, c.category_name, o.office_name, e.name AS employee_name
+// Fetch asset details from the assets table including red tag status
+$sql = "SELECT a.*, c.category_name, o.office_name, e.name AS employee_name,
+               CASE WHEN rt.id IS NOT NULL THEN 1 ELSE 0 END as has_red_tag,
+               ii.iirup_id
         FROM assets a
         LEFT JOIN categories c ON a.category = c.id
         LEFT JOIN offices o ON a.office_id = o.id
         LEFT JOIN employees e ON a.employee_id = e.employee_id
+        LEFT JOIN red_tags rt ON rt.asset_id = a.id
+        LEFT JOIN iirup_items ii ON ii.asset_id = a.id
         WHERE a.id = ?";
 
 $stmt = $conn->prepare($sql);
@@ -359,6 +363,19 @@ $stmt->close();
                                            class="btn btn-outline-warning" target="_blank">
                                             <i class="bi bi-exclamation-triangle me-2"></i>Create IIRUP
                                         </a>
+                                        <!-- Create Red Tag Button - Only show for unserviceable assets without red tags -->
+                                        <?php if ($asset['status'] === 'unserviceable' && !$asset['has_red_tag']): ?>
+                                        <a href="create_red_tag.php?asset_id=<?= $asset['id'] ?><?= !empty($asset['iirup_id']) ? '&iirup_id=' . $asset['iirup_id'] : '' ?>" 
+                                           class="btn btn-outline-danger" target="_blank">
+                                            <i class="bi bi-tag me-2"></i>Create Red Tag
+                                        </a>
+                                        <?php elseif ($asset['has_red_tag']): ?>
+                                        <!-- Red Tagged Status Badge -->
+                                        <div class="alert alert-danger mb-0 py-2">
+                                            <i class="bi bi-tag me-2"></i><strong>Red Tagged</strong>
+                                            <small class="d-block">This asset has been red tagged</small>
+                                        </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
