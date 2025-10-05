@@ -122,8 +122,13 @@ $available_assets = $stmt->get_result();
 <html lang="en" class="<?php echo $darkModeClass; ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Borrow Assets - PILAR Asset Inventory</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $pageTitle; ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css" />
     <style>
         /* Layout styles */
         .wrapper {
@@ -217,13 +222,28 @@ $available_assets = $stmt->get_result();
         
         /* Original styles */
         .asset-card {
-            transition: transform 0.2s;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
             height: 100%;
+            display: flex;
+            flex-direction: column;
         }
-        
         .asset-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+        .asset-img-container {
+            height: 200px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            padding: 1rem;
+        }
+        .asset-img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
         }
         
         .cart-badge {
@@ -261,18 +281,13 @@ $available_assets = $stmt->get_result();
         }
     </style>
 </head>
-<body class="<?php echo $darkModeClass; ?>">
-    <div class="wrapper d-flex">
-        <?php 
-        // Set active page for sidebar highlighting
-        $sidebarActive = 'borrow';
-        include 'includes/sidebar.php'; 
-        ?>
+<body>
+    <?php include 'includes/sidebar.php' ?>
 
-        <div class="main-content" style="flex: 1; margin-left: 250px;">
+    <div class="main">
+        <?php include 'includes/topbar.php' ?>
+
         <?php 
-        include 'includes/topbar.php';
-        
         // Display success/error messages if any
         if (isset($_SESSION['success'])) {
             echo '<div class="alert alert-success alert-dismissible fade show m-3" role="alert">';
@@ -291,17 +306,20 @@ $available_assets = $stmt->get_result();
         }
         ?>
 
-        <div class="container mt-4">
-            <div id="alert-placeholder"></div>
-
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3>Available Assets for Borrowing</h3>
-                <a href="view_inter_dept_cart.php" class="btn btn-primary position-relative">
-                    <i class="bi bi-cart3"></i> View Box
-                    <span id="cart-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        <?= $cart_count ? $cart_count : '' ?>
-                    </span>
-                </a>
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Borrow Assets</h1>
+                <div>
+                    <a href="view_borrow_cart.php" class="btn btn-primary position-relative">
+                        <i class="bi bi-cart3"></i> Borrowing Cart
+                        <?php if ($cart_count > 0): ?>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                <?= $cart_count ?>
+                                <span class="visually-hidden">items in cart</span>
+                            </span>
+                        <?php endif; ?>
+                    </a>
+                </div>
             </div>
 
             <!-- Filter and Search Form -->
@@ -375,7 +393,7 @@ $available_assets = $stmt->get_result();
             </div>
 
             <!-- Asset Grid -->
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
                 <?php 
                 error_log("Rendering assets - Found " . $available_assets->num_rows . " assets to display");
                 if ($available_assets->num_rows > 0): 
@@ -389,33 +407,33 @@ $available_assets = $stmt->get_result();
                         ));
                 ?>
                 <div class="col">
-                    <div class="card h-100 shadow-sm asset-card">
-                        <img src="../img/assets/<?= htmlspecialchars($row['image'] ?: 'default.png') ?>" 
-                             class="card-img-top" 
-                             alt="<?= htmlspecialchars($row['asset_name']) ?>" 
-                             style="height: 200px; object-fit: cover;">
-                        <div class="card-body">
+                    <div class="card h-100 asset-card">
+                        <div class="asset-img-container">
+                            <?php if (!empty($row['image']) && file_exists("../img/assets/" . $row['image'])): ?>
+                                <img src="../img/assets/<?= htmlspecialchars($row['image']) ?>" 
+                                     class="asset-img" 
+                                     alt="<?= htmlspecialchars($row['asset_name']) ?>">
+                            <?php else: ?>
+                                <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                            <?php endif; ?>
+                        </div>
+                        <div class="card-body d-flex flex-column">
                             <h5 class="card-title"><?= htmlspecialchars($row['asset_name']) ?></h5>
-                            <p class="card-text text-muted">
+                            <p class="card-text text-muted mb-3">
                                 <i class="bi bi-tag"></i> <?= htmlspecialchars($row['category'] ?? 'Uncategorized') ?><br>
-                                <i class="bi bi-box"></i> Qty: <?= (int)$row['quantity'] ?>
+                                <i class="bi bi-box"></i> Available: <?= (int)$row['quantity'] ?>
                             </p>
-                            <form class="add-to-cart-form" method="post">
-                                <input type="hidden" name="asset_id" value="<?= (int)$row['id'] ?>">
-                                <input type="hidden" name="asset_name" value="<?= htmlspecialchars($row['asset_name']) ?>">
-                                <input type="hidden" name="max_quantity" value="<?= (int)$row['quantity'] ?>">
-                                <div class="input-group mb-2">
-                                    <input type="number" 
-                                           name="quantity" 
-                                           class="form-control" 
-                                           value="1" 
-                                           min="1" 
-                                           max="<?= (int)$row['quantity'] ?>">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-cart-plus"></i> Add to Cart
-                                    </button>
-                                </div>
-                            </form>
+                            <div class="mt-auto">
+                                <button type="button" 
+                                        class="btn btn-primary w-100 add-to-cart-btn" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#addToCartModal"
+                                        data-asset-id="<?= (int)$row['id'] ?>"
+                                        data-asset-name="<?= htmlspecialchars($row['asset_name']) ?>"
+                                        data-quantity-available="<?= (int)$row['quantity'] ?>">
+                                    <i class="bi bi-cart-plus"></i> Add to Cart
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

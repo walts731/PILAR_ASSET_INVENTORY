@@ -11,15 +11,11 @@ $user_id = $_SESSION['user_id'];
 $office_id = $_SESSION['office_id'];
 $pageTitle = 'Inter-Department Borrowing Requests - PILAR Asset Inventory';
 
-// Include header with dark mode support
-require_once '../includes/header.php';
-
 // Set active page for sidebar highlighting
 $sidebarActive = 'inter_dept_borrow_requests';
 
-// Include sidebar and topbar
-require_once 'includes/sidebar.php';
-require_once 'includes/topbar.php';
+// Include header with dark mode support (includes topbar and sidebar)
+require_once '../includes/header.php';
 
 // Handle request actions (approve/reject)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -296,24 +292,47 @@ $stmt->close();
     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css" />
     <style>
+        /* Card styles */
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+        }
+        
         .request-card {
             transition: all 0.2s ease-in-out;
             margin-bottom: 1rem;
         }
+        
         .request-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
+        
         .status-badge {
             font-size: 0.75rem;
             padding: 0.35em 0.65em;
             font-weight: 500;
         }
+        
         .timeline {
             position: relative;
             padding-left: 2rem;
             margin: 1.5rem 0;
         }
+        
         .timeline::before {
             content: '';
             position: absolute;
@@ -366,11 +385,35 @@ $stmt->close();
         }
     </style>
 </head>
-<body>
+<body class="<?php echo $darkModeClass; ?>">
     <?php include 'includes/sidebar.php' ?>
 
     <div class="main">
         <?php include 'includes/topbar.php' ?>
+        
+        <?php if (isset($_SESSION['success_message'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <?php 
+                echo $_SESSION['success_message'];
+                unset($_SESSION['success_message']);
+                ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+        
+        <?php if (isset($_SESSION['error_message'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <?php 
+                echo $_SESSION['error_message'];
+                unset($_SESSION['error_message']);
+                ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+        
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Inter-Department Borrow Requests</h1>
 
         <?php if (isset($_SESSION['success_message'])): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -418,7 +461,7 @@ $stmt->close();
     <?php if (!empty($pending_approval_requests)): ?>
         <div class="card mb-4">
             <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">Pending Your Approval</h5>
+                <h5 class="mb-0"><i class="bi bi-hourglass-split me-2"></i>Pending Your Approval</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -484,9 +527,9 @@ $stmt->close();
     <?php endif; ?>
 
     <!-- My Requests Section -->
-    <div class="card">
+    <div class="card mt-4">
         <div class="card-header">
-            <h5 class="mb-0">My Inter-Department Requests</h5>
+            <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>My Inter-Department Requests</h5>
         </div>
         <div class="card-body p-0">
             <?php if (!empty($my_requests)): ?>
@@ -599,7 +642,7 @@ $stmt->close();
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="POST" id="approvalForm">
-                <div class="modal-header">
+                <div class="modal-header bg-light">
                     <h5 class="modal-title">Approve/Reject Request</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
