@@ -125,7 +125,10 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
       <?php if ($category): ?>
       <!-- Page Header -->
       <div class="page-header p-3 p-sm-4 d-flex flex-wrap gap-3 align-items-center justify-content-between mb-3">
-        <div class="d-flex align-items-center gap-3">
+        <?php if (!empty($systemLogo)): ?>
+        <img src="<?= htmlspecialchars($systemLogo) ?>" alt="Logo" class="rounded border bg-white p-1" style="height:42px;object-fit:contain;">
+        <?php endif; ?>
+        <div class="d-flex align-items-center gap-3 flex-grow-1 <?= !empty($systemLogo) ? 'justify-content-center' : '' ?>">
           <div class="rounded-circle d-flex align-items-center justify-content-center bg-white border" style="width:48px;height:48px;">
             <i class="bi bi-tags text-primary fs-4"></i>
           </div>
@@ -134,8 +137,8 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
             <div class="text-muted small">Category Inventory</div>
           </div>
         </div>
-        <?php if (!empty($systemLogo)): ?>
-        <img src="<?= htmlspecialchars($systemLogo) ?>" alt="Logo" class="rounded border bg-white p-1" style="height:42px;object-fit:contain;">
+        <?php if (empty($systemLogo)): ?>
+        <div></div> <!-- Spacer when no logo -->
         <?php endif; ?>
       </div>
       <?php endif; ?>
@@ -148,10 +151,18 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
               <h5 class="mb-0">
                 <i class="bi bi-list-ul"></i> <?= htmlspecialchars($category['category_name'] ?? 'Unknown Category') ?> Assets
               </h5>
-              <div class="d-flex gap-2">
+              <div class="d-flex gap-2 flex-wrap">
                 <button type="button" id="selectAllBtn" class="btn btn-sm btn-outline-secondary rounded-pill" title="Select/Deselect all items">
                   <i class="bi bi-check-square me-1"></i> Select All
                 </button>
+                <div class="btn-group" role="group">
+                  <button type="button" id="exportCsvBtn" class="btn btn-sm btn-success rounded-pill" title="Export selected items to CSV">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+                  </button>
+                  <button type="button" id="exportPdfBtn" class="btn btn-sm btn-danger rounded-pill" title="Export selected items to PDF">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
+                  </button>
+                </div>
                 <button type="button" id="generateReportBtn" class="btn btn-sm btn-primary rounded-pill" title="Generate a report for selected items" disabled>
                   <i class="bi bi-file-earmark-text me-1"></i> Generate Report (<span id="selectedCount">0</span>)
                 </button>
@@ -161,7 +172,7 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
               <!-- Alert for selection feedback -->
               <div id="selectionAlert" class="alert alert-info d-none" role="alert">
                 <i class="bi bi-info-circle"></i> 
-                <span id="selectionMessage">Please select assets to generate a report.</span>
+                <span id="selectionMessage">Select assets to export or generate reports. Leave unselected to export all items.</span>
               </div>
               
               <?php if (count($an_rows) > 0): ?>
@@ -263,11 +274,11 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
         if (checkedBoxes > 0) {
           $('#generateReportBtn').prop('disabled', false).removeClass('btn-secondary').addClass('btn-primary');
           $('#selectionAlert').removeClass('d-none').removeClass('alert-info').addClass('alert-success');
-          $('#selectionMessage').text(`${checkedBoxes} asset(s) selected for report generation.`);
+          $('#selectionMessage').text(`${checkedBoxes} asset(s) selected for export/report generation.`);
         } else {
           $('#generateReportBtn').prop('disabled', true).removeClass('btn-primary').addClass('btn-secondary');
           $('#selectionAlert').removeClass('d-none').removeClass('alert-success').addClass('alert-info');
-          $('#selectionMessage').text('Please select assets to generate a report.');
+          $('#selectionMessage').text('Select assets to export or generate reports. Leave unselected to export all items.');
         }
       }
 
@@ -336,6 +347,60 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
         // Reset button after a delay
         setTimeout(() => {
           $(this).prop('disabled', false).html('<i class="bi bi-file-earmark-text"></i> Generate Report (<span id="selectedCount">' + checkedBoxes + '</span>)');
+        }, 2000);
+      });
+
+      // Export CSV button click
+      $('#exportCsvBtn').on('click', function() {
+        const checkedBoxes = $('.asset-checkbox-cat:checked');
+        const categoryId = <?= $category_id ?>;
+        
+        // Show loading state
+        $(this).prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Exporting...');
+        
+        // Build URL with selected assets
+        let url = `export_category_csv.php?category=${categoryId}`;
+        if (checkedBoxes.length > 0) {
+          const selectedIds = [];
+          checkedBoxes.each(function() {
+            selectedIds.push($(this).val());
+          });
+          url += `&selected_assets=${selectedIds.join(',')}`;
+        }
+        
+        // Open export in new tab
+        window.open(url, '_blank');
+        
+        // Reset button after a delay
+        setTimeout(() => {
+          $(this).prop('disabled', false).html('<i class="bi bi-file-earmark-spreadsheet"></i> Export CSV');
+        }, 2000);
+      });
+
+      // Export PDF button click
+      $('#exportPdfBtn').on('click', function() {
+        const checkedBoxes = $('.asset-checkbox-cat:checked');
+        const categoryId = <?= $category_id ?>;
+        
+        // Show loading state
+        $(this).prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Exporting...');
+        
+        // Build URL with selected assets
+        let url = `export_category_pdf.php?category=${categoryId}`;
+        if (checkedBoxes.length > 0) {
+          const selectedIds = [];
+          checkedBoxes.each(function() {
+            selectedIds.push($(this).val());
+          });
+          url += `&selected_assets=${selectedIds.join(',')}`;
+        }
+        
+        // Open export in new tab
+        window.open(url, '_blank');
+        
+        // Reset button after a delay
+        setTimeout(() => {
+          $(this).prop('disabled', false).html('<i class="bi bi-file-earmark-pdf"></i> Export PDF');
         }, 2000);
       });
 
