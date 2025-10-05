@@ -30,7 +30,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
             case "admin":
                 header("Location: MAIN_ADMIN/admin_dashboard.php?office=" . $user_data['office_id']);
                 break;
-            case "user":
+            case "admin":
                 // Check if this user has a specific permission to only access Fuel Inventory
                 $fuel_only = false;
                 if ($permStmt = $conn->prepare("SELECT 1 FROM user_permissions WHERE user_id = ? AND permission = 'fuel_inventory' LIMIT 1")) {
