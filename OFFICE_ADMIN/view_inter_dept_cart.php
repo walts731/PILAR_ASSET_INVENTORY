@@ -11,11 +11,92 @@ $user_id = $_SESSION['user_id'];
 $office_id = $_SESSION['office_id'];
 $pageTitle = 'Inter-Department Borrowing - PILAR Asset Inventory';
 
-// Include header with dark mode support
-require_once '../includes/header.php';
-
 // Set active page for sidebar highlighting
 $sidebarActive = 'view_inter_dept_cart';
+
+// Initialize carts if they don't exist
+if (!isset($_SESSION['inter_dept_cart'])) {
+    $_SESSION['inter_dept_cart'] = [];
+}
+if (!isset($_SESSION['borrow_cart'])) {
+    $_SESSION['borrow_cart'] = [];
+}
+
+// Determine which cart to use based on referring page
+$is_borrow_cart = strpos($_SERVER['HTTP_REFERER'] ?? '', 'borrow.php') !== false;
+$cart = $is_borrow_cart ? $_SESSION['borrow_cart'] : $_SESSION['inter_dept_cart'];
+$cart_key = $is_borrow_cart ? 'borrow_cart' : 'inter_dept_cart';
+$cart_count = count($cart);
+
+// Handle item removal
+if (isset($_POST['remove_item']) && isset($_POST['item_key'])) {
+    $item_key = $_POST['item_key'];
+    if (isset($cart[$item_key])) {
+        unset($cart[$item_key]);
+        $_SESSION['success_message'] = 'Item removed from cart successfully.';
+        header('Location: view_inter_dept_cart.php');
+        exit();
+    }
+}
+
+// Handle cart submission
+if (isset($_POST['submit_request'])) {
+    if (empty($cart)) {
+        $_SESSION['error_message'] = 'Your cart is empty.';
+        header('Location: view_inter_dept_cart.php');
+        exit();
+    }
+    
+    try {
+        $requested_at = date('Y-m-d H:i:s');
+        $requested_return_date = $_POST['requested_return_date'] ?? null;
+        $purpose = trim($_POST['purpose'] ?? '');
+        
+        // Start transaction
+        $conn->begin_transaction();
+        
+        // Create borrow request
+        $stmt = $conn->prepare("INSERT INTO borrow_requests (requester_id, office_id, requested_at, requested_return_date, purpose, status) VALUES (?, ?, ?, ?, ?, 'pending')");
+        $stmt->bind_param("iisss", $user_id, $office_id, $requested_at, $requested_return_date, $purpose);
+        $stmt->execute();
+        $request_id = $conn->insert_id;
+        
+        // Add items to borrow_request_items
+        foreach ($cart as $item_key => $item) {
+            $asset_id = $item['asset_id'];
+            $source_office_id = $item['source_office_id'];
+            $quantity = $item['quantity'];
+            
+            $stmt = $conn->prepare("INSERT INTO borrow_request_items (request_id, asset_id, source_office_id, quantity) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("iiii", $request_id, $asset_id, $source_office_id, $quantity);
+            $stmt->execute();
+        }
+        
+        // Commit transaction
+        $conn->commit();
+        
+        // Clear the cart
+        $_SESSION[$cart_key] = [];
+        
+        $success_message = $is_borrow_cart 
+            ? 'Your borrow request has been submitted successfully.'
+            : 'Your inter-department borrow request has been submitted successfully.';
+        
+        $_SESSION['success_message'] = $success_message;
+        header('Location: view_borrow_requests.php');
+        exit();
+        
+    } catch (Exception $e) {
+        // Something went wrong, roll back
+        $conn->rollback();
+        $_SESSION['error_message'] = 'Error submitting request: ' . $e->getMessage();
+        header('Location: view_inter_dept_cart.php');
+        exit();
+    }
+}
+
+// Include header with dark mode support
+require_once '../includes/header.php';
 
 // Initialize carts if they don't exist
 if (!isset($_SESSION['inter_dept_cart'])) {
@@ -433,11 +514,13 @@ if (isset($_POST['submit_request'])) {
                                 </a>
                             </div>
                         </form>
-                    </div>
-                    </div> <!-- Close col-lg-8 -->
-                </div> <!-- Close row -->
-            </div> <!-- Close container-fluid -->
-        </div> <!-- Close main -->
+                    
+                    </div> <!-- Close card-body -->
+                </div> <!-- Close card -->
+            </div> <!-- Close col-lg-8 -->
+            </div> <!-- Close row -->
+        </div> <!-- Close container-fluid -->
+    </div> <!-- Close main -->
     <!-- End of Main Content -->
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
