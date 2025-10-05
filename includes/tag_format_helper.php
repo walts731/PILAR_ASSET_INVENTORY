@@ -16,9 +16,10 @@ class TagFormatHelper {
     /**
      * Generate next tag number for a specific type
      * @param string $tagType - Type of tag (red_tag, ics_no, itr_no, par_no, ris_no, inventory_tag, asset_code, sai_no, control_no)
+     * @param array $replacements - Optional replacements for placeholders like {CODE}
      * @return string|false - Generated tag or false on error
      */
-    public function generateNextTag($tagType) {
+    public function generateNextTag($tagType, $replacements = []) {
         try {
             // Get tag format configuration
             $stmt = $this->conn->prepare("SELECT * FROM tag_formats WHERE tag_type = ? AND is_active = 1 LIMIT 1");
@@ -32,7 +33,7 @@ class TagFormatHelper {
             }
             
             // Parse the template and generate tag
-            return $this->parseAndGenerateTag($format);
+            return $this->parseAndGenerateTag($format, $replacements);
             
         } catch (Exception $e) {
             error_log("Tag generation error: " . $e->getMessage());
@@ -43,18 +44,25 @@ class TagFormatHelper {
     /**
      * Parse template and generate the actual tag
      * @param array $format - Format configuration from database
+     * @param array $replacements - Optional replacements for placeholders like {CODE}
      * @return string - Generated tag
      */
-    private function parseAndGenerateTag($format) {
+    private function parseAndGenerateTag($format, $replacements = []) {
         $template = $format['format_template'];
         $tagType = $format['tag_type'];
         
         // Replace date placeholders (if any)
         $template = $this->replaceDatePlaceholders($template);
         
+        // Replace custom placeholders from replacements array
+        foreach ($replacements as $placeholder => $value) {
+            $template = str_replace('{' . $placeholder . '}', $value, $template);
+            $template = str_replace($placeholder, $value, $template);
+        }
+        
         // For asset_code, use template-based counter to handle different formats
         if ($tagType === 'asset_code') {
-            // Use the template itself as the prefix hash for asset codes
+            // Use the template itself as the prefix hash for asset codes (after custom replacements)
             $prefixHash = md5($template);
         } else {
             // For simple prefix+digits format, use a single counter per tag type
@@ -69,6 +77,7 @@ class TagFormatHelper {
         $this->updateCounter($tagType, 'global', $prefixHash, $nextNumber);
         
         // Enhanced flexible digit replacement - supports any number of # symbols
+        // All increment placeholders get the same sequential number (like inventory_tag)
         $template = preg_replace_callback('/\{(#+)\}/', function($matches) use ($nextNumber) {
             $digitCount = strlen($matches[1]);
             return str_pad($nextNumber, $digitCount, '0', STR_PAD_LEFT);
@@ -254,10 +263,10 @@ class TagFormatHelper {
 }
 
 // Global helper function for easy access
-function generateTag($tagType) {
+function generateTag($tagType, $replacements = []) {
     global $conn;
     $helper = new TagFormatHelper($conn);
-    return $helper->generateNextTag($tagType);
+    return $helper->generateNextTag($tagType, $replacements);
 }
 
 function previewTag($tagType) {

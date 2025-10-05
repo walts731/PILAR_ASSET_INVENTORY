@@ -142,6 +142,48 @@ if (!empty($existing_inventory_tag)) {
     $inventory_tag = generateTag('inventory_tag');
 }
 
+// Check if asset already has saved asset code and serial number (like inventory_tag behavior)
+$existing_asset_code = '';
+$existing_serial_no = '';
+if ($asset_id) {
+    $stmt_check_codes = $conn->prepare("SELECT code, serial_no FROM assets WHERE id = ?");
+    $stmt_check_codes->bind_param("i", $asset_id);
+    $stmt_check_codes->execute();
+    $result_check_codes = $stmt_check_codes->get_result();
+    if ($result_check_codes && $row_check_codes = $result_check_codes->fetch_assoc()) {
+        $existing_asset_code = $row_check_codes['code'] ?? '';
+        $existing_serial_no = $row_check_codes['serial_no'] ?? '';
+    }
+    $stmt_check_codes->close();
+}
+
+// Generate asset code for display (like inventory_tag - only if not already saved)
+$display_asset_code = '';
+if (!empty($existing_asset_code)) {
+    $display_asset_code = $existing_asset_code;
+} else {
+    // Generate new asset code only if none exists
+    if (!empty($categories) && count($categories) > 0) {
+        // Use first category as default for display
+        $default_category = $categories[0];
+        $category_code = $default_category['category_code'] ?? '';
+        if (!empty($category_code)) {
+            $tagHelper = new TagFormatHelper($conn);
+            $replacements = ['CODE' => $category_code];
+            $display_asset_code = $tagHelper->generateNextTag('asset_code', $replacements);
+        }
+    }
+}
+
+// Generate serial number for display (like inventory_tag - only if not already saved)
+if (!empty($existing_serial_no)) {
+    $display_serial_no = $existing_serial_no;
+} else {
+    // Generate new serial number only if none exists
+    $tagHelper = new TagFormatHelper($conn);
+    $display_serial_no = $tagHelper->generateNextTag('serial_no');
+}
+
 // Format patterns are now handled by the tag format system
 $property_no_format = '';
 
@@ -245,14 +287,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $category_code = $cat_row['category_code'];
             
             if (!empty($category_code)) {
-                // Generate asset code using tag format system
+                // Generate asset code using tag format system with category code replacement
                 $tagHelper = new TagFormatHelper($conn);
-                $generated_code = $tagHelper->generateNextTag('asset_code');
+                $replacements = ['CODE' => $category_code];
+                $generated_code = $tagHelper->generateNextTag('asset_code', $replacements);
                 
                 if ($generated_code) {
-                    // Replace placeholders with actual values
-                    $code = str_replace('{CODE}', $category_code, $generated_code);
-                    $code = str_replace('CODE', $category_code, $code);
+                    $code = $generated_code;
                 } else {
                     // Fallback to simple format if tag generation fails
                     $year = date('Y');
@@ -948,8 +989,8 @@ if ($baseSerial !== '') {
                                             <i class="bi bi-hash me-1 text-success"></i>Serial Number
                                         </label>
                                         <input type="text" class="form-control" name="serial_no"
-                                            value="<?= htmlspecialchars($generated_serial_no) ?>"
-                                            placeholder="Auto-generated from tag format" readonly id="serial_no">
+                                            value="<?= htmlspecialchars($display_serial_no) ?>"
+                                            placeholder="Auto-generated from tag format" <?= !empty($existing_serial_no) ? 'readonly' : '' ?> id="serial_no">
                                         <div class="form-text">
                                             <i class="bi bi-info-circle me-1"></i>
                                             Auto-generated unique serial number - Format managed in 
@@ -965,8 +1006,8 @@ if ($baseSerial !== '') {
                                             <i class="bi bi-upc me-1 text-success"></i>Asset Code
                                         </label>
                                         <input type="text" class="form-control" name="code" id="code"
-                                            value="<?= isset($asset_details['code']) ? htmlspecialchars($asset_details['code']) : '' ?>"
-                                            placeholder="Auto-generated based on category">
+                                            value="<?= htmlspecialchars($display_asset_code) ?>"
+                                            placeholder="Auto-generated based on category" <?= !empty($existing_asset_code) ? 'readonly' : '' ?>>
                                         <div class="form-text">
                                             <i class="bi bi-info-circle me-1"></i>
                                             Internal asset classification code - Format managed in 
@@ -1635,32 +1676,15 @@ if ($baseSerial !== '') {
                 }
 
                 if (categorySelect && codeInput) {
-                    // Clear code when category changes to empty
+                    // Note: Asset code is now generated server-side on page load like inventory_tag
+                    // This provides proper incrementing behavior on each page refresh
                     categorySelect.addEventListener('change', function() {
-                        const selected = this.options[this.selectedIndex];
-                        const catCode = selected ? (selected.getAttribute('data-code') || '') : '';
-                        
-                        if (catCode) {
-                            codeInput.value = buildCodeFromCategory(catCode);
-                        } else {
-                            codeInput.value = ''; // Clear if no category selected
-                        }
+                        // Asset code will be generated server-side on form submission
+                        // No client-side generation needed - maintains server incrementing
                     });
                     
-                    // Also trigger on input event for datalist
-                    categorySelect.addEventListener('input', function() {
-                        setTimeout(() => {
-                            const selected = this.options[this.selectedIndex];
-                            const catCode = selected ? (selected.getAttribute('data-code') || '') : '';
-                            if (catCode) {
-                                codeInput.value = buildCodeFromCategory(catCode);
-                            }
-                        }, 100);
-                    });
-                    
-                    // Initialize on page load
-                    document.addEventListener('DOMContentLoaded', maybePrefillCode);
-                    maybePrefillCode();
+                    // Asset code and serial number are now generated server-side on page load
+                    // This ensures proper incrementing behavior like inventory_tag
                 }
             })();
 
