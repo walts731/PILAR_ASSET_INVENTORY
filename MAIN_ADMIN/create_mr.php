@@ -244,23 +244,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $brand = $_POST['brand'] ?? '';
     $category_id = isset($_POST['category_id']) && $_POST['category_id'] !== '' ? (int)$_POST['category_id'] : null;
 
-    $asset_status = $_POST['asset_status'] ?? 'serviceable';
-    // Enforce: if the current asset record is already unserviceable, lock it server-side
-    if (!empty($asset_id_form)) {
-        if ($st_status = $conn->prepare("SELECT status FROM assets WHERE id = ?")) {
-            $st_status->bind_param("i", $asset_id_form);
-            $st_status->execute();
-            $rs_status = $st_status->get_result();
-            if ($rs_status && ($row_s = $rs_status->fetch_assoc())) {
-                if (strtolower((string)$row_s['status']) === 'unserviceable') {
-                    $asset_status = 'unserviceable';
-                }
-            }
-            $st_status->close();
-        }
-    }
-    $serviceable = ($asset_status === 'serviceable') ? 1 : 0;
-    $unserviceable = ($asset_status === 'unserviceable') ? 1 : 0;
+    $asset_status = 'serviceable'; // Always serviceable since unserviceable option is removed
+    $serviceable = 1; // Always set to serviceable
+    $unserviceable = 0; // Always set to 0 since unserviceable option is removed
     $unit_quantity = $_POST['unit_quantity'];
     $unit = $_POST['unit'];
     $acquisition_date = $_POST['acquisition_date'];
@@ -710,29 +696,9 @@ if (!empty($asset_id) && !empty($employee_id)) {
     $stmt_assets->close();
 }
 
-// Fetch existing MR details to populate serviceable/unserviceable radio buttons
-$mr_serviceable = 0;
-$mr_unserviceable = 0;
-if ($asset_id && $existing_mr_check) {
-    if ($mr_item_id) {
-        $stmt_mr = $conn->prepare("SELECT serviceable, unserviceable FROM mr_details WHERE item_id = ? AND asset_id = ?");
-        $stmt_mr->bind_param("ii", $mr_item_id, $asset_id);
-    } else {
-        $stmt_mr = $conn->prepare("SELECT serviceable, unserviceable FROM mr_details WHERE asset_id = ?");
-        $stmt_mr->bind_param("i", $asset_id);
-    }
-    $stmt_mr->execute();
-    $result_mr = $stmt_mr->get_result();
-    if ($result_mr && $mr_data = $result_mr->fetch_assoc()) {
-        $mr_serviceable = (int)$mr_data['serviceable'];
-        $mr_unserviceable = (int)$mr_data['unserviceable'];
-    }
-    $stmt_mr->close();
-} else {
-    // Default values for new MR records
-    $mr_serviceable = 1; // Default to serviceable for new assets
-    $mr_unserviceable = 0;
-}
+// Since unserviceable option is removed, always default to serviceable
+$mr_serviceable = 1; // Always serviceable
+$mr_unserviceable = 0; // Always 0 since unserviceable option is removed
 
 // Determine default property number for display: use existing, else the configured Property No format
 $baseProp = isset($asset_details['property_no']) ? trim((string)$asset_details['property_no']) : '';
@@ -1033,27 +999,12 @@ if ($baseSerial !== '') {
                                         </label>
                                         <div class="card border-0 bg-light">
                                             <div class="card-body">
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="form-check form-check-lg">
-                                                            <input class="form-check-input" type="radio" name="asset_status" value="serviceable" id="serviceable"
-                                                                <?= $mr_serviceable == 1 ? 'checked' : '' ?>>
-                                                            <label class="form-check-label fw-semibold text-success" for="serviceable">
-                                                                <i class="bi bi-check-circle-fill me-1"></i>Serviceable
-                                                            </label>
-                                                            <div class="form-text">Asset is in good working condition</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="form-check form-check-lg">
-                                                            <input class="form-check-input" type="radio" name="asset_status" value="unserviceable" id="unserviceable"
-                                                                <?= $mr_unserviceable == 1 ? 'checked' : '' ?>>
-                                                            <label class="form-check-label fw-semibold text-warning" for="unserviceable">
-                                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Unserviceable
-                                                            </label>
-                                                            <div class="form-text">Asset requires repair or replacement</div>
-                                                        </div>
-                                                    </div>
+                                                <div class="form-check form-check-lg">
+                                                    <input class="form-check-input" type="radio" name="asset_status" value="serviceable" id="serviceable" checked>
+                                                    <label class="form-check-label fw-semibold text-success" for="serviceable">
+                                                        <i class="bi bi-check-circle-fill me-1"></i>Serviceable
+                                                    </label>
+                                                    <div class="form-text">Asset is in good working condition</div>
                                                 </div>
                                             </div>
                                         </div>

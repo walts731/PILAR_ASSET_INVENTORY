@@ -583,7 +583,6 @@ if ($result_assets && $result_assets->num_rows > 0) {
                 <td data-label="Remarks">
                     <select name="remarks[]" class="form-select" title="Current condition status of the asset">
                         <option value="Unserviceable" selected>Unserviceable</option>
-                        <option value="Serviceable">Serviceable</option>
                     </select>
                 </td>
                 <td data-label="Sale">
@@ -717,8 +716,7 @@ if ($result_assets && $result_assets->num_rows > 0) {
                         <label class="form-label">Remarks</label>
                         <select class="form-select" id="modal_remarks">
                             <option value="Unserviceable">Unserviceable</option>
-                            <option value="Serviceable">Serviceable</option>
-                        </select>
+                            </select>
                     </div>
 
                     <!-- Disposal Information -->
@@ -1362,7 +1360,7 @@ if ($result_footer && $result_footer->num_rows > 0) {
         document.getElementById('modal_accumulated_depreciation').value = row.querySelector('input[name="accumulated_depreciation[]"]').value || '';
         document.getElementById('modal_accumulated_impairment').value = row.querySelector('input[name="accumulated_impairment_losses[]"]').value || '';
         document.getElementById('modal_carrying_amount').value = row.querySelector('input[name="carrying_amount[]"]').value || '';
-        document.getElementById('modal_remarks').value = row.querySelector('select[name="remarks[]"]').value || 'Unserviceable';
+        document.getElementById('modal_remarks').value = 'Unserviceable';
         document.getElementById('modal_sale').value = row.querySelector('input[name="sale[]"]').value || '';
         document.getElementById('modal_transfer').value = row.querySelector('input[name="transfer[]"]').value || '';
         document.getElementById('modal_destruction').value = row.querySelector('input[name="destruction[]"]').value || '';

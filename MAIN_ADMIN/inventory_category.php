@@ -135,9 +135,7 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
           </div>
         </div>
         <div class="d-flex align-items-center gap-3">
-          <div class="rounded-circle d-flex align-items-center justify-content-center bg-white border" style="width:48px;height:48px;">
-            <i class="bi bi-tags text-primary fs-4"></i>
-          </div>
+         
           <div>
             
           </div>
