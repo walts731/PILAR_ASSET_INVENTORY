@@ -31,9 +31,9 @@ if (isset($_GET['asset_id']) && !empty($_GET['asset_id'])) {
     $stmt = $conn->prepare("
         SELECT a.*, c.category_name, o.office_name, e.name as employee_name
         FROM assets a
-        LEFT JOIN categories c ON c.id = a.category_id
+        LEFT JOIN categories c ON c.id = a.category
         LEFT JOIN offices o ON o.id = a.office_id
-        LEFT JOIN employees e ON e.id = a.employee_id
+        LEFT JOIN employees e ON e.employee_id = a.employee_id
         WHERE a.id = ?
     ");
     

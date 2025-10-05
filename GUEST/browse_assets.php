@@ -79,7 +79,7 @@ $assets_query = "
     FROM assets a
     LEFT JOIN categories c ON c.id = a.category
     LEFT JOIN offices o ON o.id = a.office_id
-    LEFT JOIN employees e ON e.id = a.employee_id
+    LEFT JOIN employees e ON e.employee_id = a.employee_id
     WHERE $where_clause
     ORDER BY a.description ASC
     LIMIT ? OFFSET ?
