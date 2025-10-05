@@ -23,6 +23,11 @@ if (isset($_GET['selected_assets']) && !empty($_GET['selected_assets'])) {
   $selected_assets = array_map('intval', explode(',', $_GET['selected_assets']));
 }
 
+// Get filter parameters
+$filter_type = $_GET['filter_type'] ?? 'all';
+$from_date = $_GET['from_date'] ?? '';
+$to_date = $_GET['to_date'] ?? '';
+
 // Fetch category details
 $category = null;
 $stmt = $conn->prepare("SELECT id, category_name FROM categories WHERE id = ?");
@@ -40,9 +45,13 @@ if (!$category) {
   exit;
 }
 
-// Build filename
+// Build filename with filter info
 $category_name_safe = preg_replace('/[^a-zA-Z0-9_-]/', '_', $category['category_name']);
-$filename = 'category_' . $category_name_safe . '_export_' . date('Ymd_His') . '.csv';
+$filter_suffix = '';
+if ($filter_type !== 'all' && !empty($from_date) && !empty($to_date)) {
+  $filter_suffix = '_' . str_replace(['-', ' '], ['', '_'], $filter_type) . '_' . $from_date . '_to_' . $to_date;
+}
+$filename = 'category_' . $category_name_safe . '_export' . $filter_suffix . '_' . date('Ymd_His') . '.csv';
 
 // Set CSV headers
 header('Content-Type: text/csv; charset=utf-8');
@@ -100,6 +109,14 @@ if (!empty($selected_assets)) {
   $sql .= " AND an.id IN ($placeholders)";
   $params = array_merge($params, $selected_assets);
   $types .= str_repeat('i', count($selected_assets));
+}
+
+// Add date filtering if specified
+if ($filter_type !== 'all' && !empty($from_date) && !empty($to_date)) {
+  $sql .= " AND DATE(an.date_created) >= ? AND DATE(an.date_created) <= ?";
+  $params[] = $from_date;
+  $params[] = $to_date;
+  $types .= 'ss';
 }
 
 $sql .= " ORDER BY an.date_created DESC";

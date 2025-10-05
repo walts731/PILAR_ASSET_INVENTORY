@@ -125,21 +125,23 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
       <?php if ($category): ?>
       <!-- Page Header -->
       <div class="page-header p-3 p-sm-4 d-flex flex-wrap gap-3 align-items-center justify-content-between mb-3">
-        <?php if (!empty($systemLogo)): ?>
-        <img src="<?= htmlspecialchars($systemLogo) ?>" alt="Logo" class="rounded border bg-white p-1" style="height:42px;object-fit:contain;">
-        <?php endif; ?>
-        <div class="d-flex align-items-center gap-3 flex-grow-1 <?= !empty($systemLogo) ? 'justify-content-center' : '' ?>">
+        <div class="d-flex align-items-center gap-3">
+          <?php if (!empty($systemLogo)): ?>
+          <img src="<?= htmlspecialchars($systemLogo) ?>" alt="Logo" class="rounded border bg-white p-1" style="height:42px;object-fit:contain;">
+          <?php endif; ?>
+          <div>
+          <div class="h4 mb-0 title"><?= htmlspecialchars($category['category_name'] ?? 'Category') ?></div>
+          <div class="text-muted small">Category Inventory</div>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
           <div class="rounded-circle d-flex align-items-center justify-content-center bg-white border" style="width:48px;height:48px;">
             <i class="bi bi-tags text-primary fs-4"></i>
           </div>
           <div>
-            <div class="h4 mb-0 title"><?= htmlspecialchars($category['category_name'] ?? 'Category') ?></div>
-            <div class="text-muted small">Category Inventory</div>
+            
           </div>
         </div>
-        <?php if (empty($systemLogo)): ?>
-        <div></div> <!-- Spacer when no logo -->
-        <?php endif; ?>
       </div>
       <?php endif; ?>
 
@@ -147,25 +149,45 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
 
         <?php if (count($an_rows) > 0): ?>
           <div class="card shadow-sm card-hover">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <h5 class="mb-0">
-                <i class="bi bi-list-ul"></i> <?= htmlspecialchars($category['category_name'] ?? 'Unknown Category') ?> Assets
-              </h5>
-              <div class="d-flex gap-2 flex-wrap">
-                <button type="button" id="selectAllBtn" class="btn btn-sm btn-outline-secondary rounded-pill" title="Select/Deselect all items">
-                  <i class="bi bi-check-square me-1"></i> Select All
-                </button>
-                <div class="btn-group" role="group">
-                  <button type="button" id="exportCsvBtn" class="btn btn-sm btn-success rounded-pill" title="Export selected items to CSV">
-                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+            <div class="card-header">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h5 class="mb-0">
+                  <i class="bi bi-list-ul"></i> <?= htmlspecialchars($category['category_name'] ?? 'Unknown Category') ?> Assets
+                </h5>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                  <div class="d-flex align-items-center gap-2">
+                    <label for="categoryDateFilter" class="form-label mb-0 small">Filter:</label>
+                    <select id="categoryDateFilter" class="form-select form-select-sm" style="min-width: 120px;">
+                      <option value="all">All Records</option>
+                      <option value="current_month">Current Month</option>
+                      <option value="current_quarter">Current Quarter</option>
+                      <option value="current_year">Current Year</option>
+                      <option value="last_month">Last Month</option>
+                      <option value="last_quarter">Last Quarter</option>
+                      <option value="last_year">Last Year</option>
+                      <option value="custom">Custom Range</option>
+                    </select>
+                  </div>
+                  <div id="customDateRangeCategory" class="d-flex align-items-center gap-2" style="display: none;">
+                    <input type="date" id="categoryFromDate" class="form-control form-control-sm" />
+                    <span class="small">to</span>
+                    <input type="date" id="categoryToDate" class="form-control form-control-sm" />
+                    <button class="btn btn-sm btn-outline-primary" id="applyCustomFilterCategory" title="Apply Filter">
+                      <i class="bi bi-funnel"></i>
+                    </button>
+                  </div>
+                  <button type="button" id="selectAllBtn" class="btn btn-sm btn-outline-secondary" title="Select/Deselect all items">
+                    <i class="bi bi-check-square me-1"></i> Select All
                   </button>
-                  <button type="button" id="exportPdfBtn" class="btn btn-sm btn-danger rounded-pill" title="Export selected items to PDF">
-                    <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
-                  </button>
+                  <div class="btn-group" role="group">
+                    <button type="button" id="exportCsvBtn" class="btn btn-sm btn-success" title="Export filtered items to CSV">
+                      <i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV
+                    </button>
+                    <button type="button" id="exportPdfBtn" class="btn btn-sm btn-danger" title="Export filtered items to PDF">
+                      <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                    </button>
+                  </div>
                 </div>
-                <button type="button" id="generateReportBtn" class="btn btn-sm btn-primary rounded-pill" title="Generate a report for selected items" disabled>
-                  <i class="bi bi-file-earmark-text me-1"></i> Generate Report (<span id="selectedCount">0</span>)
-                </button>
               </div>
             </div>
             <div class="card-body">
@@ -354,12 +376,21 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
       $('#exportCsvBtn').on('click', function() {
         const checkedBoxes = $('.asset-checkbox-cat:checked');
         const categoryId = <?= $category_id ?>;
+        const filterParams = getCurrentFilterParams();
         
         // Show loading state
         $(this).prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Exporting...');
         
-        // Build URL with selected assets
+        // Build URL with selected assets and filters
         let url = `export_category_csv.php?category=${categoryId}`;
+        
+        // Add filter parameters
+        Object.keys(filterParams).forEach(key => {
+          if (filterParams[key]) {
+            url += `&${key}=${encodeURIComponent(filterParams[key])}`;
+          }
+        });
+        
         if (checkedBoxes.length > 0) {
           const selectedIds = [];
           checkedBoxes.each(function() {
@@ -373,7 +404,7 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
         
         // Reset button after a delay
         setTimeout(() => {
-          $(this).prop('disabled', false).html('<i class="bi bi-file-earmark-spreadsheet"></i> Export CSV');
+          $(this).prop('disabled', false).html('<i class="bi bi-file-earmark-spreadsheet"></i> CSV');
         }, 2000);
       });
 
@@ -381,12 +412,21 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
       $('#exportPdfBtn').on('click', function() {
         const checkedBoxes = $('.asset-checkbox-cat:checked');
         const categoryId = <?= $category_id ?>;
+        const filterParams = getCurrentFilterParams();
         
         // Show loading state
         $(this).prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Exporting...');
         
-        // Build URL with selected assets
+        // Build URL with selected assets and filters
         let url = `export_category_pdf.php?category=${categoryId}`;
+        
+        // Add filter parameters
+        Object.keys(filterParams).forEach(key => {
+          if (filterParams[key]) {
+            url += `&${key}=${encodeURIComponent(filterParams[key])}`;
+          }
+        });
+        
         if (checkedBoxes.length > 0) {
           const selectedIds = [];
           checkedBoxes.each(function() {
@@ -400,9 +440,104 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
         
         // Reset button after a delay
         setTimeout(() => {
-          $(this).prop('disabled', false).html('<i class="bi bi-file-earmark-pdf"></i> Export PDF');
+          $(this).prop('disabled', false).html('<i class="bi bi-file-earmark-pdf"></i> PDF');
         }, 2000);
       });
+
+      // Date filter functionality
+      $('#categoryDateFilter').on('change', function() {
+        const filterType = $(this).val();
+        if (filterType === 'custom') {
+          $('#customDateRangeCategory').show();
+        } else {
+          $('#customDateRangeCategory').hide();
+          if (filterType !== 'all') {
+            applyDateFilter(filterType);
+          } else {
+            // Reset to show all records
+            $('#inventoryTable').DataTable().search('').draw();
+          }
+        }
+      });
+
+      // Apply custom date filter
+      $('#applyCustomFilterCategory').on('click', function() {
+        const fromDate = $('#categoryFromDate').val();
+        const toDate = $('#categoryToDate').val();
+        
+        if (!fromDate || !toDate) {
+          alert('Please select both from and to dates.');
+          return;
+        }
+        
+        if (new Date(fromDate) > new Date(toDate)) {
+          alert('From date cannot be later than to date.');
+          return;
+        }
+        
+        applyDateFilter('custom', fromDate, toDate);
+      });
+
+      // Function to apply date filters
+      function applyDateFilter(filterType, fromDate = null, toDate = null) {
+        const table = $('#inventoryTable').DataTable();
+        
+        // Get date range based on filter type
+        let startDate, endDate;
+        const now = new Date();
+        
+        switch(filterType) {
+          case 'current_month':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            break;
+          case 'current_quarter':
+            const currentQuarter = Math.floor(now.getMonth() / 3);
+            startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
+            endDate = new Date(now.getFullYear(), (currentQuarter + 1) * 3, 0);
+            break;
+          case 'current_year':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date(now.getFullYear(), 11, 31);
+            break;
+          case 'last_month':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+            break;
+          case 'last_quarter':
+            const lastQuarter = Math.floor(now.getMonth() / 3) - 1;
+            const year = lastQuarter < 0 ? now.getFullYear() - 1 : now.getFullYear();
+            const quarter = lastQuarter < 0 ? 3 : lastQuarter;
+            startDate = new Date(year, quarter * 3, 1);
+            endDate = new Date(year, (quarter + 1) * 3, 0);
+            break;
+          case 'last_year':
+            startDate = new Date(now.getFullYear() - 1, 0, 1);
+            endDate = new Date(now.getFullYear() - 1, 11, 31);
+            break;
+          case 'custom':
+            startDate = new Date(fromDate);
+            endDate = new Date(toDate);
+            break;
+        }
+        
+        // Apply filter to DataTable (this is a simple implementation)
+        // For more complex filtering, you might want to reload data from server
+        table.draw();
+      }
+
+      // Get current filter parameters for export
+      function getCurrentFilterParams() {
+        const filterType = $('#categoryDateFilter').val();
+        let params = { filter_type: filterType };
+        
+        if (filterType === 'custom') {
+          params.from_date = $('#categoryFromDate').val();
+          params.to_date = $('#categoryToDate').val();
+        }
+        
+        return params;
+      }
 
       // Initialize count
       updateSelectionCount();

@@ -27,6 +27,11 @@ if (isset($_GET['selected_assets']) && !empty($_GET['selected_assets'])) {
   $selected_assets = array_map('intval', explode(',', $_GET['selected_assets']));
 }
 
+// Get filter parameters
+$filter_type = $_GET['filter_type'] ?? 'all';
+$from_date = $_GET['from_date'] ?? '';
+$to_date = $_GET['to_date'] ?? '';
+
 // Fetch category details
 $category = null;
 $stmt = $conn->prepare("SELECT id, category_name FROM categories WHERE id = ?");
@@ -95,6 +100,14 @@ if (!empty($selected_assets)) {
   $types .= str_repeat('i', count($selected_assets));
 }
 
+// Add date filtering if specified
+if ($filter_type !== 'all' && !empty($from_date) && !empty($to_date)) {
+  $sql .= " AND DATE(an.date_created) >= ? AND DATE(an.date_created) <= ?";
+  $params[] = $from_date;
+  $params[] = $to_date;
+  $types .= 'ss';
+}
+
 $sql .= " ORDER BY an.date_created DESC";
 
 // Execute query
@@ -127,10 +140,27 @@ $filename = 'category_' . $category_name_safe . '_export_' . date('Ymd_His') . '
 
 // Create filter description
 $filter_description = 'Category: ' . htmlspecialchars($category['category_name']);
-if (!empty($selected_assets)) {
-  $filter_description .= ' (Selected Items: ' . count($selected_assets) . ')';
+
+// Add date filter info
+if ($filter_type !== 'all' && !empty($from_date) && !empty($to_date)) {
+  $filter_descriptions = [
+    'current_month' => 'Current Month',
+    'current_quarter' => 'Current Quarter', 
+    'current_year' => 'Current Year',
+    'last_month' => 'Last Month',
+    'last_quarter' => 'Last Quarter',
+    'last_year' => 'Last Year',
+    'custom' => 'Custom Range'
+  ];
+  
+  $filter_name = $filter_descriptions[$filter_type] ?? 'Custom Range';
+  $filter_description .= ' | ' . $filter_name . ' (' . date('M d, Y', strtotime($from_date)) . ' - ' . date('M d, Y', strtotime($to_date)) . ')';
 } else {
-  $filter_description .= ' (All Items)';
+  $filter_description .= ' | All Records';
+}
+
+if (!empty($selected_assets)) {
+  $filter_description .= ' | Selected Items: ' . count($selected_assets);
 }
 
 // Generate HTML for PDF
