@@ -161,7 +161,7 @@ function createItemAssetsDirect($conn, $description, $unit, $unit_cost, $count, 
 
     $stmtIns = $conn->prepare("INSERT INTO assets 
         (asset_name, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, ics_id, asset_new_id, par_id)
-        VALUES (?, ?, 1, ?, 'available', ?, ?, ?, ?, NOW(), ?, '', ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)");
+        VALUES (?, ?, 1, ?, 'pending', ?, ?, ?, ?, NOW(), ?, '', ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)");
 
     $first_inserted_id = null;
     for ($i = 1; $i <= $count; $i++) {

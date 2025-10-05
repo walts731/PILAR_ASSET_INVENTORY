@@ -442,7 +442,7 @@ function transferAssetToOffice($conn, $description, $unit_cost, $quantity, $offi
         $p_description = isset($asset['description']) ? $asset['description'] : $description;
         $p_quantity = $quantity;
         $p_unit = isset($asset['unit']) ? $asset['unit'] : $unit;
-        $p_status = isset($asset['status']) ? $asset['status'] : 'available';
+        $p_status = 'pending'; // Set to pending when ICS form is submitted
         $p_acquisition_date = isset($asset['acquisition_date']) ? $asset['acquisition_date'] : date('Y-m-d');
         $p_office_id = (int)$office_id;
         $p_employee_id = isset($asset['employee_id']) ? (int)$asset['employee_id'] : null; // may be NULL
@@ -534,7 +534,7 @@ function createAssetItems($conn, $asset_id, $office_id, $base_property_no, $coun
     // Prepare insert for new item-level asset
     $stmtIns = $conn->prepare("INSERT INTO assets 
         (asset_name, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, ics_id, asset_new_id)
-        VALUES (?, ?, 1, ?, 'available', ?, ?, ?, ?, NOW(), ?, '', ?, ?, ?, ?, NULL, ?, ?, ?, ?)");
+        VALUES (?, ?, 1, ?, 'pending', ?, ?, ?, ?, NOW(), ?, '', ?, ?, ?, ?, NULL, ?, ?, ?, ?)");
 
     $first_inserted_id = null;
     for ($i = 1; $i <= $count; $i++) {
@@ -607,7 +607,7 @@ function createItemAssetsDirect($conn, $description, $unit, $unit_cost, $count, 
     // Prepare insert for new item-level asset (quantity = 1)
     $stmtIns = $conn->prepare("INSERT INTO assets 
         (asset_name, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, ics_id, asset_new_id)
-        VALUES (?, ?, 1, ?, 'available', ?, ?, ?, ?, NOW(), ?, '', ?, ?, ?, ?, NULL, ?, ?, ?, ?)");
+        VALUES (?, ?, 1, ?, 'pending', ?, ?, ?, ?, NOW(), ?, '', ?, ?, ?, ?, NULL, ?, ?, ?, ?)");
 
     $first_inserted_id = null;
     for ($i = 1; $i <= $count; $i++) {
