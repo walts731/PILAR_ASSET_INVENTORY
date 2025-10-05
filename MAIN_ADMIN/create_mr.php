@@ -409,7 +409,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($asset_id_form) {
         if ($category_id === null) {
             $stmt_update_asset = $conn->prepare("UPDATE assets 
-                SET description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ?, end_user = ?, employee_id = ? 
+                SET description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ?, end_user = ?, employee_id = ?, status = 'serviceable' 
                 WHERE id = ?");
             $stmt_update_asset->bind_param(
                 "ssssssdssii",
@@ -427,7 +427,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             );
         } else {
             $stmt_update_asset = $conn->prepare("UPDATE assets 
-                SET category = ?, description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ?, end_user = ?, employee_id = ? 
+                SET category = ?, description = ?, model = ?, serial_no = ?, code = ?, brand = ?, unit = ?, value = ?, acquisition_date = ?, end_user = ?, employee_id = ?, status = 'serviceable' 
                 WHERE id = ?");
             $stmt_update_asset->bind_param(
                 "issssssdssii",

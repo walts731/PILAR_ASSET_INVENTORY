@@ -278,7 +278,7 @@ $stmt->close();
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Basic Information</h5>
                                 <span class="badge status-badge <?=
-                                                                $asset['status'] === 'available' ? 'bg-success' : ($asset['status'] === 'unserviceable' ? 'bg-danger' : 'bg-warning')
+                                                                $asset['status'] === 'serviceable' ? 'bg-success' : ($asset['status'] === 'unserviceable' ? 'bg-danger' : 'bg-warning')
                                                                 ?>">
                                     <?= ucfirst($asset['status']) ?>
                                 </span>
