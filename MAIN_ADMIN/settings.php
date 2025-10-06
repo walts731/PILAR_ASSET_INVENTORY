@@ -175,52 +175,7 @@ $stmt->close();
                 </div>
             </div>
 
-            <!-- Auto Report Generation Card -->
-            <div class="card shadow-sm mt-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Auto Report Generation Settings</h5>
-                </div>
-                <div class="card-body">
-                    <?php if ($report_saved): ?>
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            Auto report generation settings saved!
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    <?php endif; ?>
-                    <form method="POST">
-                        <div class="mb-3">
-                            <label for="report_frequency" class="form-label">Frequency</label>
-                            <select name="report_frequency" id="report_frequency" class="form-select" onchange="toggleScheduleFields()">
-                                <option value="daily" <?= $report_setting['frequency'] === 'daily' ? 'selected' : '' ?>>Daily</option>
-                                <option value="weekly" <?= $report_setting['frequency'] === 'weekly' ? 'selected' : '' ?>>Weekly</option>
-                                <option value="monthly" <?= $report_setting['frequency'] === 'monthly' ? 'selected' : '' ?>>Monthly</option>
-                            </select>
-
-                        </div>
-
-                        <div class="mb-3" id="weeklyField">
-                            <label>Day of the Week</label>
-                            <select name="day_of_week" class="form-select">
-                                <?php
-                                $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-                                foreach ($days as $day) {
-                                    $selected = ($report_setting['day_of_week'] === $day) ? 'selected' : '';
-                                    echo "<option value='$day' $selected>$day</option>";
-                                }
-                                ?>
-                            </select>
-                        </div>
-
-                        <div class="mb-3" id="monthlyField">
-                            <label>Day of the Month (1–28)</label>
-                            <input type="number" name="day_of_month" class="form-control" min="1" max="28"
-                                value="<?= $report_setting['day_of_month'] ?>">
-                        </div>
-
-                        <button type="submit" class="btn rounded-pill save-btn"><i class="bi bi-save"></i> Save Report Settings</button>
-                    </form>
-                </div>
-            </div>
+           
         </div>
     </div>
 
