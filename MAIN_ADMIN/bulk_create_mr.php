@@ -307,7 +307,7 @@ $tagHelper = new TagFormatHelper($conn);
                                            name="assets[${index}][property_no]" 
                                            placeholder="Auto-generated" 
                                            readonly>
-                                    <label for="propertyNo_${index}">Property Number</label>
+                                    <label for="propertyNo_${index}">Property Number <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -317,7 +317,7 @@ $tagHelper = new TagFormatHelper($conn);
                                            name="assets[${index}][inventory_tag]" 
                                            placeholder="Auto-generated" 
                                            readonly>
-                                    <label for="inventoryTag_${index}">Inventory Tag</label>
+                                    <label for="inventoryTag_${index}">Inventory Tag <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -327,7 +327,7 @@ $tagHelper = new TagFormatHelper($conn);
                                            name="assets[${index}][asset_code]" 
                                            placeholder="Auto-generated" 
                                            readonly>
-                                    <label for="assetCode_${index}">Asset Code</label>
+                                    <label for="assetCode_${index}">Asset Code <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                         </div>
@@ -340,7 +340,7 @@ $tagHelper = new TagFormatHelper($conn);
                                            name="assets[${index}][serial_no]" 
                                            placeholder="Auto-generated" 
                                            readonly>
-                                    <label for="serialNo_${index}">Serial Number</label>
+                                    <label for="serialNo_${index}">Serial Number <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -351,6 +351,11 @@ $tagHelper = new TagFormatHelper($conn);
                                            placeholder="Model">
                                     <label for="model_${index}">Model</label>
                                 </div>
+                                <div class="text-end mb-3">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary applyAllBtn" data-field="model" data-index="${index}">
+                                        <i class="bi bi-arrow-right-square me-1"></i>Apply to all
+                                    </button>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-floating mb-3">
@@ -359,6 +364,11 @@ $tagHelper = new TagFormatHelper($conn);
                                            name="assets[${index}][brand]" 
                                            placeholder="Brand">
                                     <label for="brand_${index}">Brand</label>
+                                </div>
+                                <div class="text-end mb-3">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary applyAllBtn" data-field="brand" data-index="${index}">
+                                        <i class="bi bi-arrow-right-square me-1"></i>Apply to all
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -370,7 +380,12 @@ $tagHelper = new TagFormatHelper($conn);
                                            id="endUser_${index}" 
                                            name="assets[${index}][end_user]" 
                                            placeholder="End User">
-                                    <label for="endUser_${index}">End User</label>
+                                    <label for="endUser_${index}">End User <span class="text-danger">*</span></label>
+                                </div>
+                                <div class="text-end mb-3">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary applyAllBtn" data-field="endUser" data-index="${index}">
+                                        <i class="bi bi-arrow-right-square me-1"></i>Apply to all
+                                    </button>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -381,6 +396,11 @@ $tagHelper = new TagFormatHelper($conn);
                                            name="assets[${index}][image]" 
                                            accept="image/*">
                                     <div class="form-text">Upload an image for this asset (optional)</div>
+                                    <div class="text-end mt-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary applyAllBtn" data-field="image" data-index="${index}">
+                                            <i class="bi bi-arrow-right-square me-1"></i>Apply to all
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -458,6 +478,58 @@ $tagHelper = new TagFormatHelper($conn);
                 }
             });
         }
+
+        // Apply-to-all handler for Model, Brand, End User
+        $(document).on('click', '.applyAllBtn', function() {
+            const field = $(this).data('field'); // 'model' | 'brand' | 'endUser' | 'image'
+            const index = $(this).data('index');
+
+            // Map field -> input ID prefix in each row
+            const idPrefix = field === 'endUser' ? 'endUser' : field; // model, brand, endUser, image
+
+            // Special handling for image file inputs
+            if (field === 'image') {
+                const $sourceInput = $(`#${idPrefix}_${index}`);
+                const files = $sourceInput[0]?.files;
+                if (!files || files.length === 0) {
+                    alert('Please choose an image in this row first before applying to all.');
+                    return;
+                }
+                const file = files[0];
+                if (!window.DataTransfer) {
+                    alert('Your browser does not support applying files to multiple inputs.');
+                    return;
+                }
+                if (!confirm('Apply this image to all selected assets?')) return;
+
+                for (let i = 0; i < selectedAssets.length; i++) {
+                    const inputEl = document.getElementById(`${idPrefix}_${i}`);
+                    if (inputEl) {
+                        const dt = new DataTransfer();
+                        dt.items.add(file);
+                        inputEl.files = dt.files;
+                        // brief highlight effect
+                        inputEl.classList.add('border-success');
+                        setTimeout(() => inputEl.classList.remove('border-success'), 600);
+                    }
+                }
+                return;
+            }
+
+            // Text inputs (model, brand, endUser)
+            const sourceVal = $(`#${idPrefix}_${index}`).val();
+            if (typeof sourceVal === 'undefined') return;
+            if (!confirm(`Apply this ${field === 'endUser' ? 'End User' : field.charAt(0).toUpperCase() + field.slice(1)} value to all selected assets?`)) return;
+
+            for (let i = 0; i < selectedAssets.length; i++) {
+                const $input = $(`#${idPrefix}_${i}`);
+                if ($input.length) {
+                    $input.val(sourceVal);
+                    $input.addClass('border-success');
+                    setTimeout(() => $input.removeClass('border-success'), 600);
+                }
+            }
+        });
 
         // Form submission
         $('#bulkCreateForm').on('submit', function(e) {
