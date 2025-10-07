@@ -51,6 +51,12 @@ if (isset($_GET['asset_id']) && is_numeric($_GET['asset_id'])) {
     $stmt_preselect->close();
 }
 
+// Include temp items helper functions
+include 'load_temp_iirup_items.php';
+
+// Fetch temporary IIRUP items using helper function
+$temp_items = getTempIIRUPItems($conn);
+
 // Fetch asset data for datalist and JS - only assets where red_tagged = 0 and check for red tag status
 $assets_data = [];
 $sql_assets = "SELECT a.id, a.description, a.quantity, a.value, a.office_id, a.inventory_tag, o.office_name,
@@ -83,6 +89,22 @@ if ($result_assets && $result_assets->num_rows > 0) {
     <?php $savedCount = isset($_GET['count']) ? (int)$_GET['count'] : 0; ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <strong>Success!</strong> IIRUP form and <?= htmlspecialchars((string)$savedCount) ?> item(s) were saved successfully.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
+
+<?php if (!empty($temp_items)): ?>
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <strong><i class="bi bi-info-circle"></i> Temporary Items Ready!</strong> 
+        You have <?= count($temp_items) ?> item(s) ready to be loaded into this IIRUP form.
+        <div class="mt-2">
+            <button type="button" class="btn btn-sm btn-primary me-2" onclick="loadTempItems()">
+                <i class="bi bi-download"></i> Load Items
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearTempItems()">
+                <i class="bi bi-trash"></i> Clear All
+            </button>
+        </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <?php endif; ?>
@@ -522,121 +544,7 @@ if ($result_assets && $result_assets->num_rows > 0) {
         </tr>
     </thead>
     <tbody>
-        <?php for ($i = 0; $i < 1; $i++): ?>
-            <?php 
-                // Pre-populate first row if asset is selected from QR scan
-                $is_first_row = ($i === 0);
-                $preselected_description = ($is_first_row && $preselected_asset) ? $preselected_asset['description'] : '';
-                $preselected_asset_id = ($is_first_row && $preselected_asset) ? $preselected_asset['id'] : '';
-                $preselected_property_no = ($is_first_row && $preselected_asset) ? ($preselected_asset['inventory_tag'] ?? '') : '';
-                $preselected_unit_cost = ($is_first_row && $preselected_asset) ? $preselected_asset['value'] : '';
-                $preselected_office = ($is_first_row && $preselected_asset) ? $preselected_asset['office_name'] : '';
-                $show_remove_btn = ($is_first_row && $preselected_asset) ? 'inline-block' : 'none';
-            ?>
-            <tr class="iirup-row">
-                <td data-label="Date Acquired">
-                    <input type="date" name="date_acquired[]" value="<?= date('Y-m-d'); ?>" 
-                           title="Date when the asset was originally acquired by the organization">
-                </td>
-                <td data-label="Particulars/Articles">
-                    <div class="d-flex align-items-center">
-                        <input type="text" name="particulars[]" list="asset_descriptions" class="particulars flex-grow-1" 
-                               value="<?= htmlspecialchars($preselected_description) ?>" placeholder="Select or type asset description"
-                               title="Description of the asset/item being inspected for disposal">
-                        <button type="button" class="btn btn-sm btn-danger ms-1 remove-asset" 
-                                style="display: <?= $show_remove_btn ?>;" title="Remove Asset">
-                            <i class="bi bi-x"></i>
-                        </button>
-                    </div>
-                    <input type="hidden" name="asset_id[]" class="asset_id" value="<?= htmlspecialchars($preselected_asset_id) ?>">
-                </td>
-                <td data-label="Property No">
-                    <input type="text" name="property_no[]" value="<?= htmlspecialchars($preselected_property_no) ?>" placeholder="Property Number"
-                           title="Official property number or inventory tag assigned to the asset">
-                </td>
-                <td data-label="Quantity">
-                    <input type="number" name="qty[]" min="1" class="qty" max="1" value="<?= $preselected_asset ? '1' : '' ?>" placeholder="Qty"
-                           title="Number of units of this asset being inspected">
-                </td>
-                <td data-label="Unit Cost">
-                    <input type="number" step="0.01" name="unit_cost[]" min="1" class="unit_cost" 
-                           value="<?= htmlspecialchars($preselected_unit_cost) ?>" placeholder="0.00"
-                           title="Original purchase price per unit of the asset">
-                </td>
-                <td data-label="Total Cost">
-                    <input type="number" step="0.01" name="total_cost[]" min="1" readonly 
-                           value="<?= $preselected_unit_cost ? $preselected_unit_cost : '' ?>" placeholder="Auto-calculated"
-                           title="Automatically calculated: Quantity × Unit Cost">
-                </td>
-                <td data-label="Accumulated Depreciation">
-                    <input type="number" step="0.01" name="accumulated_depreciation[]" min="1" placeholder="0.00"
-                           title="Total depreciation accumulated over the asset's useful life">
-                </td>
-                <td data-label="Accumulated Impairment">
-                    <input type="number" step="0.01" name="accumulated_impairment_losses[]" min="1" placeholder="0.00"
-                           title="Total impairment losses recognized for this asset">
-                </td>
-                <td data-label="Carrying Amount">
-                    <input type="number" step="0.01" name="carrying_amount[]" min="1" placeholder="0.00"
-                           title="Current book value: Cost - Depreciation - Impairment">
-                </td>
-                <td data-label="Remarks">
-                    <select name="remarks[]" class="form-select" title="Current condition status of the asset">
-                        <option value="Unserviceable" selected>Unserviceable</option>
-                    </select>
-                </td>
-                <td data-label="Sale">
-                    <input type="text" name="sale[]" placeholder="Sale info"
-                           title="Details if asset is to be sold (buyer, price, etc.)">
-                </td>
-                <td data-label="Transfer">
-                    <input type="text" name="transfer[]" placeholder="Transfer info"
-                           title="Details if asset is to be transferred (recipient, location)">
-                </td>
-                <td data-label="Destruction">
-                    <input type="text" name="destruction[]" placeholder="Destruction info"
-                           title="Details if asset is to be destroyed (method, date, reason)">
-                </td>
-                <td data-label="Others">
-                    <input type="text" name="others[]" placeholder="Other disposal"
-                           title="Other disposal methods not covered above">
-                </td>
-                <td data-label="Total">
-                    <input type="number" step="0.01" name="total[]" min="1" placeholder="0.00"
-                           title="Total disposal value or cost">
-                </td>
-                <td data-label="Appraised Value">
-                    <input type="number" step="0.01" name="appraised_value[]" min="1" placeholder="0.00"
-                           title="Current market value as determined by appraisal">
-                </td>
-                <td data-label="OR Number">
-                    <input type="text" name="or_no[]" placeholder="OR Number"
-                           title="Official Receipt number for any sales transaction">
-                </td>
-                <td data-label="Amount">
-                    <input type="number" step="0.01" name="amount[]" min="1" placeholder="0.00"
-                           title="Amount received from sale or disposal">
-                </td>
-                <td data-label="Department/Office">
-                    <input type="text" name="dept_office[]" class="dept_office" value="<?= htmlspecialchars($preselected_office) ?>" readonly placeholder="Auto-filled"
-                           title="Department/Office responsible for this asset">
-                </td>
-                <td data-label="Code">
-                    <input type="text" name="code[]" placeholder="Code"
-                           title="Internal classification or reference code">
-                </td>
-                <td data-label="Date Received">
-                    <input type="date" name="date_received[]" value="<?= date('Y-m-d'); ?>"
-                           title="Date when IIRUP form was received/processed">
-                </td>
-                <td data-label="Actions">
-                    <button type="button" class="btn btn-sm btn-info edit-row-btn" 
-                            title="Edit row details in modal">
-                        <i class="bi bi-pencil-square"></i>
-                    </button>
-                </td>
-            </tr>
-        <?php endfor; ?>
+        <?php echo generateIIRUPTableRows($preselected_asset, $temp_items); ?>
     </tbody>
 </table>
 
@@ -1334,6 +1242,15 @@ if ($result_footer && $result_footer->num_rows > 0) {
         setTimeout(updateInputTitles, 100);
     <?php endif; ?>
 
+    // Add temp items to selected set
+    <?php if (!empty($temp_items)): ?>
+        <?php foreach ($temp_items as $temp_item): ?>
+            selectedAssetIds.add('<?= htmlspecialchars($temp_item['asset_id']) ?>');
+        <?php endforeach; ?>
+        updateDatalist();
+        console.log('Added temp items to selectedAssetIds:', <?= json_encode(array_column($temp_items, 'asset_id')) ?>);
+    <?php endif; ?>
+
     // Modal functionality
     let currentEditingRow = null;
 
@@ -1522,6 +1439,38 @@ if ($result_footer && $result_footer->num_rows > 0) {
             } else {
                 removeBtn.style.display = 'none';
             }
+        }
+    }
+
+    // Temp Items Management Functions
+    function loadTempItems() {
+        // Since temp items are already displayed in the table, 
+        // this function can be used to reload the page to refresh temp items
+        alert('Temp items are already loaded in the form. The table shows all temporary items from the database.');
+    }
+    
+    function clearTempItems() {
+        if (confirm('Are you sure you want to clear all temporary items? This action cannot be undone.')) {
+            fetch('clear_temp_iirup.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Cleared ' + data.count + ' temporary items.');
+                    location.reload(); // Reload to update the display
+                } else {
+                    alert('Error clearing temporary items: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error clearing temporary items.');
+            });
         }
     }
 </script>
