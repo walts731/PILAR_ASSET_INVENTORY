@@ -173,7 +173,8 @@ try {
                 'serial_no' => [$serial_no, 's'],
                 'code' => [$asset_code, 's'],
                 'end_user' => [$end_user, 's'],
-                'image' => [$image_filename, 's']
+                'image' => [$image_filename, 's'],
+                'supplier' => [$supplier, 's']
             ];
             
             foreach ($optional_columns as $column => $data) {
