@@ -87,26 +87,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception('Failed to update role: ' . $conn->error);
                 }
                 
-                // Get role name for permission updates
-                $role_stmt = $conn->prepare("SELECT name FROM roles WHERE id = ?");
-                $role_stmt->bind_param('i', $role_id);
-                $role_stmt->execute();
-                $role_result = $role_stmt->get_result();
-                $role_data = $role_result->fetch_assoc();
-                $role_name = $role_data['name'];
-                
-                // Update role permissions
-                $delete_stmt = $conn->prepare("DELETE FROM role_permissions WHERE role = ?");
-                $delete_stmt->bind_param('s', $role_name);
+                // Delete existing role permissions
+                $delete_stmt = $conn->prepare("DELETE FROM role_permissions WHERE role_id = ?");
+                $delete_stmt->bind_param('i', $role_id);
                 $delete_stmt->execute();
                 
                 if (!empty($_POST['permissions']) && is_array($_POST['permissions'])) {
-                    $insert_stmt = $conn->prepare("INSERT INTO role_permissions (role, permission_id) VALUES (?, ?)");
+                    $insert_stmt = $conn->prepare("INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)");
                     
                     foreach ($_POST['permissions'] as $permission_id) {
                         $permission_id = (int)$permission_id;
                         if ($permission_id > 0) {
-                            $insert_stmt->bind_param('si', $role_name, $permission_id);
+                            $insert_stmt->bind_param('ii', $role_id, $permission_id);
                             $insert_stmt->execute();
                         }
                     }
