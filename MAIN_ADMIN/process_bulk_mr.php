@@ -142,9 +142,9 @@ try {
             $mr_stmt->close();
 
             // Check which columns exist in assets table before updating
-            $columns_to_update = ['property_no', 'inventory_tag', 'employee_id', 'office_id'];
-            $values_to_bind = [$property_no, $inventory_tag, $accountable_person, $office];
-            $bind_types = 'ssii';
+            $columns_to_update = ['property_no', 'inventory_tag', 'employee_id', 'office_id', 'status'];
+            $values_to_bind = [$property_no, $inventory_tag, $accountable_person, $office, 'serviceable'];
+            $bind_types = 'ssiis';
             
             // Check if optional columns exist
             $optional_columns = [
