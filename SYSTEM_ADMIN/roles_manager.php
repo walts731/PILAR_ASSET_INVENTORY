@@ -73,10 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Get all roles with their permissions
 $roles = [];
 $result = $conn->query("
-    SELECT r.*, GROUP_CONCAT(p.name) as permission_names, 
-           GROUP_CONCAT(p.id) as permission_ids
+    SELECT r.*, 
+           GROUP_CONCAT(DISTINCT p.name) as permission_names, 
+           GROUP_CONCAT(DISTINCT p.id) as permission_ids,
+           (SELECT COUNT(*) FROM users u WHERE u.role = r.name) as user_count
     FROM roles r
-    LEFT JOIN role_permissions rp ON r.name = rp.role
+    LEFT JOIN role_permissions rp ON r.id = rp.role_id
     LEFT JOIN permissions p ON rp.permission_id = p.id
     GROUP BY r.id
     ORDER BY r.position DESC, r.name ASC
