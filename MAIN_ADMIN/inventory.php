@@ -471,6 +471,7 @@ $stmt->close();
                           class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn"
                           data-source="assets_new"
                           data-id="<?= (int)$row['an_id'] ?>"
+                          data-can-delete="<?= (empty($row['ics_no']) && empty($row['par_no'])) ? '1' : '0' ?>"
                           data-bs-toggle="modal"
                           data-bs-target="#viewAssetModal">
                           <i class="bi bi-eye"></i>View
@@ -1221,6 +1222,7 @@ echo $displayNo;
       button.addEventListener('click', function() {
         const assetId = this.getAttribute('data-id');
         const source = this.getAttribute('data-source') || 'assets';
+        const canDelete = this.getAttribute('data-can-delete') === '1';
 
         const url = source === 'assets_new' ?
           `get_assets_new_details.php?id=${assetId}` :
@@ -1333,6 +1335,27 @@ echo $displayNo;
               } else {
                 items.forEach(it => {
                   const tr = document.createElement('tr');
+                  // Base action buttons (always visible)
+                  const viewBtn = `
+                      <a class="btn btn-sm btn-outline-info" href="view_asset_details.php?id=${it.item_id}" target="_blank" title="View Full Details">
+                        <i class=\"bi bi-eye\"></i>
+                      </a>`;
+                  const tagBtn = `
+                      <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="${(it.property_no && it.property_no.trim()) ? 'Edit Property Tag' : 'Create Property Tag'}">
+                        <i class=\"bi bi-tag\"></i>
+                      </a>`;
+                  const deleteBtn = canDelete ? `
+                      <button type="button" class="btn btn-sm btn-outline-danger deleteIndividualAssetBtn" 
+                        data-id="${it.item_id}" 
+                        data-description="${data.description || ''}" 
+                        data-property-no="${it.property_no || 'N/A'}"
+                        data-inventory-tag="${it.inventory_tag || 'N/A'}"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#deleteIndividualAssetModal"
+                        title="Delete Individual Asset">
+                        <i class=\"bi bi-trash\"></i>
+                      </button>` : '';
+
                   tr.innerHTML = `
                     <td>${it.property_no ?? ''}</td>
                     <td>${it.inventory_tag ?? ''}</td>
@@ -1340,24 +1363,9 @@ echo $displayNo;
                     <td>${it.status ?? ''}</td>
                     <td>${it.date_acquired ? new Date(it.date_acquired).toLocaleDateString('en-US') : ''}</td>
                     <td class="text-nowrap d-flex gap-1">
-                      <a class="btn btn-sm btn-outline-info" href="view_asset_details.php?id=${it.item_id}" target="_blank" title="View Full Details">
-                        <i class="bi bi-eye"></i>
-                      </a>
-                      <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="${(it.property_no && it.property_no.trim()) ? 'Edit Property Tag' : 'Create Property Tag'}">
-                        <i class="bi bi-tag"></i>
-                      </a>
-                      ${(!data.ics_no && !data.par_no) ? `
-                        <button type="button" class="btn btn-sm btn-outline-danger deleteIndividualAssetBtn" 
-                          data-id="${it.item_id}" 
-                          data-description="${data.description || ''}" 
-                          data-property-no="${it.property_no || 'N/A'}"
-                          data-inventory-tag="${it.inventory_tag || 'N/A'}"
-                          data-bs-toggle="modal" 
-                          data-bs-target="#deleteIndividualAssetModal"
-                          title="Delete Individual Asset">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      ` : ''}
+                      ${viewBtn}
+                      ${tagBtn}
+                      ${deleteBtn}
                     </td>
                   `;
                   itemsBody.appendChild(tr);
