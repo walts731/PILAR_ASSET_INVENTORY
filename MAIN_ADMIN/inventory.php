@@ -725,11 +725,22 @@ $stmt->close();
         <div class="card shadow-sm">
           <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="mb-0">Assets Without Inventory Tag</h5>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-outline-primary btn-sm" id="selectAllNoPropertyBtn">
+                <i class="bi bi-check-square me-1"></i>Select All
+              </button>
+              <button type="button" class="btn btn-primary btn-sm" id="bulkCreatePropertyTagBtn" disabled>
+                <i class="bi bi-tags me-1"></i>Bulk Create Property Tags (<span id="selectedCount">0</span>)
+              </button>
+            </div>
           </div>
           <div class="card-body table-responsive">
             <table id="noPropertyTable" class="table table-striped table-hover align-middle">
               <thead class="table-light">
                 <tr>
+                  <th>
+                    <input type="checkbox" class="form-check-input" id="selectAllCheckbox">
+                  </th>
                   <th>ICS/PAR No.</th>
                   <th>Description</th>
                   <th>Category</th>
@@ -742,6 +753,16 @@ $stmt->close();
               <tbody>
                 <?php while ($row = $npResult->fetch_assoc()): ?>
                   <tr>
+                    <td>
+                      <input type="checkbox" class="form-check-input asset-checkbox" 
+                             value="<?= $row['id'] ?>"
+                             data-description="<?= htmlspecialchars($row['description']) ?>"
+                             data-category="<?= htmlspecialchars($row['category_name']) ?>"
+                             data-value="<?= $row['value'] ?>"
+                             data-quantity="<?= $row['quantity'] ?>"
+                             data-unit="<?= htmlspecialchars($row['unit']) ?>"
+                             data-category-id="<?= $row['category'] ?>">
+                    </td>
                     <td>
                     <?php
 $displayNo = 'N/A';
@@ -2419,6 +2440,77 @@ document.querySelectorAll('.viewLifecycleBtn').forEach(btn => {
         console.error('Lifecycle load error:', err);
       });
   });
+});
+
+// Bulk Property Tag Creation JavaScript
+$(document).ready(function() {
+  // Handle select all checkbox
+  $('#selectAllCheckbox').on('change', function() {
+    const isChecked = $(this).is(':checked');
+    $('.asset-checkbox').prop('checked', isChecked);
+    updateSelectedCount();
+  });
+
+  // Handle individual checkboxes
+  $(document).on('change', '.asset-checkbox', function() {
+    updateSelectedCount();
+    
+    // Update select all checkbox state
+    const totalCheckboxes = $('.asset-checkbox').length;
+    const checkedCheckboxes = $('.asset-checkbox:checked').length;
+    
+    if (checkedCheckboxes === 0) {
+      $('#selectAllCheckbox').prop('indeterminate', false).prop('checked', false);
+    } else if (checkedCheckboxes === totalCheckboxes) {
+      $('#selectAllCheckbox').prop('indeterminate', false).prop('checked', true);
+    } else {
+      $('#selectAllCheckbox').prop('indeterminate', true);
+    }
+  });
+
+  // Handle Select All button
+  $('#selectAllNoPropertyBtn').on('click', function() {
+    const allChecked = $('.asset-checkbox:checked').length === $('.asset-checkbox').length;
+    $('.asset-checkbox').prop('checked', !allChecked);
+    $('#selectAllCheckbox').prop('checked', !allChecked).prop('indeterminate', false);
+    updateSelectedCount();
+  });
+
+  // Handle Bulk Create Property Tags button
+  $('#bulkCreatePropertyTagBtn').on('click', function() {
+    const selectedAssets = [];
+    $('.asset-checkbox:checked').each(function() {
+      const checkbox = $(this);
+      selectedAssets.push({
+        id: checkbox.val(),
+        description: checkbox.data('description'),
+        category: checkbox.data('category'),
+        categoryId: checkbox.data('category-id'),
+        value: checkbox.data('value'),
+        quantity: checkbox.data('quantity'),
+        unit: checkbox.data('unit')
+      });
+    });
+
+    if (selectedAssets.length === 0) {
+      alert('Please select at least one asset to create property tags.');
+      return;
+    }
+
+    // Store selected assets in sessionStorage and redirect
+    sessionStorage.setItem('selectedAssets', JSON.stringify(selectedAssets));
+    window.location.href = 'bulk_create_mr.php';
+  });
+
+  function updateSelectedCount() {
+    const count = $('.asset-checkbox:checked').length;
+    $('#selectedCount').text(count);
+    $('#bulkCreatePropertyTagBtn').prop('disabled', count === 0);
+    
+    // Update button text
+    const btnText = count === 0 ? 'Bulk Create Property Tags' : `Bulk Create Property Tags (${count})`;
+    $('#bulkCreatePropertyTagBtn').html('<i class="bi bi-tags me-1"></i>' + btnText.replace(/\(\d+\)/, `(<span id="selectedCount">${count}</span>)`));
+  }
 });
 
 
