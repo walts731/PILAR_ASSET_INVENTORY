@@ -72,5 +72,62 @@
   </div>
 <?php endif; ?>
 
+<!-- CSV Import Messages -->
+<?php if (isset($_GET['import'])): ?>
+  <?php if ($_GET['import'] === 'success'): ?>
+    <?php 
+      $success_count = isset($_GET['ok']) ? (int)$_GET['ok'] : 0;
+      $failed_count = isset($_GET['fail']) ? (int)$_GET['fail'] : 0;
+    ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="bi bi-check-circle-fill me-2"></i>
+      <strong>Import Successful!</strong> 
+      <?= $success_count ?> asset<?= $success_count !== 1 ? 's' : '' ?> imported successfully.
+      <?php if ($failed_count > 0): ?>
+        <br><small class="text-muted"><?= $failed_count ?> row<?= $failed_count !== 1 ? 's' : '' ?> were skipped due to errors.</small>
+      <?php endif; ?>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php elseif ($_GET['import'] === 'partial'): ?>
+    <?php 
+      $success_count = isset($_GET['ok']) ? (int)$_GET['ok'] : 0;
+      $failed_count = isset($_GET['fail']) ? (int)$_GET['fail'] : 0;
+      $error_details = isset($_GET['errors']) ? htmlspecialchars(urldecode($_GET['errors'])) : '';
+    ?>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <strong>Partial Import Success!</strong> 
+      <?= $success_count ?> asset<?= $success_count !== 1 ? 's' : '' ?> imported successfully, but <?= $failed_count ?> row<?= $failed_count !== 1 ? 's' : '' ?> failed.
+      <?php if ($error_details): ?>
+        <br><small class="text-muted"><strong>Errors:</strong> <?= $error_details ?></small>
+      <?php endif; ?>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php elseif ($_GET['import'] === 'failed'): ?>
+    <?php 
+      $failed_count = isset($_GET['fail']) ? (int)$_GET['fail'] : 0;
+      $error_details = isset($_GET['errors']) ? htmlspecialchars(urldecode($_GET['errors'])) : '';
+    ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-x-circle-fill me-2"></i>
+      <strong>Import Failed!</strong> 
+      No assets were imported. <?= $failed_count ?> row<?= $failed_count !== 1 ? 's' : '' ?> failed to process.
+      <?php if ($error_details): ?>
+        <br><small><strong>Errors:</strong> <?= $error_details ?></small>
+      <?php endif; ?>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php elseif ($_GET['import'] === 'error'): ?>
+    <?php $error_message = isset($_GET['message']) ? htmlspecialchars(urldecode($_GET['message'])) : 'Unknown error occurred.'; ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-x-circle-fill me-2"></i>
+      <strong>Import Error!</strong> 
+      <?= $error_message ?>
+      <br><small class="text-muted">Please check your file format and try again.</small>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php endif; ?>
+<?php endif; ?>
+
 
 
