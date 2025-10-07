@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../connect.php';
 session_start();
 
@@ -475,7 +475,6 @@ $stmt->close();
                           data-bs-target="#viewAssetModal">
                           <i class="bi bi-eye"></i>View
                         </button>
-                        
                       </td>
                     </tr>
                   <?php endwhile; ?>
@@ -725,11 +724,22 @@ $stmt->close();
         <div class="card shadow-sm">
           <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="mb-0">Assets Without Inventory Tag</h5>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-outline-primary btn-sm" id="selectAllNoPropertyBtn">
+                <i class="bi bi-check-square me-1"></i>Select All
+              </button>
+              <button type="button" class="btn btn-primary btn-sm" id="bulkCreatePropertyTagBtn" disabled>
+                <i class="bi bi-tags me-1"></i>Bulk Create Property Tags (<span id="selectedCount">0</span>)
+              </button>
+            </div>
           </div>
           <div class="card-body table-responsive">
             <table id="noPropertyTable" class="table table-striped table-hover align-middle">
               <thead class="table-light">
                 <tr>
+                  <th>
+                    <input type="checkbox" class="form-check-input" id="selectAllCheckbox">
+                  </th>
                   <th>ICS/PAR No.</th>
                   <th>Description</th>
                   <th>Category</th>
@@ -742,6 +752,16 @@ $stmt->close();
               <tbody>
                 <?php while ($row = $npResult->fetch_assoc()): ?>
                   <tr>
+                    <td>
+                      <input type="checkbox" class="form-check-input asset-checkbox" 
+                             value="<?= $row['id'] ?>"
+                             data-description="<?= htmlspecialchars($row['description']) ?>"
+                             data-category="<?= htmlspecialchars($row['category_name']) ?>"
+                             data-value="<?= $row['value'] ?>"
+                             data-quantity="<?= $row['quantity'] ?>"
+                             data-unit="<?= htmlspecialchars($row['unit']) ?>"
+                             data-category-id="<?= $row['category'] ?>">
+                    </td>
                     <td>
                     <?php
 $displayNo = 'N/A';
@@ -766,6 +786,10 @@ echo $displayNo;
                         <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetNoTagBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal">
                           <i class="bi bi-eye"></i>
                         </button>
+                        <?php 
+                        // Only show delete button if asset has no ICS ID and no PAR ID
+                        if (empty($row['ics_id']) && empty($row['par_id'])): 
+                        ?>
                         <button type="button" class="btn btn-sm btn-outline-danger rounded-pill deleteNoPropertyTagBtn"
                           data-id="<?= (int)$row['id'] ?>"
                           data-name="<?= htmlspecialchars($row['description']) ?>"
@@ -778,6 +802,9 @@ echo $displayNo;
                           data-bs-target="#deleteNoPropertyTagModal" title="Delete Asset">
                           <i class="bi bi-trash"></i>
                         </button>
+                        <?php else: ?>
+                        
+                        <?php endif; ?>
                       </div>
                     </td>
                   </tr>
@@ -1160,6 +1187,7 @@ echo $displayNo;
   <?php include 'modals/delete_consumable_modal.php'; ?>
   <?php include 'modals/update_asset_modal.php'; ?>
   <?php include 'modals/delete_asset_modal.php'; ?>
+  <?php include 'modals/delete_individual_asset_modal.php'; ?>
   <?php include 'modals/delete_no_property_tag_modal.php'; ?>
   <?php include 'modals/add_asset_modal.php'; ?>
   <?php include 'modals/manage_categories_modal.php'; ?>
@@ -1318,6 +1346,18 @@ echo $displayNo;
                       <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="${(it.property_no && it.property_no.trim()) ? 'Edit Property Tag' : 'Create Property Tag'}">
                         <i class="bi bi-tag"></i>
                       </a>
+                      ${(!data.ics_no && !data.par_no) ? `
+                        <button type="button" class="btn btn-sm btn-outline-danger deleteIndividualAssetBtn" 
+                          data-id="${it.item_id}" 
+                          data-description="${data.description || ''}" 
+                          data-property-no="${it.property_no || 'N/A'}"
+                          data-inventory-tag="${it.inventory_tag || 'N/A'}"
+                          data-bs-toggle="modal" 
+                          data-bs-target="#deleteIndividualAssetModal"
+                          title="Delete Individual Asset">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      ` : ''}
                     </td>
                   `;
                   itemsBody.appendChild(tr);
@@ -2411,6 +2451,100 @@ document.querySelectorAll('.viewLifecycleBtn').forEach(btn => {
         if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Failed to load life cycle.</td></tr>`;
         console.error('Lifecycle load error:', err);
       });
+  });
+});
+
+// Bulk Property Tag Creation JavaScript
+$(document).ready(function() {
+  // Handle select all checkbox
+  $('#selectAllCheckbox').on('change', function() {
+    const isChecked = $(this).is(':checked');
+    $('.asset-checkbox').prop('checked', isChecked);
+    updateSelectedCount();
+  });
+
+  // Handle individual checkboxes
+  $(document).on('change', '.asset-checkbox', function() {
+    updateSelectedCount();
+    
+    // Update select all checkbox state
+    const totalCheckboxes = $('.asset-checkbox').length;
+    const checkedCheckboxes = $('.asset-checkbox:checked').length;
+    
+    if (checkedCheckboxes === 0) {
+      $('#selectAllCheckbox').prop('indeterminate', false).prop('checked', false);
+    } else if (checkedCheckboxes === totalCheckboxes) {
+      $('#selectAllCheckbox').prop('indeterminate', false).prop('checked', true);
+    } else {
+      $('#selectAllCheckbox').prop('indeterminate', true);
+    }
+  });
+
+  // Handle Select All button
+  $('#selectAllNoPropertyBtn').on('click', function() {
+    const allChecked = $('.asset-checkbox:checked').length === $('.asset-checkbox').length;
+    $('.asset-checkbox').prop('checked', !allChecked);
+    $('#selectAllCheckbox').prop('checked', !allChecked).prop('indeterminate', false);
+    updateSelectedCount();
+  });
+
+  // Handle Bulk Create Property Tags button
+  $('#bulkCreatePropertyTagBtn').on('click', function() {
+    const selectedAssets = [];
+    $('.asset-checkbox:checked').each(function() {
+      const checkbox = $(this);
+      selectedAssets.push({
+        id: checkbox.val(),
+        description: checkbox.data('description'),
+        category: checkbox.data('category'),
+        categoryId: checkbox.data('category-id'),
+        value: checkbox.data('value'),
+        quantity: checkbox.data('quantity'),
+        unit: checkbox.data('unit')
+      });
+    });
+
+    if (selectedAssets.length === 0) {
+      alert('Please select at least one asset to create property tags.');
+      return;
+    }
+
+    // Store selected assets in sessionStorage and redirect
+    sessionStorage.setItem('selectedAssets', JSON.stringify(selectedAssets));
+    window.location.href = 'bulk_create_mr.php';
+  });
+
+  function updateSelectedCount() {
+    const count = $('.asset-checkbox:checked').length;
+    $('#selectedCount').text(count);
+    $('#bulkCreatePropertyTagBtn').prop('disabled', count === 0);
+    
+    // Update button text
+    const btnText = count === 0 ? 'Bulk Create Property Tags' : `Bulk Create Property Tags (${count})`;
+    $('#bulkCreatePropertyTagBtn').html('<i class="bi bi-tags me-1"></i>' + btnText.replace(/\(\d+\)/, `(<span id="selectedCount">${count}</span>)`));
+  }
+});
+
+// Handle Delete Individual Asset button clicks
+$(document).ready(function() {
+  $(document).on('click', '.deleteIndividualAssetBtn', function() {
+    const assetId = $(this).data('id');
+    const description = $(this).data('description');
+    const propertyNo = $(this).data('property-no');
+    const inventoryTag = $(this).data('inventory-tag');
+    
+    // Get current office filter
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentOffice = urlParams.get('office') || $('#officeFilter').val() || 'all';
+    
+    // Populate modal fields
+    $('#deleteIndividualAssetId').val(assetId);
+    $('#deleteIndividualAssetDescription').text(description);
+    $('#deleteIndividualAssetPropertyNo').text(propertyNo);
+    $('#deleteIndividualAssetInventoryTag').text(inventoryTag);
+    $('#deleteIndividualAssetOffice').val(currentOffice);
+    
+    console.log('Delete Individual Asset - ID:', assetId, 'Description:', description, 'Property No:', propertyNo, 'Inventory Tag:', inventoryTag, 'Office:', currentOffice);
   });
 });
 

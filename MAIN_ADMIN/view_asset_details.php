@@ -297,8 +297,12 @@ $stmt->close();
                                     <div class="col-md-6">
                                         <strong>Employee:</strong> <?= htmlspecialchars($asset['employee_name'] ?? 'Unassigned') ?>
                                     </div>
+                                    
                                     <div class="col-md-6">
                                         <strong>Brand:</strong> <?= htmlspecialchars($asset['brand'] ?? 'N/A') ?>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>End User:</strong> <?= htmlspecialchars($asset['end_user'] ?? 'Unassigned') ?>
                                     </div>
                                     <div class="col-md-6">
                                         <strong>Model:</strong> <?= htmlspecialchars($asset['model'] ?? 'N/A') ?>
@@ -392,13 +396,13 @@ $stmt->close();
                                             <i class="bi bi-arrow-left-right me-2"></i>Transfer Asset
                                         </button>
                                     <?php endif; ?>
-                                    <!-- Create IIRUP Button - Only show if asset is serviceable/available -->
-<?php if (strtolower($asset['status'] ?? '') === 'serviceable'): ?>
-    <a href="forms.php?id=7&asset_id=<?= $asset['id'] ?>"
-        class="btn btn-outline-warning" target="_blank">
-        <i class="bi bi-exclamation-triangle me-2"></i>Create IIRUP
-    </a>
-<?php endif; ?>
+                                    <!-- Add to IIRUP Button - Only show for serviceable assets -->
+                                    <?php if ($asset['status'] === 'serviceable'): ?>
+                                    <button class="btn btn-outline-warning add-to-iirup-btn"
+                                        data-asset-id="<?= $asset['id'] ?>">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>Add to IIRUP
+                                    </button>
+                                    <?php endif; ?>
                                     <!-- Create Red Tag Button - Only show for unserviceable assets without red tags -->
                                     <?php if ($asset['status'] === 'unserviceable' && !$asset['has_red_tag']): ?>
                                         <a href="create_red_tag.php?asset_id=<?= $asset['id'] ?><?= !empty($asset['iirup_id']) ? '&iirup_id=' . $asset['iirup_id'] : '' ?>"
@@ -486,6 +490,47 @@ $stmt->close();
 
         // Load lifecycle events on page load
         $(document).ready(function() {
+            // Add to IIRUP button click handler
+            $(document).on('click', '.add-to-iirup-btn', function(e) {
+                e.preventDefault();
+                const button = $(this);
+                const assetId = button.data('asset-id');
+                
+                // Show loading state
+                button.prop('disabled', true);
+                button.html('<i class="bi bi-hourglass-split me-2"></i>Adding...');
+                
+                // Send AJAX request to add asset to temp table
+                $.post('insert_iirup_button.php', {
+                    asset_id: assetId
+                })
+                .done(function(response) {
+                    const data = typeof response === 'string' ? JSON.parse(response) : response;
+                    
+                    if (data.success) {
+                        // Show success state briefly
+                        button.removeClass('btn-outline-warning').addClass('btn-success');
+                        button.html('<i class="bi bi-check-circle me-2"></i>Added!');
+                        
+                        // Redirect to IIRUP form after short delay
+                        setTimeout(function() {
+                            window.location.href = data.redirect || 'forms.php?id=7';
+                        }, 1000);
+                    } else {
+                        alert(data.message || 'Failed to add asset to IIRUP list');
+                        // Reset button
+                        button.prop('disabled', false);
+                        button.html('<i class="bi bi-exclamation-triangle me-2"></i>Add to IIRUP');
+                    }
+                })
+                .fail(function() {
+                    alert('An error occurred while adding asset to IIRUP list');
+                    // Reset button
+                    button.prop('disabled', false);
+                    button.html('<i class="bi bi-exclamation-triangle me-2"></i>Add to IIRUP');
+                });
+            });
+
             loadLifecycleEvents();
 
             $(document).on('click', '.transfer-asset', function(e) {

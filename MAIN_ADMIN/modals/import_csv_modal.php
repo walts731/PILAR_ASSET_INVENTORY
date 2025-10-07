@@ -66,11 +66,21 @@
                     </div>
 
                     <em class="text-muted">
-                        <strong>Notes:</strong><br>
-                        1) <code>employee_name</code> must match an existing name in <code>employees</code> to be linked; otherwise it will be left empty.<br>
-                        2) <code>red_tagged</code> accepts 1/0, yes/no, true/false.<br>
-                        3) Each row creates a parent entry in <code>assets_new</code> and then individual items in <code>assets</code> (quantity = 1 each).<br>
-                        4) Column headers must be present in the first row of your file.
+                        <strong>Validation Rules:</strong><br>
+                        1) <code>employee_name</code> must match an existing name in <code>employees</code> table exactly, or import will fail for that row.<br>
+                        2) <code>office_name</code> must match an existing office name exactly, or import will fail for that row.<br>
+                        3) <code>serial_no</code>, <code>code</code>, <code>property_no</code>, and <code>inventory_tag</code> must be unique across all assets.<br>
+                        4) <code>red_tagged</code> accepts 1/0, yes/no, true/false.<br>
+                        5) Each row creates a parent entry in <code>assets_new</code> and then individual items in <code>assets</code> (quantity = 1 each).<br>
+                        6) Column headers must be present in the first row of your file.<br><br>
+                        
+                        <strong>Auto-Increment Feature:</strong><br>
+                        When <code>quantity</code> > 1, the system automatically increments identifiers for each item:<br>
+                        • <code>serial_no</code>: ABC123 → ABC123, ABC124, ABC125...<br>
+                        • <code>code</code>: CODE001 → CODE001, CODE002, CODE003...<br>
+                        • <code>property_no</code>: PROP-100 → PROP-100, PROP-101, PROP-102...<br>
+                        • <code>inventory_tag</code>: INV-001 → INV-001, INV-002, INV-003...<br>
+                        If no numbers are found, appends: TAG → TAG-1, TAG-2, TAG-3...
                     </em>
                 </div>
             <div class="modal-footer">

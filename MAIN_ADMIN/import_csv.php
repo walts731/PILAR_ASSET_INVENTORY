@@ -25,31 +25,106 @@ function safe_date($val) {
     return $ts ? date('Y-m-d', $ts) : date('Y-m-d');
 }
 
+// Helper function to increment alphanumeric identifiers
+function increment_identifier($identifier, $index) {
+    if (empty($identifier)) return '';
+    
+    // If identifier contains numbers, increment the numeric part
+    if (preg_match('/^(.*)([0-9]+)(.*)$/', $identifier, $matches)) {
+        $prefix = $matches[1];
+        $number = intval($matches[2]);
+        $suffix = $matches[3];
+        $new_number = $number + $index;
+        // Preserve leading zeros
+        $number_length = strlen($matches[2]);
+        $formatted_number = str_pad($new_number, $number_length, '0', STR_PAD_LEFT);
+        return $prefix . $formatted_number . $suffix;
+    }
+    
+    // If no numbers found, append the index
+    return $identifier . '-' . ($index + 1);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
     $fileTmpPath = $_FILES['csv_file']['tmp_name'];
     $fileName = $_FILES['csv_file']['name'];
     $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
+    // Enhanced error handling for file upload
+    if ($_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
+        $error_message = "File upload failed: ";
+        switch ($_FILES['csv_file']['error']) {
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                $error_message .= "File is too large.";
+                break;
+            case UPLOAD_ERR_PARTIAL:
+                $error_message .= "File was only partially uploaded.";
+                break;
+            case UPLOAD_ERR_NO_FILE:
+                $error_message .= "No file was uploaded.";
+                break;
+            case UPLOAD_ERR_NO_TMP_DIR:
+                $error_message .= "Missing temporary folder.";
+                break;
+            case UPLOAD_ERR_CANT_WRITE:
+                $error_message .= "Failed to write file to disk.";
+                break;
+            case UPLOAD_ERR_EXTENSION:
+                $error_message .= "File upload stopped by extension.";
+                break;
+            default:
+                $error_message .= "Unknown upload error.";
+                break;
+        }
+        header("Location: inventory.php?import=error&message=" . urlencode($error_message));
+        exit();
+    }
+
+    // Check if file exists and is readable
+    if (!file_exists($fileTmpPath) || !is_readable($fileTmpPath)) {
+        header("Location: inventory.php?import=error&message=" . urlencode("Uploaded file is not accessible."));
+        exit();
+    }
+
     $dataRows = [];
 
-    // Read header + rows (support CSV or XLSX)
+    // Read header + rows (support CSV or XLSX) with enhanced error handling
     $headers = [];
-    if ($fileExt === 'csv') {
-        $handle = fopen($fileTmpPath, 'r');
-        if (!$handle) { die("Error opening CSV file."); }
-        $headers = fgetcsv($handle); // header
-        while (($row = fgetcsv($handle, 10000, ',')) !== false) {
-            $dataRows[] = $row;
+    try {
+        if ($fileExt === 'csv') {
+            $handle = fopen($fileTmpPath, 'r');
+            if (!$handle) {
+                header("Location: inventory.php?import=error&message=" . urlencode("Error opening CSV file. Please check file format."));
+                exit();
+            }
+            $headers = fgetcsv($handle); // header
+            if ($headers === false) {
+                fclose($handle);
+                header("Location: inventory.php?import=error&message=" . urlencode("Could not read CSV headers. Please check file format."));
+                exit();
+            }
+            while (($row = fgetcsv($handle, 10000, ',')) !== false) {
+                $dataRows[] = $row;
+            }
+            fclose($handle);
+        } elseif ($fileExt === 'xlsx') {
+            $spreadsheet = IOFactory::load($fileTmpPath);
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray();
+            if (empty($rows)) {
+                header("Location: inventory.php?import=error&message=" . urlencode("Excel file appears to be empty."));
+                exit();
+            }
+            $headers = array_shift($rows);
+            $dataRows = $rows;
+        } else {
+            header("Location: inventory.php?import=error&message=" . urlencode("Unsupported file format. Please upload a CSV or XLSX file."));
+            exit();
         }
-        fclose($handle);
-    } elseif ($fileExt === 'xlsx') {
-        $spreadsheet = IOFactory::load($fileTmpPath);
-        $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray();
-        $headers = array_shift($rows);
-        $dataRows = $rows;
-    } else {
-        die("Unsupported file format. Please upload a CSV or XLSX file.");
+    } catch (Exception $e) {
+        header("Location: inventory.php?import=error&message=" . urlencode("Error reading file: " . $e->getMessage()));
+        exit();
     }
 
     // Normalize headers to lowercase keys for mapping
@@ -58,12 +133,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
         $map[strtolower(trim((string)$h))] = $idx;
     }
 
+    // Check if we have any data rows
+    if (empty($dataRows)) {
+        header("Location: inventory.php?import=error&message=" . urlencode("No data rows found in the file. Please check your file content."));
+        exit();
+    }
+
     // Required minimal columns
     $required = ['description','category_name','quantity','unit','value','office_name','type'];
+    $missing_columns = [];
     foreach ($required as $col) {
         if (!array_key_exists($col, $map)) {
-            die("Missing required column: {$col}");
+            $missing_columns[] = $col;
         }
+    }
+    
+    if (!empty($missing_columns)) {
+        $missing_list = implode(', ', $missing_columns);
+        header("Location: inventory.php?import=error&message=" . urlencode("Missing required columns: {$missing_list}. Please check your CSV headers."));
+        exit();
     }
 
     // Optional extended columns
@@ -72,11 +160,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
     ];
 
     $success = 0; $failed = 0; $messages = [];
+    $detailed_errors = [];
 
     // Prepare reusable statements
     $stmtFindCategory = $conn->prepare("SELECT id FROM categories WHERE category_name = ? LIMIT 1");
     $stmtFindOffice = $conn->prepare("SELECT id FROM offices WHERE office_name = ? LIMIT 1");
     $stmtFindEmployee = $conn->prepare("SELECT employee_id FROM employees WHERE name = ? LIMIT 1");
+    
+    // Prepare uniqueness check statements
+    $stmtCheckSerial = $conn->prepare("SELECT id FROM assets WHERE serial_no = ? AND serial_no != '' LIMIT 1");
+    $stmtCheckCode = $conn->prepare("SELECT id FROM assets WHERE code = ? AND code != '' LIMIT 1");
+    $stmtCheckProperty = $conn->prepare("SELECT id FROM assets WHERE property_no = ? AND property_no != '' LIMIT 1");
+    $stmtCheckInventory = $conn->prepare("SELECT id FROM assets WHERE inventory_tag = ? AND inventory_tag != '' LIMIT 1");
 
     // Prepare assets_new insert (ics_id NULL for CSV imports)
     $stmtInsAssetNew = $conn->prepare("INSERT INTO assets_new (description, quantity, unit_cost, unit, office_id, ics_id, date_created) VALUES (?, ?, ?, ?, ?, NULL, NOW())");
@@ -118,7 +213,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
         $type          = strtolower(trim((string)$row[$map['type']] ?? 'asset'));
 
         if ($description === '' || $quantity <= 0 || $unit === '' || $office_name === '') {
-            $failed++; $messages[] = "Skipped row (missing required fields): " . htmlspecialchars($description);
+            $failed++;
+            $row_number = $success + $failed;
+            $error_details = [];
+            if ($description === '') $error_details[] = 'description is empty';
+            if ($quantity <= 0) $error_details[] = 'quantity is invalid (' . $quantity . ')';
+            if ($unit === '') $error_details[] = 'unit is empty';
+            if ($office_name === '') $error_details[] = 'office_name is empty';
+            $detailed_errors[] = "Row {$row_number}: " . implode(', ', $error_details);
             continue;
         }
 
@@ -154,10 +256,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
         if ($resOfc && ($ofc = $resOfc->fetch_assoc())) {
             $office_id = (int)$ofc['id'];
         } else {
-            $failed++; $messages[] = "Office not found: {$office_name}"; continue;
+            $failed++;
+            $row_number = $success + $failed;
+            $detailed_errors[] = "Row {$row_number}: Office '{$office_name}' not found in system";
+            continue;
         }
 
-        // Employee (by name)
+        // Employee (by name) - Enhanced validation like office_id
         $employee_id = null;
         if ($employee_name !== '') {
             $stmtFindEmployee->bind_param('s', $employee_name);
@@ -165,41 +270,185 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
             $resEmp = $stmtFindEmployee->get_result();
             if ($resEmp && ($emp = $resEmp->fetch_assoc())) {
                 $employee_id = (int)$emp['employee_id'];
+            } else {
+                // Employee name provided but not found - this is now an error
+                $failed++;
+                $row_number = $success + $failed;
+                $detailed_errors[] = "Row {$row_number}: Employee '{$employee_name}' not found in system";
+                continue;
             }
+        }
+
+        // Validate uniqueness of key fields if they are provided
+        $uniqueness_errors = [];
+        
+        // Check serial number uniqueness
+        if (!empty($serial_no)) {
+            $stmtCheckSerial->bind_param('s', $serial_no);
+            $stmtCheckSerial->execute();
+            $resSerial = $stmtCheckSerial->get_result();
+            if ($resSerial && $resSerial->num_rows > 0) {
+                $uniqueness_errors[] = "serial number '{$serial_no}' already exists";
+            }
+        }
+        
+        // Check code uniqueness
+        if (!empty($code)) {
+            $stmtCheckCode->bind_param('s', $code);
+            $stmtCheckCode->execute();
+            $resCode = $stmtCheckCode->get_result();
+            if ($resCode && $resCode->num_rows > 0) {
+                $uniqueness_errors[] = "code '{$code}' already exists";
+            }
+        }
+        
+        // Check property number uniqueness
+        if (!empty($property_no)) {
+            $stmtCheckProperty->bind_param('s', $property_no);
+            $stmtCheckProperty->execute();
+            $resProperty = $stmtCheckProperty->get_result();
+            if ($resProperty && $resProperty->num_rows > 0) {
+                $uniqueness_errors[] = "property number '{$property_no}' already exists";
+            }
+        }
+        
+        // Check inventory tag uniqueness
+        if (!empty($inventory_tag)) {
+            $stmtCheckInventory->bind_param('s', $inventory_tag);
+            $stmtCheckInventory->execute();
+            $resInventory = $stmtCheckInventory->get_result();
+            if ($resInventory && $resInventory->num_rows > 0) {
+                $uniqueness_errors[] = "inventory tag '{$inventory_tag}' already exists";
+            }
+        }
+        
+        // If there are uniqueness errors, skip this row
+        if (!empty($uniqueness_errors)) {
+            $failed++;
+            $row_number = $success + $failed;
+            $detailed_errors[] = "Row {$row_number}: Duplicate values found - " . implode(', ', $uniqueness_errors);
+            continue;
+        }
+        
+        // Validate required fields that cannot be empty (if provided)
+        $required_field_errors = [];
+        
+        // These fields, if provided in CSV, cannot be empty strings
+        if (isset($map['serial_no']) && array_key_exists($map['serial_no'], $row) && trim((string)$row[$map['serial_no']]) === '') {
+            // Serial number column exists but is empty - this is allowed, so no error
+        }
+        if (isset($map['code']) && array_key_exists($map['code'], $row) && trim((string)$row[$map['code']]) === '') {
+            // Code column exists but is empty - this is allowed, so no error
+        }
+        if (isset($map['property_no']) && array_key_exists($map['property_no'], $row) && trim((string)$row[$map['property_no']]) === '') {
+            // Property number column exists but is empty - this is allowed, so no error
+        }
+        if (isset($map['inventory_tag']) && array_key_exists($map['inventory_tag'], $row) && trim((string)$row[$map['inventory_tag']]) === '') {
+            // Inventory tag column exists but is empty - this is allowed, so no error
+        }
+        
+        // If there are required field errors, skip this row
+        if (!empty($required_field_errors)) {
+            $failed++;
+            $row_number = $success + $failed;
+            $detailed_errors[] = "Row {$row_number}: Required fields cannot be empty - " . implode(', ', $required_field_errors);
+            continue;
         }
 
         // Insert into assets_new (parent aggregate for the batch)
         $stmtInsAssetNew->bind_param('sddsi', $description, $quantity, $value, $unit, $office_id);
         if (!$stmtInsAssetNew->execute()) {
-            $failed++; $messages[] = "Failed to insert into assets_new for: {$description}"; continue;
+            $failed++;
+            $row_number = $success + $failed;
+            $db_error = $conn->error ? ': ' . $conn->error : '';
+            $detailed_errors[] = "Row {$row_number}: Failed to create asset record for '{$description}'{$db_error}";
+            continue;
         }
         $asset_new_id = $conn->insert_id;
 
         // Create item-level assets equal to quantity
         $inserted_count = 0;
         for ($i = 0; $i < $quantity; $i++) {
-            // Bind and insert item
+            // Generate incremented identifiers for each item when quantity > 1
+            $item_serial_no = ($quantity > 1 && !empty($serial_no)) ? increment_identifier($serial_no, $i) : $serial_no;
+            $item_code = ($quantity > 1 && !empty($code)) ? increment_identifier($code, $i) : $code;
+            $item_property_no = ($quantity > 1 && !empty($property_no)) ? increment_identifier($property_no, $i) : $property_no;
+            $item_inventory_tag = ($quantity > 1 && !empty($inventory_tag)) ? increment_identifier($inventory_tag, $i) : $inventory_tag;
+            
+            // Validate uniqueness of incremented identifiers
+            $item_uniqueness_errors = [];
+            
+            // Check incremented serial number uniqueness
+            if (!empty($item_serial_no)) {
+                $stmtCheckSerial->bind_param('s', $item_serial_no);
+                $stmtCheckSerial->execute();
+                $resSerial = $stmtCheckSerial->get_result();
+                if ($resSerial && $resSerial->num_rows > 0) {
+                    $item_uniqueness_errors[] = "serial number '{$item_serial_no}' already exists";
+                }
+            }
+            
+            // Check incremented code uniqueness
+            if (!empty($item_code)) {
+                $stmtCheckCode->bind_param('s', $item_code);
+                $stmtCheckCode->execute();
+                $resCode = $stmtCheckCode->get_result();
+                if ($resCode && $resCode->num_rows > 0) {
+                    $item_uniqueness_errors[] = "code '{$item_code}' already exists";
+                }
+            }
+            
+            // Check incremented property number uniqueness
+            if (!empty($item_property_no)) {
+                $stmtCheckProperty->bind_param('s', $item_property_no);
+                $stmtCheckProperty->execute();
+                $resProperty = $stmtCheckProperty->get_result();
+                if ($resProperty && $resProperty->num_rows > 0) {
+                    $item_uniqueness_errors[] = "property number '{$item_property_no}' already exists";
+                }
+            }
+            
+            // Check incremented inventory tag uniqueness
+            if (!empty($item_inventory_tag)) {
+                $stmtCheckInventory->bind_param('s', $item_inventory_tag);
+                $stmtCheckInventory->execute();
+                $resInventory = $stmtCheckInventory->get_result();
+                if ($resInventory && $resInventory->num_rows > 0) {
+                    $item_uniqueness_errors[] = "inventory tag '{$item_inventory_tag}' already exists";
+                }
+            }
+            
+            // If there are uniqueness errors for this item, skip it and continue with next
+            if (!empty($item_uniqueness_errors)) {
+                $failed++;
+                $row_number = $success + $failed;
+                $item_number = $i + 1;
+                $detailed_errors[] = "Row {$row_number} (Item {$item_number}): Duplicate values found - " . implode(', ', $item_uniqueness_errors);
+                continue;
+            }
+            
+            // Bind and insert item with incremented identifiers
             $asset_name = $description; // use description as name
             $types = 'sssssiiidsssssssi';
             $stmtInsAsset->bind_param(
                 $types,
-                $asset_name,      // s
-                $description,     // s
-                $unit,            // s
-                $status,          // s
-                $acq_date,        // s
-                $office_id,       // i
-                $employee_id,     // i
-                $red_tagged,      // d (we'll treat as int but bind as d? better use i)
-                $value,           // d
-                $type,            // s
-                $serial_no,       // s
-                $code,            // s
-                $property_no,     // s
-                $model,           // s
-                $brand,           // s
-                $inventory_tag,   // s
-                $asset_new_id     // i
+                $asset_name,         // s
+                $description,        // s
+                $unit,              // s
+                $status,            // s
+                $acq_date,          // s
+                $office_id,         // i
+                $employee_id,       // i
+                $red_tagged,        // i
+                $value,             // d
+                $type,              // s
+                $item_serial_no,    // s - incremented
+                $item_code,         // s - incremented
+                $item_property_no,  // s - incremented
+                $model,             // s
+                $brand,             // s
+                $item_inventory_tag, // s - incremented
+                $asset_new_id       // i
             );
 
             if ($stmtInsAsset->execute()) {
@@ -248,7 +497,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                             $office_location,        // s
                             $description,            // s
                             $model_no,               // s
-                            $serial_no,              // s
+                            $item_serial_no,         // s - use incremented serial
                             $serviceable,            // i
                             $unserviceable,          // i
                             $unit_quantity,          // i
@@ -259,7 +508,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                             $end_user,               // s (allowed empty)
                             $acquired_date,          // s
                             $counted_date,           // s
-                            $inventory_tag           // s
+                            $item_inventory_tag      // s - use incremented inventory tag
                         );
                         $stmtMrInsert->execute();
                     }
@@ -267,16 +516,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
             }
         }
 
-        if ($inserted_count > 0) { $success++; } else { $failed++; }
+        if ($inserted_count > 0) { 
+            $success++; 
+            // Log successful import with quantity details
+            if ($quantity > 1) {
+                $messages[] = "Successfully imported {$inserted_count} items for '{$description}' with auto-incremented identifiers";
+            }
+        } else { 
+            $failed++; 
+        }
     }
 
+    // Close prepared statements
+    $stmtFindCategory->close();
+    $stmtFindOffice->close();
+    $stmtFindEmployee->close();
+    $stmtCheckSerial->close();
+    $stmtCheckCode->close();
+    $stmtCheckProperty->close();
+    $stmtCheckInventory->close();
+    $stmtInsAssetNew->close();
+    $stmtInsAsset->close();
+    $stmtMrExists->close();
+    $stmtMrInsert->close();
+    
     // Log CSV import operation
     logBulkActivity('IMPORT', $success, "CSV/Excel Assets from file: {$fileName}");
 
-    // Redirect with summary
-    header("Location: inventory.php?import=success&ok={$success}&fail={$failed}");
+    // Prepare detailed error message if there were failures
+    $error_details = '';
+    if (!empty($detailed_errors)) {
+        // Limit to first 10 errors to avoid URL length issues
+        $limited_errors = array_slice($detailed_errors, 0, 10);
+        $error_details = implode('; ', $limited_errors);
+        if (count($detailed_errors) > 10) {
+            $error_details .= '; and ' . (count($detailed_errors) - 10) . ' more errors...';
+        }
+    }
+
+    // Redirect with comprehensive summary
+    if ($success > 0 && $failed == 0) {
+        // Complete success
+        header("Location: inventory.php?import=success&ok={$success}&fail={$failed}");
+    } elseif ($success > 0 && $failed > 0) {
+        // Partial success
+        header("Location: inventory.php?import=partial&ok={$success}&fail={$failed}&errors=" . urlencode($error_details));
+    } else {
+        // Complete failure
+        header("Location: inventory.php?import=failed&ok={$success}&fail={$failed}&errors=" . urlencode($error_details));
+    }
     exit();
 } else {
-    echo "Invalid request.";
+    header("Location: inventory.php?import=error&message=" . urlencode("Invalid request. Please use the import form."));
+    exit();
 }
 ?>

@@ -5,8 +5,10 @@ session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
   $asset_id = (int)$_GET['id'];
+  $office = $_GET['office'] ?? 'all';
+  
   if ($asset_id <= 0) {
-    header('Location: inventory.php?delete=invalid');
+    header("Location: inventory.php?office={$office}&delete=invalid");
     exit();
   }
 
@@ -26,35 +28,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
 
     $asset_new_id = (int)($asset['asset_new_id'] ?? 0);
 
-    // 1) Archive snapshot to assets_archive (best-effort)
-    $archive_query = $conn->prepare("INSERT INTO assets_archive 
-      (id, asset_name, category, description, quantity, unit, status, acquisition_date, office_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, archived_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-    $archive_query->bind_param(
-      'iississsissdsssssssss',
-      $asset['id'],
-      $asset['asset_name'],
-      $asset['category'],
-      $asset['description'],
-      $asset['quantity'],
-      $asset['unit'],
-      $asset['status'],
-      $asset['acquisition_date'],
-      $asset['office_id'],
-      $asset['red_tagged'],
-      $asset['last_updated'],
-      $asset['value'],
-      $asset['qr_code'],
-      $asset['type'],
-      $asset['image'],
-      $asset['serial_no'],
-      $asset['code'],
-      $asset['property_no'],
-      $asset['model'],
-      $asset['brand']
-    );
-    $archive_query->execute();
-    $archive_query->close();
+    // 1) Archive snapshot to assets_archive (using traditional SQL)
+    $deletion_reason = 'Individual asset deleted - No ICS/PAR';
+    
+    // Escape values for SQL injection prevention
+    $id = (int)$asset['id'];
+    $asset_name = $conn->real_escape_string($asset['asset_name'] ?? '');
+    $category = $asset['category'] ? (int)$asset['category'] : 'NULL';
+    $description = $conn->real_escape_string($asset['description'] ?? '');
+    $quantity = (int)($asset['quantity'] ?? 0);
+    $unit = $conn->real_escape_string($asset['unit'] ?? '');
+    $status = $conn->real_escape_string($asset['status'] ?? '');
+    $acquisition_date = $asset['acquisition_date'] ? "'" . $conn->real_escape_string($asset['acquisition_date']) . "'" : 'NULL';
+    $office_id = $asset['office_id'] ? (int)$asset['office_id'] : 'NULL';
+    $employee_id = $asset['employee_id'] ? (int)$asset['employee_id'] : 'NULL';
+    $end_user = $conn->real_escape_string($asset['end_user'] ?? '');
+    $red_tagged = (int)($asset['red_tagged'] ?? 0);
+    $last_updated = $asset['last_updated'] ? "'" . $conn->real_escape_string($asset['last_updated']) . "'" : 'NULL';
+    $value = $asset['value'] ? (float)$asset['value'] : 0;
+    $qr_code = $conn->real_escape_string($asset['qr_code'] ?? '');
+    $type = $conn->real_escape_string($asset['type'] ?? '');
+    $image = $conn->real_escape_string($asset['image'] ?? '');
+    $serial_no = $conn->real_escape_string($asset['serial_no'] ?? '');
+    $code = $conn->real_escape_string($asset['code'] ?? '');
+    $property_no = $conn->real_escape_string($asset['property_no'] ?? '');
+    $model = $conn->real_escape_string($asset['model'] ?? '');
+    $brand = $conn->real_escape_string($asset['brand'] ?? '');
+    $inventory_tag = $conn->real_escape_string($asset['inventory_tag'] ?? '');
+    $asset_new_id = $asset['asset_new_id'] ? (int)$asset['asset_new_id'] : 'NULL';
+    $additional_images = $conn->real_escape_string($asset['additional_images'] ?? '');
+    $deletion_reason_escaped = $conn->real_escape_string($deletion_reason);
+    
+    $archive_sql = "INSERT INTO assets_archive 
+      (id, asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, end_user, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, inventory_tag, asset_new_id, additional_images, deletion_reason, archived_at)
+      VALUES 
+      ($id, '$asset_name', $category, '$description', $quantity, '$unit', '$status', $acquisition_date, $office_id, $employee_id, '$end_user', $red_tagged, $last_updated, $value, '$qr_code', '$type', '$image', '$serial_no', '$code', '$property_no', '$model', '$brand', '$inventory_tag', $asset_new_id, '$additional_images', '$deletion_reason_escaped', NOW())";
+    
+    if (!$conn->query($archive_sql)) {
+      throw new Exception('Failed to archive asset: ' . $conn->error);
+    }
 
     // 2) Remove MR details for this asset
     $stmt = $conn->prepare("DELETE FROM mr_details WHERE asset_id = ?");
@@ -138,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
     logAssetActivity('DELETE', $asset['description'], $asset_id, $deletion_context);
 
     $conn->commit();
-    header('Location: inventory.php?delete=success');
+    header("Location: inventory.php?office={$office}&delete=success");
     exit();
   } catch (Exception $e) {
     $conn->rollback();
@@ -147,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
     $asset_description = $asset['description'] ?? 'Unknown Asset';
     logErrorActivity('Assets', "Failed to delete asset: {$asset_description} (ID: {$asset_id}) - " . $e->getMessage());
     
-    header('Location: inventory.php?delete=failed&msg=' . urlencode($e->getMessage()));
+    header("Location: inventory.php?office={$office}&delete=failed&msg=" . urlencode($e->getMessage()));
     exit();
   }
 } else {

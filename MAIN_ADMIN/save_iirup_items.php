@@ -310,6 +310,14 @@ try {
   $updateAssetStmt->close();
   $updateMrStmt->close();
 
+  // Clean up temporary IIRUP items after successful submission
+  // Since the temp table doesn't have user isolation, clear all temporary items
+  $cleanup_stmt = $conn->prepare("DELETE FROM temp_iirup_items");
+  if ($cleanup_stmt) {
+    $cleanup_stmt->execute();
+    $cleanup_stmt->close();
+  }
+
   $conn->commit();
 
   // Redirect back to the form with success flag if possible

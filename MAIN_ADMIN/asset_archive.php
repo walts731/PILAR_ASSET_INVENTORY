@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $res = $stmt->get_result();
         if ($asset = $res->fetch_assoc()) {
-            // Build NULL-safe values
+            // Build NULL-safe values for ALL asset fields
             $asset_name = isset($asset['asset_name']) ? "'" . $conn->real_escape_string($asset['asset_name']) . "'" : 'NULL';
             $category   = isset($asset['category']) && $asset['category'] !== '' ? (int)$asset['category'] : 'NULL';
             $description= isset($asset['description']) ? "'" . $conn->real_escape_string($asset['description']) . "'" : 'NULL';
@@ -37,20 +37,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $status     = isset($asset['status']) ? "'" . $conn->real_escape_string($asset['status']) . "'" : 'NULL';
             $acq_date   = isset($asset['acquisition_date']) && $asset['acquisition_date'] !== '' ? "'" . $conn->real_escape_string($asset['acquisition_date']) . "'" : 'NULL';
             $office_id  = isset($asset['office_id']) && $asset['office_id'] !== '' ? (int)$asset['office_id'] : 'NULL';
+            $employee_id = isset($asset['employee_id']) && $asset['employee_id'] !== '' ? (int)$asset['employee_id'] : 'NULL';
+            $end_user   = isset($asset['end_user']) ? "'" . $conn->real_escape_string($asset['end_user']) . "'" : 'NULL';
             $red_tagged = isset($asset['red_tagged']) && $asset['red_tagged'] !== '' ? (int)$asset['red_tagged'] : 0;
-            $last_updated = isset($asset['last_updated']) && $asset['last_updated'] !== '' ? "'" . $conn->real_escape_string($asset['last_updated']) . "'" : 'NULL';
+            $last_updated = 'NOW()'; // Update to current timestamp on restore
             $value      = isset($asset['value']) && $asset['value'] !== '' ? (float)$asset['value'] : 0;
             $qr_code    = isset($asset['qr_code']) ? "'" . $conn->real_escape_string($asset['qr_code']) . "'" : 'NULL';
             $type       = isset($asset['type']) ? "'" . $conn->real_escape_string($asset['type']) . "'" : "'asset'";
+            $image      = isset($asset['image']) ? "'" . $conn->real_escape_string($asset['image']) . "'" : 'NULL';
+            $serial_no  = isset($asset['serial_no']) ? "'" . $conn->real_escape_string($asset['serial_no']) . "'" : 'NULL';
+            $code       = isset($asset['code']) ? "'" . $conn->real_escape_string($asset['code']) . "'" : 'NULL';
+            $property_no = isset($asset['property_no']) ? "'" . $conn->real_escape_string($asset['property_no']) . "'" : 'NULL';
+            $model      = isset($asset['model']) ? "'" . $conn->real_escape_string($asset['model']) . "'" : 'NULL';
+            $brand      = isset($asset['brand']) ? "'" . $conn->real_escape_string($asset['brand']) . "'" : 'NULL';
+            $inventory_tag = isset($asset['inventory_tag']) ? "'" . $conn->real_escape_string($asset['inventory_tag']) . "'" : 'NULL';
+            $asset_new_id = isset($asset['asset_new_id']) && $asset['asset_new_id'] !== '' ? (int)$asset['asset_new_id'] : 'NULL';
+            $additional_images = isset($asset['additional_images']) ? "'" . $conn->real_escape_string($asset['additional_images']) . "'" : 'NULL';
 
-            $insert = "INSERT INTO assets (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, red_tagged, last_updated, value, qr_code, type)
-                VALUES ($asset_name, $category, $description, $quantity, $unit, $status, $acq_date, $office_id, $red_tagged, $last_updated, $value, $qr_code, $type)";
+            $insert = "INSERT INTO assets (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, end_user, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, inventory_tag, asset_new_id, additional_images)
+                VALUES ($asset_name, $category, $description, $quantity, $unit, $status, $acq_date, $office_id, $employee_id, $end_user, $red_tagged, $last_updated, $value, $qr_code, $type, $image, $serial_no, $code, $property_no, $model, $brand, $inventory_tag, $asset_new_id, $additional_images)";
             if ($conn->query($insert)) {
+                // If asset has asset_new_id, increment the parent quantity
+                if ($asset['asset_new_id'] && $asset['asset_new_id'] !== '') {
+                    $parent_id = (int)$asset['asset_new_id'];
+                    $update_parent_sql = "UPDATE assets_new SET quantity = quantity + 1 WHERE id = $parent_id";
+                    $conn->query($update_parent_sql);
+                }
+                
                 $delete_stmt = $conn->prepare("DELETE FROM assets_archive WHERE archive_id = ?");
                 $delete_stmt->bind_param("i", $restore_id);
                 $delete_stmt->execute();
                 $delete_stmt->close();
-                header("Location: asset_archive.php?restore=success");
+                
+                // Include asset name in success message
+                $asset_name = urlencode($asset['asset_name'] ?? $asset['description'] ?? 'Unknown Asset');
+                header("Location: asset_archive.php?restore=success&asset_name={$asset_name}");
+                exit();
+            } else {
+                // Handle restoration failure
+                $error_msg = urlencode("Failed to restore asset: " . $conn->error);
+                header("Location: asset_archive.php?restore=failed&msg={$error_msg}");
                 exit();
             }
         }
@@ -60,7 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['restore_all']) && isset($_POST['type'])) {
         $type = $conn->real_escape_string($_POST['type']);
         $result = $conn->query("SELECT * FROM assets_archive WHERE type = '$type'");
+        $restored_count = 0;
         while ($asset = $result->fetch_assoc()) {
+            // Build NULL-safe values for ALL asset fields
             $asset_name = isset($asset['asset_name']) ? "'" . $conn->real_escape_string($asset['asset_name']) . "'" : 'NULL';
             $category   = isset($asset['category']) && $asset['category'] !== '' ? (int)$asset['category'] : 'NULL';
             $description= isset($asset['description']) ? "'" . $conn->real_escape_string($asset['description']) . "'" : 'NULL';
@@ -69,17 +97,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $status     = isset($asset['status']) ? "'" . $conn->real_escape_string($asset['status']) . "'" : 'NULL';
             $acq_date   = isset($asset['acquisition_date']) && $asset['acquisition_date'] !== '' ? "'" . $conn->real_escape_string($asset['acquisition_date']) . "'" : 'NULL';
             $office_id  = isset($asset['office_id']) && $asset['office_id'] !== '' ? (int)$asset['office_id'] : 'NULL';
+            $employee_id = isset($asset['employee_id']) && $asset['employee_id'] !== '' ? (int)$asset['employee_id'] : 'NULL';
+            $end_user   = isset($asset['end_user']) ? "'" . $conn->real_escape_string($asset['end_user']) . "'" : 'NULL';
             $red_tagged = isset($asset['red_tagged']) && $asset['red_tagged'] !== '' ? (int)$asset['red_tagged'] : 0;
-            $last_updated = isset($asset['last_updated']) && $asset['last_updated'] !== '' ? "'" . $conn->real_escape_string($asset['last_updated']) . "'" : 'NULL';
+            $last_updated = 'NOW()'; // Update to current timestamp on restore
             $value      = isset($asset['value']) && $asset['value'] !== '' ? (float)$asset['value'] : 0;
             $qr_code    = isset($asset['qr_code']) ? "'" . $conn->real_escape_string($asset['qr_code']) . "'" : 'NULL';
-            $type       = isset($asset['type']) ? "'" . $conn->real_escape_string($asset['type']) . "'" : "'asset'";
+            $type_val   = isset($asset['type']) ? "'" . $conn->real_escape_string($asset['type']) . "'" : "'asset'";
+            $image      = isset($asset['image']) ? "'" . $conn->real_escape_string($asset['image']) . "'" : 'NULL';
+            $serial_no  = isset($asset['serial_no']) ? "'" . $conn->real_escape_string($asset['serial_no']) . "'" : 'NULL';
+            $code       = isset($asset['code']) ? "'" . $conn->real_escape_string($asset['code']) . "'" : 'NULL';
+            $property_no = isset($asset['property_no']) ? "'" . $conn->real_escape_string($asset['property_no']) . "'" : 'NULL';
+            $model      = isset($asset['model']) ? "'" . $conn->real_escape_string($asset['model']) . "'" : 'NULL';
+            $brand      = isset($asset['brand']) ? "'" . $conn->real_escape_string($asset['brand']) . "'" : 'NULL';
+            $inventory_tag = isset($asset['inventory_tag']) ? "'" . $conn->real_escape_string($asset['inventory_tag']) . "'" : 'NULL';
+            $asset_new_id = isset($asset['asset_new_id']) && $asset['asset_new_id'] !== '' ? (int)$asset['asset_new_id'] : 'NULL';
+            $additional_images = isset($asset['additional_images']) ? "'" . $conn->real_escape_string($asset['additional_images']) . "'" : 'NULL';
 
-            $conn->query("INSERT INTO assets (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, red_tagged, last_updated, value, qr_code, type)
-                VALUES ($asset_name, $category, $description, $quantity, $unit, $status, $acq_date, $office_id, $red_tagged, $last_updated, $value, $qr_code, $type)");
+            if ($conn->query("INSERT INTO assets (asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, end_user, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, inventory_tag, asset_new_id, additional_images)
+                VALUES ($asset_name, $category, $description, $quantity, $unit, $status, $acq_date, $office_id, $employee_id, $end_user, $red_tagged, $last_updated, $value, $qr_code, $type_val, $image, $serial_no, $code, $property_no, $model, $brand, $inventory_tag, $asset_new_id, $additional_images)")) {
+                
+                // If asset has asset_new_id, increment the parent quantity
+                if ($asset['asset_new_id'] && $asset['asset_new_id'] !== '') {
+                    $parent_id = (int)$asset['asset_new_id'];
+                    $update_parent_sql = "UPDATE assets_new SET quantity = quantity + 1 WHERE id = $parent_id";
+                    $conn->query($update_parent_sql);
+                }
+                $restored_count++;
+            }
         }
         $conn->query("DELETE FROM assets_archive WHERE type = '$type'");
-        header("Location: asset_archive.php?restore_all=success");
+        header("Location: asset_archive.php?restore_all=success&count={$restored_count}");
         exit();
     }
 
@@ -225,11 +273,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </button>
           </div>
         </div>
-        <?php if (isset($_GET['restore'])): ?>
-            <div class="alert alert-success">Asset restored successfully!</div>
+        <?php if (isset($_GET['restore']) && $_GET['restore'] === 'success'): ?>
+            <?php if (isset($_GET['asset_name'])): ?>
+                <?php $asset_name = htmlspecialchars(urldecode($_GET['asset_name'])); ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>Asset Restored Successfully!</strong> 
+                    "<?= $asset_name ?>" has been restored to the active assets table and parent quantity updated.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php else: ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>Asset Restored Successfully!</strong> 
+                    The asset has been restored to the active assets table and parent quantity updated.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
-        <?php if (isset($_GET['restore_all'])): ?>
-            <div class="alert alert-success">All assets restored successfully!</div>
+        
+        <?php if (isset($_GET['restore']) && $_GET['restore'] === 'failed'): ?>
+            <?php $error_msg = isset($_GET['msg']) ? htmlspecialchars(urldecode($_GET['msg'])) : 'Unknown error occurred during restoration.'; ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-x-circle-fill me-2"></i>
+                <strong>Asset Restoration Failed!</strong> 
+                <?= $error_msg ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+        
+        <?php if (isset($_GET['restore_all']) && $_GET['restore_all'] === 'success'): ?>
+            <?php if (isset($_GET['count'])): ?>
+                <?php $count = (int)$_GET['count']; ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>Bulk Restoration Successful!</strong> 
+                    <?= $count ?> asset<?= $count !== 1 ? 's' : '' ?> have been restored to the active assets table and parent quantities updated.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php else: ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>Bulk Restoration Successful!</strong> 
+                    All assets have been restored to the active assets table and parent quantities updated.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+        
+        <?php if (isset($_GET['restore_all']) && $_GET['restore_all'] === 'failed'): ?>
+            <?php $error_msg = isset($_GET['msg']) ? htmlspecialchars(urldecode($_GET['msg'])) : 'Unknown error occurred during bulk restoration.'; ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-x-circle-fill me-2"></i>
+                <strong>Bulk Restoration Failed!</strong> 
+                <?= $error_msg ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         <?php endif; ?>
         <?php if (isset($_GET['delete'])): ?>
             <div class="alert alert-warning">Asset permanently deleted!</div>
