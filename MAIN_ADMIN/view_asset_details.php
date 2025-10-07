@@ -392,11 +392,13 @@ $stmt->close();
                                             <i class="bi bi-arrow-left-right me-2"></i>Transfer Asset
                                         </button>
                                     <?php endif; ?>
-                                    <!-- Add to IIRUP Button -->
+                                    <!-- Add to IIRUP Button - Only show for serviceable assets -->
+                                    <?php if ($asset['status'] === 'serviceable'): ?>
                                     <button class="btn btn-outline-warning add-to-iirup-btn"
                                         data-asset-id="<?= $asset['id'] ?>">
                                         <i class="bi bi-exclamation-triangle me-2"></i>Add to IIRUP
                                     </button>
+                                    <?php endif; ?>
                                     <!-- Create Red Tag Button - Only show for unserviceable assets without red tags -->
                                     <?php if ($asset['status'] === 'unserviceable' && !$asset['has_red_tag']): ?>
                                         <a href="create_red_tag.php?asset_id=<?= $asset['id'] ?><?= !empty($asset['iirup_id']) ? '&iirup_id=' . $asset['iirup_id'] : '' ?>"
