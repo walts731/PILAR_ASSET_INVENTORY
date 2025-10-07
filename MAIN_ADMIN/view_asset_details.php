@@ -297,8 +297,12 @@ $stmt->close();
                                     <div class="col-md-6">
                                         <strong>Employee:</strong> <?= htmlspecialchars($asset['employee_name'] ?? 'Unassigned') ?>
                                     </div>
+                                    
                                     <div class="col-md-6">
                                         <strong>Brand:</strong> <?= htmlspecialchars($asset['brand'] ?? 'N/A') ?>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>End User:</strong> <?= htmlspecialchars($asset['end_user'] ?? 'Unassigned') ?>
                                     </div>
                                     <div class="col-md-6">
                                         <strong>Model:</strong> <?= htmlspecialchars($asset['model'] ?? 'N/A') ?>
