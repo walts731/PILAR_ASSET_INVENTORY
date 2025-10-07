@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../connect.php';
 session_start();
 
@@ -766,6 +766,10 @@ echo $displayNo;
                         <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetNoTagBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal">
                           <i class="bi bi-eye"></i>
                         </button>
+                        <?php 
+                        // Only show delete button if asset has no ICS ID and no PAR ID
+                        if (empty($row['ics_id']) && empty($row['par_id'])): 
+                        ?>
                         <button type="button" class="btn btn-sm btn-outline-danger rounded-pill deleteNoPropertyTagBtn"
                           data-id="<?= (int)$row['id'] ?>"
                           data-name="<?= htmlspecialchars($row['description']) ?>"
@@ -778,6 +782,9 @@ echo $displayNo;
                           data-bs-target="#deleteNoPropertyTagModal" title="Delete Asset">
                           <i class="bi bi-trash"></i>
                         </button>
+                        <?php else: ?>
+                        
+                        <?php endif; ?>
                       </div>
                     </td>
                   </tr>
