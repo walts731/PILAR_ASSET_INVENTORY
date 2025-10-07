@@ -5,6 +5,7 @@ ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 
 require_once '../connect.php';
+require_once '../includes/lifecycle_helper.php';
 session_start();
 
 // Check if user is logged in
@@ -82,6 +83,22 @@ try {
             if (empty($asset_id) || empty($property_no) || empty($inventory_tag)) {
                 $errors[] = "Asset {$index}: Missing required data";
                 continue;
+            }
+
+            // Capture previous assignment before updates (for lifecycle)
+            $prev_employee_id = null;
+            $prev_office_id = null;
+            if (!empty($asset_id)) {
+                if ($stPrev = $conn->prepare("SELECT employee_id, office_id FROM assets WHERE id = ?")) {
+                    $stPrev->bind_param('i', $asset_id);
+                    $stPrev->execute();
+                    $rsPrev = $stPrev->get_result();
+                    if ($rsPrev && ($rowPrev = $rsPrev->fetch_assoc())) {
+                        $prev_employee_id = $rowPrev['employee_id'] ?? null;
+                        $prev_office_id = $rowPrev['office_id'] ?? null;
+                    }
+                    $stPrev->close();
+                }
             }
 
             // Check if asset exists and has no property tag
@@ -181,6 +198,23 @@ try {
                 continue;
             }
             $update_stmt->close();
+
+            // Lifecycle: ASSIGNED (bulk create). Mirror single-create behavior.
+            if (function_exists('logLifecycleEvent') && !empty($asset_id)) {
+                $note = sprintf('MR create (bulk); PA_ID: %s; InvTag: %s', (string)$accountable_person, (string)$inventory_tag);
+                // Source table 'mr_details', no specific source_id passed to stay aligned with create_mr.php
+                logLifecycleEvent(
+                    (int)$asset_id,
+                    'ASSIGNED',
+                    'mr_details',
+                    null,
+                    $prev_employee_id !== null ? (int)$prev_employee_id : null,
+                    $accountable_person ? (int)$accountable_person : null,
+                    $prev_office_id !== null ? (int)$prev_office_id : null,
+                    null,
+                    $note
+                );
+            }
 
             // Update tag counters for next generation
             updateTagCounter($conn, 'property_no');
