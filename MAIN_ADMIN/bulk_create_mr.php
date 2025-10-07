@@ -109,7 +109,7 @@ if (isset($_GET['print']) && (int)$_GET['print'] === 1) {
             <h4>Bulk Print MR Records</h4>
             <p>Printing <?= count($rows) ?> MR record(s)</p>
             <button onclick="window.print()">Print Now</button>
-            <button onclick="history.back()">Back</button>
+            <button onclick="window.location.href='inventory.php?tab=assets'">Back to Inventory</button>
         </div>
 
         <div class="mr-container">
@@ -206,10 +206,13 @@ if (isset($_GET['print']) && (int)$_GET['print'] === 1) {
             <?php endforeach; ?>
         </div>
         <script>
-            // Auto-print on load
+            // Auto-print on load and then redirect to inventory
             window.addEventListener('load', () => {
                 setTimeout(() => window.print(), 300);
             });
+            window.onafterprint = function() {
+                window.location.href = 'inventory.php?tab=assets&success=bulk_created';
+            };
         </script>
     </body>
     </html>
