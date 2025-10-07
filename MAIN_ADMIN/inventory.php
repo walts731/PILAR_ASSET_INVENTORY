@@ -475,7 +475,6 @@ $stmt->close();
                           data-bs-target="#viewAssetModal">
                           <i class="bi bi-eye"></i>View
                         </button>
-                        
                       </td>
                     </tr>
                   <?php endwhile; ?>
@@ -1188,6 +1187,7 @@ echo $displayNo;
   <?php include 'modals/delete_consumable_modal.php'; ?>
   <?php include 'modals/update_asset_modal.php'; ?>
   <?php include 'modals/delete_asset_modal.php'; ?>
+  <?php include 'modals/delete_individual_asset_modal.php'; ?>
   <?php include 'modals/delete_no_property_tag_modal.php'; ?>
   <?php include 'modals/add_asset_modal.php'; ?>
   <?php include 'modals/manage_categories_modal.php'; ?>
@@ -1346,6 +1346,18 @@ echo $displayNo;
                       <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="${(it.property_no && it.property_no.trim()) ? 'Edit Property Tag' : 'Create Property Tag'}">
                         <i class="bi bi-tag"></i>
                       </a>
+                      ${(!data.ics_no && !data.par_no) ? `
+                        <button type="button" class="btn btn-sm btn-outline-danger deleteIndividualAssetBtn" 
+                          data-id="${it.item_id}" 
+                          data-description="${data.description || ''}" 
+                          data-property-no="${it.property_no || 'N/A'}"
+                          data-inventory-tag="${it.inventory_tag || 'N/A'}"
+                          data-bs-toggle="modal" 
+                          data-bs-target="#deleteIndividualAssetModal"
+                          title="Delete Individual Asset">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      ` : ''}
                     </td>
                   `;
                   itemsBody.appendChild(tr);
@@ -2511,6 +2523,29 @@ $(document).ready(function() {
     const btnText = count === 0 ? 'Bulk Create Property Tags' : `Bulk Create Property Tags (${count})`;
     $('#bulkCreatePropertyTagBtn').html('<i class="bi bi-tags me-1"></i>' + btnText.replace(/\(\d+\)/, `(<span id="selectedCount">${count}</span>)`));
   }
+});
+
+// Handle Delete Individual Asset button clicks
+$(document).ready(function() {
+  $(document).on('click', '.deleteIndividualAssetBtn', function() {
+    const assetId = $(this).data('id');
+    const description = $(this).data('description');
+    const propertyNo = $(this).data('property-no');
+    const inventoryTag = $(this).data('inventory-tag');
+    
+    // Get current office filter
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentOffice = urlParams.get('office') || $('#officeFilter').val() || 'all';
+    
+    // Populate modal fields
+    $('#deleteIndividualAssetId').val(assetId);
+    $('#deleteIndividualAssetDescription').text(description);
+    $('#deleteIndividualAssetPropertyNo').text(propertyNo);
+    $('#deleteIndividualAssetInventoryTag').text(inventoryTag);
+    $('#deleteIndividualAssetOffice').val(currentOffice);
+    
+    console.log('Delete Individual Asset - ID:', assetId, 'Description:', description, 'Property No:', propertyNo, 'Inventory Tag:', inventoryTag, 'Office:', currentOffice);
+  });
 });
 
 

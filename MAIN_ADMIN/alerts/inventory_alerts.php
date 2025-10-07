@@ -1,5 +1,34 @@
 <?php if (isset($_GET['delete']) && $_GET['delete'] === 'success'): ?>
-  <div class="alert alert-success">Consumable deleted and archived successfully!</div>
+  <?php if (isset($_GET['deleted_items'])): ?>
+    <?php $deleted_items = (int)$_GET['deleted_items']; ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="bi bi-check-circle-fill me-2"></i>
+      <strong>Asset Deleted Successfully!</strong> 
+      Asset and <?= $deleted_items ?> individual item<?= $deleted_items !== 1 ? 's' : '' ?> have been deleted and archived.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php else: ?>
+    <div class="alert alert-success">Consumable deleted and archived successfully!</div>
+  <?php endif; ?>
+<?php endif; ?>
+
+<?php if (isset($_GET['delete']) && $_GET['delete'] === 'failed'): ?>
+  <?php $error_msg = isset($_GET['msg']) ? htmlspecialchars(urldecode($_GET['msg'])) : 'Unknown error occurred.'; ?>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-x-circle-fill me-2"></i>
+    <strong>Asset Deletion Failed!</strong> 
+    <?= $error_msg ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<?php endif; ?>
+
+<?php if (isset($_GET['delete']) && $_GET['delete'] === 'invalid'): ?>
+  <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>Invalid Request!</strong> 
+    The asset deletion request was invalid or the asset was not found.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
 <?php endif; ?>
 
 <?php if (isset($_GET['update']) && $_GET['update'] === 'success'): ?>
