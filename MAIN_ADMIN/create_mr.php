@@ -251,6 +251,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $unit = $_POST['unit'];
     $acquisition_date = $_POST['acquisition_date'];
     $acquisition_cost = $_POST['acquisition_cost'];
+    $supplier = trim($_POST['supplier'] ?? '');
 
     // Use the auto-generated inventory_tag for saving
     $inventory_tag_gen = $inventory_tag;
@@ -438,6 +439,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit();
         }
         $stmt_update_asset->close();
+        // If supplier field exists, update it separately
+        if ($supplier !== '') {
+            try {
+                $chk = $conn->query("SHOW COLUMNS FROM assets LIKE 'supplier'");
+                if ($chk && $chk->num_rows > 0) {
+                    if ($stSup = $conn->prepare("UPDATE assets SET supplier = ? WHERE id = ?")) {
+                        $stSup->bind_param('si', $supplier, $asset_id_form);
+                        $stSup->execute();
+                        $stSup->close();
+                    }
+                }
+                if ($chk) { $chk->close(); }
+            } catch (Throwable $e) { /* ignore */ }
+        }
     }
 
     // Ensure we have a source item mapping for this asset when available
@@ -625,7 +640,7 @@ if ($asset_id) {
     $stmt_offices->close();
 
     // Fetch detailed asset record
-    $stmt_assets = $conn->prepare("SELECT id, asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, end_user, red_tagged, last_updated, value, qr_code, type, image, additional_images, serial_no, code, property_no, model, brand FROM assets WHERE id = ?");
+    $stmt_assets = $conn->prepare("SELECT id, asset_name, category, description, quantity, unit, status, acquisition_date, office_id, employee_id, end_user, red_tagged, last_updated, value, qr_code, type, image, additional_images, serial_no, code, property_no, model, brand, supplier FROM assets WHERE id = ?");
     $stmt_assets->bind_param("i", $asset_id);
     $stmt_assets->execute();
     $result_assets = $stmt_assets->get_result();
@@ -1071,6 +1086,15 @@ if ($baseSerial !== '') {
                                         <input type="number" class="form-control" name="acquisition_cost" step="0.01"
                                             value="<?= isset($asset_details['value']) ? htmlspecialchars($asset_details['value']) : '' ?>" required>
                                         <div class="form-text">Total cost of acquisition</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="supplier" class="form-label fw-semibold">
+                                            <i class="bi bi-truck me-1 text-warning"></i>Supplier
+                                        </label>
+                                        <input type="text" class="form-control" name="supplier" id="supplier"
+                                            placeholder="Enter supplier name"
+                                            value="<?= isset($asset_details['supplier']) ? htmlspecialchars($asset_details['supplier']) : '' ?>">
+                                        <div class="form-text">Supplier/vendor of the asset</div>
                                     </div>
                                 </div>
 

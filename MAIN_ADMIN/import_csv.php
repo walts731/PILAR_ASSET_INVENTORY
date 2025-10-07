@@ -156,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
 
     // Optional extended columns
     $opt = [
-        'status','acquisition_date','employee_name','end_user','red_tagged','serial_no','code','property_no','model','brand','inventory_tag'
+        'status','acquisition_date','employee_name','end_user','red_tagged','serial_no','code','property_no','model','brand','inventory_tag','supplier'
     ];
 
     $success = 0; $failed = 0; $messages = [];
@@ -195,11 +195,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
         (item_id, asset_id, office_location, description, model_no, serial_no, serviceable, unserviceable, unit_quantity, unit, acquisition_date, acquisition_cost, person_accountable, end_user, acquired_date, counted_date, inventory_tag)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    // Detect if assets table has end_user column (once)
+    // Detect if assets table has end_user and supplier columns (once)
     $hasEndUserCol = false;
     if ($resCol = $conn->query("SHOW COLUMNS FROM assets LIKE 'end_user'")) {
         $hasEndUserCol = ($resCol->num_rows > 0);
         $resCol->close();
+    }
+    $hasSupplierCol = false;
+    if ($resColS = $conn->query("SHOW COLUMNS FROM assets LIKE 'supplier'")) {
+        $hasSupplierCol = ($resColS->num_rows > 0);
+        $resColS->close();
     }
 
     foreach ($dataRows as $row) {
@@ -236,6 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
         $model         = isset($map['model']) ? trim((string)($row[$map['model']] ?? '')) : '';
         $brand         = isset($map['brand']) ? trim((string)($row[$map['brand']] ?? '')) : '';
         $inventory_tag = isset($map['inventory_tag']) ? trim((string)($row[$map['inventory_tag']] ?? '')) : '';
+        $supplier      = isset($map['supplier']) ? trim((string)($row[$map['supplier']] ?? '')) : '';
 
         // Lookups
         // Category is optional for item rows (not set in item-level insert), but we validate presence
@@ -458,15 +464,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                 $qr_filename = $new_item_id . '.png';
                 $qr_path = '../img/' . $qr_filename;
                 QRcode::png((string)$new_item_id, $qr_path, QR_ECLEVEL_L, 4);
-                // Update asset with qr filename and optional end_user if column exists
-                $updSql = "UPDATE assets SET qr_code = ?" . (($hasEndUserCol && !empty($end_user)) ? ", end_user = ?" : "") . " WHERE id = ?";
-                if ($hasEndUserCol && !empty($end_user)) {
-                    $stmtUpd = $conn->prepare($updSql);
-                    $stmtUpd->bind_param('ssi', $qr_filename, $end_user, $new_item_id);
-                } else {
-                    $stmtUpd = $conn->prepare($updSql);
-                    $stmtUpd->bind_param('si', $qr_filename, $new_item_id);
-                }
+                // Update asset with qr filename and optional end_user/supplier if columns exist
+                $setParts = ["qr_code = ?"]; $typesUpd = 's'; $vals = [$qr_filename];
+                if ($hasEndUserCol && !empty($end_user)) { $setParts[] = "end_user = ?"; $typesUpd .= 's'; $vals[] = $end_user; }
+                if ($hasSupplierCol && !empty($supplier)) { $setParts[] = "supplier = ?"; $typesUpd .= 's'; $vals[] = $supplier; }
+                $updSql = "UPDATE assets SET " . implode(', ', $setParts) . " WHERE id = ?";
+                $typesUpd .= 'i'; $vals[] = $new_item_id;
+                $stmtUpd = $conn->prepare($updSql);
+                $stmtUpd->bind_param($typesUpd, ...$vals);
                 $stmtUpd->execute();
                 $stmtUpd->close();
 

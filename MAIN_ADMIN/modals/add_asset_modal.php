@@ -307,6 +307,12 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
                   <label for="acquisition_date">Acquisition Date</label>
                 </div>
               </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="supplier" id="supplier" class="form-control" placeholder="Supplier name">
+                  <label for="supplier">Supplier</label>
+                </div>
+              </div>
             </div>
           </div>
 

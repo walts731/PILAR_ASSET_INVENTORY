@@ -38,6 +38,7 @@
                                     <th>model</th>
                                     <th>brand</th>
                                     <th>inventory_tag</th>
+                                    <th>supplier</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -60,6 +61,7 @@
                                     <td>XPS 15</td>
                                     <td>Dell</td>
                                     <td>INV-0001</td>
+                                    <td>ABC Trading Co.</td>
                                 </tr>
                             </tbody>
                         </table>

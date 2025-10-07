@@ -30,6 +30,8 @@ $code        = isset($_POST['code']) && $_POST['code'] !== '' ? mysqli_real_esca
 $stock_no    = isset($_POST['stock_no']) && $_POST['stock_no'] !== '' ? mysqli_real_escape_string($conn, $_POST['stock_no']) : '';
 $model       = isset($_POST['model']) && $_POST['model'] !== '' ? mysqli_real_escape_string($conn, $_POST['model']) : '';
 $brand       = isset($_POST['brand']) && $_POST['brand'] !== '' ? mysqli_real_escape_string($conn, $_POST['brand']) : '';
+// New optional supplier
+$supplier    = isset($_POST['supplier']) && $_POST['supplier'] !== '' ? mysqli_real_escape_string($conn, $_POST['supplier']) : '';
 
 // Optional extended fields to enable MR insertion parity with CSV import
 $inventory_tag = isset($_POST['inventory_tag']) ? trim((string)$_POST['inventory_tag']) : '';
@@ -113,6 +115,12 @@ $property_no = ($type === 'asset') ? ($property_no_post !== '' ? $property_no_po
                                    : ($stock_no !== '' ? $stock_no : null);
 
 $created_count = 0;
+// Detect if assets table has supplier column once
+$hasSupplierCol = false;
+if ($resColS = $conn->query("SHOW COLUMNS FROM assets LIKE 'supplier'")) {
+    $hasSupplierCol = ($resColS->num_rows > 0);
+    $resColS->close();
+}
 for ($i = 0; $i < $quantity; $i++) {
     $asset_name = $description;
     $stmtInsAsset->bind_param(
@@ -141,17 +149,19 @@ for ($i = 0; $i < $quantity; $i++) {
     if ($stmtInsAsset->execute()) {
         $new_id = $conn->insert_id;
         $created_count++;
-        // Generate QR file per item into ../img/{id}.png
         $qr_filename = $new_id . '.png';
         $qr_path = realpath(__DIR__ . '/../img');
         if ($qr_path === false) { $qr_path = __DIR__ . '/../img'; }
         QRcode::png((string)$new_id, $qr_path . DIRECTORY_SEPARATOR . $qr_filename, QR_ECLEVEL_L, 4);
         // Update asset with qr filename
-        if ($stmtUpd = $conn->prepare("UPDATE assets SET qr_code = ? WHERE id = ?")) {
+        if ($hasSupplierCol && $supplier !== '') {
+            $stmtUpd = $conn->prepare("UPDATE assets SET qr_code = ?, supplier = ? WHERE id = ?");
+            $stmtUpd->bind_param('ssi', $qr_filename, $supplier, $new_id);
+        } else {
+            $stmtUpd = $conn->prepare("UPDATE assets SET qr_code = ? WHERE id = ?");
             $stmtUpd->bind_param('si', $qr_filename, $new_id);
-            $stmtUpd->execute();
-            $stmtUpd->close();
         }
+        if ($stmtUpd) { $stmtUpd->execute(); $stmtUpd->close(); }
 
         // Conditionally insert MR details if both inventory_tag and employee_name provided
         if ($inventory_tag !== '' && $employee_name !== '') {
@@ -159,6 +169,7 @@ for ($i = 0; $i < $quantity; $i++) {
             $stmtMrExists->execute();
             $resE = $stmtMrExists->get_result();
             $exists = $resE && $resE->num_rows > 0;
+            if ($resE) { $resE->free(); }
             if (!$exists) {
                 $serviceable = ($status === 'unserviceable') ? 0 : 1;
                 $unserviceable = ($status === 'unserviceable') ? 1 : 0;
