@@ -267,6 +267,9 @@ $stmt->close();
                                 <?php if ($asset['property_no']): ?>
                                     | <i class="bi bi-hash me-1"></i> Property Number <?= htmlspecialchars($asset['property_no']) ?>
                                 <?php endif; ?>
+                                <?php if (!empty($asset['serial_no'])): ?>
+                                    | <small class=""><i class="bi bi-upc-scan me-1"></i>Serial No <?= htmlspecialchars($asset['serial_no']) ?></small>
+                                <?php endif; ?>
                             </p>
                         </div>
                         
@@ -301,14 +304,16 @@ $stmt->close();
                                     <div class="col-md-6">
                                         <strong>Brand:</strong> <?= htmlspecialchars($asset['brand'] ?? 'N/A') ?>
                                     </div>
+                                    
                                     <div class="col-md-6">
                                         <strong>End User:</strong> <?= htmlspecialchars($asset['end_user'] ?? 'Unassigned') ?>
                                     </div>
+
                                     <div class="col-md-6">
-                                        <strong>Model:</strong> <?= htmlspecialchars($asset['model'] ?? 'N/A') ?>
+                                        <strong>Supplier:</strong> <?= htmlspecialchars($asset['supplier'] ?? 'N/A') ?>
                                     </div>
                                     <div class="col-md-6">
-                                        <strong>Serial Number:</strong> <?= htmlspecialchars($asset['serial_no'] ?? 'N/A') ?>
+                                        <strong>Model:</strong> <?= htmlspecialchars($asset['model'] ?? 'N/A') ?>
                                     </div>
                                 </div>
                             </div>
