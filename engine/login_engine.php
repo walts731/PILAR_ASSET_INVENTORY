@@ -28,9 +28,6 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
                 header("Location: OFFICE_ADMIN/admin_dashboard.php?office=" . $user_data['office_id']);
                 break;
             case "admin":
-                header("Location: MAIN_ADMIN/admin_dashboard.php?office=" . $user_data['office_id']);
-                break;
-            case "user":
                 // Check if this user has a specific permission to only access Fuel Inventory
                 $fuel_only = false;
                 if ($permStmt = $conn->prepare("SELECT 1 FROM user_permissions WHERE user_id = ? AND permission = 'fuel_inventory' LIMIT 1")) {
@@ -45,6 +42,9 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
                 } else {
                     header("Location: MAIN_ADMIN/admin_dashboard.php?office=" . $user_data['office_id']);
                 }
+                break;
+            case "user":
+                header("Location: MAIN_USER/user_dashboard.php?office=" . $user_data['office_id']);
                 break;
             case "office_user":
                 header("Location: USERS/user_dashboard.php?office=" . $user_data['office_id']);
@@ -115,9 +115,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         header("Location: OFFICE_ADMIN/admin_dashboard.php?office=" . $user["office_id"]);
                         break;
                     case "admin":
-                        header("Location: MAIN_ADMIN/admin_dashboard.php?office=" . $user["office_id"]);
-                        break;
-                    case "user":
                         // Check if this user has a specific permission to only access Fuel Inventory
                         $fuel_only = false;
                         if ($permStmt = $conn->prepare("SELECT 1 FROM user_permissions WHERE user_id = ? AND permission = 'fuel_inventory' LIMIT 1")) {
@@ -132,6 +129,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         } else {
                             header("Location: MAIN_ADMIN/admin_dashboard.php?office=" . $user["office_id"]);
                         }
+                        break;
+                    case "user":
+                        header("Location: MAIN_USER/user_dashboard.php?office=" . $user["office_id"]);
                         break;
                     case "office_user":
                         header("Location: USERS/user_dashboard.php?office=" . $user["office_id"]);
