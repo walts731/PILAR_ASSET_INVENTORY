@@ -8,6 +8,215 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Print mode: render bulk MR print layout when requested
+if (isset($_GET['print']) && (int)$_GET['print'] === 1) {
+    $idsParam = $_GET['ids'] ?? '';
+    $ids = array_values(array_filter(array_map(function($v){
+        $n = intval($v);
+        return $n > 0 ? $n : null;
+    }, preg_split('/[,\s]+/', $idsParam))));
+
+    if (empty($ids)) {
+        echo '<script>alert("No assets to print."); window.location.href = "bulk_create_mr.php";</script>';
+        exit();
+    }
+
+    // Fetch system details
+    $sys = ['logo' => '', 'system_title' => 'PILAR'];
+    $rs = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
+    if ($rs && $rs->num_rows > 0) { $sys = $rs->fetch_assoc(); }
+
+    // Build placeholders list for prepared IN clause
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $types = str_repeat('i', count($ids));
+
+    // Fetch latest MR details per asset together with asset, office, employee (mirror bulk_print_mr.php data needs)
+    $sql = "SELECT 
+                a.id AS asset_id,
+                a.inventory_tag,
+                a.property_no,
+                a.status,
+                a.qr_code,
+                o.office_name,
+                e.name AS employee_name,
+                md.mr_id,
+                md.description AS mr_description,
+                md.model_no,
+                md.serial_no AS mr_serial_no,
+                md.serviceable,
+                md.unserviceable,
+                md.unit_quantity,
+                md.unit,
+                md.acquisition_date,
+                md.acquisition_cost,
+                md.person_accountable,
+                md.end_user,
+                md.acquired_date,
+                md.counted_date
+            FROM assets a
+            LEFT JOIN offices o ON o.id = a.office_id
+            LEFT JOIN employees e ON e.employee_id = a.employee_id
+            LEFT JOIN (
+                SELECT x.* FROM mr_details x
+                INNER JOIN (
+                    SELECT asset_id, MAX(mr_id) AS max_id FROM mr_details GROUP BY asset_id
+                ) m ON m.asset_id = x.asset_id AND m.max_id = x.mr_id
+            ) md ON md.asset_id = a.id
+            WHERE a.id IN ($placeholders)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param($types, ...$ids);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $rows = [];
+    while ($res && ($r = $res->fetch_assoc())) { $rows[] = $r; }
+    $stmt->close();
+
+    ?><!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Bulk Print MR - <?= htmlspecialchars($sys['system_title'] ?? 'PILAR') ?></title>
+        <style>
+            @media print { body { margin: 0; } .no-print { display: none; } .page-break { page-break-after: always; } }
+            body { font-family: 'DejaVu Sans', Arial, sans-serif; margin: 0; padding: 10px; font-size: 12px; }
+            .print-controls { text-align: center; margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; }
+            .mr-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
+            .mr-record { border: 2px solid #000; padding: 10px; background-color: #fff; min-height: 350px; box-sizing: border-box; font-size: 10px; }
+            .mr-header { display:flex; justify-content: space-between; align-items:flex-start; margin-bottom:10px; position:relative; }
+            .mr-logo { width: 50px; height: 50px; }
+            .mr-title { text-align:center; flex:1; margin: 0 10px; }
+            .mr-title h3 { margin: 2px 0; font-size: 14px; font-weight: bold; }
+            .office-location { font-size: 9px; margin-top: 5px; }
+            .mr-tag-section { text-align:center; width: 80px; }
+            .tag-text { font-size: 8px; font-weight: bold; margin-bottom: 3px; }
+            .mr-qr { width: 50px; height: 50px; }
+            .mr-line { border-bottom: 1px solid #000; margin: 8px 0; }
+            .mr-field { margin-bottom: 6px; font-size: 9px; }
+            .mr-field-label { display:inline-block; width: 120px; font-weight:bold; }
+            .mr-field-value { text-decoration: underline; }
+            .mr-checkbox-section { margin: 8px 0; font-size: 9px; }
+            .mr-checkbox { margin-right: 15px; }
+            .mr-dates { display:flex; justify-content: space-between; margin: 10px 0; font-size: 9px; }
+            .mr-signatures { display:flex; justify-content: space-between; margin-top: 25px; font-size: 8px; }
+            .mr-signature { text-align:center; width:45%; }
+            .mr-signature-line { border-top:1px solid #000; margin-bottom:3px; height:20px; }
+            @media print { .mr-container { grid-template-columns: repeat(2, 1fr); gap: 10px; } .mr-record { min-height: 330px; break-inside: avoid; } }
+        </style>
+    </head>
+    <body>
+        <div class="print-controls no-print">
+            <h4>Bulk Print MR Records</h4>
+            <p>Printing <?= count($rows) ?> MR record(s)</p>
+            <button onclick="window.print()">Print Now</button>
+            <button onclick="history.back()">Back</button>
+        </div>
+
+        <div class="mr-container">
+            <?php foreach ($rows as $index => $mr): ?>
+                <?php
+                    $inventory_tag = $mr['inventory_tag'] ?: ($mr['property_no'] ?: '');
+                    $serviceableChecked = ((int)($mr['serviceable'] ?? 1) === 1) ? '☑' : '☐';
+                    $unserviceableChecked = ((int)($mr['unserviceable'] ?? 0) === 1) ? '☑' : '☐';
+                    // Prepare QR code data if available
+                    $qrData = '';
+                    if (!empty($mr['qr_code'])) {
+                        $qrPath = realpath(__DIR__ . '/../img/' . $mr['qr_code']);
+                        if ($qrPath && file_exists($qrPath)) {
+                            $imageData = base64_encode(file_get_contents($qrPath));
+                            $ext = strtolower(pathinfo($qrPath, PATHINFO_EXTENSION));
+                            $mime = in_array($ext, ['jpg','jpeg']) ? 'image/jpeg' : (in_array($ext, ['gif']) ? 'image/gif' : 'image/png');
+                            $qrData = 'data:' . $mime . ';base64,' . $imageData;
+                        }
+                    }
+                ?>
+                <div class="mr-record">
+                    <div class="mr-header">
+                        <?php if (!empty($sys['logo'])): ?>
+                            <img src="../img/<?= htmlspecialchars($sys['logo']) ?>" alt="Municipal Logo" class="mr-logo">
+                        <?php endif; ?>
+                        <div class="mr-title">
+                            <h3>GOVERNMENT PROPERTY</h3>
+                            <div class="office-location">
+                                Office/Location: <span class="mr-field-value"><?= htmlspecialchars($mr['office_name'] ?? '') ?></span>
+                            </div>
+                        </div>
+                        <div class="mr-tag-section">
+                            <div class="tag-text">
+                                No. <span class="mr-field-value"><?= htmlspecialchars($inventory_tag) ?></span><br>
+                                INVENTORY TAG
+                            </div>
+                            <?php if (!empty($qrData)): ?>
+                                <img src="<?= $qrData ?>" alt="QR Code" class="mr-qr">
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="mr-line"></div>
+
+                    <div class="mr-field">
+                        <span class="mr-field-label">Description of the property:</span>
+                        <span class="mr-field-value"><?= htmlspecialchars($mr['mr_description'] ?? '') ?></span>
+                    </div>
+
+                    <div class="mr-field">
+                        <span class="mr-field-label">Model No.:</span>
+                        <span class="mr-field-value"><?= htmlspecialchars($mr['model_no'] ?? '') ?></span>
+                        &nbsp;&nbsp;
+                        Serial No.: <span class="mr-field-value"><?= htmlspecialchars($mr['mr_serial_no'] ?? '') ?></span>
+                    </div>
+
+                    <div class="mr-checkbox-section">
+                        <span class="mr-checkbox"><?= $serviceableChecked ?> Serviceable</span>
+                        <span class="mr-checkbox"><?= $unserviceableChecked ?> Unserviceable</span>
+                    </div>
+
+                    <div class="mr-field">
+                        <span class="mr-field-label">Unit/Quantity:</span>
+                        <span class="mr-field-value"><?= htmlspecialchars($mr['unit_quantity'] ?? '') ?> <?= htmlspecialchars($mr['unit'] ?? '') ?></span>
+                        &nbsp;&nbsp;
+                        Acquisition Date/Cost: <span class="mr-field-value"><?= htmlspecialchars($mr['acquisition_date'] ?? '') ?> / ₱<?= htmlspecialchars($mr['acquisition_cost'] ?? '') ?></span>
+                    </div>
+
+                    <div class="mr-field">
+                        <span class="mr-field-label">Person Accountable:</span>
+                        <span class="mr-field-value"><?= htmlspecialchars($mr['person_accountable'] ?? '') ?></span>
+                    </div>
+
+                    <div class="mr-dates">
+                        <div>Date: (acquired) <span class="mr-field-value"><?= htmlspecialchars($mr['acquired_date'] ?? '') ?></span></div>
+                        <div>Date: (counted) <span class="mr-field-value"><?= htmlspecialchars($mr['counted_date'] ?? '') ?></span></div>
+                    </div>
+
+                    <div class="mr-signatures">
+                        <div class="mr-signature">
+                            <div class="mr-signature-line"></div>
+                            COA REPRESENTATIVE
+                        </div>
+                        <div class="mr-signature">
+                            <div class="mr-signature-line"></div>
+                            Signature of the Inventory Committee
+                        </div>
+                    </div>
+                </div>
+
+                <?php if (($index + 1) % 4 === 0): ?>
+                    <div class="page-break"></div>
+                <?php endif; ?>
+            <?php endforeach; ?>
+        </div>
+        <script>
+            // Auto-print on load
+            window.addEventListener('load', () => {
+                setTimeout(() => window.print(), 300);
+            });
+        </script>
+    </body>
+    </html>
+    <?php
+    exit();
+}
+
 $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
 if ($result && $result->num_rows > 0) {
     $system = $result->fetch_assoc();
@@ -150,6 +359,7 @@ $tagHelper = new TagFormatHelper($conn);
             <!-- Form Section -->
             <div class="form-section">
                 <form id="bulkCreateForm" method="POST" action="process_bulk_mr.php" enctype="multipart/form-data">
+                    <input type="hidden" id="accountablePersonName" name="accountable_person_name" value="">
                     <!-- Common Details Section -->
                     <div class="row mb-4">
                         <div class="col-12">
@@ -277,6 +487,16 @@ $tagHelper = new TagFormatHelper($conn);
 
             // Set default date to today
             $('#dateReceived').val(new Date().toISOString().split('T')[0]);
+
+            // Initialize accountable person name hidden field
+            const setAccountableName = () => {
+                const $sel = $('#accountablePerson');
+                const $opt = $sel.find('option:selected');
+                const name = $opt.data('name') || $opt.text() || '';
+                $('#accountablePersonName').val(name.trim());
+            };
+            setAccountableName();
+            $('#accountablePerson').on('change', setAccountableName);
         });
 
         function displayAssets() {
@@ -578,16 +798,16 @@ $tagHelper = new TagFormatHelper($conn);
                     try {
                         const result = JSON.parse(response);
                         if (result.success) {
-                            let message = `Successfully created property tags for ${result.count} assets!`;
-                            if (result.warnings && result.warnings.length > 0) {
-                                message += '\n\nWarnings:\n' + result.warnings.slice(0, 3).join('\n');
-                                if (result.warnings.length > 3) {
-                                    message += `\n... and ${result.warnings.length - 3} more warnings.`;
-                                }
+                            // Redirect to print view on this page with asset ids
+                            const ids = Array.isArray(result.asset_ids) ? result.asset_ids : [];
+                            if (ids.length === 0) {
+                                alert('Created, but no asset IDs returned. Redirecting to inventory.');
+                                window.location.href = 'inventory.php?tab=assets&success=bulk_created';
+                                return;
                             }
-                            alert(message);
                             sessionStorage.removeItem('selectedAssets');
-                            window.location.href = 'inventory.php?tab=assets&success=bulk_created';
+                            const idsParam = encodeURIComponent(ids.join(','));
+                            window.location.href = `bulk_create_mr.php?print=1&ids=${idsParam}`;
                         } else {
                             let errorMsg = 'Error: ' + result.message;
                             if (result.debug_steps) {

@@ -31,7 +31,8 @@ try {
     $conn->begin_transaction();
 
     // Get common details
-    $accountable_person = intval($_POST['accountable_person']);
+    $accountable_person = intval($_POST['accountable_person']); // employee_id (for assets table)
+    $accountable_person_name = trim($_POST['accountable_person_name'] ?? ''); // human-readable name for mr_details
     $office = intval($_POST['office']);
     $category = intval($_POST['category']);
     $date_received = $_POST['date_received'];
@@ -51,6 +52,7 @@ try {
 
     $created_count = 0;
     $errors = [];
+    $processed_asset_ids = [];
 
     // Process each asset
     foreach ($assets as $index => $asset) {
@@ -145,7 +147,7 @@ try {
                 $unit,           // unit
                 $date_received,  // acquisition_date
                 $value,          // acquisition_cost
-                $accountable_person, // person_accountable
+                $accountable_person_name, // person_accountable (store name for printability)
                 $end_user,       // end_user
                 $date_received,  // acquired_date
                 $inventory_tag   // inventory_tag
@@ -201,7 +203,7 @@ try {
 
             // Lifecycle: ASSIGNED (bulk create). Mirror single-create behavior.
             if (function_exists('logLifecycleEvent') && !empty($asset_id)) {
-                $note = sprintf('MR create (bulk); PA_ID: %s; InvTag: %s', (string)$accountable_person, (string)$inventory_tag);
+                $note = sprintf('MR create (bulk); PA: %s (ID %s); InvTag: %s', (string)$accountable_person_name, (string)$accountable_person, (string)$inventory_tag);
                 // Source table 'mr_details', no specific source_id passed to stay aligned with create_mr.php
                 logLifecycleEvent(
                     (int)$asset_id,
@@ -222,6 +224,7 @@ try {
             updateTagCounter($conn, 'asset_code');
 
             $created_count++;
+            $processed_asset_ids[] = $asset_id;
 
         } catch (Exception $e) {
             $errors[] = "Asset {$index}: " . $e->getMessage();
@@ -240,7 +243,8 @@ try {
     $response = [
         'success' => true,
         'count' => $created_count,
-        'message' => "Successfully created property tags for {$created_count} assets"
+        'message' => "Successfully created property tags for {$created_count} assets",
+        'asset_ids' => $processed_asset_ids
     ];
 
     if (!empty($errors)) {
