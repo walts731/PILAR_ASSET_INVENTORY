@@ -25,6 +25,26 @@ function safe_date($val) {
     return $ts ? date('Y-m-d', $ts) : date('Y-m-d');
 }
 
+// Helper function to increment alphanumeric identifiers
+function increment_identifier($identifier, $index) {
+    if (empty($identifier)) return '';
+    
+    // If identifier contains numbers, increment the numeric part
+    if (preg_match('/^(.*)([0-9]+)(.*)$/', $identifier, $matches)) {
+        $prefix = $matches[1];
+        $number = intval($matches[2]);
+        $suffix = $matches[3];
+        $new_number = $number + $index;
+        // Preserve leading zeros
+        $number_length = strlen($matches[2]);
+        $formatted_number = str_pad($new_number, $number_length, '0', STR_PAD_LEFT);
+        return $prefix . $formatted_number . $suffix;
+    }
+    
+    // If no numbers found, append the index
+    return $identifier . '-' . ($index + 1);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
     $fileTmpPath = $_FILES['csv_file']['tmp_name'];
     $fileName = $_FILES['csv_file']['name'];
@@ -349,28 +369,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
         // Create item-level assets equal to quantity
         $inserted_count = 0;
         for ($i = 0; $i < $quantity; $i++) {
-            // Bind and insert item
+            // Generate incremented identifiers for each item when quantity > 1
+            $item_serial_no = ($quantity > 1 && !empty($serial_no)) ? increment_identifier($serial_no, $i) : $serial_no;
+            $item_code = ($quantity > 1 && !empty($code)) ? increment_identifier($code, $i) : $code;
+            $item_property_no = ($quantity > 1 && !empty($property_no)) ? increment_identifier($property_no, $i) : $property_no;
+            $item_inventory_tag = ($quantity > 1 && !empty($inventory_tag)) ? increment_identifier($inventory_tag, $i) : $inventory_tag;
+            
+            // Validate uniqueness of incremented identifiers
+            $item_uniqueness_errors = [];
+            
+            // Check incremented serial number uniqueness
+            if (!empty($item_serial_no)) {
+                $stmtCheckSerial->bind_param('s', $item_serial_no);
+                $stmtCheckSerial->execute();
+                $resSerial = $stmtCheckSerial->get_result();
+                if ($resSerial && $resSerial->num_rows > 0) {
+                    $item_uniqueness_errors[] = "serial number '{$item_serial_no}' already exists";
+                }
+            }
+            
+            // Check incremented code uniqueness
+            if (!empty($item_code)) {
+                $stmtCheckCode->bind_param('s', $item_code);
+                $stmtCheckCode->execute();
+                $resCode = $stmtCheckCode->get_result();
+                if ($resCode && $resCode->num_rows > 0) {
+                    $item_uniqueness_errors[] = "code '{$item_code}' already exists";
+                }
+            }
+            
+            // Check incremented property number uniqueness
+            if (!empty($item_property_no)) {
+                $stmtCheckProperty->bind_param('s', $item_property_no);
+                $stmtCheckProperty->execute();
+                $resProperty = $stmtCheckProperty->get_result();
+                if ($resProperty && $resProperty->num_rows > 0) {
+                    $item_uniqueness_errors[] = "property number '{$item_property_no}' already exists";
+                }
+            }
+            
+            // Check incremented inventory tag uniqueness
+            if (!empty($item_inventory_tag)) {
+                $stmtCheckInventory->bind_param('s', $item_inventory_tag);
+                $stmtCheckInventory->execute();
+                $resInventory = $stmtCheckInventory->get_result();
+                if ($resInventory && $resInventory->num_rows > 0) {
+                    $item_uniqueness_errors[] = "inventory tag '{$item_inventory_tag}' already exists";
+                }
+            }
+            
+            // If there are uniqueness errors for this item, skip it and continue with next
+            if (!empty($item_uniqueness_errors)) {
+                $failed++;
+                $row_number = $success + $failed;
+                $item_number = $i + 1;
+                $detailed_errors[] = "Row {$row_number} (Item {$item_number}): Duplicate values found - " . implode(', ', $item_uniqueness_errors);
+                continue;
+            }
+            
+            // Bind and insert item with incremented identifiers
             $asset_name = $description; // use description as name
             $types = 'sssssiiidsssssssi';
             $stmtInsAsset->bind_param(
                 $types,
-                $asset_name,      // s
-                $description,     // s
-                $unit,            // s
-                $status,          // s
-                $acq_date,        // s
-                $office_id,       // i
-                $employee_id,     // i
-                $red_tagged,      // d (we'll treat as int but bind as d? better use i)
-                $value,           // d
-                $type,            // s
-                $serial_no,       // s
-                $code,            // s
-                $property_no,     // s
-                $model,           // s
-                $brand,           // s
-                $inventory_tag,   // s
-                $asset_new_id     // i
+                $asset_name,         // s
+                $description,        // s
+                $unit,              // s
+                $status,            // s
+                $acq_date,          // s
+                $office_id,         // i
+                $employee_id,       // i
+                $red_tagged,        // i
+                $value,             // d
+                $type,              // s
+                $item_serial_no,    // s - incremented
+                $item_code,         // s - incremented
+                $item_property_no,  // s - incremented
+                $model,             // s
+                $brand,             // s
+                $item_inventory_tag, // s - incremented
+                $asset_new_id       // i
             );
 
             if ($stmtInsAsset->execute()) {
@@ -419,7 +497,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                             $office_location,        // s
                             $description,            // s
                             $model_no,               // s
-                            $serial_no,              // s
+                            $item_serial_no,         // s - use incremented serial
                             $serviceable,            // i
                             $unserviceable,          // i
                             $unit_quantity,          // i
@@ -430,7 +508,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                             $end_user,               // s (allowed empty)
                             $acquired_date,          // s
                             $counted_date,           // s
-                            $inventory_tag           // s
+                            $item_inventory_tag      // s - use incremented inventory tag
                         );
                         $stmtMrInsert->execute();
                     }
@@ -438,7 +516,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
             }
         }
 
-        if ($inserted_count > 0) { $success++; } else { $failed++; }
+        if ($inserted_count > 0) { 
+            $success++; 
+            // Log successful import with quantity details
+            if ($quantity > 1) {
+                $messages[] = "Successfully imported {$inserted_count} items for '{$description}' with auto-incremented identifiers";
+            }
+        } else { 
+            $failed++; 
+        }
     }
 
     // Close prepared statements
