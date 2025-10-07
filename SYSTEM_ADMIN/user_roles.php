@@ -23,9 +23,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'super_admin') {
 $has_permission = false;
 $user_id = $_SESSION['user_id'];
 $permission_check = $conn->prepare("
-    SELECT 1 FROM user_permissions up 
-    JOIN permissions p ON up.permission_id = p.id 
-    WHERE up.user_id = ? AND p.name = 'manage_roles'
+    SELECT 1 FROM users u
+    LEFT JOIN user_permissions up ON u.id = up.user_id
+    WHERE u.id = ? AND (u.role = 'super_admin' OR up.permission = 'manage_roles')
     LIMIT 1
 ");
 
@@ -96,14 +96,20 @@ if ($result) {
 }
 
 // Get permissions for a specific role
-function getRolePermissions($conn, $roleId) {
+function getRolePermissions($conn, $roleName) {
     $rolePermissions = [];
-    $stmt = $conn->prepare("SELECT permission_id FROM role_permissions WHERE role_id = ?");
-    $stmt->bind_param('i', $roleId);
+    $stmt = $conn->prepare("
+        SELECT p.name 
+        FROM permissions p
+        JOIN user_permissions up ON p.name = up.permission
+        JOIN users u ON up.user_id = u.id
+        WHERE u.role = ?
+    ");
+    $stmt->bind_param('s', $roleName);
     $stmt->execute();
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
-        $rolePermissions[] = $row['permission_id'];
+        $rolePermissions[] = $row['name'];
     }
     return $rolePermissions;
 }
@@ -127,10 +133,21 @@ if ($selectedRoleId === null && !empty($roles)) {
 }
 
 // Get permissions for the selected role
-$rolePermissions = $selectedRoleId ? getRolePermissions($conn, $selectedRoleId) : [];
+$roleName = '';
+if ($selectedRoleId) {
+    // Find the role name by ID
+    $stmt = $conn->prepare("SELECT role FROM users WHERE id = ? LIMIT 1");
+    $stmt->bind_param('i', $selectedRoleId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $roleName = $row['role'];
+    }
+}
+$rolePermissions = $roleName ? getRolePermissions($conn, $roleName) : [];
 ?>
 
-<?php include 'includes/header.php'; ?>
+<?php include '../includes/header.php'; ?>
 
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
