@@ -149,10 +149,10 @@ $stmt = $conn->prepare("
                         $check_stmt->close();
 
                         if ($existing_asset) {
-                            // Restock existing office asset and ensure type is 'consumable'
+                            // Restock existing office asset and ensure type is 'consumable'; tag with current RIS
                             $updated_qty = ((int)$existing_asset['quantity']) + $qty;
-                            $restock_stmt = $conn->prepare("UPDATE assets SET quantity = ?, added_stock = ?, type = 'consumable', last_updated = NOW() WHERE id = ?");
-                            $restock_stmt->bind_param("iii", $updated_qty, $qty, $existing_asset['id']);
+                            $restock_stmt = $conn->prepare("UPDATE assets SET quantity = ?, added_stock = ?, type = 'consumable', last_updated = NOW(), ris_id = ? WHERE id = ?");
+                            $restock_stmt->bind_param("iiii", $updated_qty, $qty, $ris_form_id, $existing_asset['id']);
                             $restock_stmt->execute();
                             $restock_stmt->close();
                         } else {
@@ -183,7 +183,7 @@ $stmt = $conn->prepare("
         asset_name, category, description, quantity, added_stock, unit, status,
         acquisition_date, office_id, employee_id, red_tagged,
         value, qr_code, type, image, serial_no,
-        code, property_no, model, brand, inventory_tag, last_updated
+        code, property_no, model, brand, inventory_tag, ris_id, last_updated
     ) VALUES (
         '" . $conn->real_escape_string($asset['asset_name']) . "',
         " . ($category_id ? (int)$category_id : 'NULL') . ",
@@ -206,6 +206,7 @@ $stmt = $conn->prepare("
         '" . $conn->real_escape_string($asset['model']) . "',
         '" . $conn->real_escape_string($asset['brand']) . "',
         '" . $conn->real_escape_string($asset['inventory_tag']) . "',
+        " . (int)$ris_form_id . ",
         NOW()
     )";
                             if (!$conn->query($sql)) {
@@ -255,18 +256,18 @@ $stmt = $conn->prepare("
                         if ($existing_id !== null) {
                             // Merge quantities into existing asset
                             $new_qty = $existing_qty + $qty;
-                            $upd = $conn->prepare("UPDATE assets SET quantity = ?, added_stock = COALESCE(added_stock,0) + ?, last_updated = NOW() WHERE id = ?");
-                            $upd->bind_param("iii", $new_qty, $qty, $existing_id);
+                            $upd = $conn->prepare("UPDATE assets SET quantity = ?, added_stock = COALESCE(added_stock,0) + ?, last_updated = NOW(), ris_id = ? WHERE id = ?");
+                            $upd->bind_param("iiii", $new_qty, $qty, $ris_form_id, $existing_id);
                             $upd->execute();
                             $upd->close();
                         } else {
-                            // Insert as a new consumable asset record
-                            $ins_stmt = $conn->prepare("INSERT INTO assets (asset_name, category, description, quantity, added_stock, unit, status, acquisition_date, office_id, employee_id, red_tagged, value, qr_code, type, image, serial_no, code, property_no, model, brand, inventory_tag, last_updated) VALUES (?, NULL, ?, ?, ?, ?, 'available', NOW(), ?, NULL, 0, ?, '', 'consumable', '', '', '', ?, '', '', '', NOW())");
+                            // Insert as a new consumable asset record; tag with current RIS
+                            $ins_stmt = $conn->prepare("INSERT INTO assets (asset_name, category, description, quantity, added_stock, unit, status, acquisition_date, office_id, employee_id, red_tagged, value, qr_code, type, image, serial_no, code, property_no, model, brand, inventory_tag, ris_id, last_updated) VALUES (?, NULL, ?, ?, ?, ?, 'available', NOW(), ?, NULL, 0, ?, '', 'consumable', '', '', '', ?, '', '', '', ?, NOW())");
                             $asset_name_val = $desc;
                             $added_stock_val = $qty;
                             $property_no_val = $stock;
                             $ins_stmt->bind_param(
-                                "ssiisids",
+                                "ssiisidsi",
                                 $asset_name_val,   // s asset_name
                                 $desc,            // s description
                                 $qty,             // i quantity
@@ -274,7 +275,8 @@ $stmt = $conn->prepare("
                                 $unit_value,      // s unit
                                 $office_id,       // i office_id
                                 $price,           // d value
-                                $property_no_val  // s property_no
+                                $property_no_val, // s property_no
+                                $ris_form_id      // i ris_id
                             );
                             $ins_stmt->execute();
                             $ins_stmt->close();

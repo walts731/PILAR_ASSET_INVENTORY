@@ -673,7 +673,8 @@ $stmt->close();
                         </button>
 
 
-                        <!-- Enhanced Delete Button -->
+                        <!-- Enhanced Delete Button (only when no RIS is linked) -->
+                        <?php if (empty($row['ris_id'])): ?>
                         <button type="button"
                           class="btn btn-sm btn-outline-danger rounded-pill deleteConsumableEnhancedBtn"
                           data-id="<?= $row['id'] ?>"
@@ -689,6 +690,7 @@ $stmt->close();
                           title="Delete Consumable">
                           <i class="bi bi-trash"></i>
                         </button>
+                        <?php endif; ?>
                       </td>
                     </tr>
                   <?php endwhile; ?>
