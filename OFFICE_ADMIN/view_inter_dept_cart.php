@@ -12,14 +12,22 @@ $office_id = $_SESSION['office_id'];
 $pageTitle = 'Inter-Department Borrowing - PILAR Asset Inventory';
 $sidebarActive = 'view_inter_dept_cart';
 
-// Initialize carts
-if (!isset($_SESSION['inter_dept_cart'])) $_SESSION['inter_dept_cart'] = [];
-if (!isset($_SESSION['borrow_cart'])) $_SESSION['borrow_cart'] = [];
+// Handle clear cart action
+if (isset($_GET['clear_cart']) && $_GET['clear_cart'] == 1) {
+    $_SESSION['inter_dept_cart'] = [];
+    $_SESSION['success_message'] = 'Your box has been cleared successfully.';
+    header('Location: view_inter_dept_cart.php');
+    exit();
+}
 
-// Detect which cart to use (based on referrer)
-$is_borrow_cart = strpos($_SERVER['HTTP_REFERER'] ?? '', 'borrow.php') !== false;
-$cart = $is_borrow_cart ? $_SESSION['borrow_cart'] : $_SESSION['inter_dept_cart'];
-$cart_key = $is_borrow_cart ? 'borrow_cart' : 'inter_dept_cart';
+// Initialize cart if it doesn't exist
+if (!isset($_SESSION['inter_dept_cart'])) {
+    $_SESSION['inter_dept_cart'] = [];
+}
+
+// Always use inter_dept_cart for this page
+$cart = &$_SESSION['inter_dept_cart'];
+$cart_key = 'inter_dept_cart';
 
 // Handle item removal
 if (isset($_POST['remove_item'], $_POST['item_key'])) {
@@ -159,6 +167,9 @@ if (isset($_POST['submit_request'])) {
             <h2 class="fw-bold">Inter-Department Borrowing Cart</h2>
             <a href="inter_department_borrow.php" class="btn btn-outline-primary">
                 <i class="bi bi-arrow-left"></i> Back to Assets
+            </a>
+            <a href="?clear_cart=1" class="btn btn-danger ms-2" onclick="return confirm('Are you sure you want to clear your box? This cannot be undone.');">
+                <i class="bi bi-trash"></i> Clear Box
             </a>
         </div>
 

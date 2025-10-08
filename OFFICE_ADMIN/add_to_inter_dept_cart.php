@@ -46,6 +46,9 @@ $cart_item = [
 // Add or update item in cart
 $_SESSION['inter_dept_cart'][$item_key] = $cart_item;
 
+// Ensure session is written
+session_write_close();
+
 // Return success response
 echo json_encode([
     'success' => true,
