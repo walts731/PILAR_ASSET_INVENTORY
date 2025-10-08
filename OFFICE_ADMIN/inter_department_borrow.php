@@ -60,7 +60,7 @@ if (!empty($search_query)) {
 
 // Add category filter
 if (!empty($category_filter)) {
-    $query .= " AND a.category_id = ?";
+    $query .= " AND a.category = ?";
     $params[] = $category_filter;
     $types .= "i";
 }
@@ -165,7 +165,7 @@ if ($stmt) {
                 <h1 class="h3 mb-0">Inter-Department Borrowing</h1>
                 <div>
                     <a href="view_inter_dept_cart.php" class="btn btn-primary position-relative">
-                        <i class="fas fa-shopping-cart"></i> View Cart
+                        <i class="fas fa-box-open"></i> View Box
                         <?php if ($cart_count > 0): ?>
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                 <?= $cart_count ?>
@@ -259,31 +259,38 @@ if ($stmt) {
 <div class="modal fade" id="addToCartModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="addToCartForm" method="POST" action="add_to_cart.php">
+            <form id="addToCartForm" method="POST" action="add_to_inter_dept_cart.php">
                 <div class="modal-header">
-                    <h5 class="modal-title">Add to Cart</h5>
+                    <h5 class="modal-title">Add to Box</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Asset</label>
-                        <input type="text" class="form-control" id="assetName" readonly>
+                        <input type="text" class="form-control" id="assetNameDisplay" readonly>
                         <input type="hidden" name="asset_id" id="assetId">
+                        <input type="hidden" name="asset_name" id="assetName">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Source Office</label>
                         <input type="text" class="form-control" id="sourceOffice" readonly>
                         <input type="hidden" name="source_office_id" id="sourceOfficeId">
+                        <input type="hidden" name="source_office_name" id="sourceOfficeName">
                     </div>
                     <div class="mb-3">
                         <label for="quantity" class="form-label">Quantity</label>
                         <input type="number" class="form-control" id="quantity" name="quantity" min="1" value="1" required>
                         <small class="form-text text-muted">Maximum available: <span id="maxQuantity">0</span></small>
                     </div>
+                    <input type="hidden" name="purpose" value="">
+                    <input type="hidden" name="requested_return_date" value="">
                 </div>
                 <div class="modal-footer">
+                    <div class="me-auto text-muted small">
+                        <span class="text-danger">*</span> Required field
+                    </div>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add to Cart</button>
+                    <button type="submit" class="btn btn-primary">Add to Box</button>
                 </div>
             </form>
         </div>
@@ -315,6 +322,12 @@ if ($stmt) {
 
 <script>
 $(document).ready(function() {
+    // Reset form when modal is hidden
+    $('#addToCartModal').on('hidden.bs.modal', function () {
+        $(this).find('form')[0].reset();
+        $('#maxQuantity').text('0');
+    });
+
     // Handle Add to Cart button click
     $('.add-to-cart').click(function() {
         const assetId = $(this).data('asset-id');
@@ -326,10 +339,14 @@ $(document).ready(function() {
         // Set modal values
         $('#assetId').val(assetId);
         $('#assetName').val(assetName);
+        $('#assetNameDisplay').val(assetName);
         $('#sourceOfficeId').val(officeId);
         $('#sourceOffice').val(officeName);
-        $('#quantity').attr('max', maxQty);
+        $('#sourceOfficeName').val(officeName);
+        $('#quantity').attr('max', maxQty).val(1);
         $('#maxQuantity').text(maxQty);
+        $('#purpose').val('');
+        $('#requested_return_date').val('');
     });
     
     // Handle form submission
@@ -337,32 +354,96 @@ $(document).ready(function() {
         e.preventDefault();
         
         // Add loading state
-        const submitBtn = $(this).find('button[type="submit"]');
+        const form = $(this);
+        const submitBtn = form.find('button[type="submit"]');
         const originalText = submitBtn.html();
         submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...');
         
-        // Submit form via AJAX
+        // Create form data object with proper types
+        const formData = {
+            asset_id: parseInt(form.find('input[name="asset_id"]').val(), 10),
+            asset_name: form.find('input[name="asset_name"]').val(),
+            source_office_id: parseInt(form.find('input[name="source_office_id"]').val(), 10),
+            source_office_name: form.find('input[name="source_office_name"]').val(),
+            quantity: parseInt(form.find('input[name="quantity"]').val(), 10)
+        };
+        
+        console.log('Submitting form data:', formData);
+        
+        // Submit form via AJAX with JSON data
         $.ajax({
-            url: 'add_to_cart.php',
+            url: 'add_to_inter_dept_cart.php',
             type: 'POST',
-            data: $(this).serialize(),
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(formData),
+            dataType: 'json',
             success: function(response) {
-                // Handle success
-                const result = JSON.parse(response);
-                if (result.success) {
+                console.log('Response:', response);
+                
+                if (response && response.success) {
+                    // Update cart count
+                    $('.cart-badge').text(response.cart_count > 0 ? response.cart_count : '');
+                    
                     // Show success message
-                    alert('Item added to cart successfully!');
-                    // Reload the page to update cart count
-                    location.reload();
+                    const successAlert = `
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            ${response.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                    $('.main').prepend(successAlert);
+                    
+                    // Close the modal
+                    $('#addToCartModal').modal('hide');
                 } else {
-                    // Show error message
-                    alert('Error: ' + result.message);
-                    submitBtn.prop('disabled', false).html(originalText);
+                    // Show error message with more details
+                    let errorMessage = 'An error occurred';
+                    if (response && response.message) {
+                        errorMessage = response.message;
+                    } else if (response && response.errors) {
+                        errorMessage = 'Validation errors: ' + response.errors.join(', ');
+                    }
+                    
+                    const errorAlert = `
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            ${errorMessage}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                    $('.main').prepend(errorAlert);
                 }
+                submitBtn.prop('disabled', false).html(originalText);
             },
-            error: function() {
-                // Show error message
-                alert('An error occurred. Please try again.');
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    error: error
+                });
+                
+                let errorMessage = 'An error occurred while processing your request.';
+                
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response && response.message) {
+                        errorMessage = response.message;
+                    }
+                } catch (e) {
+                    // If we can't parse the response, use the status text
+                    errorMessage = `Error ${xhr.status}: ${xhr.statusText || 'Unknown error'}`;
+                }
+                
+                const errorAlert = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${errorMessage}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                $('.main').prepend(errorAlert);
                 submitBtn.prop('disabled', false).html(originalText);
             }
         });

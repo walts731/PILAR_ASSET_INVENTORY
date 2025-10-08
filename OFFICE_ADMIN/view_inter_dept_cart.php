@@ -12,14 +12,22 @@ $office_id = $_SESSION['office_id'];
 $pageTitle = 'Inter-Department Borrowing - PILAR Asset Inventory';
 $sidebarActive = 'view_inter_dept_cart';
 
-// Initialize carts
-if (!isset($_SESSION['inter_dept_cart'])) $_SESSION['inter_dept_cart'] = [];
-if (!isset($_SESSION['borrow_cart'])) $_SESSION['borrow_cart'] = [];
+// Handle clear cart action
+if (isset($_GET['clear_cart']) && $_GET['clear_cart'] == 1) {
+    $_SESSION['inter_dept_cart'] = [];
+    $_SESSION['success_message'] = 'Your box has been cleared successfully.';
+    header('Location: view_inter_dept_cart.php');
+    exit();
+}
 
-// Detect which cart to use (based on referrer)
-$is_borrow_cart = strpos($_SERVER['HTTP_REFERER'] ?? '', 'borrow.php') !== false;
-$cart = $is_borrow_cart ? $_SESSION['borrow_cart'] : $_SESSION['inter_dept_cart'];
-$cart_key = $is_borrow_cart ? 'borrow_cart' : 'inter_dept_cart';
+// Initialize cart if it doesn't exist
+if (!isset($_SESSION['inter_dept_cart'])) {
+    $_SESSION['inter_dept_cart'] = [];
+}
+
+// Always use inter_dept_cart for this page
+$cart = &$_SESSION['inter_dept_cart'];
+$cart_key = 'inter_dept_cart';
 
 // Handle item removal
 if (isset($_POST['remove_item'], $_POST['item_key'])) {
@@ -40,15 +48,12 @@ if (isset($_POST['submit_request'])) {
         header('Location: view_inter_dept_cart.php');
         exit();
     }
-
-    $conn->begin_transaction();
-
+    
     try {
+        $conn->begin_transaction();
         $requested_at = date('Y-m-d H:i:s');
         $requested_return_date = $_POST['requested_return_date'] ?? null;
-        $purpose = trim($_POST['purpose'] ?? '');
-
-        if (empty($requested_return_date) || empty($purpose)) {
+        if (empty($requested_return_date)) {
             throw new Exception('Please fill in all required fields.');
         }
 
@@ -64,22 +69,25 @@ if (isset($_POST['submit_request'])) {
             $asset = $check->get_result()->fetch_assoc();
             $check->close();
 
-            if (!$asset || $asset['status'] !== 'available' || $asset['quantity'] < $quantity) {
+            if (!$asset || $asset['quantity'] < $quantity || $asset['status'] !== 'available') {
                 throw new Exception("Asset {$item['asset_name']} is no longer available.");
             }
 
             // Insert request
+            // Get purpose from cart item or use empty string if not set
+            $purpose = $item['purpose'] ?? '';
+            
             $insert = $conn->prepare("
-                INSERT INTO borrow_requests (
+                INSERT INTO borrow_requests ( 
                     user_id, requested_by_user_id, asset_id, office_id, source_office_id,
-                    quantity, status, purpose, requested_at, requested_return_date,
+                    quantity, status, requested_at, due_date, purpose,
                     is_inter_department, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, 'pending_approval', ?, ?, ?, 1, NOW(), NOW())
+                ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, 1, NOW(), NOW())
             ");
             $insert->bind_param(
-                "iiiiissss",
+                "iiiiiisss",
                 $user_id, $user_id, $asset_id, $office_id, $source_office_id,
-                $quantity, $purpose, $requested_at, $requested_return_date
+                $quantity, $requested_at, $requested_return_date, $purpose
             );
             $insert->execute();
             $request_id = $conn->insert_id;
@@ -88,8 +96,8 @@ if (isset($_POST['submit_request'])) {
             // Approvals
             $approval = $conn->prepare("
                 INSERT INTO inter_department_approvals (request_id, approver_id, approval_type, status, created_at, updated_at)
-                VALUES (?, (SELECT head_user_id FROM office WHERE id = ?), 'office_head', 'pending', NOW(), NOW()),
-                       (?, (SELECT head_user_id FROM office WHERE id = ?), 'source_office', 'pending', NOW(), NOW())
+                VALUES (?, (SELECT head_user_id FROM offices WHERE id = ?), 'office_head', 'pending', NOW(), NOW()),
+                       (?, (SELECT head_user_id FROM offices WHERE id = ?), 'source_office', 'pending', NOW(), NOW())
             ");
             $approval->bind_param("iiii", $request_id, $office_id, $request_id, $source_office_id);
             $approval->execute();
@@ -97,11 +105,19 @@ if (isset($_POST['submit_request'])) {
 
             // Notification
             $notif_msg = "New inter-department borrow request for {$item['asset_name']} from {$item['source_office_name']}";
+            // Get notification type ID for borrow requests
+            $type_query = $conn->query("SELECT id FROM notification_types WHERE name = 'borrow_request' LIMIT 1");
+            $type_row = $type_query->fetch_assoc();
+            $type_id = $type_row ? $type_row['id'] : 1; // Default to 1 if type not found
+            
             $notif = $conn->prepare("
-                INSERT INTO notifications (user_id, title, message, type, related_id, related_type, is_read, created_at)
-                VALUES ((SELECT head_user_id FROM office WHERE id = ?), 'New Borrow Request', ?, 'borrow_request', ?, 'inter_dept_borrow', 0, NOW())
+                INSERT INTO notifications (
+                    type_id, title, message, 
+                    related_entity_type, related_entity_id, 
+                    is_read, created_at, updated_at
+                ) VALUES (?, 'New Borrow Request', ?, 'borrow_request', ?, 0, NOW(), NOW())
             ");
-            $notif->bind_param("isi", $office_id, $notif_msg, $request_id);
+            $notif->bind_param("isi", $type_id, $notif_msg, $request_id);
             $notif->execute();
             $notif->close();
         }
@@ -159,6 +175,9 @@ if (isset($_POST['submit_request'])) {
             <h2 class="fw-bold">Inter-Department Borrowing Cart</h2>
             <a href="inter_department_borrow.php" class="btn btn-outline-primary">
                 <i class="bi bi-arrow-left"></i> Back to Assets
+            </a>
+            <a href="?clear_cart=1" class="btn btn-danger ms-2" onclick="return confirm('Are you sure you want to clear your box? This cannot be undone.');">
+                <i class="bi bi-trash"></i> Clear Box
             </a>
         </div>
 
