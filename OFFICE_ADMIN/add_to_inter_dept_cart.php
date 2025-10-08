@@ -36,8 +36,10 @@ try {
     $source_office_id = filter_input(INPUT_POST, 'source_office_id', FILTER_VALIDATE_INT);
     $source_office_name = trim(filter_input(INPUT_POST, 'source_office_name', FILTER_SANITIZE_STRING) ?: '');
     $quantity = filter_input(INPUT_POST, 'quantity', FILTER_VALIDATE_INT);
-    $purpose = trim(filter_input(INPUT_POST, 'purpose', FILTER_SANITIZE_STRING) ?: '');
-    $requested_return_date = trim(filter_input(INPUT_POST, 'requested_return_date', FILTER_SANITIZE_STRING) ?: '');
+    
+    // These will be set when submitting the final request
+    $purpose = '';
+    $requested_return_date = '';
 
     // Validate input
     $errors = [];
@@ -46,8 +48,6 @@ try {
     if (!$source_office_id || $source_office_id <= 0) $errors[] = 'Invalid source office ID';
     if (empty($source_office_name)) $errors[] = 'Source office name is required';
     if (!$quantity || $quantity <= 0) $errors[] = 'Quantity must be greater than 0';
-    if (empty($purpose)) $errors[] = 'Purpose is required';
-    if (empty($requested_return_date)) $errors[] = 'Requested return date is required';
 
     if (!empty($errors)) {
         sendResponse(false, 'Validation failed: ' . implode(', ', $errors), ['errors' => $errors]);

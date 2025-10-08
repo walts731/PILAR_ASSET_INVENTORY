@@ -282,14 +282,8 @@ if ($stmt) {
                         <input type="number" class="form-control" id="quantity" name="quantity" min="1" value="1" required>
                         <small class="form-text text-muted">Maximum available: <span id="maxQuantity">0</span></small>
                     </div>
-                    <div class="mb-3">
-                        <label for="purpose" class="form-label">Remarks <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="purpose" name="purpose" rows="2" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="requested_return_date" class="form-label">Requested Return Date</label>
-                        <input type="date" class="form-control" id="requested_return_date" name="requested_return_date" required min="<?php echo date('Y-m-d'); ?>">
-                    </div>
+                    <input type="hidden" name="purpose" value="">
+                    <input type="hidden" name="requested_return_date" value="">
                 </div>
                 <div class="modal-footer">
                     <div class="me-auto text-muted small">
@@ -364,11 +358,16 @@ $(document).ready(function() {
         const originalText = submitBtn.html();
         submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...');
         
+        // Get form data and remove purpose and return_date
+        const formData = $(this).serializeArray().filter(item => 
+            item.name !== 'purpose' && item.name !== 'requested_return_date'
+        );
+        
         // Submit form via AJAX
         $.ajax({
             url: 'add_to_inter_dept_cart.php',
             type: 'POST',
-            data: $(this).serialize(),
+            data: $.param(formData),
             dataType: 'json',
             success: function(response) {
                 console.log('Response:', response);
