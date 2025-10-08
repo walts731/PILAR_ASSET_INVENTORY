@@ -371,13 +371,16 @@ $(document).ready(function() {
             data: $(this).serialize(),
             dataType: 'json',
             success: function(response) {
-                if (response.success) {
+                console.log('Response:', response);
+                
+                if (response && response.success) {
                     // Update cart count
                     $('.cart-badge').text(response.cart_count > 0 ? response.cart_count : '');
                     
                     // Show success message
                     const successAlert = `
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
                             ${response.message}
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
@@ -387,14 +390,53 @@ $(document).ready(function() {
                     // Close the modal
                     $('#addToCartModal').modal('hide');
                 } else {
-                    // Show error message
-                    alert('Error: ' + response.message);
+                    // Show error message with more details
+                    let errorMessage = 'An error occurred';
+                    if (response && response.message) {
+                        errorMessage = response.message;
+                    } else if (response && response.errors) {
+                        errorMessage = 'Validation errors: ' + response.errors.join(', ');
+                    }
+                    
+                    const errorAlert = `
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            ${errorMessage}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                    $('.main').prepend(errorAlert);
                 }
                 submitBtn.prop('disabled', false).html(originalText);
             },
             error: function(xhr, status, error) {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again. (' + error + ')');
+                console.error('AJAX Error:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    error: error
+                });
+                
+                let errorMessage = 'An error occurred while processing your request.';
+                
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response && response.message) {
+                        errorMessage = response.message;
+                    }
+                } catch (e) {
+                    // If we can't parse the response, use the status text
+                    errorMessage = `Error ${xhr.status}: ${xhr.statusText || 'Unknown error'}`;
+                }
+                
+                const errorAlert = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${errorMessage}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                $('.main').prepend(errorAlert);
                 submitBtn.prop('disabled', false).html(originalText);
             }
         });
