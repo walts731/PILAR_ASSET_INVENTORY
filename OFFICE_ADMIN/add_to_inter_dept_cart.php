@@ -25,68 +25,121 @@ try {
         sendResponse(false, 'Unauthorized access. Please log in.');
     }
 
+    // Get raw POST data for debugging
+    $input = file_get_contents('php://input');
+    $postData = json_decode($input, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        $postData = $_POST; // Fallback to regular POST data
+    }
+
+    // Log received data for debugging
+    error_log('Received POST data: ' . print_r($postData, true));
+
+    // Get and validate required fields
+    $required = ['asset_id', 'asset_name', 'source_office_id', 'source_office_name', 'quantity'];
+    $missing = [];
+    $data = [];
+    
+    foreach ($required as $field) {
+        if (empty($postData[$field])) {
+            $missing[] = $field;
+        } else {
+            $data[$field] = $postData[$field];
+        }
+    }
+    
+    if (!empty($missing)) {
+        sendResponse(false, 'Missing required fields: ' . implode(', ', $missing), [
+            'missing_fields' => $missing,
+            'received_data' => $postData
+        ]);
+    }
+    
+    // Type validation
+    $asset_id = filter_var($data['asset_id'], FILTER_VALIDATE_INT);
+    $source_office_id = filter_var($data['source_office_id'], FILTER_VALIDATE_INT);
+    $quantity = filter_var($data['quantity'], FILTER_VALIDATE_INT);
+    
+    if ($asset_id === false || $asset_id <= 0) {
+        sendResponse(false, 'Invalid asset ID', ['asset_id' => $data['asset_id']]);
+    }
+    
+    if ($source_office_id === false || $source_office_id <= 0) {
+        sendResponse(false, 'Invalid source office ID', ['source_office_id' => $data['source_office_id']]);
+    }
+    
+    if ($quantity === false || $quantity <= 0) {
+        sendResponse(false, 'Quantity must be a positive number', ['quantity' => $data['quantity']]);
+    }
+
     // Initialize cart if it doesn't exist
     if (!isset($_SESSION['inter_dept_cart'])) {
         $_SESSION['inter_dept_cart'] = [];
     }
 
-    // Get POST data with validation
-    $asset_id = filter_input(INPUT_POST, 'asset_id', FILTER_VALIDATE_INT);
-    $asset_name = trim(filter_input(INPUT_POST, 'asset_name', FILTER_SANITIZE_STRING) ?: '');
-    $source_office_id = filter_input(INPUT_POST, 'source_office_id', FILTER_VALIDATE_INT);
-    $source_office_name = trim(filter_input(INPUT_POST, 'source_office_name', FILTER_SANITIZE_STRING) ?: '');
-    $quantity = filter_input(INPUT_POST, 'quantity', FILTER_VALIDATE_INT);
-    
-    // These will be set when submitting the final request
-    $purpose = '';
-    $requested_return_date = '';
-
-    // Validate input
-    $errors = [];
-    if (!$asset_id || $asset_id <= 0) $errors[] = 'Invalid asset ID';
-    if (empty($asset_name)) $errors[] = 'Asset name is required';
-    if (!$source_office_id || $source_office_id <= 0) $errors[] = 'Invalid source office ID';
-    if (empty($source_office_name)) $errors[] = 'Source office name is required';
-    if (!$quantity || $quantity <= 0) $errors[] = 'Quantity must be greater than 0';
-
-    if (!empty($errors)) {
-        sendResponse(false, 'Validation failed: ' . implode(', ', $errors), ['errors' => $errors]);
-    }
-
-    // Create cart item
+    // Create cart item without purpose and requested_return_date
     $item_key = $asset_id . '_' . $source_office_id;
     $cart_item = [
         'asset_id' => $asset_id,
-        'asset_name' => $asset_name,
+        'asset_name' => $data['asset_name'],
         'source_office_id' => $source_office_id,
-        'source_office_name' => $source_office_name,
+        'source_office_name' => $data['source_office_name'],
         'quantity' => $quantity,
-        'purpose' => $purpose,
-        'requested_return_date' => $requested_return_date,
         'added_at' => date('Y-m-d H:i:s')
     ];
+    
+    // Add optional fields only if they exist in the database
+    if (isset($data['purpose'])) {
+        $cart_item['purpose'] = $data['purpose'];
+    }
+    if (isset($data['requested_return_date'])) {
+        $cart_item['requested_return_date'] = $data['requested_return_date'];
+    }
 
     // Add or update item in cart
-    $_SESSION['inter_dept_cart'][$item_key] = $cart_item;
+    if (isset($_SESSION['inter_dept_cart'][$item_key])) {
+        // Update quantity if item already exists
+        $_SESSION['inter_dept_cart'][$item_key]['quantity'] += $quantity;
+        
+        // Update other fields if they exist in the request
+        if (isset($data['purpose'])) {
+            $_SESSION['inter_dept_cart'][$item_key]['purpose'] = $data['purpose'];
+        }
+        if (isset($data['requested_return_date'])) {
+            $_SESSION['inter_dept_cart'][$item_key]['requested_return_date'] = $data['requested_return_date'];
+        }
+    } else {
+        // Add new item to cart
+        $_SESSION['inter_dept_cart'][$item_key] = $cart_item;
+    }
 
     // Save session data
     session_write_close();
-
+    
     // Return success response
     sendResponse(true, 'Item added to cart successfully', [
         'cart_count' => count($_SESSION['inter_dept_cart']),
-        'item' => $cart_item
+        'item' => $cart_item,
+        'cart' => $_SESSION['inter_dept_cart']
     ]);
 
 } catch (Exception $e) {
-    // Log the error
-    error_log('Error in add_to_inter_dept_cart.php: ' . $e->getMessage());
-    
-    // Send error response
-    sendResponse(false, 'An error occurred: ' . $e->getMessage(), [
+    // Log the error with full details
+    $errorDetails = [
+        'message' => $e->getMessage(),
         'file' => $e->getFile(),
         'line' => $e->getLine(),
-        'trace' => $e->getTraceAsString()
+        'trace' => $e->getTraceAsString(),
+        'post_data' => $_POST,
+        'session' => $_SESSION
+    ];
+    
+    error_log('Error in add_to_inter_dept_cart.php: ' . print_r($errorDetails, true));
+    
+    // Send error response
+    http_response_code(500);
+    sendResponse(false, 'An error occurred while processing your request. Please try again.', [
+        'error' => $e->getMessage()
     ]);
 }
 ?>

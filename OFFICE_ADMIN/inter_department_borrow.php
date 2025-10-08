@@ -354,20 +354,28 @@ $(document).ready(function() {
         e.preventDefault();
         
         // Add loading state
-        const submitBtn = $(this).find('button[type="submit"]');
+        const form = $(this);
+        const submitBtn = form.find('button[type="submit"]');
         const originalText = submitBtn.html();
         submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...');
         
-        // Get form data and remove purpose and return_date
-        const formData = $(this).serializeArray().filter(item => 
-            item.name !== 'purpose' && item.name !== 'requested_return_date'
-        );
+        // Create form data object with proper types
+        const formData = {
+            asset_id: parseInt(form.find('input[name="asset_id"]').val(), 10),
+            asset_name: form.find('input[name="asset_name"]').val(),
+            source_office_id: parseInt(form.find('input[name="source_office_id"]').val(), 10),
+            source_office_name: form.find('input[name="source_office_name"]').val(),
+            quantity: parseInt(form.find('input[name="quantity"]').val(), 10)
+        };
         
-        // Submit form via AJAX
+        console.log('Submitting form data:', formData);
+        
+        // Submit form via AJAX with JSON data
         $.ajax({
             url: 'add_to_inter_dept_cart.php',
             type: 'POST',
-            data: $.param(formData),
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(formData),
             dataType: 'json',
             success: function(response) {
                 console.log('Response:', response);
