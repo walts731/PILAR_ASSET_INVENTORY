@@ -373,7 +373,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (!function_exists('sendItrEmail')) {
-            function sendItrEmail(mysqli $conn, $employeeId, $personName, $direction, $itrId, $itrNo, $assetId, $inventoryTag, $propertyNo, $description, $reason, $dateStr) {
+            function sendItrEmail(mysqli $conn, $employeeId, $personName, $direction, $itrId, $itrNo, $assetId, $inventoryTag, $propertyNo, $description, $reason, $dateStr, $otherOfficerName) {
                 ensureEmailNotificationsTable_bulk_itr($conn);
                 // resolve email
                 $recipientEmail = null;
@@ -404,12 +404,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 $subject = 'ITR Asset Transfer Notification (' . strtoupper((string)$direction) . ')';
+                $counterpartyLabel = ($direction === 'to') ? 'From Accountable Officer' : 'To Accountable Officer';
                 $body = "Hello " . htmlspecialchars((string)$personName) . ",<br><br>"
                       . "An asset has been transferred " . htmlspecialchars((string)$direction) . " you via ITR.<br>"
                       . "<ul>"
                       . "<li><strong>ITR No.:</strong> " . htmlspecialchars((string)$itrNo) . "</li>"
                       . "<li><strong>Date:</strong> " . htmlspecialchars((string)$dateStr) . "</li>"
                       . "<li><strong>Reason:</strong> " . htmlspecialchars((string)$reason) . "</li>"
+                      . "<li><strong>" . htmlspecialchars($counterpartyLabel) . ":</strong> " . htmlspecialchars((string)$otherOfficerName) . "</li>"
                       . "<li><strong>Office:</strong> " . htmlspecialchars((string)$officeName) . "</li>"
                       . "<li><strong>Inventory Tag:</strong> " . htmlspecialchars((string)$inventoryTag) . "</li>"
                       . "<li><strong>Description:</strong> " . htmlspecialchars((string)$description) . "</li>"
@@ -454,6 +456,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Send emails per asset to FROM and TO officers
         foreach ($assets_to_update as $aid_int) {
+            // Initialize per-asset previous owner name for safe use below
+            $fromName = '';
             $propNo = $asset_propnos[$aid_int] ?? '';
             $invTag = $asset_inventory_tags[$aid_int] ?? '';
             // Match description from valid_items
@@ -473,11 +477,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($rsn && ($rowN = $rsn->fetch_assoc())) { $fromName = $rowN['name'] ?? ''; }
                     $stn->close();
                 }
-                sendItrEmail($conn, $fromEmpId, $fromName, 'from', $itr_id, $itr_no, $aid_int, $invTag, $propNo, $desc, $reason_for_transfer, $date);
+                // Email to FROM officer should include TO officer's name
+                sendItrEmail($conn, $fromEmpId, $fromName, 'from', $itr_id, $itr_no, $aid_int, $invTag, $propNo, $desc, $reason_for_transfer, $date, $to_accountable_officer);
             }
             // TO officer (new owner)
             if (!empty($to_employee_id)) {
-                sendItrEmail($conn, $to_employee_id, $to_accountable_officer, 'to', $itr_id, $itr_no, $aid_int, $invTag, $propNo, $desc, $reason_for_transfer, $date);
+                // Email to TO officer should include FROM officer's name
+                // Prefer resolved per-asset previous owner name if available, otherwise use form's from_accountable_officer
+                $fromOfficerForEmail = !empty($fromName) ? $fromName : $from_accountable_officer;
+                sendItrEmail($conn, $to_employee_id, $to_accountable_officer, 'to', $itr_id, $itr_no, $aid_int, $invTag, $propNo, $desc, $reason_for_transfer, $date, $fromOfficerForEmail);
             }
         }
 
