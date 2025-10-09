@@ -465,6 +465,50 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
         }
       })();
 
+      // Import feedback alerts (from import_employees.php)
+      (function(){
+        const params = new URLSearchParams(window.location.search);
+        const importFlag = params.get('import');
+        if (importFlag === 'completed') {
+          const imported = parseInt(params.get('imported') || '0', 10);
+          const duplicates = (params.get('duplicates') || '').split(',').filter(Boolean);
+          const missingOffices = (params.get('missing_offices') || '').split(',').filter(Boolean);
+
+          let html = '';
+          if (imported > 0) {
+            html += `<div class="alert alert-success alert-dismissible fade show" role="alert">
+                       <i class="bi bi-check-circle"></i> Imported <strong>${imported}</strong> employee(s) successfully.
+                       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                     </div>`;
+          }
+          if (duplicates.length > 0) {
+            const list = duplicates.map(n => `<span class=\"badge bg-secondary me-1\">${$('<div>').text(n).html()}</span>`).join(' ');
+            html += `<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                       <i class="bi bi-exclamation-triangle"></i> Skipped duplicate name(s): ${list}
+                       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                     </div>`;
+          }
+          if (missingOffices.length > 0) {
+            const list = missingOffices.map(o => `<span class=\"badge bg-danger me-1\">${$('<div>').text(o).html()}</span>`).join(' ');
+            html += `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                       <i class="bi bi-x-circle"></i> Office not found for: ${list}. Those rows were skipped.
+                       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                     </div>`;
+          }
+          if (html) {
+            $('#pageAlerts').prepend(html);
+          }
+
+          // Clean the URL
+          const url = new URL(window.location.href);
+          url.searchParams.delete('import');
+          url.searchParams.delete('imported');
+          url.searchParams.delete('duplicates');
+          url.searchParams.delete('missing_offices');
+          window.history.replaceState({}, document.title, url.toString());
+        }
+      })();
+
       // Select All handling
       $('#selectAllEmployees').on('change', function() {
         const checked = $(this).is(':checked');

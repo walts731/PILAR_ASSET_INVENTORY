@@ -4,6 +4,8 @@ session_start();
 
 if (isset($_POST['import'])) {
     $duplicates = []; // store duplicate names
+    $missingOffices = []; // store office names that do not exist
+    $importedCount = 0;   // count successfully imported rows
 
     if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === 0) {
         $fileName = $_FILES['csv_file']['tmp_name'];
@@ -20,9 +22,9 @@ if (isset($_POST['import'])) {
                 // Optional 4th column: email
                 $emailCsv    = isset($data[3]) ? $conn->real_escape_string(trim($data[3])) : null;
 
-                // Lookup office_id based on office_name
+                // Lookup office_id based on office_name (case-insensitive, trimmed)
                 $office_id = null;
-                $stmt = $conn->prepare("SELECT id FROM offices WHERE office_name = ?");
+                $stmt = $conn->prepare("SELECT id FROM offices WHERE TRIM(LOWER(office_name)) = TRIM(LOWER(?)) LIMIT 1");
                 $stmt->bind_param("s", $office_name);
                 $stmt->execute();
                 $stmt->bind_result($office_id);
@@ -67,21 +69,35 @@ if (isset($_POST['import'])) {
                                                  VALUES (?, ?, ?, ?, NOW())");
                         $stmt->bind_param("ssis", $employee_no, $name, $office_id, $status);
                     }
-                    $stmt->execute();
+                    if ($stmt->execute()) {
+                        $importedCount++;
+                    }
                     $stmt->close();
+                } else {
+                    if ($office_name !== '') {
+                        $missingOffices[] = $office_name;
+                    }
                 }
             }
             fclose($handle);
         }
     }
 
-    // Redirect with duplicates if any
+    // Summarize results for Bootstrap alerts on employees.php
+    $params = [
+        'import' => 'completed',
+        'imported' => $importedCount,
+    ];
     if (!empty($duplicates)) {
-        $dupString = implode(",", $duplicates);
-        header("Location: employees.php?import=duplicates&names=" . urlencode($dupString));
-    } else {
-        header("Location: employees.php?import=success");
+        $params['duplicates'] = implode(',', array_unique($duplicates));
     }
+    if (!empty($missingOffices)) {
+        $params['missing_offices'] = implode(',', array_unique($missingOffices));
+    }
+
+    // Build redirect URL
+    $qs = http_build_query($params);
+    header("Location: employees.php?" . $qs);
     exit();
 }
 ?>
