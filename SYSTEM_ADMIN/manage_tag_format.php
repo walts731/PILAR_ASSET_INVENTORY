@@ -834,7 +834,49 @@ if (isset($_SESSION['flash'])) {
         }
 
         // Enhanced preview format functionality with flexible digit support
-        function previewFormat(template) {
+        function previewFormat(templateOrForm) {
+            // Support calling with either a template string or a form element (this.form)
+            let template = '';
+            if (typeof templateOrForm === 'string') {
+                template = templateOrForm;
+            } else if (templateOrForm && typeof templateOrForm.querySelector === 'function') {
+                const ti = templateOrForm.querySelector('input[name="format_template"]');
+                template = ti ? String(ti.value || '') : '';
+                // If template is empty, derive from form fields like updateTemplate()
+                if (!template) {
+                    const prefixInput = templateOrForm.querySelector('input[name="prefix"]');
+                    const digitsSelect = templateOrForm.querySelector('select[name="increment_digits"]');
+                    const dateSelect = templateOrForm.querySelector('select[name="date_format"]');
+                    const suffixInput = templateOrForm.querySelector('input[name="suffix"]');
+                    const tagTypeInput = templateOrForm.querySelector('input[name="tag_type"]');
+                    const isAssetCode = tagTypeInput && tagTypeInput.value === 'asset_code';
+
+                    const prefix = prefixInput ? prefixInput.value : '';
+                    const digits = digitsSelect ? '#'.repeat(parseInt(digitsSelect.value || '4')) : '####';
+                    const dateFormat = dateSelect ? dateSelect.value : '';
+                    const suffix = suffixInput ? suffixInput.value : '';
+
+                    let tmp = '';
+                    if (dateFormat) {
+                        if (dateFormat === 'YYYY') tmp += '{YYYY}';
+                        else if (dateFormat === 'YY') tmp += '{YY}';
+                        else if (dateFormat === 'YYYYMM') tmp += '{YYYYMM}';
+                        else if (dateFormat === 'YYYYMMDD') tmp += '{YYYYMMDD}';
+                        tmp += '-';
+                    }
+                    if (isAssetCode) tmp += '{CODE}-';
+                    if (prefix) {
+                        tmp += prefix;
+                        if (!tmp.endsWith('-')) tmp += '-';
+                    }
+                    if (digits) tmp += '{' + digits + '}';
+                    if (suffix) tmp += suffix;
+                    template = tmp.replace(/-+/g, '-');
+                }
+            } else {
+                template = '';
+            }
+
             // Replace placeholders with sample values
             let preview = template;
             const now = new Date();
@@ -843,12 +885,12 @@ if (isset($_SESSION['flash'])) {
             const day = String(now.getDate()).padStart(2, '0');
             
             // Replace date placeholders
-            preview = preview.replace(/\{YYYY\}/g, year);
-            preview = preview.replace(/\{YY\}/g, year.toString().slice(-2));
-            preview = preview.replace(/\{MM\}/g, month);
-            preview = preview.replace(/\{DD\}/g, day);
-            preview = preview.replace(/\{YYYYMM\}/g, year + month);
-            preview = preview.replace(/\{YYYYMMDD\}/g, year + month + day);
+            preview = preview.replace(/\{YYYY\}|YYYY/g, year);
+            preview = preview.replace(/\{YY\}|YY/g, year.toString().slice(-2));
+            preview = preview.replace(/\{MM\}|MM/g, month);
+            preview = preview.replace(/\{DD\}|DD/g, day);
+            preview = preview.replace(/\{YYYYMM\}|YYYYMM/g, year + month);
+            preview = preview.replace(/\{YYYYMMDD\}|YYYYMMDD/g, year + month + day);
             
             // Enhanced flexible digit replacement - supports any number of # symbols
             preview = preview.replace(/\{(#+)\}/g, function(match, hashes) {
@@ -864,9 +906,26 @@ if (isset($_SESSION['flash'])) {
             preview = preview.replace(/\{##\}/g, '01');
             preview = preview.replace(/\{#\}/g, '1');
             
-            // Replace asset code placeholder
-            preview = preview.replace(/\{CODE\}/g, 'COMP');
+            // Replace asset code placeholder (both with and without braces)
+            preview = preview.replace(/\{CODE\}|CODE/g, 'COMP');
             
+            // Also render inline preview near the form (visible without modal)
+            if (templateOrForm && typeof templateOrForm.querySelector === 'function') {
+                let wrap = templateOrForm.querySelector('.inline-preview-wrap');
+                if (!wrap) {
+                    wrap = document.createElement('div');
+                    wrap.className = 'inline-preview-wrap mt-3';
+                    wrap.innerHTML = `
+                        <div class="small text-muted mb-1"><i class="bi bi-eye"></i> Preview Result</div>
+                        <div class="format-preview" style="font-size:1.1em;"><code class="d-block" style="font-size:1.2em; font-weight:bold; color:#0d6efd;"></code></div>
+                    `;
+                    // append at end of form
+                    templateOrForm.appendChild(wrap);
+                }
+                const codeEl = wrap.querySelector('code');
+                if (codeEl) codeEl.textContent = preview;
+            }
+
             // Show preview modal
             const modal = document.createElement('div');
             modal.className = 'modal fade';
