@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/email_helper.php';
 session_start();
 
 if (isset($_POST['import'])) {
@@ -71,6 +72,28 @@ if (isset($_POST['import'])) {
                     }
                     if ($stmt->execute()) {
                         $importedCount++;
+                        // Send welcome email if we have a valid email and column exists
+                        if ($hasEmailCol && !empty($emailCsv) && filter_var($emailCsv, FILTER_VALIDATE_EMAIL)) {
+                            try {
+                                $mail = configurePHPMailer();
+                                $mail->addAddress($emailCsv, (string)$name);
+                                $mail->isHTML(true);
+                                $mail->Subject = 'Welcome to PILAR Asset Inventory';
+                                $mail->Body =
+                                    "Hello " . htmlspecialchars((string)$name) . ",<br><br>" .
+                                    "You have been added to the PILAR Asset Inventory system.<br>" .
+                                    "<ul>" .
+                                    "<li><strong>Employee No.:</strong> " . htmlspecialchars((string)$employee_no) . "</li>" .
+                                    "<li><strong>Status:</strong> " . htmlspecialchars((string)$status) . "</li>" .
+                                    "<li><strong>Office:</strong> " . htmlspecialchars((string)$office_name) . "</li>" .
+                                    "</ul>" .
+                                    "If you believe this was in error, please contact the system administrator.";
+                                $mail->AltBody = strip_tags(str_replace(['<br>','<br/>','<br />'], "\n", $mail->Body));
+                                $mail->send();
+                            } catch (Throwable $e) {
+                                error_log('Import employee email send failed for ' . $emailCsv . ': ' . $e->getMessage());
+                            }
+                        }
                     }
                     $stmt->close();
                 } else {

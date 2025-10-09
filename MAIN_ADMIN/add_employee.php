@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/email_helper.php';
 session_start();
 
 // Redirect if not logged in
@@ -74,6 +75,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($stmt->execute()) {
         $_SESSION['success'] = "Employee added successfully!";
+        // Attempt to send a welcome email if an email address was provided and column exists
+        if ($hasEmailCol && !empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            try {
+                $mail = configurePHPMailer();
+                $mail->addAddress($email, (string)$name);
+                $mail->isHTML(true);
+                $mail->Subject = 'Welcome to PILAR Asset Inventory';
+                $mail->Body =
+                    "Hello " . htmlspecialchars((string)$name) . ",<br><br>" .
+                    "You have been added to the PILAR Asset Inventory system.<br>" .
+                    "<ul>" .
+                    "<li><strong>Employee No.:</strong> " . htmlspecialchars((string)$employee_no) . "</li>" .
+                    "<li><strong>Status:</strong> " . htmlspecialchars((string)$status) . "</li>" .
+                    "</ul>" .
+                    "If you believe this was in error, please contact the system administrator.";
+                $mail->AltBody = strip_tags(str_replace(['<br>','<br/>','<br />'], "\n", $mail->Body));
+                $mail->send();
+            } catch (Throwable $e) {
+                // Do not fail the request if email sending fails; optionally log
+                error_log('Add employee email send failed for ' . $email . ': ' . $e->getMessage());
+            }
+        }
     } else {
         $_SESSION['error'] = "Error: " . $conn->error;
     }
