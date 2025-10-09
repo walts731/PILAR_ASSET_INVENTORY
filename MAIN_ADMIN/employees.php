@@ -73,6 +73,7 @@ $stmt->bind_result($fullname);
 if ($stmt->fetch()) {
   $user_name = $fullname;
 }
+
 $stmt->close();
 
 // Get system logo
@@ -87,20 +88,8 @@ if (isset($_GET['export_employees']) && $_GET['export_employees'] === '1') {
   $timestamp = date('Ymd_His');
   $filename = "employees_{$timestamp}.csv";
 
-  // Query: match the view table to include office and clearance status
-  $exportSql = $conn->query("
-    SELECT e.employee_no, e.name, e.email, o.office_name,
-           e.status,
-           CASE 
-             WHEN EXISTS (SELECT 1 FROM mr_details m WHERE m.person_accountable = e.name) 
-             THEN 'uncleared'
-             ELSE 'cleared'
-           END AS clearance_status,
-           e.date_added
-    FROM employees e
-    LEFT JOIN offices o ON e.office_id = o.id
-    ORDER BY e.date_added DESC
-  ");
+  // Clearance rule: Uncleared if employee has ANY assigned asset not marked 'unserviceable'
+  $exportSql = $conn->query("\n    SELECT e.employee_no, e.name, e.email, o.office_name,\n           e.status,\n           CASE \n             WHEN EXISTS (\n               SELECT 1\n               FROM mr_details m\n               JOIN assets a ON a.id = m.asset_id\n               WHERE m.person_accountable = e.name\n                 AND (a.status IS NULL OR LOWER(a.status) <> 'unserviceable')\n             ) THEN 'uncleared'\n             ELSE 'cleared'\n           END AS clearance_status,\n           e.date_added\n    FROM employees e\n    LEFT JOIN offices o ON e.office_id = o.id\n    ORDER BY e.date_added DESC\n  ");
 
   // Send headers
   header('Content-Type: text/csv; charset=utf-8');
@@ -134,7 +123,7 @@ if (isset($_GET['export_employees']) && $_GET['export_employees'] === '1') {
 
 // Fetch employees
 $employees = [];
-$result = $conn->query("\n  SELECT e.employee_id, e.employee_no, e.name, e.email, e.status, e.date_added, e.image,\n         e.office_id, o.office_name,\n         CASE \n           WHEN EXISTS (SELECT 1 FROM mr_details m WHERE m.person_accountable = e.name) \n           THEN 'uncleared'\n           ELSE 'cleared'\n         END AS clearance_status\n  FROM employees e\n  LEFT JOIN offices o ON e.office_id = o.id\n  ORDER BY e.date_added DESC\n");
+$result = $conn->query("\n  SELECT e.employee_id, e.employee_no, e.name, e.email, e.status, e.date_added, e.image,\n         e.office_id, o.office_name,\n         CASE \n           WHEN EXISTS (\n             SELECT 1\n             FROM mr_details m\n             JOIN assets a ON a.id = m.asset_id\n             WHERE m.person_accountable = e.name\n               AND (a.status IS NULL OR LOWER(a.status) <> 'unserviceable')\n           ) THEN 'uncleared'\n           ELSE 'cleared'\n         END AS clearance_status\n  FROM employees e\n  LEFT JOIN offices o ON e.office_id = o.id\n  ORDER BY e.date_added DESC\n");
 
 while ($row = $result->fetch_assoc()) {
   $employees[] = $row;
