@@ -286,7 +286,7 @@ if ($role === 'user' && $userId > 0) {
 
             <div class="nav-section">Operations</div>
             <a href="borrowing.php" class="<?= ($page == 'borrow') ? 'active' : '' ?>">
-                <i class="bi bi-arrow-left-right"></i> Borrowed Assets
+                <i class="bi bi-arrow-left-right"></i> Borrowing Log
             </a>
             <a href="reports.php" class="<?= ($page == 'reports') ? 'active' : '' ?>">
                 <i class="bi bi-bar-chart-line"></i> Reports

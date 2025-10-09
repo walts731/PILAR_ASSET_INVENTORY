@@ -56,24 +56,18 @@ $html = '<!DOCTYPE html>
   body { font-family: DejaVu Sans, sans-serif; font-size: 9px; }
   .header-img { text-align: center; margin-bottom: 6px; }
   .header-img img { max-width: 100%; height: auto; }
-  .hdr-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin-bottom: 6px; border: none; }
+  .hdr-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
   .hdr-table td { text-align: center; padding: 2px 3px; font-size: 9px; }
   .hdr-underline { display: inline-block; border-bottom: 1px solid #000; padding: 0 4px; min-width: 150px; }
 
-  table { width: 100%; border-collapse: collapse; border: none; }
+  table { width: 100%; border-collapse: collapse; }
   table.items-table { border: 1px solid #000; }
   thead th { font-weight: bold; border: none; font-size: 9px; padding: 2px; }
   table.items-table thead th { border-bottom: 1px solid #000; }
-  th, td { border: none; padding: 2px; text-align: center; font-size: 9px; }
-  table.items-table th, table.items-table td { border: 1px solid #000; }
+  th, td { border: 1px solid #000; padding: 2px; text-align: center; font-size: 9px; }
   th:last-child, td:last-child { border-right: none; }
 
-  .footer-sign { width: 100%; border-collapse: collapse; margin-top: 6px; border: none; }
-  .footer-cell { width: 50%; text-align: center; vertical-align: bottom; height: 70px; border: none; }
-  .footer-title { font-weight: bold; }
-  .sig-name { margin-top: 30px; text-transform: uppercase; display: inline-block; border-bottom: 1px solid #000; padding: 0 6px; }
-  .designation { font-size: 9px; }
-  .static-footer { width:100%; border-collapse: collapse; margin-top: 6px; font-size: 9px; border: none; }
+  .static-footer { width:100%; border-collapse: collapse; margin-top: 10px; font-size: 9px; }
   .static-footer td { vertical-align: top; padding: 4px; }
   .static-footer .labels td { text-align: center; font-weight: bold; padding-top: 8px; }
   .asof { text-align:center; font-size:9px; margin-bottom:6px; }
@@ -94,12 +88,11 @@ if (!empty($form['header_image'])) {
             $html .= '<div class="header-img"><img src="' . $src . '" alt="Header"></div>';
         }
     }
-    // Add "As of [current year]" text
     $currentYear = date('Y');
     $html .= '<div class="asof">As of ' . $currentYear . '</div>';
 }
 
-// Mirror header three-field layout from view_iirup.php
+// Header fields
 $html .= '<table class="hdr-table">
   <tr>
     <td>
@@ -110,10 +103,11 @@ $html .= '<table class="hdr-table">
       <span class="hdr-underline">' . htmlspecialchars($form['designation']) . '</span><br>
       <small>(Designation)</small>
     </td>
-    <td>
-      <span class="hdr-underline">' . htmlspecialchars($form['office']) . '</span><br>
-      <small>(Department/Office)</small>
-    </td>
+   <td style="border-right:1px solid #000;">
+  <span class="hdr-underline">' . htmlspecialchars($form['office']) . '</span><br>
+  <small>(Department/Office)</small>
+</td>
+
   </tr>
 </table>
 
@@ -128,24 +122,24 @@ $html .= '<table class="hdr-table">
       <th rowspan="2">DATE RECEIVED</th>
     </tr>
     <tr>
-      <th>Date Acquired<br>(1)</th>
-      <th>Particulars/ Articles<br>(2)</th>
-      <th>Property No.<br>(3)</th>
-      <th>Qty<br>(4)</th>
-      <th>Unit Cost<br>(5)</th>
-      <th>Total Cost<br>(6)</th>
-      <th>Accumulated Depreciation<br>(7)</th>
-      <th>Accumulated Impairment Losses<br>(8)</th>
-      <th>Carrying Amount<br>(9)</th>
-      <th>Remarks<br>(10)</th>
-      <th>Sale<br>(11)</th>
-      <th>Transfer<br>(12)</th>
-      <th>Destruction<br>(13)</th>
-      <th>Others (Specify)<br>(14)</th>
-      <th>Total<br>(15)</th>
-      <th>Appraised Value<br>(16)</th>
-      <th>OR No.<br>(17)</th>
-      <th>Amount<br>(18)</th>
+      <th>Date Acquired</th>
+      <th>Particulars/Articles</th>
+      <th>Property No.</th>
+      <th>Qty</th>
+      <th>Unit Cost</th>
+      <th>Total Cost</th>
+      <th>Accumulated Depreciation</th>
+      <th>Accumulated Impairment Losses</th>
+      <th>Carrying Amount</th>
+      <th>Remarks</th>
+      <th>Sale</th>
+      <th>Transfer</th>
+      <th>Destruction</th>
+      <th>Others</th>
+      <th>Total</th>
+      <th>Appraised Value</th>
+      <th>OR No.</th>
+      <th>Amount</th>
     </tr>
   </thead>
   <tbody>';
@@ -176,14 +170,8 @@ if (!empty($items)) {
           <td>' . htmlspecialchars($row['date_received']) . '</td>
         </tr>';
     }
-    
-    // Add "nothing follows" row if there are items
-    if (!empty($items)) {
-        $html .= '
-        <tr>
-          <td colspan="21" style="text-align: center; font-style: italic; padding: 6px 0; border-top: 1px solid #000;">— NOTHING FOLLOWS —</td>
-        </tr>';
-    }
+
+    $html .= '<tr><td colspan="21" style="text-align:center; font-style:italic;">— NOTHING FOLLOWS —</td></tr>';
 } else {
     $html .= '<tr><td colspan="21">No items found.</td></tr>';
 }
@@ -192,43 +180,70 @@ $html .= '</tbody>
 </table>
 
 <!-- Static footer text block (mirrors view_iirup.php) -->
-<table class="static-footer">
-  <tr>
-    <td colspan="2" style="width:50%; text-align:left;">
+<table class="static-footer" style="width:100%; border:1px solid #000; border-collapse:collapse; margin-top:10px;">
+  <tr style="border:none;">
+    <td colspan="2" style="width:50%; text-align:left; vertical-align:top; border:none;">
       I HEREBY request inspection and disposition, pursuant to Section 79 of PD 1445, of the property enumerated above.
     </td>
-    <td style="width:25%; text-align:left;">
+    <td style="width:25%; text-align:left; vertical-align:top; border:none;">
       I CERTIFY that I have inspected each and every article enumerated in this report, and that the disposition made thereof was, in my judgment, the best for the public interest.
     </td>
-    <td style="width:25%; text-align:left;">
+    <td style="width:25%; text-align:left; vertical-align:top; border:none;">
       I CERTIFY that I have witnessed the disposition of the articles enumerated on this report this ____ day of _____________, _____.
     </td>
   </tr>
-  <tr class="labels">
-    <td>Requested by:</td>
-    <td>Approved by:</td>
-    <td>(Signature over Printed Name of Inspection Officer)</td>
-    <td>(Signature over Printed Name of Witness)</td>
+
+  <!-- Labels -->
+  <tr class="labels" style="border:none;">
+    <td style="padding-top:12px; font-weight:bold; text-align:center; border:none;">Requested by:</td>
+    <td style="padding-top:12px; font-weight:bold; text-align:center; border:none;">Approved by:</td>
+    <td style="padding-top:12px; border:none;"></td>
+    <td style="padding-top:12px; border:none;"></td>
   </tr>
+
+    <!-- Signatories inline with their labels (centered) -->
+  <tr style="border:none;">
+    <!-- Requested by -->
+    <td style="text-align:center; padding-top:20px; border:none;">
+      <div style="font-weight:bold; text-transform:uppercase; display:inline-block; border-bottom:1px solid #000; padding-bottom:1px; width:80%;">
+        ' . htmlspecialchars($form['footer_accountable_officer'] ?? '') . '
+      </div>
+      <div style="font-size:9px; margin-top:3px;">(Signature over Printed Name of Accountable Officer)</div>
+      <div style="font-style:italic; margin-top:2px;">
+        ' . htmlspecialchars($form['footer_designation_officer'] ?? '') . '
+      </div>
+      <div style="font-size:9px; margin-top:1px;">(Designation of Accountable Officer)</div>
+    </td>
+
+    <!-- Approved by -->
+    <td style="text-align:center; padding-top:20px; border:none;">
+      <div style="font-weight:bold; text-transform:uppercase; display:inline-block; border-bottom:1px solid #000; padding-bottom:1px; width:80%;">
+        ' . htmlspecialchars($form['footer_authorized_official'] ?? '') . '
+      </div>
+      <div style="font-size:9px; margin-top:3px;">(Signature over Printed Name of Authorized Official)</div>
+      <div style="font-style:italic; margin-top:2px;">
+        ' . htmlspecialchars($form['footer_designation_official'] ?? '') . '
+      </div>
+      <div style="font-size:9px; margin-top:1px;">(Designation of Authorized Official)</div>
+    </td>
+
+    <!-- Inspection Officer -->
+    <td style="text-align:center; vertical-align:bottom; padding-top:20px; border:none;">
+      <div style="border-bottom:1px solid #000; width:80%; margin:0 auto; height:0;"></div>
+      <div style="font-size:9px; margin-top:3px;">(Signature over Printed Name of Inspection Officer)</div>
+    </td>
+
+    <!-- Witness -->
+    <td style="text-align:center; vertical-align:bottom; padding-top:20px; border:none;">
+      <div style="border-bottom:1px solid #000; width:80%; margin:0 auto; height:0;"></div>
+      <div style="font-size:9px; margin-top:3px;">(Signature over Printed Name of Witness)</div>
+    </td>
+  </tr>
+
 </table>
 
-<!-- Footer mirroring view_iirup.php -->
-<table class="footer-sign">
-  <tr>
-    <td class="footer-cell" style="border-right:none;">
-      <div class="footer-title">Requested by:</div>
-      <div class="sig-name">' . htmlspecialchars($form['footer_accountable_officer'] ?? '') . '</div>
-      <div class="designation">(Signature over Printed Name of Accountable Officer)</div>
-      <div class="designation">' . htmlspecialchars($form['footer_designation_officer'] ?? '') . '</div>
-    </td>
-    <td class="footer-cell">
-      <div class="footer-title">Approved by:</div>
-      <div class="sig-name">' . htmlspecialchars($form['footer_authorized_official'] ?? '') . '</div>
-      <div class="designation">(Signature over Printed Name of Authorized Official)</div>
-      <div class="designation">' . htmlspecialchars($form['footer_designation_official'] ?? '') . '</div>
-    </td>
-  </tr>
-</table>
+
+
 
 </body>
 </html>';
@@ -237,7 +252,6 @@ $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'landscape');
 $dompdf->render();
 
-// Log IIRUP PDF generation
 $office_name = $form['office'] ?? 'Unknown Office';
 logReportActivity('IIRUP PDF', "IIRUP ID: {$iirup_id}, Office: {$office_name}");
 

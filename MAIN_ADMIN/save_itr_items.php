@@ -3,6 +3,7 @@ require_once '../connect.php';
 require_once '../includes/audit_logger.php';
 require_once '../includes/lifecycle_helper.php';
 require_once '../includes/tag_format_helper.php';
+require_once '../includes/email_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -88,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Extract asset IDs from descriptions and validate
         $assets_to_update = [];
         $asset_inventory_tags = [];
+        $asset_propnos = []; // map asset_id => property_no for email context
         $valid_items = [];
         $from_employee_map = [];
         
@@ -174,6 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'amount' => $amount_array[$i] ?? 0,
                         'condition_of_PPE' => $condition_array[$i] ?? ''
                     ];
+                    $asset_propnos[$asset_id] = $propNo;
                 }
             }
         }
@@ -324,6 +327,167 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $conn->commit();
+
+        // --- Email notifications (post-commit) ---
+        // Helpers for email logging table reuse
+        if (!function_exists('ensureEmailNotificationsTable_bulk_itr')) {
+            function ensureEmailNotificationsTable_bulk_itr(mysqli $conn) {
+                try {
+                    $conn->query("CREATE TABLE IF NOT EXISTS email_notifications (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        type VARCHAR(50) NOT NULL,
+                        recipient_email VARCHAR(255) NULL,
+                        recipient_name VARCHAR(255) NULL,
+                        subject VARCHAR(255) NOT NULL,
+                        body TEXT NOT NULL,
+                        status VARCHAR(50) NOT NULL,
+                        error_message TEXT NULL,
+                        related_asset_id INT NULL,
+                        related_mr_id INT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+                } catch (Throwable $e) { /* ignore */ }
+            }
+        }
+
+        if (!function_exists('logEmail_itr')) {
+            function logEmail_itr(mysqli $conn, array $data) {
+                $stmt = $conn->prepare("INSERT INTO email_notifications
+                    (type, recipient_email, recipient_name, subject, body, status, error_message, related_asset_id, related_mr_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param(
+                    'sssssssii',
+                    $data['type'],
+                    $data['recipient_email'],
+                    $data['recipient_name'],
+                    $data['subject'],
+                    $data['body'],
+                    $data['status'],
+                    $data['error_message'],
+                    $data['related_asset_id'],
+                    $data['related_mr_id']
+                );
+                $stmt->execute();
+                $stmt->close();
+            }
+        }
+
+        if (!function_exists('sendItrEmail')) {
+            function sendItrEmail(mysqli $conn, $employeeId, $personName, $direction, $itrId, $itrNo, $assetId, $inventoryTag, $propertyNo, $description, $reason, $dateStr, $otherOfficerName) {
+                ensureEmailNotificationsTable_bulk_itr($conn);
+                // resolve email
+                $recipientEmail = null;
+                if (!empty($employeeId)) {
+                    if ($st = $conn->prepare("SELECT email FROM employees WHERE employee_id = ? LIMIT 1")) {
+                        $st->bind_param('i', $employeeId);
+                        $st->execute();
+                        $rs = $st->get_result();
+                        if ($rs && ($row = $rs->fetch_assoc())) { $recipientEmail = $row['email'] ?? null; }
+                        $st->close();
+                    }
+                }
+
+                // Resolve asset office and serial_no for richer context
+                $officeName = '';
+                $serialNoVal = '';
+                if (!empty($assetId)) {
+                    if ($stA = $conn->prepare("SELECT a.serial_no, o.office_name FROM assets a LEFT JOIN offices o ON o.id = a.office_id WHERE a.id = ? LIMIT 1")) {
+                        $stA->bind_param('i', $assetId);
+                        $stA->execute();
+                        $rsA = $stA->get_result();
+                        if ($rsA && ($rowA = $rsA->fetch_assoc())) {
+                            $serialNoVal = $rowA['serial_no'] ?? '';
+                            $officeName = $rowA['office_name'] ?? '';
+                        }
+                        $stA->close();
+                    }
+                }
+
+                $subject = 'ITR Asset Transfer Notification (' . strtoupper((string)$direction) . ')';
+                $counterpartyLabel = ($direction === 'to') ? 'From Accountable Officer' : 'To Accountable Officer';
+                $body = "Hello " . htmlspecialchars((string)$personName) . ",<br><br>"
+                      . "An asset has been transferred " . htmlspecialchars((string)$direction) . " you via ITR.<br>"
+                      . "<ul>"
+                      . "<li><strong>ITR No.:</strong> " . htmlspecialchars((string)$itrNo) . "</li>"
+                      . "<li><strong>Date:</strong> " . htmlspecialchars((string)$dateStr) . "</li>"
+                      . "<li><strong>Reason:</strong> " . htmlspecialchars((string)$reason) . "</li>"
+                      . "<li><strong>" . htmlspecialchars($counterpartyLabel) . ":</strong> " . htmlspecialchars((string)$otherOfficerName) . "</li>"
+                      . "<li><strong>Office:</strong> " . htmlspecialchars((string)$officeName) . "</li>"
+                      . "<li><strong>Inventory Tag:</strong> " . htmlspecialchars((string)$inventoryTag) . "</li>"
+                      . "<li><strong>Description:</strong> " . htmlspecialchars((string)$description) . "</li>"
+                      . "<li><strong>Property No.:</strong> " . htmlspecialchars((string)$propertyNo) . "</li>"
+                      . "<li><strong>Serial No.:</strong> " . htmlspecialchars((string)$serialNoVal) . "</li>"
+                      . "</ul>"
+                      . "If this was not expected, please contact your system administrator.";
+
+                $log = [
+                    'type' => 'ITR_TRANSFER',
+                    'recipient_email' => $recipientEmail,
+                    'recipient_name' => $personName,
+                    'subject' => $subject,
+                    'body' => $body,
+                    'status' => 'queued',
+                    'error_message' => null,
+                    'related_asset_id' => !empty($assetId) ? (int)$assetId : null,
+                    'related_mr_id' => !empty($itrId) ? (int)$itrId : null,
+                ];
+
+                if (!empty($recipientEmail)) {
+                    try {
+                        $mail = configurePHPMailer();
+                        $mail->addAddress($recipientEmail, (string)$personName);
+                        $mail->isHTML(true);
+                        $mail->Subject = $subject;
+                        $mail->Body = $body;
+                        $mail->AltBody = strip_tags(str_replace(['<br>','<br/>','<br />'], "\n", $body));
+                        $mail->send();
+                        $log['status'] = 'sent';
+                    } catch (Throwable $e) {
+                        $log['status'] = 'failed';
+                        $log['error_message'] = $e->getMessage();
+                    }
+                } else {
+                    $log['status'] = 'no_email';
+                }
+
+                logEmail_itr($conn, $log);
+            }
+        }
+
+        // Send emails per asset to FROM and TO officers
+        foreach ($assets_to_update as $aid_int) {
+            // Initialize per-asset previous owner name for safe use below
+            $fromName = '';
+            $propNo = $asset_propnos[$aid_int] ?? '';
+            $invTag = $asset_inventory_tags[$aid_int] ?? '';
+            // Match description from valid_items
+            $desc = '';
+            foreach ($valid_items as $vi) {
+                if ((int)$vi['asset_id'] === (int)$aid_int) { $desc = $vi['description']; break; }
+            }
+            // FROM officer (current owner before transfer)
+            $fromEmpId = $from_employee_map[$aid_int] ?? null;
+            if (!empty($fromEmpId)) {
+                // Resolve name
+                $fromName = '';
+                if ($stn = $conn->prepare("SELECT name FROM employees WHERE employee_id = ? LIMIT 1")) {
+                    $stn->bind_param('i', $fromEmpId);
+                    $stn->execute();
+                    $rsn = $stn->get_result();
+                    if ($rsn && ($rowN = $rsn->fetch_assoc())) { $fromName = $rowN['name'] ?? ''; }
+                    $stn->close();
+                }
+                // Email to FROM officer should include TO officer's name
+                sendItrEmail($conn, $fromEmpId, $fromName, 'from', $itr_id, $itr_no, $aid_int, $invTag, $propNo, $desc, $reason_for_transfer, $date, $to_accountable_officer);
+            }
+            // TO officer (new owner)
+            if (!empty($to_employee_id)) {
+                // Email to TO officer should include FROM officer's name
+                // Prefer resolved per-asset previous owner name if available, otherwise use form's from_accountable_officer
+                $fromOfficerForEmail = !empty($fromName) ? $fromName : $from_accountable_officer;
+                sendItrEmail($conn, $to_employee_id, $to_accountable_officer, 'to', $itr_id, $itr_no, $aid_int, $invTag, $propNo, $desc, $reason_for_transfer, $date, $fromOfficerForEmail);
+            }
+        }
 
         // Set success message
         $_SESSION['flash'] = [

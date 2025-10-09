@@ -7,6 +7,7 @@ use Dompdf\Options;
 
 // Ensure POST with selected employees
 $selectedEmployees = isset($_POST['selected_employees']) ? array_map('intval', (array)$_POST['selected_employees']) : [];
+$reportType = isset($_POST['report_type']) && $_POST['report_type'] === 'list' ? 'list' : 'assets';
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($selectedEmployees)) {
     http_response_code(400);
     echo 'No employees selected.';
@@ -23,22 +24,27 @@ if ($systemRes && ($row = $systemRes->fetch_assoc()) && !empty($row['logo'])) {
     }
 }
 
-// Prepare data: for each employee, get details and their MR assets
+// Prepare data: for each employee, get details (and MR assets if requested)
 $employeesData = [];
 $empIds = implode(',', $selectedEmployees);
 
 // Get employee basic info
-$empQuery = $conn->query("SELECT e.employee_id, e.employee_no, e.name, o.office_name FROM employees e LEFT JOIN offices o ON e.office_id = o.id WHERE e.employee_id IN ($empIds)");
+$empQuery = $conn->query("SELECT e.employee_id, e.employee_no, e.name, e.email, e.status, o.office_name,
+    CASE WHEN EXISTS (SELECT 1 FROM mr_details md WHERE md.person_accountable = e.name) THEN 'uncleared' ELSE 'cleared' END AS clearance_status
+    FROM employees e LEFT JOIN offices o ON e.office_id = o.id WHERE e.employee_id IN ($empIds)");
 while ($emp = $empQuery->fetch_assoc()) {
     $employeesData[(int)$emp['employee_id']] = [
         'employee_no' => $emp['employee_no'] ?? '',
         'name' => $emp['name'] ?? '',
+        'email' => $emp['email'] ?? '',
+        'status' => $emp['status'] ?? '',
         'office_name' => $emp['office_name'] ?? 'N/A',
+        'clearance_status' => $emp['clearance_status'] ?? '',
         'items' => [],
     ];
 }
 
-if (!empty($employeesData)) {
+if (!empty($employeesData) && $reportType === 'assets') {
     // Use a JOIN to map MR rows to the selected employee IDs via name match
     $mrSql = "SELECT md.*, a.qr_code, a.inventory_tag AS asset_inventory_tag, a.description AS asset_description, e.employee_id
               FROM mr_details md
@@ -71,16 +77,19 @@ if (!empty($employeesData)) {
     }
 }
 
-// Remove employees with no MR items
-$employeesData = array_filter($employeesData, function($e){ return !empty($e['items']); });
+if ($reportType === 'assets') {
+    // Remove employees with no MR items
+    $employeesData = array_filter($employeesData, function($e){ return !empty($e['items']); });
 
-if (empty($employeesData)) {
-    echo 'No MR assets found for the selected employees.';
-    exit;
+    if (empty($employeesData)) {
+        echo 'No MR assets found for the selected employees.';
+        exit;
+    }
 }
 
 $reportDate = date('F d, Y');
-$reportFilename = 'Employee_MR_Report_' . date('Ymd_His') . '.pdf';
+$reportTitle = $reportType === 'assets' ? 'EMPLOYEE MR REPORT' : 'EMPLOYEES LIST';
+$reportFilename = ($reportType === 'assets' ? 'Employee_MR_Report_' : 'Employees_List_') . date('Ymd_His') . '.pdf';
 
 // Build HTML
 $html = '<html><head><meta charset="UTF-8"><style>
@@ -104,42 +113,71 @@ $html .= '<div class="header">'
       . '<div>Republic of the Philippines</div>'
       . '<div><strong>Municipality of Pilar</strong></div>'
       . '<div>Province of Sorsogon</div>'
-      . '<h2>EMPLOYEE MR REPORT</h2>'
+      . '<h2>' . $reportTitle . '</h2>'
       . '<div class="small"><em>As of ' . htmlspecialchars($reportDate) . '</em></div>'
       . '</div>'
       . '<div class="col" style="width:20%"></div>'
       . '</div>';
 
-foreach ($employeesData as $emp) {
-    $html .= '<div class="section-title">' . htmlspecialchars($emp['name']) . ' — ' . htmlspecialchars($emp['office_name']) . ' (Emp No: ' . htmlspecialchars($emp['employee_no']) . ')</div>';
+if ($reportType === 'assets') {
+    foreach ($employeesData as $emp) {
+        $html .= '<div class="section-title">' . htmlspecialchars($emp['name']) . ' — ' . htmlspecialchars($emp['office_name']) . ' (Emp No: ' . htmlspecialchars($emp['employee_no']) . ')</div>';
+        if (!empty($emp['email'])) {
+            $html .= '<div class="meta"><strong>Email:</strong> ' . htmlspecialchars($emp['email']) . '</div>';
+        }
 
+        $html .= '<table class="table">'
+              . '<thead>'
+              . '<tr>'
+              . '<th>Description</th>'
+              . '<th>Model No.</th>'
+              . '<th>Serial No.</th>'
+              . '<th>Serviceable</th>'
+              . '<th>Unit/Qty</th>'
+              . '<th>Acq. Date</th>'
+              . '<th>Acq. Cost</th>'
+              . '<th>Inventory Tag</th>'
+              . '</tr>'
+              . '</thead><tbody>';
+
+        foreach ($emp['items'] as $it) {
+            $html .= '<tr>'
+                  . '<td>' . htmlspecialchars((string)$it['description']) . '</td>'
+                  . '<td>' . htmlspecialchars((string)$it['model_no']) . '</td>'
+                  . '<td>' . htmlspecialchars((string)$it['serial_no']) . '</td>'
+                  . '<td>' . ((int)$it['serviceable'] === 1 ? 'Yes' : ((int)$it['unserviceable'] === 1 ? 'No' : '')) . '</td>'
+                  . '<td>' . htmlspecialchars((string)$it['unit_quantity'] . ' ' . (string)$it['unit']) . '</td>'
+                  . '<td>' . (!empty($it['acquisition_date']) ? htmlspecialchars(date('M d, Y', strtotime($it['acquisition_date']))) : '') . '</td>'
+                  . '<td>₱ ' . htmlspecialchars(number_format((float)($it['acquisition_cost'] ?: 0), 2)) . '</td>'
+                  . '<td>' . htmlspecialchars((string)($it['inventory_tag'] ?: '')) . '</td>'
+                  . '</tr>';
+        }
+
+        $html .= '</tbody></table>';
+    }
+} else {
+    // Employees list (no assets table). Render a single consolidated table
     $html .= '<table class="table">'
           . '<thead>'
           . '<tr>'
-          . '<th>Description</th>'
-          . '<th>Model No.</th>'
-          . '<th>Serial No.</th>'
-          . '<th>Serviceable</th>'
-          . '<th>Unit/Qty</th>'
-          . '<th>Acq. Date</th>'
-          . '<th>Acq. Cost</th>'
-          . '<th>Inventory Tag</th>'
+          . '<th>Employee No</th>'
+          . '<th>Name</th>'
+          . '<th>Email</th>'
+          . '<th>Office</th>'
+          . '<th>Status</th>'
+          . '<th>Clearance Status</th>'
           . '</tr>'
           . '</thead><tbody>';
-
-    foreach ($emp['items'] as $it) {
+    foreach ($employeesData as $emp) {
         $html .= '<tr>'
-              . '<td>' . htmlspecialchars((string)$it['description']) . '</td>'
-              . '<td>' . htmlspecialchars((string)$it['model_no']) . '</td>'
-              . '<td>' . htmlspecialchars((string)$it['serial_no']) . '</td>'
-              . '<td>' . ((int)$it['serviceable'] === 1 ? 'Yes' : ((int)$it['unserviceable'] === 1 ? 'No' : '')) . '</td>'
-              . '<td>' . htmlspecialchars((string)$it['unit_quantity'] . ' ' . (string)$it['unit']) . '</td>'
-              . '<td>' . (!empty($it['acquisition_date']) ? htmlspecialchars(date('M d, Y', strtotime($it['acquisition_date']))) : '') . '</td>'
-              . '<td>₱ ' . htmlspecialchars(number_format((float)($it['acquisition_cost'] ?: 0), 2)) . '</td>'
-              . '<td>' . htmlspecialchars((string)($it['inventory_tag'] ?: '')) . '</td>'
+              . '<td>' . htmlspecialchars($emp['employee_no']) . '</td>'
+              . '<td>' . htmlspecialchars($emp['name']) . '</td>'
+              . '<td>' . htmlspecialchars($emp['email']) . '</td>'
+              . '<td>' . htmlspecialchars($emp['office_name']) . '</td>'
+              . '<td>' . htmlspecialchars(ucfirst((string)$emp['status'])) . '</td>'
+              . '<td>' . htmlspecialchars(ucfirst((string)$emp['clearance_status'])) . '</td>'
               . '</tr>';
     }
-
     $html .= '</tbody></table>';
 }
 

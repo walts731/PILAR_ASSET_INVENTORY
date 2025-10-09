@@ -202,12 +202,7 @@ $stmt->close();
       $stmtAllUnserv->fetch();
       $stmtAllUnserv->close();
       ?>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="no-red-tag-tab" data-bs-toggle="tab" data-bs-target="#no_red_tag" type="button" role="tab">
-          <i class="bi bi-exclamation-octagon me-1"></i> No Red Tag Only
-          <span class="badge rounded-pill text-bg-warning ms-1 align-middle"><?= $noRedTagCount ?></span>
-        </button>
-      </li>
+      
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="unserviceable-tab" data-bs-toggle="tab" data-bs-target="#unserviceable" type="button" role="tab">
           <i class="bi bi-tools me-1"></i> Unserviceable
@@ -455,13 +450,17 @@ $stmt->close();
                     <tr>
                       <td><input type="checkbox" class="asset-checkbox" name="selected_assets_new[]" value="<?= $row['an_id'] ?>"></td>
                       <td>
-  <?php
-  $nums = [];
-  if (!empty($row['ics_no'])) { $nums[] = 'ICS: ' . htmlspecialchars($row['ics_no']); }
-  if (!empty($row['par_no'])) { $nums[] = 'PAR: ' . htmlspecialchars($row['par_no']); }
-  echo $nums ? implode(' | ', $nums) : 'N/A';
-  ?>
-</td>
+                        <?php
+                        $nums = [];
+                        if (!empty($row['ics_no'])) {
+                          $nums[] = 'ICS: ' . htmlspecialchars($row['ics_no']);
+                        }
+                        if (!empty($row['par_no'])) {
+                          $nums[] = 'PAR: ' . htmlspecialchars($row['par_no']);
+                        }
+                        echo $nums ? implode(' | ', $nums) : 'N/A';
+                        ?>
+                      </td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td><?= htmlspecialchars($row['category_name']) ?></td>
                       <td><?= (int)$row['quantity'] ?></td>
@@ -673,22 +672,24 @@ $stmt->close();
                         </button>
 
 
-                        <!-- Enhanced Delete Button -->
-                        <button type="button"
-                          class="btn btn-sm btn-outline-danger rounded-pill deleteConsumableEnhancedBtn"
-                          data-id="<?= $row['id'] ?>"
-                          data-stock-no="<?= htmlspecialchars($row['property_no']) ?>"
-                          data-description="<?= htmlspecialchars($row['description']) ?>"
-                          data-category="<?= htmlspecialchars($row['category_name']) ?>"
-                          data-quantity="<?= $row['quantity'] ?>"
-                          data-unit="<?= htmlspecialchars($row['unit']) ?>"
-                          data-value="<?= $row['value'] ?>"
-                          data-status="<?= $row['status'] ?>"
-                          data-office="<?= htmlspecialchars($row['office_name'] ?? 'No Office') ?>"
-                          data-last-updated="<?= date('M d, Y', strtotime($row['last_updated'])) ?>"
-                          title="Delete Consumable">
-                          <i class="bi bi-trash"></i>
-                        </button>
+                        <!-- Enhanced Delete Button (only when no RIS is linked) -->
+                        <?php if (empty($row['ris_id'])): ?>
+                          <button type="button"
+                            class="btn btn-sm btn-outline-danger rounded-pill deleteConsumableEnhancedBtn"
+                            data-id="<?= $row['id'] ?>"
+                            data-stock-no="<?= htmlspecialchars($row['property_no']) ?>"
+                            data-description="<?= htmlspecialchars($row['description']) ?>"
+                            data-category="<?= htmlspecialchars($row['category_name']) ?>"
+                            data-quantity="<?= $row['quantity'] ?>"
+                            data-unit="<?= htmlspecialchars($row['unit']) ?>"
+                            data-value="<?= $row['value'] ?>"
+                            data-status="<?= $row['status'] ?>"
+                            data-office="<?= htmlspecialchars($row['office_name'] ?? 'No Office') ?>"
+                            data-last-updated="<?= date('M d, Y', strtotime($row['last_updated'])) ?>"
+                            title="Delete Consumable">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        <?php endif; ?>
                       </td>
                     </tr>
                   <?php endwhile; ?>
@@ -754,28 +755,28 @@ $stmt->close();
                 <?php while ($row = $npResult->fetch_assoc()): ?>
                   <tr>
                     <td>
-                      <input type="checkbox" class="form-check-input asset-checkbox" 
-                             value="<?= $row['id'] ?>"
-                             data-description="<?= htmlspecialchars($row['description']) ?>"
-                             data-category="<?= htmlspecialchars($row['category_name']) ?>"
-                             data-value="<?= $row['value'] ?>"
-                             data-quantity="<?= $row['quantity'] ?>"
-                             data-unit="<?= htmlspecialchars($row['unit']) ?>"
-                             data-category-id="<?= $row['category'] ?>">
+                      <input type="checkbox" class="form-check-input asset-checkbox"
+                        value="<?= $row['id'] ?>"
+                        data-description="<?= htmlspecialchars($row['description']) ?>"
+                        data-category="<?= htmlspecialchars($row['category_name']) ?>"
+                        data-value="<?= $row['value'] ?>"
+                        data-quantity="<?= $row['quantity'] ?>"
+                        data-unit="<?= htmlspecialchars($row['unit']) ?>"
+                        data-category-id="<?= $row['category'] ?>">
                     </td>
                     <td>
-                    <?php
-$displayNo = 'N/A';
-// Prefer PAR number if linked; otherwise use ICS number if linked
-if (!empty($row['par_no'])) {
-  $displayNo = htmlspecialchars($row['par_no']);
-} elseif (!empty($row['ics_no'])) {
-  $displayNo = htmlspecialchars($row['ics_no']);
-} else {
-  $displayNo = 'N/A';
-}
-echo $displayNo;
-?>
+                      <?php
+                      $displayNo = 'N/A';
+                      // Prefer PAR number if linked; otherwise use ICS number if linked
+                      if (!empty($row['par_no'])) {
+                        $displayNo = htmlspecialchars($row['par_no']);
+                      } elseif (!empty($row['ics_no'])) {
+                        $displayNo = htmlspecialchars($row['ics_no']);
+                      } else {
+                        $displayNo = 'N/A';
+                      }
+                      echo $displayNo;
+                      ?>
                     </td>
                     <td><?= htmlspecialchars($row['description']) ?></td>
                     <td><?= htmlspecialchars($row['category_name']) ?></td>
@@ -787,24 +788,24 @@ echo $displayNo;
                         <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetNoTagBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal">
                           <i class="bi bi-eye"></i>
                         </button>
-                        <?php 
+                        <?php
                         // Only show delete button if asset has no ICS ID and no PAR ID
-                        if (empty($row['ics_id']) && empty($row['par_id'])): 
+                        if (empty($row['ics_id']) && empty($row['par_id'])):
                         ?>
-                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill deleteNoPropertyTagBtn"
-                          data-id="<?= (int)$row['id'] ?>"
-                          data-name="<?= htmlspecialchars($row['description']) ?>"
-                          data-category="<?= htmlspecialchars($row['category_name']) ?>"
-                          data-value="<?= number_format($row['value'], 2) ?>"
-                          data-qty="<?= $row['quantity'] ?>"
-                          data-unit="<?= htmlspecialchars($row['unit']) ?>"
-                          data-number="<?= htmlspecialchars($displayNo) ?>"
-                          data-bs-toggle="modal"
-                          data-bs-target="#deleteNoPropertyTagModal" title="Delete Asset">
-                          <i class="bi bi-trash"></i>
-                        </button>
+                          <button type="button" class="btn btn-sm btn-outline-danger rounded-pill deleteNoPropertyTagBtn"
+                            data-id="<?= (int)$row['id'] ?>"
+                            data-name="<?= htmlspecialchars($row['description']) ?>"
+                            data-category="<?= htmlspecialchars($row['category_name']) ?>"
+                            data-value="<?= number_format($row['value'], 2) ?>"
+                            data-qty="<?= $row['quantity'] ?>"
+                            data-unit="<?= htmlspecialchars($row['unit']) ?>"
+                            data-number="<?= htmlspecialchars($displayNo) ?>"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteNoPropertyTagModal" title="Delete Asset">
+                            <i class="bi bi-trash"></i>
+                          </button>
                         <?php else: ?>
-                        
+
                         <?php endif; ?>
                       </div>
                     </td>
@@ -816,159 +817,7 @@ echo $displayNo;
         </div>
       </div>
 
-      <!-- No Red Tag Only Tab -->
-      <div class="tab-pane fade" id="no_red_tag" role="tabpanel">
-        <?php
-        // Query for unserviceable assets without red tags, including IIRUP ID (system-wide)
-        $stmtNoRedTag = $conn->prepare("
-    SELECT a.*, c.category_name, o.office_name, e.name AS employee_name, ii.iirup_id
-    FROM assets a
-    LEFT JOIN categories c ON a.category = c.id
-    LEFT JOIN offices o ON a.office_id = o.id
-    LEFT JOIN employees e ON a.employee_id = e.employee_id
-    LEFT JOIN iirup_items ii ON a.id = ii.asset_id
-    WHERE a.status = 'unserviceable' AND a.red_tagged = 0 AND a.quantity > 0
-    ORDER BY a.last_updated DESC
-  ");
-        $stmtNoRedTag->execute();
-        $noRedTagResult = $stmtNoRedTag->get_result();
-        ?>
-
-        <div class="row mb-4">
-          <div class="col-12">
-            <div class="alert alert-warning">
-              <h6 class="alert-heading mb-2">
-                <i class="bi bi-exclamation-triangle"></i> Unserviceable Assets Without Red Tags
-              </h6>
-              <p class="mb-0">
-                These assets are marked as unserviceable but have not been red tagged yet.
-                Consider creating IIRUP forms and red tags for proper documentation.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">
-              <i class="bi bi-exclamation-circle text-warning"></i>
-              Unserviceable Assets Without Red Tags (<?= $noRedTagResult->num_rows ?> items)
-            </h6>
-
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover" id="noRedTagRegularTable">
-                <thead class="table-light">
-                  <tr>
-                    <th>Property No</th>
-                    <th>Description</th>
-                    <th>Category</th>
-                    <th>Office</th>
-                    <th>Person Accountable</th>
-                    <th>Value</th>
-                    <th>Qty</th>
-                    <th>Last Updated</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <?php if ($noRedTagResult->num_rows > 0): ?>
-                    <?php while ($row = $noRedTagResult->fetch_assoc()): ?>
-                      <tr>
-                        <td>
-                          <span class="badge bg-secondary"><?= htmlspecialchars($row['property_no'] ?? 'N/A') ?></span>
-                        </td>
-                        <td>
-                          <div class="d-flex align-items-center">
-                            <?php if (!empty($row['image'])): ?>
-                              <img src="../img/assets/<?= htmlspecialchars($row['image']) ?>"
-                                alt="Asset" class="rounded me-2" style="width: 32px; height: 32px; object-fit: cover;">
-                            <?php else: ?>
-                              <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center"
-                                style="width: 32px; height: 32px;">
-                                <i class="bi bi-image text-muted"></i>
-                              </div>
-                            <?php endif; ?>
-                            <div>
-                              <div class="fw-medium"><?= htmlspecialchars($row['description']) ?></div>
-                              <?php if (!empty($row['brand']) || !empty($row['model'])): ?>
-                                <small class="text-muted">
-                                  <?= htmlspecialchars(trim(($row['brand'] ?? '') . ' ' . ($row['model'] ?? ''))) ?>
-                                </small>
-                              <?php endif; ?>
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <span class="badge bg-info text-dark">
-                            <?= htmlspecialchars($row['category_name'] ?? 'Uncategorized') ?>
-                          </span>
-                        </td>
-                        <td>
-                          <div class="text-truncate" style="max-width: 120px;" title="<?= htmlspecialchars($row['office_name'] ?? 'Not Assigned') ?>">
-                            <?= htmlspecialchars($row['office_name'] ?? 'Not Assigned') ?>
-                          </div>
-                        </td>
-                        <td>
-                          <div class="text-truncate" style="max-width: 120px;" title="<?= htmlspecialchars($row['employee_name'] ?? 'Not Assigned') ?>">
-                            <?= htmlspecialchars($row['employee_name'] ?? 'Not Assigned') ?>
-                          </div>
-                        </td>
-                        <td>
-                          <span class="text-success fw-medium">
-                            â‚±<?= number_format((float)$row['value'], 2) ?>
-                          </span>
-                        </td>
-                        <td>
-                          <span class="badge bg-light text-dark">
-                            <?= (int)$row['quantity'] ?> <?= htmlspecialchars($row['unit']) ?>
-                          </span>
-                        </td>
-                        <td>
-                          <small class="text-muted">
-                            <?= $row['last_updated'] ? date('M j, Y', strtotime($row['last_updated'])) : 'N/A' ?>
-                          </small>
-                        </td>
-                        <td class="text-nowrap">
-                          <?php if (!empty($row['iirup_id'])): ?>
-                            <a href="create_red_tag.php?asset_id=<?= $row['id'] ?>&iirup_id=<?= $row['iirup_id'] ?>"
-                              class="btn btn-sm btn-danger rounded-pill"
-                              title="Create Red Tag">
-                              <i class="bi bi-tag-fill"></i> Create Red Tag
-                            </a>
-                          <?php else: ?>
-                            <div class="d-flex gap-1">
-                              <a href="forms.php?id=7&asset_id=<?= $row['id'] ?>&asset_description=<?= urlencode($row['description']) ?>&inventory_tag=<?= urlencode($row['inventory_tag'] ?? $row['property_no'] ?? '') ?>"
-                                class="btn btn-sm btn-outline-warning rounded-pill"
-                                title="Create IIRUP Form First">
-                                <i class="bi bi-file-earmark-plus"></i>
-                              </a>
-                              <small class="text-muted align-self-center">IIRUP Required</small>
-                            </div>
-                          <?php endif; ?>
-                        </td>
-                      </tr>
-                    <?php endwhile; ?>
-                  <?php else: ?>
-                    <tr>
-                      <td colspan="9" class="text-center py-4">
-                        <div class="text-muted">
-                          <i class="bi bi-check-circle display-4 d-block mb-2 text-success"></i>
-                          <h6>No Unserviceable Assets Without Red Tags</h6>
-                          <p class="mb-0">All unserviceable assets have been properly red tagged.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  <?php endif; ?>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <?php $stmtNoRedTag->close(); ?>
-      </div>
+      
 
       <!-- Unserviceable Tab -->
       <div class="tab-pane fade" id="unserviceable" role="tabpanel">
@@ -1004,10 +853,7 @@ echo $displayNo;
 
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">
-              <i class="bi bi-exclamation-circle text-info"></i>
-              All Unserviceable Assets (<?= $allUnservResult->num_rows ?> items)
-            </h6>
+
             <form id="unservReportForm" class="d-flex align-items-center gap-2 flex-wrap" action="generate_unserviceable_report.php" method="POST" target="_blank">
               <input type="hidden" name="office" value="<?= htmlspecialchars($selected_office) ?>">
               <label for="unservReportType" class="mb-0 small">Report:</label>
@@ -1208,6 +1054,30 @@ echo $displayNo;
   <script src="js/unserviceable_export.js"></script>
 
   <script>
+    // Initialize DataTables for Unserviceable and No Red Tag Only tabs
+    $(document).ready(function() {
+      const $unservTable = $('#allUnserviceableRegularTable');
+      const $noRedTagTable = $('#noRedTagRegularTable');
+
+      // Unserviceable DataTable
+      if ($unservTable.length) {
+        window.unservDT = $unservTable.DataTable({
+          pageLength: 10,
+          lengthMenu: [10, 25, 50, 100],
+          order: [
+            [6, 'desc']
+          ], // Last Updated column
+          columnDefs: [{
+              targets: [0, 7],
+              orderable: false
+            }, // checkbox + actions
+          ]
+        });
+      }
+
+     
+    });
+
     function formatDateFormal(dateStr) {
       const options = {
         year: 'numeric',
@@ -1383,59 +1253,39 @@ echo $displayNo;
     (function() {
       const $table = $('#allUnserviceableRegularTable');
       if ($table.length === 0) return;
+      // Use DataTables if initialized
+      const dt = window.unservDT;
 
-      // DataTable initialization removed - using regular table instead
-      const dt = null;
-
-      // Search box hookup - using regular table search
-      const $search = $('#unservSearch');
-      if ($search.length) {
-        $search.on('keyup change', function() {
-          const val = this.value.toLowerCase();
-          $table.find('tbody tr').each(function() {
-            const row = $(this);
-            const text = row.text().toLowerCase();
-            row.toggle(text.indexOf(val) > -1);
-          });
-        });
-      }
-
-      // Custom filter for month/year using regular table filtering
+      // Custom filter for month/year using DataTables (applies only to this table)
       const typeSel = document.getElementById('unservReportType');
       const monthSel = document.getElementById('unservMonth');
       const yearSel = document.getElementById('unservYear');
 
-      const applyDateFilter = () => {
+      $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        if (!dt || settings.nTable !== $table[0]) return true; // Only apply to Unserviceable table
+
         const selType = typeSel ? typeSel.value : 'monthly';
         const selYear = yearSel ? parseInt(yearSel.value, 10) : new Date().getFullYear();
         const selMonth = monthSel ? parseInt(monthSel.value, 10) : (new Date().getMonth() + 1);
 
-        $table.find('tbody tr').each(function() {
-          const row = $(this);
-          const raw = this.getAttribute('data-updated');
-          if (!raw) {
-            row.show();
-            return;
-          }
-          const d = new Date(raw);
-          if (isNaN(d)) {
-            row.show();
-            return;
-          }
+        // Last Updated displayed text is column index 6
+        const lastUpdatedText = data[6] || '';
+        if (!lastUpdatedText || lastUpdatedText === 'N/A') return true;
+        const d = new Date(lastUpdatedText);
+        if (isNaN(d)) return true;
 
-          let showRow = true;
-          if (selType === 'yearly') {
-            showRow = d.getFullYear() === selYear;
-          } else {
-            showRow = d.getFullYear() === selYear && (d.getMonth() + 1) === selMonth;
-          }
-          row.toggle(showRow);
-        });
+        if (selType === 'yearly') {
+          return d.getFullYear() === selYear;
+        }
+        return d.getFullYear() === selYear && (d.getMonth() + 1) === selMonth;
+      });
+
+      const redraw = () => {
+        if (dt) dt.draw();
       };
-
-      if (typeSel) typeSel.addEventListener('change', applyDateFilter);
-      if (monthSel) monthSel.addEventListener('change', applyDateFilter);
-      if (yearSel) yearSel.addEventListener('change', applyDateFilter);
+      if (typeSel) typeSel.addEventListener('change', redraw);
+      if (monthSel) monthSel.addEventListener('change', redraw);
+      if (yearSel) yearSel.addEventListener('change', redraw);
 
       // Month visibility toggle (reuse if exists)
       const monthWrap = document.getElementById('unservMonthWrap');
@@ -1450,21 +1300,31 @@ echo $displayNo;
       const $count = $('#unservSelectedCount');
       const updateCount = () => $count.text(selected.size);
 
-      // Row checkbox handler - using regular table
+      // Row checkbox handler (pagination-aware)
       $table.on('change', 'input.unserv-checkbox', function() {
         if (this.checked) selected.add(this.value);
         else selected.delete(this.value);
         updateCount();
       });
 
-      // Select All for visible rows
+      // Select All for current page rows
       $('#selectAllUnserv').on('change', function() {
         const checked = this.checked;
-        $table.find('tbody tr:visible input.unserv-checkbox').each(function() {
-          this.checked = checked;
-          if (checked) selected.add(this.value);
-          else selected.delete(this.value);
-        });
+        if (dt) {
+          dt.rows({
+            page: 'current'
+          }).nodes().to$().find('input.unserv-checkbox').each(function() {
+            this.checked = checked;
+            if (checked) selected.add(this.value);
+            else selected.delete(this.value);
+          });
+        } else {
+          $table.find('tbody tr:visible input.unserv-checkbox').each(function() {
+            this.checked = checked;
+            if (checked) selected.add(this.value);
+            else selected.delete(this.value);
+          });
+        }
         updateCount();
       });
 
@@ -1497,6 +1357,29 @@ echo $displayNo;
           inp.value = office.value;
           form.appendChild(inp);
         }
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+      });
+
+      // Bulk Create Red Tag - send selected ids to bulk form page
+      $('#btnBulkRedTagUnserv').on('click', function() {
+        if (selected.size === 0) {
+          alert('Please select at least one asset to red tag.');
+          return;
+        }
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'bulk_create_red_tag.php';
+
+        selected.forEach(id => {
+          const inp = document.createElement('input');
+          inp.type = 'hidden';
+          inp.name = 'selected_assets[]';
+          inp.value = id;
+          form.appendChild(inp);
+        });
 
         document.body.appendChild(form);
         form.submit();
@@ -2324,54 +2207,67 @@ echo $displayNo;
     });
 
     // Lifecycle viewer for Assets tab (assets_new)
-document.querySelectorAll('.viewLifecycleBtn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    const id = this.getAttribute('data-id');
-    const source = this.getAttribute('data-source') || 'assets_new';
-    const tableBody = document.getElementById('lifecycleBody');
-    const countEl = document.getElementById('lifecycleCount');
-    const assetsCountEl = document.getElementById('lifecycleAssetsCount');
-    const ctxEl = document.getElementById('lifecycleContext');
+    document.querySelectorAll('.viewLifecycleBtn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        const source = this.getAttribute('data-source') || 'assets_new';
+        const tableBody = document.getElementById('lifecycleBody');
+        const countEl = document.getElementById('lifecycleCount');
+        const assetsCountEl = document.getElementById('lifecycleAssetsCount');
+        const ctxEl = document.getElementById('lifecycleContext');
 
-    if (tableBody) {
-      tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">
+        if (tableBody) {
+          tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">
         <div class="spinner-border spinner-border-sm me-2"></div>Loading life cycle...
       </td></tr>`;
-    }
-    if (countEl) countEl.textContent = '0';
-    if (assetsCountEl) assetsCountEl.textContent = '0';
-    if (ctxEl) ctxEl.textContent = source === 'assets_new'
-      ? 'Items created from this Acquisition (assets_new)'
-      : 'Single Asset';
+        }
+        if (countEl) countEl.textContent = '0';
+        if (assetsCountEl) assetsCountEl.textContent = '0';
+        if (ctxEl) ctxEl.textContent = source === 'assets_new' ?
+          'Items created from this Acquisition (assets_new)' :
+          'Single Asset';
 
-    fetch(`get_asset_lifecycle.php?source=${encodeURIComponent(source)}&id=${encodeURIComponent(id)}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.error) {
-          if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${data.error}</td></tr>`;
-          return;
-        }
-        const events = Array.isArray(data.events) ? data.events : [];
-        if (countEl) countEl.textContent = events.length;
-        if (assetsCountEl && data.summary && typeof data.summary.assets_count !== 'undefined') {
-          assetsCountEl.textContent = data.summary.assets_count;
-        }
-        if (tableBody) {
-          if (events.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No events found.</td></tr>`;
-            return;
-          }
-          const escapeHtml = v => (v == null ? '' : String(v)
-            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
-          tableBody.innerHTML = events.map(ev => {
-            const ref = ev.ref_table ? `${escapeHtml(ev.ref_table)} #${escapeHtml(ev.ref_id ?? '')}` : '';
-            const fromStr = [ev.from_office, ev.from_employee].filter(Boolean).map(escapeHtml).join(' â€¢ ');
-            const toStr = [ev.to_office, ev.to_employee].filter(Boolean).map(escapeHtml).join(' â€¢ ');
-            const t = (ev.event_type || '').toUpperCase();
-            const color = { ACQUIRED: 'success', ASSIGNED: 'primary', TRANSFERRED: 'info', DISPOSAL_LISTED: 'warning', DISPOSED: 'secondary', RED_TAGGED: 'danger' }[t] || 'light';
-            const typeBadge = `<span class="badge bg-${color}">${escapeHtml(t)}</span>`;
-            const dt = ev.created_at ? new Date(ev.created_at).toLocaleString('en-US', { year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
-            return `
+        fetch(`get_asset_lifecycle.php?source=${encodeURIComponent(source)}&id=${encodeURIComponent(id)}`)
+          .then(r => r.json())
+          .then(data => {
+            if (data.error) {
+              if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${data.error}</td></tr>`;
+              return;
+            }
+            const events = Array.isArray(data.events) ? data.events : [];
+            if (countEl) countEl.textContent = events.length;
+            if (assetsCountEl && data.summary && typeof data.summary.assets_count !== 'undefined') {
+              assetsCountEl.textContent = data.summary.assets_count;
+            }
+            if (tableBody) {
+              if (events.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No events found.</td></tr>`;
+                return;
+              }
+              const escapeHtml = v => (v == null ? '' : String(v)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+              tableBody.innerHTML = events.map(ev => {
+                const ref = ev.ref_table ? `${escapeHtml(ev.ref_table)} #${escapeHtml(ev.ref_id ?? '')}` : '';
+                const fromStr = [ev.from_office, ev.from_employee].filter(Boolean).map(escapeHtml).join(' â€¢ ');
+                const toStr = [ev.to_office, ev.to_employee].filter(Boolean).map(escapeHtml).join(' â€¢ ');
+                const t = (ev.event_type || '').toUpperCase();
+                const color = {
+                  ACQUIRED: 'success',
+                  ASSIGNED: 'primary',
+                  TRANSFERRED: 'info',
+                  DISPOSAL_LISTED: 'warning',
+                  DISPOSED: 'secondary',
+                  RED_TAGGED: 'danger'
+                } [t] || 'light';
+                const typeBadge = `<span class="badge bg-${color}">${escapeHtml(t)}</span>`;
+                const dt = ev.created_at ? new Date(ev.created_at).toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : '';
+                return `
               <tr>
                 <td>${escapeHtml(dt)}</td>
                 <td>${typeBadge}</td>
@@ -2381,60 +2277,73 @@ document.querySelectorAll('.viewLifecycleBtn').forEach(btn => {
                 <td>${escapeHtml(ev.notes || '')}</td>
               </tr>
             `;
-          }).join('');
-        }
-
-        // ==============================
-        // Render roadmap steps
-        // ==============================
-        const stepsWrap = document.getElementById('lifecycleRoadmapSteps');
-        if (stepsWrap) {
-          stepsWrap.innerHTML = ''; // clear previous
-
-          const colorFor = (t) => {
-            const map = {
-              ACQUIRED: 'success',
-              ASSIGNED: 'primary',
-              TRANSFERRED: 'info',
-              DISPOSAL_LISTED: 'warning',
-              DISPOSED: 'secondary',
-              RED_TAGGED: 'danger'
-            };
-            return map[(t || '').toUpperCase()] || 'secondary';
-          };
-          const iconFor = (t) => {
-            switch ((t || '').toUpperCase()) {
-              case 'ACQUIRED': return 'bi-bag-check';
-              case 'ASSIGNED': return 'bi-person-check';
-              case 'TRANSFERRED': return 'bi-arrow-left-right';
-              case 'DISPOSAL_LISTED': return 'bi-journal-text';
-              case 'DISPOSED': return 'bi-trash';
-              case 'RED_TAGGED': return 'bi-tag';
-              default: return 'bi-circle';
+              }).join('');
             }
-          };
-          const fmt = (d) => {
-            if (!d) return '';
-            try {
-              return new Date(d).toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
-            } catch { return ''; }
-          };
-          const escapeHtml = v => (v == null ? '' : String(v)
-            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
 
-          if (events.length === 0) {
-            stepsWrap.innerHTML = '<div class="text-muted small">No events</div>';
-          } else {
-            const steps = [...events].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-            steps.forEach(ev => {
-              const t = (ev.event_type || '').toUpperCase();
-              const color = colorFor(t);
-              const icon = iconFor(t);
-              const dt = fmt(ev.created_at);
-              const ref = ev.ref_table ? `${escapeHtml(ev.ref_table)} #${escapeHtml(ev.ref_id ?? '')}` : '';
-              const label = escapeHtml(t.replace('_', ' '));
+            // ==============================
+            // Render roadmap steps
+            // ==============================
+            const stepsWrap = document.getElementById('lifecycleRoadmapSteps');
+            if (stepsWrap) {
+              stepsWrap.innerHTML = ''; // clear previous
 
-              const stepHtml = `
+              const colorFor = (t) => {
+                const map = {
+                  ACQUIRED: 'success',
+                  ASSIGNED: 'primary',
+                  TRANSFERRED: 'info',
+                  DISPOSAL_LISTED: 'warning',
+                  DISPOSED: 'secondary',
+                  RED_TAGGED: 'danger'
+                };
+                return map[(t || '').toUpperCase()] || 'secondary';
+              };
+              const iconFor = (t) => {
+                switch ((t || '').toUpperCase()) {
+                  case 'ACQUIRED':
+                    return 'bi-bag-check';
+                  case 'ASSIGNED':
+                    return 'bi-person-check';
+                  case 'TRANSFERRED':
+                    return 'bi-arrow-left-right';
+                  case 'DISPOSAL_LISTED':
+                    return 'bi-journal-text';
+                  case 'DISPOSED':
+                    return 'bi-trash';
+                  case 'RED_TAGGED':
+                    return 'bi-tag';
+                  default:
+                    return 'bi-circle';
+                }
+              };
+              const fmt = (d) => {
+                if (!d) return '';
+                try {
+                  return new Date(d).toLocaleString('en-US', {
+                    month: 'short',
+                    day: '2-digit',
+                    year: 'numeric'
+                  });
+                } catch {
+                  return '';
+                }
+              };
+              const escapeHtml = v => (v == null ? '' : String(v)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+
+              if (events.length === 0) {
+                stepsWrap.innerHTML = '<div class="text-muted small">No events</div>';
+              } else {
+                const steps = [...events].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                steps.forEach(ev => {
+                  const t = (ev.event_type || '').toUpperCase();
+                  const color = colorFor(t);
+                  const icon = iconFor(t);
+                  const dt = fmt(ev.created_at);
+                  const ref = ev.ref_table ? `${escapeHtml(ev.ref_table)} #${escapeHtml(ev.ref_id ?? '')}` : '';
+                  const label = escapeHtml(t.replace('_', ' '));
+
+                  const stepHtml = `
                 <div class="roadmap-step">
                   <div class="roadmap-dot ${color}" title="${label}"></div>
                   <div class="roadmap-label mt-1"><i class="bi ${icon} me-1"></i>${label}</div>
@@ -2442,126 +2351,123 @@ document.querySelectorAll('.viewLifecycleBtn').forEach(btn => {
                   ${ref ? `<div class="roadmap-ref">${ref}</div>` : ''}
                 </div>
               `;
-              stepsWrap.insertAdjacentHTML('beforeend', stepHtml);
-            });
+                  stepsWrap.insertAdjacentHTML('beforeend', stepHtml);
+                });
 
-            // Auto-scroll to the latest step
-            const road = document.getElementById('lifecycleRoadmap');
-            if (road) {
-              setTimeout(() => { road.scrollLeft = road.scrollWidth; }, 0);
+                // Auto-scroll to the latest step
+                const road = document.getElementById('lifecycleRoadmap');
+                if (road) {
+                  setTimeout(() => {
+                    road.scrollLeft = road.scrollWidth;
+                  }, 0);
+                }
+              }
             }
-          }
-        }
-        // ==============================
+            // ==============================
 
-      })
-      .catch(err => {
-        if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Failed to load life cycle.</td></tr>`;
-        console.error('Lifecycle load error:', err);
-      });
-  });
-});
-
-// Bulk Property Tag Creation JavaScript
-$(document).ready(function() {
-  // Handle select all checkbox
-  $('#selectAllCheckbox').on('change', function() {
-    const isChecked = $(this).is(':checked');
-    $('.asset-checkbox').prop('checked', isChecked);
-    updateSelectedCount();
-  });
-
-  // Handle individual checkboxes
-  $(document).on('change', '.asset-checkbox', function() {
-    updateSelectedCount();
-    
-    // Update select all checkbox state
-    const totalCheckboxes = $('.asset-checkbox').length;
-    const checkedCheckboxes = $('.asset-checkbox:checked').length;
-    
-    if (checkedCheckboxes === 0) {
-      $('#selectAllCheckbox').prop('indeterminate', false).prop('checked', false);
-    } else if (checkedCheckboxes === totalCheckboxes) {
-      $('#selectAllCheckbox').prop('indeterminate', false).prop('checked', true);
-    } else {
-      $('#selectAllCheckbox').prop('indeterminate', true);
-    }
-  });
-
-  // Handle Select All button
-  $('#selectAllNoPropertyBtn').on('click', function() {
-    const allChecked = $('.asset-checkbox:checked').length === $('.asset-checkbox').length;
-    $('.asset-checkbox').prop('checked', !allChecked);
-    $('#selectAllCheckbox').prop('checked', !allChecked).prop('indeterminate', false);
-    updateSelectedCount();
-  });
-
-  // Handle Bulk Create Property Tags button
-  $('#bulkCreatePropertyTagBtn').on('click', function() {
-    const selectedAssets = [];
-    $('.asset-checkbox:checked').each(function() {
-      const checkbox = $(this);
-      selectedAssets.push({
-        id: checkbox.val(),
-        description: checkbox.data('description'),
-        category: checkbox.data('category'),
-        categoryId: checkbox.data('category-id'),
-        value: checkbox.data('value'),
-        quantity: checkbox.data('quantity'),
-        unit: checkbox.data('unit')
+          })
+          .catch(err => {
+            if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Failed to load life cycle.</td></tr>`;
+            console.error('Lifecycle load error:', err);
+          });
       });
     });
 
-    if (selectedAssets.length === 0) {
-      alert('Please select at least one asset to create property tags.');
-      return;
-    }
+    // Bulk Property Tag Creation JavaScript
+    $(document).ready(function() {
+      // Handle select all checkbox
+      $('#selectAllCheckbox').on('change', function() {
+        const isChecked = $(this).is(':checked');
+        $('.asset-checkbox').prop('checked', isChecked);
+        updateSelectedCount();
+      });
 
-    // Store selected assets in sessionStorage and redirect
-    sessionStorage.setItem('selectedAssets', JSON.stringify(selectedAssets));
-    window.location.href = 'bulk_create_mr.php';
-  });
+      // Handle individual checkboxes
+      $(document).on('change', '.asset-checkbox', function() {
+        updateSelectedCount();
 
-  function updateSelectedCount() {
-    const count = $('.asset-checkbox:checked').length;
-    $('#selectedCount').text(count);
-    $('#bulkCreatePropertyTagBtn').prop('disabled', count === 0);
-    
-    // Update button text
-    const btnText = count === 0 ? 'Bulk Create Property Tags' : `Bulk Create Property Tags (${count})`;
-    $('#bulkCreatePropertyTagBtn').html('<i class="bi bi-tags me-1"></i>' + btnText.replace(/\(\d+\)/, `(<span id="selectedCount">${count}</span>)`));
-  }
-});
+        // Update select all checkbox state
+        const totalCheckboxes = $('.asset-checkbox').length;
+        const checkedCheckboxes = $('.asset-checkbox:checked').length;
 
-// Handle Delete Individual Asset button clicks
-$(document).ready(function() {
-  $(document).on('click', '.deleteIndividualAssetBtn', function() {
-    const assetId = $(this).data('id');
-    const description = $(this).data('description');
-    const propertyNo = $(this).data('property-no');
-    const inventoryTag = $(this).data('inventory-tag');
-    
-    // Get current office filter
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentOffice = urlParams.get('office') || $('#officeFilter').val() || 'all';
-    
-    // Populate modal fields
-    $('#deleteIndividualAssetId').val(assetId);
-    $('#deleteIndividualAssetDescription').text(description);
-    $('#deleteIndividualAssetPropertyNo').text(propertyNo);
-    $('#deleteIndividualAssetInventoryTag').text(inventoryTag);
-    $('#deleteIndividualAssetOffice').val(currentOffice);
-    
-    console.log('Delete Individual Asset - ID:', assetId, 'Description:', description, 'Property No:', propertyNo, 'Inventory Tag:', inventoryTag, 'Office:', currentOffice);
-  });
-});
+        if (checkedCheckboxes === 0) {
+          $('#selectAllCheckbox').prop('indeterminate', false).prop('checked', false);
+        } else if (checkedCheckboxes === totalCheckboxes) {
+          $('#selectAllCheckbox').prop('indeterminate', false).prop('checked', true);
+        } else {
+          $('#selectAllCheckbox').prop('indeterminate', true);
+        }
+      });
 
+      // Handle Select All button
+      $('#selectAllNoPropertyBtn').on('click', function() {
+        const allChecked = $('.asset-checkbox:checked').length === $('.asset-checkbox').length;
+        $('.asset-checkbox').prop('checked', !allChecked);
+        $('#selectAllCheckbox').prop('checked', !allChecked).prop('indeterminate', false);
+        updateSelectedCount();
+      });
 
+      // Handle Bulk Create Property Tags button
+      $('#bulkCreatePropertyTagBtn').on('click', function() {
+        const selectedAssets = [];
+        $('.asset-checkbox:checked').each(function() {
+          const checkbox = $(this);
+          selectedAssets.push({
+            id: checkbox.val(),
+            description: checkbox.data('description'),
+            category: checkbox.data('category'),
+            categoryId: checkbox.data('category-id'),
+            value: checkbox.data('value'),
+            quantity: checkbox.data('quantity'),
+            unit: checkbox.data('unit')
+          });
+        });
 
+        if (selectedAssets.length === 0) {
+          alert('Please select at least one asset to create property tags.');
+          return;
+        }
+
+        // Store selected assets in sessionStorage and redirect
+        sessionStorage.setItem('selectedAssets', JSON.stringify(selectedAssets));
+        window.location.href = 'bulk_create_mr.php';
+      });
+
+      function updateSelectedCount() {
+        const count = $('.asset-checkbox:checked').length;
+        $('#selectedCount').text(count);
+        $('#bulkCreatePropertyTagBtn').prop('disabled', count === 0);
+
+        // Update button text
+        const btnText = count === 0 ? 'Bulk Create Property Tags' : `Bulk Create Property Tags (${count})`;
+        $('#bulkCreatePropertyTagBtn').html('<i class="bi bi-tags me-1"></i>' + btnText.replace(/\(\d+\)/, `(<span id="selectedCount">${count}</span>)`));
+      }
+    });
+
+    // Handle Delete Individual Asset button clicks
+    $(document).ready(function() {
+      $(document).on('click', '.deleteIndividualAssetBtn', function() {
+        const assetId = $(this).data('id');
+        const description = $(this).data('description');
+        const propertyNo = $(this).data('property-no');
+        const inventoryTag = $(this).data('inventory-tag');
+
+        // Get current office filter
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentOffice = urlParams.get('office') || $('#officeFilter').val() || 'all';
+
+        // Populate modal fields
+        $('#deleteIndividualAssetId').val(assetId);
+        $('#deleteIndividualAssetDescription').text(description);
+        $('#deleteIndividualAssetPropertyNo').text(propertyNo);
+        $('#deleteIndividualAssetInventoryTag').text(inventoryTag);
+        $('#deleteIndividualAssetOffice').val(currentOffice);
+
+        console.log('Delete Individual Asset - ID:', assetId, 'Description:', description, 'Property No:', propertyNo, 'Inventory Tag:', inventoryTag, 'Office:', currentOffice);
+      });
+    });
   </script>
 
 </body>
 
 </html>
-
-

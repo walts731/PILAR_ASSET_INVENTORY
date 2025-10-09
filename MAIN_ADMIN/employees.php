@@ -73,6 +73,7 @@ $stmt->bind_result($fullname);
 if ($stmt->fetch()) {
   $user_name = $fullname;
 }
+
 $stmt->close();
 
 // Get system logo
@@ -87,20 +88,8 @@ if (isset($_GET['export_employees']) && $_GET['export_employees'] === '1') {
   $timestamp = date('Ymd_His');
   $filename = "employees_{$timestamp}.csv";
 
-  // Query: match the view table to include office and clearance status
-  $exportSql = $conn->query("
-    SELECT e.employee_no, e.name, o.office_name,
-           e.status,
-           CASE 
-             WHEN EXISTS (SELECT 1 FROM mr_details m WHERE m.person_accountable = e.name) 
-             THEN 'uncleared'
-             ELSE 'cleared'
-           END AS clearance_status,
-           e.date_added
-    FROM employees e
-    LEFT JOIN offices o ON e.office_id = o.id
-    ORDER BY e.date_added DESC
-  ");
+  // Clearance rule: Uncleared if employee has ANY assigned asset not marked 'unserviceable'
+  $exportSql = $conn->query("\n    SELECT e.employee_no, e.name, e.email, o.office_name,\n           e.status,\n           CASE \n             WHEN EXISTS (\n               SELECT 1\n               FROM mr_details m\n               JOIN assets a ON a.id = m.asset_id\n               WHERE m.person_accountable = e.name\n                 AND (a.status IS NULL OR LOWER(a.status) <> 'unserviceable')\n             ) THEN 'uncleared'\n             ELSE 'cleared'\n           END AS clearance_status,\n           e.date_added\n    FROM employees e\n    LEFT JOIN offices o ON e.office_id = o.id\n    ORDER BY e.date_added DESC\n  ");
 
   // Send headers
   header('Content-Type: text/csv; charset=utf-8');
@@ -110,7 +99,7 @@ if (isset($_GET['export_employees']) && $_GET['export_employees'] === '1') {
 
   $output = fopen('php://output', 'w');
   // CSV header row
-  fputcsv($output, ['Employee No', 'Name', 'Office', 'Employment Status', 'Clearance Status', 'Date Added']);
+  fputcsv($output, ['Employee No', 'Name', 'Email', 'Office', 'Employment Status', 'Clearance Status', 'Date Added']);
 
   while ($row = $exportSql->fetch_assoc()) {
     $dateFormatted = '';
@@ -121,6 +110,7 @@ if (isset($_GET['export_employees']) && $_GET['export_employees'] === '1') {
     fputcsv($output, [
       $row['employee_no'],
       $row['name'],
+      $row['email'] ?? '',
       $row['office_name'] ?? 'N/A',
       $row['status'],
       ucfirst($row['clearance_status']),
@@ -128,29 +118,17 @@ if (isset($_GET['export_employees']) && $_GET['export_employees'] === '1') {
     ]);
   }
 
-  fclose($output);
   exit();
 }
 
 // Fetch employees
 $employees = [];
-$result = $conn->query("
-  SELECT e.employee_id, e.employee_no, e.name, e.status, e.date_added, e.image,
-         e.office_id, o.office_name,
-         CASE 
-           WHEN EXISTS (SELECT 1 FROM mr_details m WHERE m.person_accountable = e.name) 
-           THEN 'uncleared'
-           ELSE 'cleared'
-         END AS clearance_status
-  FROM employees e
-  LEFT JOIN offices o ON e.office_id = o.id
-  ORDER BY e.date_added DESC
-");
+$result = $conn->query("\n  SELECT e.employee_id, e.employee_no, e.name, e.email, e.status, e.date_added, e.image,\n         e.office_id, o.office_name,\n         CASE \n           WHEN EXISTS (\n             SELECT 1\n             FROM mr_details m\n             JOIN assets a ON a.id = m.asset_id\n             WHERE m.person_accountable = e.name\n               AND (a.status IS NULL OR LOWER(a.status) <> 'unserviceable')\n           ) THEN 'uncleared'\n           ELSE 'cleared'\n         END AS clearance_status\n  FROM employees e\n  LEFT JOIN offices o ON e.office_id = o.id\n  ORDER BY e.date_added DESC\n");
 
 while ($row = $result->fetch_assoc()) {
   $employees[] = $row;
 }
-
+ 
 // Fetch offices for filter dropdown
 $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_name ASC");
 
@@ -207,7 +185,14 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
                   <i class="bi bi-download"></i> Export
                 </a>
               </div>
-              <div class="btn-group" role="group" aria-label="Report & Delete">
+              <div class="d-flex align-items-center gap-2" role="group" aria-label="Report & Delete">
+                <div class="input-group input-group-sm w-auto">
+                  <label class="input-group-text" for="reportTypeSelect"><i class="bi bi-filetype-pdf me-1"></i> Report</label>
+                  <select id="reportTypeSelect" class="form-select form-select-sm">
+                    <option value="assets" selected>With MR Assets</option>
+                    <option value="list">Employees List</option>
+                  </select>
+                </div>
                 <button id="generateMrReportBtn" class="btn btn-sm btn-primary" title="Generate MR Report">
                   <i class="bi bi-filetype-pdf"></i> MR Report
                 </button>
@@ -221,6 +206,7 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
 
         <div class="card-body">
           <form id="employeeReportForm" method="POST" action="generate_employee_mr_report.php" target="_blank">
+            <input type="hidden" name="report_type" id="reportTypeInput" value="assets" />
             <table id="employeeTable" class="table">
               <thead class="table-light">
                 <tr>
@@ -261,6 +247,7 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
                         data-name="<?= htmlspecialchars($emp['name']) ?>"
                         data-no="<?= htmlspecialchars($emp['employee_no']) ?>"
                         data-office="<?= htmlspecialchars($emp['office_name'] ?? 'N/A') ?>"
+                        data-email="<?= htmlspecialchars($emp['email'] ?? '') ?>"
                         data-status="<?= htmlspecialchars($emp['status']) ?>"
                         data-clearance="<?= htmlspecialchars($emp['clearance_status']) ?>"
                         data-image="<?= htmlspecialchars($emp['image']) ?>"
@@ -272,6 +259,7 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
                         data-id="<?= $emp['employee_id'] ?>"
                         data-no="<?= htmlspecialchars($emp['employee_no']) ?>"
                         data-name="<?= htmlspecialchars($emp['name']) ?>"
+                        data-email="<?= htmlspecialchars($emp['email'] ?? '') ?>"
                         data-office="<?= $emp['office_id'] ?>"
                         data-status="<?= $emp['status'] ?>"
                         data-image="<?= htmlspecialchars($emp['image']) ?>">
@@ -474,6 +462,50 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
         }
       })();
 
+      // Import feedback alerts (from import_employees.php)
+      (function(){
+        const params = new URLSearchParams(window.location.search);
+        const importFlag = params.get('import');
+        if (importFlag === 'completed') {
+          const imported = parseInt(params.get('imported') || '0', 10);
+          const duplicates = (params.get('duplicates') || '').split(',').filter(Boolean);
+          const missingOffices = (params.get('missing_offices') || '').split(',').filter(Boolean);
+
+          let html = '';
+          if (imported > 0) {
+            html += `<div class="alert alert-success alert-dismissible fade show" role="alert">
+                       <i class="bi bi-check-circle"></i> Imported <strong>${imported}</strong> employee(s) successfully.
+                       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                     </div>`;
+          }
+          if (duplicates.length > 0) {
+            const list = duplicates.map(n => `<span class=\"badge bg-secondary me-1\">${$('<div>').text(n).html()}</span>`).join(' ');
+            html += `<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                       <i class="bi bi-exclamation-triangle"></i> Skipped duplicate name(s): ${list}
+                       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                     </div>`;
+          }
+          if (missingOffices.length > 0) {
+            const list = missingOffices.map(o => `<span class=\"badge bg-danger me-1\">${$('<div>').text(o).html()}</span>`).join(' ');
+            html += `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                       <i class="bi bi-x-circle"></i> Office not found for: ${list}. Those rows were skipped.
+                       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                     </div>`;
+          }
+          if (html) {
+            $('#pageAlerts').prepend(html);
+          }
+
+          // Clean the URL
+          const url = new URL(window.location.href);
+          url.searchParams.delete('import');
+          url.searchParams.delete('imported');
+          url.searchParams.delete('duplicates');
+          url.searchParams.delete('missing_offices');
+          window.history.replaceState({}, document.title, url.toString());
+        }
+      })();
+
       // Select All handling
       $('#selectAllEmployees').on('change', function() {
         const checked = $(this).is(':checked');
@@ -490,6 +522,9 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
       // Handle Generate MR Report
       $('#generateMrReportBtn').on('click', function(e){
         e.preventDefault();
+        // Sync hidden input with dropdown
+        const reportType = $('#reportTypeSelect').val() || 'assets';
+        $('#reportTypeInput').val(reportType);
         const hasSelection = $('.emp-checkbox:checked').length > 0;
         if (!hasSelection) {
           // Show info in the delete modal style but as info only
@@ -500,6 +535,11 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
           return;
         }
         $('#employeeReportForm')[0].submit();
+      });
+
+      // Keep hidden input updated on dropdown change
+      $('#reportTypeSelect').on('change', function(){
+        $('#reportTypeInput').val(this.value || 'assets');
       });
 
       // Enable/disable Delete button based on selection
@@ -554,6 +594,7 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
         let empName = $(this).data('name');
         let empNo = $(this).data('no');
         let empOffice = $(this).data('office');
+        let empEmail = $(this).data('email');
         let empStatus = $(this).data('status');
         let empClearance = $(this).data('clearance');
         let empImage = $(this).data('image');
@@ -562,6 +603,7 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
         $('#empInfoName').text(empName || '—');
         $('#empInfoNo').text(empNo || '—');
         $('#empInfoOffice').text(empOffice || '—');
+        $('#empInfoEmail').text(empEmail || '—');
         // Status badge styling
         const statusBadge = $('#empInfoStatusBadge');
         statusBadge.removeClass('bg-success bg-warning text-dark bg-secondary bg-info');
@@ -662,12 +704,14 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
       let empNo = $(this).data("no");
       let empName = $(this).data("name");
       let empStatus = $(this).data("status");
+      let empEmail = $(this).data("email") || '';
       let empImage = $(this).data("image");
       let empOfficeId = $(this).data("office");
 
       $("#editEmployeeId").val(empId);
       $("#editEmployeeNo").val(empNo);
       $("#editEmployeeName").val(empName);
+      $("#editEmployeeEmail").val(empEmail);
       $("#editStatus").val(empStatus);
       $("#editOfficeId").val(empOfficeId);
 

@@ -95,8 +95,8 @@ if ($result && $result->num_rows > 0) {
               <i class="bi bi-person-fill info-icon me-3"></i>
               <div>
                 <div class="section-title">Developer</div>
-                <p><strong>Name:</strong> <?= htmlspecialchars($info['developer_name']) ?><br>
-                   <strong>Email:</strong> <a href="mailto:<?= htmlspecialchars($info['developer_email']) ?>"><?= htmlspecialchars($info['developer_email']) ?></a></p>
+                <p class="mb-2"><strong>Name:</strong><br><?= nl2br(htmlspecialchars($info['developer_name'])) ?></p>
+                <p><strong>Email:</strong><br><?= nl2br(htmlspecialchars($info['developer_email'])) ?></p>
               </div>
             </div>
 
