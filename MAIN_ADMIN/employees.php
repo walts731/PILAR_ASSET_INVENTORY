@@ -196,7 +196,14 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
                   <i class="bi bi-download"></i> Export
                 </a>
               </div>
-              <div class="btn-group" role="group" aria-label="Report & Delete">
+              <div class="d-flex align-items-center gap-2" role="group" aria-label="Report & Delete">
+                <div class="input-group input-group-sm w-auto">
+                  <label class="input-group-text" for="reportTypeSelect"><i class="bi bi-filetype-pdf me-1"></i> Report</label>
+                  <select id="reportTypeSelect" class="form-select form-select-sm">
+                    <option value="assets" selected>With MR Assets</option>
+                    <option value="list">Employees List</option>
+                  </select>
+                </div>
                 <button id="generateMrReportBtn" class="btn btn-sm btn-primary" title="Generate MR Report">
                   <i class="bi bi-filetype-pdf"></i> MR Report
                 </button>
@@ -210,6 +217,7 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
 
         <div class="card-body">
           <form id="employeeReportForm" method="POST" action="generate_employee_mr_report.php" target="_blank">
+            <input type="hidden" name="report_type" id="reportTypeInput" value="assets" />
             <table id="employeeTable" class="table">
               <thead class="table-light">
                 <tr>
@@ -525,6 +533,9 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
       // Handle Generate MR Report
       $('#generateMrReportBtn').on('click', function(e){
         e.preventDefault();
+        // Sync hidden input with dropdown
+        const reportType = $('#reportTypeSelect').val() || 'assets';
+        $('#reportTypeInput').val(reportType);
         const hasSelection = $('.emp-checkbox:checked').length > 0;
         if (!hasSelection) {
           // Show info in the delete modal style but as info only
@@ -535,6 +546,11 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
           return;
         }
         $('#employeeReportForm')[0].submit();
+      });
+
+      // Keep hidden input updated on dropdown change
+      $('#reportTypeSelect').on('change', function(){
+        $('#reportTypeInput').val(this.value || 'assets');
       });
 
       // Enable/disable Delete button based on selection
