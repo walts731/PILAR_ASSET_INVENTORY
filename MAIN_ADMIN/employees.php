@@ -89,7 +89,7 @@ if (isset($_GET['export_employees']) && $_GET['export_employees'] === '1') {
 
   // Query: match the view table to include office and clearance status
   $exportSql = $conn->query("
-    SELECT e.employee_no, e.name, o.office_name,
+    SELECT e.employee_no, e.name, e.email, o.office_name,
            e.status,
            CASE 
              WHEN EXISTS (SELECT 1 FROM mr_details m WHERE m.person_accountable = e.name) 
@@ -110,7 +110,7 @@ if (isset($_GET['export_employees']) && $_GET['export_employees'] === '1') {
 
   $output = fopen('php://output', 'w');
   // CSV header row
-  fputcsv($output, ['Employee No', 'Name', 'Office', 'Employment Status', 'Clearance Status', 'Date Added']);
+  fputcsv($output, ['Employee No', 'Name', 'Email', 'Office', 'Employment Status', 'Clearance Status', 'Date Added']);
 
   while ($row = $exportSql->fetch_assoc()) {
     $dateFormatted = '';
@@ -121,6 +121,7 @@ if (isset($_GET['export_employees']) && $_GET['export_employees'] === '1') {
     fputcsv($output, [
       $row['employee_no'],
       $row['name'],
+      $row['email'] ?? '',
       $row['office_name'] ?? 'N/A',
       $row['status'],
       ucfirst($row['clearance_status']),
@@ -128,29 +129,17 @@ if (isset($_GET['export_employees']) && $_GET['export_employees'] === '1') {
     ]);
   }
 
-  fclose($output);
   exit();
 }
 
 // Fetch employees
 $employees = [];
-$result = $conn->query("
-  SELECT e.employee_id, e.employee_no, e.name, e.status, e.date_added, e.image,
-         e.office_id, o.office_name,
-         CASE 
-           WHEN EXISTS (SELECT 1 FROM mr_details m WHERE m.person_accountable = e.name) 
-           THEN 'uncleared'
-           ELSE 'cleared'
-         END AS clearance_status
-  FROM employees e
-  LEFT JOIN offices o ON e.office_id = o.id
-  ORDER BY e.date_added DESC
-");
+$result = $conn->query("\n  SELECT e.employee_id, e.employee_no, e.name, e.email, e.status, e.date_added, e.image,\n         e.office_id, o.office_name,\n         CASE \n           WHEN EXISTS (SELECT 1 FROM mr_details m WHERE m.person_accountable = e.name) \n           THEN 'uncleared'\n           ELSE 'cleared'\n         END AS clearance_status\n  FROM employees e\n  LEFT JOIN offices o ON e.office_id = o.id\n  ORDER BY e.date_added DESC\n");
 
 while ($row = $result->fetch_assoc()) {
   $employees[] = $row;
 }
-
+ 
 // Fetch offices for filter dropdown
 $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_name ASC");
 
@@ -261,6 +250,7 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
                         data-name="<?= htmlspecialchars($emp['name']) ?>"
                         data-no="<?= htmlspecialchars($emp['employee_no']) ?>"
                         data-office="<?= htmlspecialchars($emp['office_name'] ?? 'N/A') ?>"
+                        data-email="<?= htmlspecialchars($emp['email'] ?? '') ?>"
                         data-status="<?= htmlspecialchars($emp['status']) ?>"
                         data-clearance="<?= htmlspecialchars($emp['clearance_status']) ?>"
                         data-image="<?= htmlspecialchars($emp['image']) ?>"
@@ -272,6 +262,7 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
                         data-id="<?= $emp['employee_id'] ?>"
                         data-no="<?= htmlspecialchars($emp['employee_no']) ?>"
                         data-name="<?= htmlspecialchars($emp['name']) ?>"
+                        data-email="<?= htmlspecialchars($emp['email'] ?? '') ?>"
                         data-office="<?= $emp['office_id'] ?>"
                         data-status="<?= $emp['status'] ?>"
                         data-image="<?= htmlspecialchars($emp['image']) ?>">
@@ -554,6 +545,7 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
         let empName = $(this).data('name');
         let empNo = $(this).data('no');
         let empOffice = $(this).data('office');
+        let empEmail = $(this).data('email');
         let empStatus = $(this).data('status');
         let empClearance = $(this).data('clearance');
         let empImage = $(this).data('image');
@@ -562,6 +554,7 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
         $('#empInfoName').text(empName || '—');
         $('#empInfoNo').text(empNo || '—');
         $('#empInfoOffice').text(empOffice || '—');
+        $('#empInfoEmail').text(empEmail || '—');
         // Status badge styling
         const statusBadge = $('#empInfoStatusBadge');
         statusBadge.removeClass('bg-success bg-warning text-dark bg-secondary bg-info');
@@ -662,12 +655,14 @@ $officesRes = $conn->query("SELECT id, office_name FROM offices ORDER BY office_
       let empNo = $(this).data("no");
       let empName = $(this).data("name");
       let empStatus = $(this).data("status");
+      let empEmail = $(this).data("email") || '';
       let empImage = $(this).data("image");
       let empOfficeId = $(this).data("office");
 
       $("#editEmployeeId").val(empId);
       $("#editEmployeeNo").val(empNo);
       $("#editEmployeeName").val(empName);
+      $("#editEmployeeEmail").val(empEmail);
       $("#editStatus").val(empStatus);
       $("#editOfficeId").val(empOfficeId);
 

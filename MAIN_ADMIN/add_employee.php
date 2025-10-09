@@ -11,6 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
     $status = trim($_POST['status']);
+    $email = isset($_POST['email']) ? trim($_POST['email']) : null;
     $office_id = intval($_POST['office_id']);
 
     // --- 0. Check for duplicate name ---
@@ -54,9 +55,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // --- 3. Insert into database ---
-    $stmt = $conn->prepare("INSERT INTO employees (employee_no, name, status, date_added, image, office_id) 
-                            VALUES (?, ?, ?, NOW(), ?, ?)");
-    $stmt->bind_param("ssssi", $employee_no, $name, $status, $imageName, $office_id);
+    // Check if 'email' column exists
+    $hasEmailCol = false;
+    if ($rs = $conn->query("SHOW COLUMNS FROM employees LIKE 'email'")) {
+        $hasEmailCol = $rs->num_rows > 0;
+        $rs->close();
+    }
+
+    if ($hasEmailCol) {
+        $stmt = $conn->prepare("INSERT INTO employees (employee_no, name, email, status, date_added, image, office_id) 
+                                VALUES (?, ?, ?, ?, NOW(), ?, ?)");
+        $stmt->bind_param("sssssi", $employee_no, $name, $email, $status, $imageName, $office_id);
+    } else {
+        $stmt = $conn->prepare("INSERT INTO employees (employee_no, name, status, date_added, image, office_id) 
+                                VALUES (?, ?, ?, NOW(), ?, ?)");
+        $stmt->bind_param("ssssi", $employee_no, $name, $status, $imageName, $office_id);
+    }
 
     if ($stmt->execute()) {
         $_SESSION['success'] = "Employee added successfully!";

@@ -30,6 +30,9 @@
                 <span class="ms-2">Clearance: <span class="badge" id="empInfoClearanceBadge">—</span></span>
                 <span class="ms-3">Date Joined: <span id="empInfoDateJoined">—</span></span>
               </div>
+              <div class="small mt-1">
+                <span class="text-muted">Email:</span> <span id="empInfoEmail">—</span>
+              </div>
             </div>
           </div>
         </div>

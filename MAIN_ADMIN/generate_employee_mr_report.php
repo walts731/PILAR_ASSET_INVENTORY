@@ -28,11 +28,12 @@ $employeesData = [];
 $empIds = implode(',', $selectedEmployees);
 
 // Get employee basic info
-$empQuery = $conn->query("SELECT e.employee_id, e.employee_no, e.name, o.office_name FROM employees e LEFT JOIN offices o ON e.office_id = o.id WHERE e.employee_id IN ($empIds)");
+$empQuery = $conn->query("SELECT e.employee_id, e.employee_no, e.name, e.email, o.office_name FROM employees e LEFT JOIN offices o ON e.office_id = o.id WHERE e.employee_id IN ($empIds)");
 while ($emp = $empQuery->fetch_assoc()) {
     $employeesData[(int)$emp['employee_id']] = [
         'employee_no' => $emp['employee_no'] ?? '',
         'name' => $emp['name'] ?? '',
+        'email' => $emp['email'] ?? '',
         'office_name' => $emp['office_name'] ?? 'N/A',
         'items' => [],
     ];
@@ -112,6 +113,9 @@ $html .= '<div class="header">'
 
 foreach ($employeesData as $emp) {
     $html .= '<div class="section-title">' . htmlspecialchars($emp['name']) . ' — ' . htmlspecialchars($emp['office_name']) . ' (Emp No: ' . htmlspecialchars($emp['employee_no']) . ')</div>';
+    if (!empty($emp['email'])) {
+        $html .= '<div class="meta"><strong>Email:</strong> ' . htmlspecialchars($emp['email']) . '</div>';
+    }
 
     $html .= '<table class="table">'
           . '<thead>'

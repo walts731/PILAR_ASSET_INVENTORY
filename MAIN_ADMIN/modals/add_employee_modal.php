@@ -28,6 +28,10 @@
             <input type="text" name="name" class="form-control" required>
           </div>
           <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" placeholder="name@example.com">
+          </div>
+          <div class="col-md-6">
             <label class="form-label">Office</label>
             <select name="office_id" class="form-select" required>
               <option value="">Select Office</option>

@@ -13,9 +13,12 @@ if (isset($_POST['import'])) {
             fgetcsv($handle, 1000, ",");
 
             while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                $name        = $conn->real_escape_string($data[0]);
-                $office_name = $conn->real_escape_string($data[1]);
-                $status      = $conn->real_escape_string($data[2]);
+                // Basic columns: name, office_name, status
+                $name        = $conn->real_escape_string(trim($data[0] ?? ''));
+                $office_name = $conn->real_escape_string(trim($data[1] ?? ''));
+                $status      = $conn->real_escape_string(trim($data[2] ?? 'permanent'));
+                // Optional 4th column: email
+                $emailCsv    = isset($data[3]) ? $conn->real_escape_string(trim($data[3])) : null;
 
                 // Lookup office_id based on office_name
                 $office_id = null;
@@ -50,10 +53,20 @@ if (isset($_POST['import'])) {
                     }
                     $employee_no = "EMP" . str_pad($newNo, 4, "0", STR_PAD_LEFT);
 
-                    // Insert employee
-                    $stmt = $conn->prepare("INSERT INTO employees (employee_no, name, office_id, status, date_added) 
-                                             VALUES (?, ?, ?, ?, NOW())");
-                    $stmt->bind_param("ssis", $employee_no, $name, $office_id, $status);
+                    // Insert employee (with optional email if column exists)
+                    $hasEmailCol = false;
+                    if ($rs = $conn->query("SHOW COLUMNS FROM employees LIKE 'email'")) {
+                        $hasEmailCol = $rs->num_rows > 0; $rs->close();
+                    }
+                    if ($hasEmailCol) {
+                        $stmt = $conn->prepare("INSERT INTO employees (employee_no, name, email, office_id, status, date_added) 
+                                                 VALUES (?, ?, ?, ?, ?, NOW())");
+                        $stmt->bind_param("sssis", $employee_no, $name, $emailCsv, $office_id, $status);
+                    } else {
+                        $stmt = $conn->prepare("INSERT INTO employees (employee_no, name, office_id, status, date_added) 
+                                                 VALUES (?, ?, ?, ?, NOW())");
+                        $stmt->bind_param("ssis", $employee_no, $name, $office_id, $status);
+                    }
                     $stmt->execute();
                     $stmt->close();
                 }

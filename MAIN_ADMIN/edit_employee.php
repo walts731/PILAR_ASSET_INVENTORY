@@ -7,6 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $employee_no = $_POST['employee_no'];
     $name = $_POST['name'];
     $office_id = $_POST['office_id'];
+    $email = isset($_POST['email']) ? trim($_POST['email']) : null;
     $status = $_POST['status'];
     $image = null;
 
@@ -21,12 +22,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Detect if email column exists
+    $hasEmailCol = false;
+    if ($rs = $conn->query("SHOW COLUMNS FROM employees LIKE 'email'")) {
+        $hasEmailCol = $rs->num_rows > 0;
+        $rs->close();
+    }
+
     if ($image) {
-        $stmt = $conn->prepare("UPDATE employees SET employee_no=?, name=?, office_id=?, status=?, image=? WHERE employee_id=?");
-        $stmt->bind_param("ssissi", $employee_no, $name, $office_id, $status, $image, $employee_id);
+        if ($hasEmailCol) {
+            $stmt = $conn->prepare("UPDATE employees SET employee_no=?, name=?, email=?, office_id=?, status=?, image=? WHERE employee_id=?");
+            $stmt->bind_param("ssssisi", $employee_no, $name, $email, $office_id, $status, $image, $employee_id);
+        } else {
+            $stmt = $conn->prepare("UPDATE employees SET employee_no=?, name=?, office_id=?, status=?, image=? WHERE employee_id=?");
+            $stmt->bind_param("ssissi", $employee_no, $name, $office_id, $status, $image, $employee_id);
+        }
     } else {
-        $stmt = $conn->prepare("UPDATE employees SET employee_no=?, name=?, office_id=?, status=? WHERE employee_id=?");
-        $stmt->bind_param("ssisi", $employee_no, $name, $office_id, $status, $employee_id);
+        if ($hasEmailCol) {
+            $stmt = $conn->prepare("UPDATE employees SET employee_no=?, name=?, email=?, office_id=?, status=? WHERE employee_id=?");
+            $stmt->bind_param("ssssii", $employee_no, $name, $email, $office_id, $status, $employee_id);
+        } else {
+            $stmt = $conn->prepare("UPDATE employees SET employee_no=?, name=?, office_id=?, status=? WHERE employee_id=?");
+            $stmt->bind_param("ssisi", $employee_no, $name, $office_id, $status, $employee_id);
+        }
     }
 
     if ($stmt->execute()) {
