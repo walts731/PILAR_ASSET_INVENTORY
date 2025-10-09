@@ -1,6 +1,7 @@
 <?php
 require_once '../connect.php';
 require_once '../includes/lifecycle_helper.php';
+require_once '../includes/email_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -10,6 +11,111 @@ if (!isset($_SESSION['user_id'])) {
 $ics_id = isset($_GET['ics_id']) ? intval($_GET['ics_id']) : null;
 $ics_form_id = $_GET['form_id'] ?? '';
 
+
+// Helper: ensure email_notifications table exists
+function ensureEmailNotificationsTable(mysqli $conn) {
+    try {
+        $conn->query("CREATE TABLE IF NOT EXISTS email_notifications (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            type VARCHAR(50) NOT NULL,
+            recipient_email VARCHAR(255) NULL,
+            recipient_name VARCHAR(255) NULL,
+            subject VARCHAR(255) NOT NULL,
+            body TEXT NOT NULL,
+            status VARCHAR(50) NOT NULL,
+            error_message TEXT NULL,
+            related_asset_id INT NULL,
+            related_mr_id INT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (Throwable $e) { /* ignore */ }
+}
+
+// Helper: save email log
+function saveEmailNotification(mysqli $conn, array $data) {
+    $stmt = $conn->prepare("INSERT INTO email_notifications
+        (type, recipient_email, recipient_name, subject, body, status, error_message, related_asset_id, related_mr_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param(
+        'sssssssii',
+        $data['type'],
+        $data['recipient_email'],
+        $data['recipient_name'],
+        $data['subject'],
+        $data['body'],
+        $data['status'],
+        $data['error_message'],
+        $data['related_asset_id'],
+        $data['related_mr_id']
+    );
+    $stmt->execute();
+    $stmt->close();
+}
+
+// Helper: send MR email and log regardless of delivery success
+function sendMrEmailAndLog(mysqli $conn, $employeeId, $personName, $assetId, $mrId, $officeLocation, $inventoryTag, $description) {
+    ensureEmailNotificationsTable($conn);
+
+    // Fetch employee email
+    $recipientEmail = null;
+    if (!empty($employeeId)) {
+        if ($st = $conn->prepare("SELECT email FROM employees WHERE employee_id = ? LIMIT 1")) {
+            $st->bind_param('i', $employeeId);
+            $st->execute();
+            $res = $st->get_result();
+            if ($res && ($row = $res->fetch_assoc())) {
+                $recipientEmail = $row['email'] ?? null;
+            }
+            $st->close();
+        }
+    }
+
+    // Build subject/body
+    $subject = 'New Material Receipt (MR) Assignment Notification';
+    $body = "Hello " . htmlspecialchars((string)$personName) . ",<br><br>" .
+            "You have been set as the Person Accountable for an item in the PILAR Asset Inventory system.<br>" .
+            "<ul>" .
+              "<li><strong>Office:</strong> " . htmlspecialchars((string)$officeLocation) . "</li>" .
+              "<li><strong>Inventory Tag:</strong> " . htmlspecialchars((string)$inventoryTag) . "</li>" .
+              "<li><strong>Description:</strong> " . htmlspecialchars((string)$description) . "</li>" .
+            "</ul>" .
+            "If this was not expected, please contact your system administrator.";
+
+    // Default log data
+    $log = [
+        'type' => 'MR_CREATED',
+        'recipient_email' => $recipientEmail,
+        'recipient_name' => $personName,
+        'subject' => $subject,
+        'body' => $body,
+        'status' => 'queued',
+        'error_message' => null,
+        'related_asset_id' => !empty($assetId) ? (int)$assetId : null,
+        'related_mr_id' => !empty($mrId) ? (int)$mrId : null,
+    ];
+
+    // Attempt to send if email present
+    if (!empty($recipientEmail)) {
+        try {
+            $mail = configurePHPMailer();
+            $mail->addAddress($recipientEmail, (string)$personName);
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body = $body;
+            $mail->AltBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $body));
+            $mail->send();
+            $log['status'] = 'sent';
+        } catch (Throwable $e) {
+            $log['status'] = 'failed';
+            $log['error_message'] = $e->getMessage();
+        }
+    } else {
+        // No email on file
+        $log['status'] = 'no_email';
+    }
+
+    saveEmailNotification($conn, $log);
+}
 
 // Fetch the municipal logo from the system table
 $logo_path = '';
@@ -567,6 +673,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['error_message'] = "Failed to update asset details: " . $stmt_ai->error;
             }
             $stmt_ai->close();
+            // Send notification email and log (UPDATE path)
+            $mrIdForLog = null;
+            if ($stFind = $conn->prepare("SELECT id FROM mr_details WHERE (item_id = ? OR (? IS NULL AND item_id IS NULL)) AND asset_id = ? ORDER BY id DESC LIMIT 1")) {
+                $stFind->bind_param('iii', $mr_item_id, $mr_item_id, $asset_id_form);
+                $stFind->execute();
+                $rsFind = $stFind->get_result();
+                if ($rsFind && ($rowF = $rsFind->fetch_assoc())) { $mrIdForLog = (int)$rowF['id']; }
+                $stFind->close();
+            }
+            sendMrEmailAndLog($conn, $employee_id, $person_accountable_name, $asset_id_form, $mrIdForLog, $office_location, $inventory_tag_gen, $description);
             $_SESSION['success_message'] = "MR Details successfully updated!";
             header("Location: create_mr.php?asset_id=" . $asset_id_form);
             exit();
@@ -614,6 +730,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $note = sprintf('MR create; PA: %s; InvTag: %s', (string)$person_accountable_name, (string)$inventory_tag_gen);
                 logLifecycleEvent((int)$asset_id_form, 'ASSIGNED', 'mr_details', null, $prev_employee_id ? (int)$prev_employee_id : null, $employee_id ? (int)$employee_id : null, $prev_office_id ? (int)$prev_office_id : null, null, $note);
             }
+            // Send notification email and log (INSERT path)
+            $insertedMrId = $conn->insert_id;
+            sendMrEmailAndLog($conn, $employee_id, $person_accountable_name, $asset_id_form, $insertedMrId, $office_location, $inventory_tag_gen, $description);
             $_SESSION['success_message'] = "MR has been successfully created!";
             header("Location: create_mr.php?asset_id=" . $asset_id_form);
             exit();
