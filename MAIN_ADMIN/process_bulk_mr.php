@@ -6,6 +6,7 @@ ini_set('log_errors', 1);
 
 require_once '../connect.php';
 require_once '../includes/lifecycle_helper.php';
+require_once '../includes/email_helper.php';
 session_start();
 
 // Check if user is logged in
@@ -20,6 +21,118 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed']);
     exit();
+}
+
+// Ensure email_notifications table exists
+function ensureEmailNotificationsTable_bulk(mysqli $conn) {
+    try {
+        $conn->query("CREATE TABLE IF NOT EXISTS email_notifications (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            type VARCHAR(50) NOT NULL,
+            recipient_email VARCHAR(255) NULL,
+            recipient_name VARCHAR(255) NULL,
+            subject VARCHAR(255) NOT NULL,
+            body TEXT NOT NULL,
+            status VARCHAR(50) NOT NULL,
+            error_message TEXT NULL,
+            related_asset_id INT NULL,
+            related_mr_id INT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (Throwable $e) { /* ignore */ }
+}
+
+function saveEmailNotification_bulk(mysqli $conn, array $data) {
+    $stmt = $conn->prepare("INSERT INTO email_notifications
+        (type, recipient_email, recipient_name, subject, body, status, error_message, related_asset_id, related_mr_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param(
+        'sssssssii',
+        $data['type'],
+        $data['recipient_email'],
+        $data['recipient_name'],
+        $data['subject'],
+        $data['body'],
+        $data['status'],
+        $data['error_message'],
+        $data['related_asset_id'],
+        $data['related_mr_id']
+    );
+    $stmt->execute();
+    $stmt->close();
+}
+
+function sendMrEmailAndLog_bulk(mysqli $conn, $employeeId, $personName, $assetId, $mrId, $officeId, $inventoryTag, $description, $propertyNo, $serialNo) {
+    ensureEmailNotificationsTable_bulk($conn);
+
+    // Resolve recipient email
+    $recipientEmail = null;
+    if (!empty($employeeId)) {
+        if ($st = $conn->prepare("SELECT email FROM employees WHERE employee_id = ? LIMIT 1")) {
+            $st->bind_param('i', $employeeId);
+            $st->execute();
+            $res = $st->get_result();
+            if ($res && ($row = $res->fetch_assoc())) { $recipientEmail = $row['email'] ?? null; }
+            $st->close();
+        }
+    }
+
+    // Resolve office name
+    $officeName = '';
+    if (!empty($officeId)) {
+        if ($st2 = $conn->prepare("SELECT office_name FROM offices WHERE id = ? LIMIT 1")) {
+            $st2->bind_param('i', $officeId);
+            $st2->execute();
+            $rs2 = $st2->get_result();
+            if ($rs2 && ($r2 = $rs2->fetch_assoc())) { $officeName = $r2['office_name'] ?? ''; }
+            $st2->close();
+        }
+    }
+
+    // Build subject/body
+    $subject = 'New Material Receipt (MR) Assignment Notification';
+    $body = "Hello " . htmlspecialchars((string)$personName) . ",<br><br>"
+          . "You have been set as the Person Accountable for an item in the PILAR Asset Inventory system.<br>"
+          . "<ul>"
+          . "<li><strong>Office:</strong> " . htmlspecialchars((string)$officeName) . "</li>"
+          . "<li><strong>Inventory Tag:</strong> " . htmlspecialchars((string)$inventoryTag) . "</li>"
+          . "<li><strong>Description:</strong> " . htmlspecialchars((string)$description) . "</li>"
+          . "<li><strong>Property No.:</strong> " . htmlspecialchars((string)$propertyNo) . "</li>"
+          . "<li><strong>Serial No.:</strong> " . htmlspecialchars((string)$serialNo) . "</li>"
+          . "</ul>"
+          . "If this was not expected, please contact your system administrator.";
+
+    $log = [
+        'type' => 'MR_CREATED_BULK',
+        'recipient_email' => $recipientEmail,
+        'recipient_name' => $personName,
+        'subject' => $subject,
+        'body' => $body,
+        'status' => 'queued',
+        'error_message' => null,
+        'related_asset_id' => !empty($assetId) ? (int)$assetId : null,
+        'related_mr_id' => !empty($mrId) ? (int)$mrId : null,
+    ];
+
+    if (!empty($recipientEmail)) {
+        try {
+            $mail = configurePHPMailer();
+            $mail->addAddress($recipientEmail, (string)$personName);
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body = $body;
+            $mail->AltBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $body));
+            $mail->send();
+            $log['status'] = 'sent';
+        } catch (Throwable $e) {
+            $log['status'] = 'failed';
+            $log['error_message'] = $e->getMessage();
+        }
+    } else {
+        $log['status'] = 'no_email';
+    }
+
+    saveEmailNotification_bulk($conn, $log);
 }
 
 try {
@@ -158,6 +271,9 @@ try {
                 $mr_stmt->close();
                 continue;
             }
+            // Get inserted MR id and send email + log
+            $insertedMrId = $conn->insert_id;
+            sendMrEmailAndLog_bulk($conn, $accountable_person, $accountable_person_name, $asset_id, $insertedMrId, $office, $inventory_tag, $description, $property_no, $serial_no);
             $mr_stmt->close();
 
             // Check which columns exist in assets table before updating

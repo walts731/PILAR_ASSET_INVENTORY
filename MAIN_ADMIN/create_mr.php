@@ -53,7 +53,7 @@ function saveEmailNotification(mysqli $conn, array $data) {
 }
 
 // Helper: send MR email and log regardless of delivery success
-function sendMrEmailAndLog(mysqli $conn, $employeeId, $personName, $assetId, $mrId, $officeLocation, $inventoryTag, $description) {
+function sendMrEmailAndLog(mysqli $conn, $employeeId, $personName, $assetId, $mrId, $officeLocation, $inventoryTag, $description, $propertyNo, $serialNo) {
     ensureEmailNotificationsTable($conn);
 
     // Fetch employee email
@@ -78,6 +78,8 @@ function sendMrEmailAndLog(mysqli $conn, $employeeId, $personName, $assetId, $mr
               "<li><strong>Office:</strong> " . htmlspecialchars((string)$officeLocation) . "</li>" .
               "<li><strong>Inventory Tag:</strong> " . htmlspecialchars((string)$inventoryTag) . "</li>" .
               "<li><strong>Description:</strong> " . htmlspecialchars((string)$description) . "</li>" .
+              "<li><strong>Property No.:</strong> " . htmlspecialchars((string)$propertyNo) . "</li>" .
+              "<li><strong>Serial No.:</strong> " . htmlspecialchars((string)$serialNo) . "</li>" .
             "</ul>" .
             "If this was not expected, please contact your system administrator.";
 
@@ -682,7 +684,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 if ($rsFind && ($rowF = $rsFind->fetch_assoc())) { $mrIdForLog = (int)$rowF['id']; }
                 $stFind->close();
             }
-            sendMrEmailAndLog($conn, $employee_id, $person_accountable_name, $asset_id_form, $mrIdForLog, $office_location, $inventory_tag_gen, $description);
+            sendMrEmailAndLog($conn, $employee_id, $person_accountable_name, $asset_id_form, $mrIdForLog, $office_location, $inventory_tag_gen, $description, $property_no, $serial_no);
             $_SESSION['success_message'] = "MR Details successfully updated!";
             header("Location: create_mr.php?asset_id=" . $asset_id_form);
             exit();
@@ -732,7 +734,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
             // Send notification email and log (INSERT path)
             $insertedMrId = $conn->insert_id;
-            sendMrEmailAndLog($conn, $employee_id, $person_accountable_name, $asset_id_form, $insertedMrId, $office_location, $inventory_tag_gen, $description);
+            sendMrEmailAndLog($conn, $employee_id, $person_accountable_name, $asset_id_form, $insertedMrId, $office_location, $inventory_tag_gen, $description, $property_no, $serial_no);
             $_SESSION['success_message'] = "MR has been successfully created!";
             header("Location: create_mr.php?asset_id=" . $asset_id_form);
             exit();
