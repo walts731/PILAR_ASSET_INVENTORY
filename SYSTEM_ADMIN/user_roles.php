@@ -146,96 +146,268 @@ if ($selectedRoleId) {
 }
 $rolePermissions = $roleName ? getRolePermissions($conn, $roleName) : [];
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Roles & Permissions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css" />
+    <style>
+        .main {
+            min-height: 100vh;
+            background-color: #f8f9fc;
+            transition: all 0.3s;
+        }
+        @media (max-width: 991.98px) {
+            .main {
+                margin-left: 0;
+                padding: 15px;
+            }
+        }
+        .card {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 1rem 1.25rem;
+        }
+        .card-header h5, .card-header h6 {
+            font-weight: 600;
+            color: #4e73df;
+            margin-bottom: 0;
+        }
+        .list-group-item {
+            border-left: none;
+            border-right: none;
+            padding: 0.75rem 1.25rem;
+            border-color: #e3e6f0;
+            transition: all 0.2s;
+        }
+        .list-group-item:first-child {
+            border-top: none;
+        }
+        .list-group-item:hover {
+            background-color: #f8f9fc;
+        }
+        .list-group-item.active {
+            background-color: #4e73df;
+            border-color: #4e73df;
+        }
+        .permission-group {
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e9ecef;
+        }
+        .permission-item {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s;
+        }
+        .permission-item:hover {
+            background-color: #f8f9fa;
+        }
+        .permission-item:last-child {
+            border-bottom: none;
+        }
+        .btn-primary {
+            background-color: #4e73df;
+            border-color: #4e73df;
+        }
+        .btn-primary:hover {
+            background-color: #2e59d9;
+            border-color: #2653d4;
+        }
+        .form-check-input:checked {
+            background-color: #4e73df;
+            border-color: #4e73df;
+        }
+</head>
+<body>
+    <?php include 'includes/sidebar.php'; ?>
+    <div class="main">
+        <?php include 'includes/topbar.php'; ?>
 
-<?php include '../includes/header.php'; ?>
-
-<div class="container-fluid">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">User Roles & Permissions</h1>
-    </div>
-
-    <?php if ($success): ?>
-        <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
-    <?php endif; ?>
-    
-    <?php if ($error): ?>
-        <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
-    <?php endif; ?>
-
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Roles</h6>
-                </div>
-                <div class="list-group list-group-flush">
-                    <?php foreach ($roles as $role): ?>
-                        <a href="?role_id=<?php echo $role['id']; ?>" 
-                           class="list-group-item list-group-item-action <?php echo $selectedRoleId == $role['id'] ? 'active' : ''; ?>">
-                            <?php echo htmlspecialchars($role['name']); ?>
-                        </a>
-                    <?php endforeach; ?>
-                </div>
+        <div class="container-fluid py-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">User Roles & Permissions</h1>
             </div>
-        </div>
 
-        <div class="col-md-9">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        Permissions for 
-                        <?php 
-                        $roleName = '';
-                        foreach ($roles as $role) {
-                            if ($role['id'] == $selectedRoleId) {
-                                $roleName = $role['name'];
-                                break;
-                            }
-                        }
-                        echo htmlspecialchars($roleName);
-                        ?>
-                    </h6>
+            <?php if (isset($_SESSION['message'])): ?>
+                <div class="alert alert-<?= $_SESSION['message_type'] ?? 'info' ?> alert-dismissible fade show" role="alert">
+                    <i class="bi <?= $_SESSION['message_type'] === 'success' ? 'bi-check-circle' : 'bi-info-circle' ?> me-2"></i>
+                    <?= htmlspecialchars($_SESSION['message']) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-                <div class="card-body">
-                    <?php if ($selectedRoleId): ?>
-                        <form method="post" action="">
-                            <input type="hidden" name="role_id" value="<?php echo $selectedRoleId; ?>">
-                            
-                            <div class="row">
-                                <?php foreach (array_chunk($permissions, 2) as $permissionChunk): ?>
-                                    <div class="col-md-6">
-                                        <?php foreach ($permissionChunk as $permission): ?>
-                                            <div class="form-check mb-3">
-                                                <input class="form-check-input" type="checkbox" 
-                                                       name="permissions[]" 
-                                                       value="<?php echo $permission['id']; ?>"
-                                                       id="perm_<?php echo $permission['id']; ?>"
-                                                       <?php echo in_array($permission['id'], $rolePermissions) ? 'checked' : ''; ?>>
-                                                <label class="form-check-label" for="perm_<?php echo $permission['id']; ?>">
-                                                    <strong><?php echo htmlspecialchars(str_replace('_', ' ', ucfirst($permission['name']))); ?></strong>
-                                                    <small class="d-block text-muted">
-                                                        <?php echo htmlspecialchars($permission['description']); ?>
-                                                    </small>
-                                                </label>
+                <?php unset($_SESSION['message'], $_SESSION['message_type']); ?>
+            <?php endif; ?>
+
+            <?php if ($success): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <?php echo htmlspecialchars($success); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($error): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <?php echo htmlspecialchars($error); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <div class="row g-4">
+                <!-- Roles List -->
+                <div class="col-lg-3">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold">Roles</h6>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($roles as $role): ?>
+                                <a href="?role_id=<?php echo $role['id']; ?>" 
+                                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center <?php echo $selectedRoleId == $role['id'] ? 'active' : ''; ?>">
+                                    <span><?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $role['name']))); ?></span>
+                                    <?php if ($selectedRoleId == $role['id']): ?>
+                                        <i class="bi bi-check-lg"></i>
+                                    <?php endif; ?>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Permissions Panel -->
+                <div class="col-lg-9">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold">
+                                Permissions for 
+                                <span class="text-primary">
+                                    <?php 
+                                    $roleName = '';
+                                    foreach ($roles as $role) {
+                                        if ($role['id'] == $selectedRoleId) {
+                                            $roleName = $role['name'];
+                                            break;
+                                        }
+                                    }
+                                    echo htmlspecialchars(ucwords(str_replace('_', ' ', $roleName)));
+                                    ?>
+                                </span>
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <?php if ($selectedRoleId): ?>
+                                <form method="post" action="">
+                                    <input type="hidden" name="role_id" value="<?php echo $selectedRoleId; ?>">
+                                    
+                                    <div class="row g-4">
+                                        <?php 
+                                        // Group permissions by their prefix (e.g., 'manage_', 'view_', etc.)
+                                        $groupedPermissions = [];
+                                        foreach ($permissions as $permission) {
+                                            $prefix = strtok($permission['name'], '_') . '_';
+                                            $groupedPermissions[$prefix][] = $permission;
+                                        }
+                                        
+                                        foreach ($groupedPermissions as $prefix => $permissionGroup): 
+                                            $groupName = ucwords(str_replace('_', ' ', rtrim($prefix, '_'))) . ' Permissions';
+                                        ?>
+                                            <div class="col-12 col-md-6">
+                                                <div class="permission-group">
+                                                    <h6 class="font-weight-bold text-primary mb-3">
+                                                        <i class="bi bi-shield-lock me-2"></i><?php echo $groupName; ?>
+                                                    </h6>
+                                                    <div class="permission-list">
+                                                        <?php foreach ($permissionGroup as $permission): ?>
+                                                            <div class="permission-item">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="checkbox" 
+                                                                            name="permissions[]" 
+                                                                            value="<?php echo $permission['id']; ?>"
+                                                                            id="perm_<?php echo $permission['id']; ?>"
+                                                                            <?php echo in_array($permission['id'], $rolePermissions) ? 'checked' : ''; ?>>
+                                                                    <label class="form-check-label w-100" for="perm_<?php echo $permission['id']; ?>">
+                                                                        <div class="font-weight-medium">
+                                                                            <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $permission['name']))); ?>
+                                                                        </div>
+                                                                        <div class="small text-muted">
+                                                                            <?php echo htmlspecialchars($permission['description']); ?>
+                                                                        </div>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        <?php endforeach; ?>
+                                                    </div>
+                                                </div>
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
-                                <?php endforeach; ?>
-                            </div>
-                            
-                            <button type="submit" name="update_permissions" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Save Changes
-                            </button>
-                        </form>
-                    <?php else: ?>
-                        <div class="alert alert-info">
-                            Please select a role to view and edit its permissions.
+                                    
+                                    <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                                        <button type="submit" name="update_permissions" class="btn btn-primary px-4">
+                                            <i class="bi bi-save me-2"></i>Save Changes
+                                        </button>
+                                    </div>
+                                </form>
+                            <?php else: ?>
+                                <div class="alert alert-info d-flex align-items-center mb-0">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    <div>
+                                        <h6 class="alert-heading mb-1">No Role Selected</h6>
+                                        <p class="mb-0">Please select a role from the list to view and edit its permissions.</p>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
-                    <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            </div>
+{{ ... }}
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<?php include 'includes/footer.php'; ?>
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    
+    <!-- Custom Scripts -->
+    <script>
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+
+        // Toggle all checkboxes in a permission group
+        function togglePermissionGroup(checkbox, groupClass) {
+            var checkboxes = document.querySelectorAll('.' + groupClass + ' .form-check-input');
+            checkboxes.forEach(function(cb) {
+                cb.checked = checkbox.checked;
+            });
+        }
+    </script>
+</body>
+</html>
