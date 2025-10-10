@@ -165,9 +165,7 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
           <td><input type="number" class="form-control shadow" name="req_quantity[]" min="1" required></td>
           <td><input type="number" step="0.01" class="form-control shadow" name="price[]" required></td>
           <td><input type="text" class="form-control total shadow" name="total[]" readonly></td>
-          <td>
-            <button type="button" class="btn btn-outline-danger btn-sm remove-row">Remove</button>
-          </td>
+          <td><!-- No remove button for first row --></td>
         </tr>
       <?php endfor; ?>
     </tbody>

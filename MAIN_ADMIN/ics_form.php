@@ -253,11 +253,7 @@ if ($thrRes && $thrRes->num_rows > 0) {
 
                             <td><input type="text" class="form-control shadow item-no-field" name="item_no[]" value="1" readonly required></td>
                             <td><input type="text" class="form-control shadow" name="estimated_useful_life[]" required></td>
-                            <td>
-                                <button type="button" class="btn btn-outline-danger btn-sm remove-row">
-                                    Remove
-                                </button>
-                            </td>
+                            <td><!-- No remove button for first row --></td>
                         </tr>
                     <?php endfor; ?>
                 </tbody>
@@ -549,6 +545,12 @@ if ($thrRes && $thrRes->num_rows > 0) {
 
             // specifically ensure total_cost cleared
             newRow.querySelectorAll('input.total_cost').forEach(i => i.value = '');
+
+            // Ensure the Actions cell contains a Remove button for cloned rows
+            const actionCell = newRow.querySelector('td:last-child');
+            if (actionCell) {
+                actionCell.innerHTML = '<button type="button" class="btn btn-outline-danger btn-sm remove-row">Remove</button>';
+            }
 
             tableBody.appendChild(newRow);
         });
