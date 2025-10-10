@@ -304,7 +304,7 @@ echo "<!-- SIDEBAR DEBUG: user_id={$user_id} | office_id=" . htmlspecialchars($o
             </a>
             <a href="reports.php" class="<?= ($page == 'reports') ? 'active' : '' ?>"><i class="bi bi-bar-chart-line"></i> Reports</a>
             <a href="user.php" class="<?= ($page == 'user') ? 'active' : '' ?>"><i class="bi bi-person"></i> Users</a>
-            <a href="asset_archive.php" class="<?= ($page == 'asset_archive') ? 'active' : '' ?>"><i class="bi bi-archive"></i> Archive</a>
+            
             <a href="about.php" class="<?= ($page == 'about') ? 'active' : '' ?>"><i class="bi bi-info-circle"></i> About</a>
             <a href="settings.php" class="<?= ($page == 'settings') ? 'active' : '' ?>"><i class="bi bi-gear"></i> Settings</a>
         </nav>

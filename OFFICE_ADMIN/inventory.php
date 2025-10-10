@@ -216,11 +216,7 @@ $office_id = $_SESSION['office_id'];
                         <div class="btn-group" role="group">
                           <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal"><i class="bi bi-eye"></i></button>
                           <button type="button" class="btn btn-sm btn-outline-primary rounded-pill updateAssetBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#updateAssetModal"><i class="bi bi-pencil-square"></i></button>
-                          <?php if ($row['status'] !== 'borrowed'): ?>
-                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill deleteAssetBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#deleteAssetModal"><i class="bi bi-trash"></i></button>
-                          <?php else: ?>
-                            <span class="text-muted small ms-2"><i class="bi bi-lock"></i></span>
-                          <?php endif; ?>
+                         
                         </div>
                       </td>
                     </tr>
@@ -323,11 +319,7 @@ $office_id = $_SESSION['office_id'];
                       <td>
                         <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal"><i class="bi bi-eye"></i></button>
                         <button type="button" class="btn btn-sm btn-outline-primary rounded-pill updateConsumableBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#updateConsumableModal"><i class="bi bi-pencil-square"></i></button>
-                        <?php if ($row['status'] !== 'borrowed'): ?>
-                          <button type="button" class="btn btn-sm btn-outline-danger rounded-pill deleteConsumableBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#deleteConsumableModal"><i class="bi bi-trash"></i></button>
-                        <?php else: ?>
-                          <span class="text-muted small"><i class="bi bi-lock"></i></span>
-                        <?php endif; ?>
+                       
                         <button type="button" class="btn btn-sm btn-outline-success rounded-pill dispenseBtn"
                           data-id="<?= $row['id'] ?>"
                           data-name="<?= htmlspecialchars($row['description']) ?>"
