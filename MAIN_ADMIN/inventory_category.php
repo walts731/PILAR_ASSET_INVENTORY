@@ -49,30 +49,7 @@ $stmt->close();
 // Fetch aggregates from assets_new that have at least one linked asset in this category
 $an_rows = [];
 if ($category && isset($category['category_name'])) {
-  $stmt = $conn->prepare("
-    SELECT 
-      an.id AS an_id,
-      an.description,
-      an.quantity,
-      an.unit,
-      an.unit_cost,
-      an.date_created,
-      COALESCE((
-        SELECT c.category_name
-        FROM assets a
-        LEFT JOIN categories c ON a.category = c.id
-        WHERE a.asset_new_id = an.id
-        ORDER BY a.id ASC
-        LIMIT 1
-      ), 'Uncategorized') AS category_name,
-      f.ics_no AS ics_no
-    FROM assets_new an
-    LEFT JOIN ics_form f ON f.id = an.ics_id
-    WHERE EXISTS (
-      SELECT 1 FROM assets ax WHERE ax.asset_new_id = an.id AND ax.category = ?
-    )
-    ORDER BY an.date_created DESC
-  ");
+  $stmt = $conn->prepare("\n    SELECT \n      an.id AS an_id,\n      an.description,\n      an.quantity,\n      an.unit,\n      an.unit_cost,\n      an.date_created,\n      COALESCE((\n        SELECT c.category_name\n        FROM assets a\n        LEFT JOIN categories c ON a.category = c.id\n        WHERE a.asset_new_id = an.id\n        ORDER BY a.id ASC\n        LIMIT 1\n      ), 'Uncategorized') AS category_name,\n      REPLACE(REPLACE(f.ics_no, '{OFFICE}', o.office_name), 'OFFICE', o.office_name) AS ics_no,\n      o.office_name AS office_name\n    FROM assets_new an\n    LEFT JOIN ics_form f ON f.id = an.ics_id\n    LEFT JOIN offices o ON an.office_id = o.id\n    WHERE EXISTS (\n      SELECT 1 FROM assets ax WHERE ax.asset_new_id = an.id AND ax.category = ?\n    )\n    ORDER BY an.date_created DESC\n  ");
   $stmt->bind_param("i", $category_id);
   $stmt->execute();
   $res = $stmt->get_result();
