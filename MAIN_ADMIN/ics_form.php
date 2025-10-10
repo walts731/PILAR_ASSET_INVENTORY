@@ -379,11 +379,22 @@ if ($thrRes && $thrRes->num_rows > 0) {
             if (!tpl) return;
             const sel = document.getElementById('destinationOffice');
             let officeAcr = 'OFFICE';
+            let isOutside = false;
             if (sel) {
                 const opt = sel.options[sel.selectedIndex];
                 const txt = opt ? (opt.text || '') : '';
-                if (sel.value && sel.value !== 'outside_lgu') officeAcr = (txt || '').trim() || 'OFFICE'; else officeAcr = 'Outside LGU';
+                if (sel.value && sel.value !== 'outside_lgu') { officeAcr = (txt || '').trim() || 'OFFICE'; }
+                else {
+                    // Use Entity Name as OFFICE when Outside LGU
+                    const en = document.getElementById('entityName');
+                    officeAcr = (en && en.value.trim()) ? en.value.trim() : 'OFFICE';
+                    isOutside = true;
+                }
             }
+            // Always keep read-only; preview drives the value
+            field.readOnly = true;
+            field.required = false;
+            field.placeholder = '';
             tpl = replaceDatePlaceholdersLocal(tpl);
             tpl = tpl.replace(/\{OFFICE\}|OFFICE/g, officeAcr);
             tpl = padDigitsForPreview(tpl);
@@ -595,6 +606,10 @@ if ($thrRes && $thrRes->num_rows > 0) {
         if (destinationOffice) {
             destinationOffice.addEventListener('change', handleDestinationChange);
             handleDestinationChange(); // initialize on load for prefilled states
+        }
+        // Recompute ICS preview when entity name changes (for Outside LGU)
+        if (entityNameInput) {
+            entityNameInput.addEventListener('input', computeIcsPreview);
         }
     });
 </script>
