@@ -293,12 +293,13 @@ $html .= '
       <td>' . htmlspecialchars($ris['received_by_designation']) . '</td>
     </tr>
     <tr>
-      <td>Date</td>
-      <td>' . htmlspecialchars($ris['requested_by_date']) . '</td>
-      <td>' . htmlspecialchars($ris['approved_by_date']) . '</td>
-      <td>' . htmlspecialchars($ris['issued_by_date']) . '</td>
-      <td>' . htmlspecialchars($ris['received_by_date']) . '</td>
-    </tr>
+  <td>Date</td>
+  <td>' . (!empty($ris['requested_by_date']) && $ris['requested_by_date'] != '0000-00-00' ? htmlspecialchars($ris['requested_by_date']) : '') . '</td>
+  <td>' . (!empty($ris['approved_by_date']) && $ris['approved_by_date'] != '0000-00-00' ? htmlspecialchars($ris['approved_by_date']) : '') . '</td>
+  <td>' . (!empty($ris['issued_by_date']) && $ris['issued_by_date'] != '0000-00-00' ? htmlspecialchars($ris['issued_by_date']) : '') . '</td>
+  <td>' . (!empty($ris['received_by_date']) && $ris['received_by_date'] != '0000-00-00' ? htmlspecialchars($ris['received_by_date']) : '') . '</td>
+</tr>
+
   </tbody>
 </table>
 ';
