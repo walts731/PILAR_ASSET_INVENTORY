@@ -80,26 +80,26 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
             <div class="row mb-3">
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Division</label>
-                    <input type="text" class="form-control" name="division" value="<?= htmlspecialchars($ris_data['division'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control" name="division" value="<?= htmlspecialchars($ris_data['division'] ?? '') ?>">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Responsibility Center</label>
-                    <input type="text" class="form-control" name="responsibility_center" value="<?= htmlspecialchars($ris_data['responsibility_center'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control" name="responsibility_center" value="<?= htmlspecialchars($ris_data['responsibility_center'] ?? '') ?>">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">RIS No.</label>
-                    <input type="text" class="form-control" name="ris_no" value="<?= htmlspecialchars($risNoDisplay) ?>" readonly>
+                    <input type="text" class="form-control" name="ris_no" value="<?= htmlspecialchars($risNoDisplay) ?>">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Date</label>
-                    <input type="date" class="form-control" name="date" value="<?= htmlspecialchars($ris_data['date'] ?? '') ?>" readonly>
+                    <input type="date" class="form-control" name="date" value="<?= htmlspecialchars($ris_data['date'] ?? '') ?>">
                 </div>
             </div>
 
             <div class="row mb-3">
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Office/Unit</label>
-                    <select class="form-select" name="office_id" disabled>
+                    <select class="form-select" name="office_id">
                         <?php foreach ($offices as $office): ?>
                             <option value="<?= $office['id'] ?>" <?= ($office['id'] == $ris_data['office_id']) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($office['office_name']) ?>
@@ -110,21 +110,20 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
 
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Code</label>
-                    <input type="text" class="form-control" name="responsibility_code" value="<?= htmlspecialchars($ris_data['responsibility_code'] ?? '') ?>" readonly>
+                    <input type="text" class="form-control" name="responsibility_code" value="<?= htmlspecialchars($ris_data['responsibility_code'] ?? '') ?>">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">SAI No.</label>
-                    <input type="text" class="form-control" name="sai_no" value="<?= htmlspecialchars($saiNoDisplay) ?>" readonly>
+                    <input type="text" class="form-control" name="sai_no" value="<?= htmlspecialchars($saiNoDisplay) ?>">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Date</label>
-                    <input type="date" class="form-control" name="sai_date" value="<?= htmlspecialchars($ris_data['date'] ?? '') ?>" readonly>
+                    <input type="date" class="form-control" name="sai_date" value="<?= htmlspecialchars($ris_data['date'] ?? '') ?>">
                 </div>
             </div>
 
             <!-- ITEMS TABLE (READONLY) -->
             <table class="table table-bordered align-middle text-center">
-                <thead>
                     <tr class="table-secondary">
                         <th colspan="4">REQUISITION</th>
                         <th colspan="3">ISSUANCE</th>

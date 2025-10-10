@@ -80,22 +80,22 @@ if ($res_off && $res_off->num_rows) {
 
       <form method="POST" action="save_iirup_view.php" enctype="multipart/form-data">
         <input type="hidden" name="iirup_id" value="<?= (int)$iirup_id ?>">
-        <div class="mb-3" style="text-align:center; display: none;">
+        <div class="mb-3" style="text-align:center;">
           <label class="form-label">Header Image</label>
           <input type="file" name="header_image" class="form-control" style="max-width: 400px; margin: 0 auto;">
         </div>
 
         <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 10px;" class="mb-3">
           <div style="flex: 1; margin: 0 5px;">
-            <input type="text" name="accountable_officer" value="<?= htmlspecialchars($hdr['accountable_officer']) ?>" style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;" readonly>
+            <input type="text" name="accountable_officer" value="<?= htmlspecialchars($hdr['accountable_officer']) ?>" style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;">
             <br><small><em>(Name of Accountable Officer)</em></small>
           </div>
           <div style="flex: 1; margin: 0 5px;">
-            <input type="text" name="designation" value="<?= htmlspecialchars($hdr['designation']) ?>" style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;" readonly>
+            <input type="text" name="designation" value="<?= htmlspecialchars($hdr['designation']) ?>" style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;">
             <br><small><em>(Designation)</em></small>
           </div>
           <div style="flex: 1; margin: 0 5px;">
-            <select name="office" style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;" disabled>
+            <select name="office" style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;">
               <option value="">-- Select Office --</option>
               <?php foreach ($offices as $o): ?>
                 <option value="<?= htmlspecialchars($o['office_name']) ?>" <?= ($hdr['office'] == $o['office_name']) ? 'selected' : '' ?>><?= htmlspecialchars($o['office_name']) ?></option>

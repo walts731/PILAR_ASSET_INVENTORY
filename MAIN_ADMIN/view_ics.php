@@ -21,7 +21,7 @@ $sql = "SELECT f.id AS ics_id, f.header_image, f.entity_name, f.fund_cluster, f.
                f.received_by_name, f.received_by_position, f.created_at,
                o.office_name
         FROM ics_form f
-        LEFT JOIN offices o ON f.id = o.id
+        LEFT JOIN offices o ON f.office_id = o.id
         WHERE f.id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $ics_id);
@@ -53,8 +53,7 @@ $stmt->close();
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <?php $icsOfficeDisplay = ($ics['office_name'] ?: ($ics['entity_name'] ?? '')); $icsNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $icsOfficeDisplay, $ics['ics_no'] ?? ''); ?>
-  <title>ICS Details - <?= htmlspecialchars($icsNoDisplay) ?></title>
+  <title>ICS Details - <?= htmlspecialchars($ics['ics_no']) ?></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="css/dashboard.css" />
@@ -95,22 +94,27 @@ $stmt->close();
               <?php else: ?>
                 <p class="text-muted">No header image</p>
               <?php endif; ?>
-            <hr>
-            <!-- Readonly Header Fields -->
+            </div>
+
             <div class="row mb-3">
-              <div class="col-md-4">
-                <label class="form-label fw-semibold">Entity Name</label>
-                <input type="text" class="form-control shadow" value="<?= htmlspecialchars($ics['entity_name'] ?? '') ?>" readonly />
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-semibold">Fund Cluster</label>
-                <input type="text" class="form-control shadow" value="<?= htmlspecialchars($ics['fund_cluster'] ?? '') ?>" readonly />
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-semibold">ICS No.</label>
-                <input type="text" class="form-control shadow" value="<?= htmlspecialchars($icsNoDisplay) ?>" readonly />
+              <div class="col-md-6">
+                <label class="form-label fw-semibold ">Entity Name</label>
+                <input type="text" class="form-control shadow" name="entity_name" value="<?= htmlspecialchars($ics['entity_name']) ?>" required />
               </div>
             </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Fund Cluster</label>
+                <input type="text" class="form-control shadow" name="fund_cluster" value="<?= htmlspecialchars($ics['fund_cluster']) ?>" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">ICS No.</label>
+                <input type="text" class="form-control shadow" name="ics_no" value="<?= htmlspecialchars($ics['ics_no']) ?>" required />
+              </div>
+            </div>
+
+            <hr>
 
             <!-- Items Table -->
             <div class="table-responsive">
@@ -154,6 +158,8 @@ $stmt->close();
                         </td>
                         <td>
                           <input type="number" step="1" min="0" class="form-control form-control-sm text-center shadow" name="items[<?= (int)$item['item_id'] ?>][item_no]" value="<?= htmlspecialchars($item['item_no']) ?>">
+                        </td>
+                        <td>
                           <input type="text" class="form-control form-control-sm text-center shadow" name="items[<?= (int)$item['item_id'] ?>][estimated_useful_life]" value="<?= htmlspecialchars($item['estimated_useful_life']) ?>">
                         </td>
                        
@@ -174,11 +180,10 @@ $stmt->close();
               </table>
             </div>
 
-{{ ... }}
             <div class="row mt-4">
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Received from - Name</label>
-                <input type="text" class="form-control shadow" name="received_from_name " value="<?= htmlspecialchars($ics['received_from_name']) ?>">
+                <input type="text" class="form-control shadow" name="received_from_name" value="<?= htmlspecialchars($ics['received_from_name']) ?>">
                 <label class="form-label mt-2">Position</label>
                 <input type="text" class="form-control shadow" name="received_from_position" value="<?= htmlspecialchars($ics['received_from_position']) ?>">
               </div>

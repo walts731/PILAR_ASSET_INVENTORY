@@ -127,18 +127,18 @@ $stmt->close();
           <div class="row mb-3">
             <div class="col-md-6">
               <label class="form-label fw-semibold">Entity Name</label>
-              <input type="text" class="form-control shadow" name="entity_name" value="<?= htmlspecialchars($par['entity_name']) ?>" readonly />
+              <input type="text" class="form-control shadow" name="entity_name" value="<?= htmlspecialchars($par['entity_name']) ?>" />
             </div>
           </div>
 
           <div class="row mb-3">
             <div class="col-md-4">
               <label class="form-label fw-semibold">Fund Cluster</label>
-              <input type="text" class="form-control shadow" name="fund_cluster" value="<?= htmlspecialchars($par['fund_cluster']) ?>" readonly />
+              <input type="text" class="form-control shadow" name="fund_cluster" value="<?= htmlspecialchars($par['fund_cluster']) ?>" />
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">PAR No.</label>
-              <input type="text" class="form-control shadow" name="par_no" value="<?= htmlspecialchars($parNoDisplay) ?>" readonly />
+              <input type="text" class="form-control shadow" name="par_no" value="<?= htmlspecialchars($parNoDisplay) ?>" />
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">Office</label>
@@ -147,8 +147,6 @@ $stmt->close();
           </div>
 
           <hr>
-
-          <!-- Items Table -->
           <div class="table-responsive">
             <table class="table table-bordered text-center align-middle">
               <thead class="table-secondary">
