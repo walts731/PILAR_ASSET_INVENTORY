@@ -18,6 +18,8 @@ $filter_type = $_GET['filter_type'] ?? 'all';
 $from_date = $_GET['from_date'] ?? '';
 $to_date = $_GET['to_date'] ?? '';
 $office_filter = $_GET['office'] ?? 'all';
+$category_filter = $_GET['category'] ?? 'all';
+$status_filter = $_GET['status'] ?? 'all';
 
 // Get system information and logo
 $logoPath = '../img/PILAR LOGO TRANSPARENT.png';
@@ -76,6 +78,24 @@ if ($office_filter !== 'all') {
   $sql .= " AND a.office_id = ?";
   $params[] = $office_filter;
   $types .= 'i';
+}
+
+// Add category filtering if specified (expects category id)
+if ($category_filter !== 'all' && ctype_digit((string)$category_filter)) {
+  $sql .= " AND a.category = ?";
+  $params[] = (int)$category_filter;
+  $types .= 'i';
+}
+
+// Add status filtering if specified
+if ($status_filter !== 'all') {
+  if ($status_filter === 'red_tagged') {
+    $sql .= " AND a.red_tagged = 1";
+  } else {
+    $sql .= " AND a.status = ?";
+    $params[] = $status_filter;
+    $types .= 's';
+  }
 }
 
 // Add date filtering if specified

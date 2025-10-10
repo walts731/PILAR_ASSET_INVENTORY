@@ -258,10 +258,7 @@ if (empty($records)) {
     <table>
         <thead>
             <tr>
-                <th>Property No</th>
                 <th>Description</th>
-                <th>Category</th>
-                <th>Office</th>
                 <th class="text-right">Qty</th>
                 <th>Unit</th>
                 <th class="text-right">Unit Price</th>
@@ -280,10 +277,7 @@ if (empty($records)) {
         
         $html .= '
             <tr>
-                <td>' . htmlspecialchars($record['property_no'] ?? '') . '</td>
                 <td>' . htmlspecialchars($record['description'] ?? '') . '</td>
-                <td>' . htmlspecialchars($record['category_name'] ?? '') . '</td>
-                <td>' . htmlspecialchars($record['office_name'] ?? '') . '</td>
                 <td class="text-right ' . $stock_class . '">' . number_format((float)($record['quantity'] ?? 0), 0) . '</td>
                 <td>' . htmlspecialchars($record['unit'] ?? '') . '</td>
                 <td class="text-right">₱' . number_format((float)($record['unit_price'] ?? 0), 2) . '</td>

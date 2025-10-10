@@ -57,6 +57,18 @@ $stmt->close();
 
 $office_id = $_SESSION['office_id'];
 
+// Fetch categories used by this office's assets for category filter
+$asset_categories = [];
+$cat_stmt = $conn->prepare("SELECT DISTINCT c.id, c.category_name
+                           FROM categories c
+                           INNER JOIN assets a ON a.category = c.id
+                           WHERE a.type = 'asset' AND a.office_id = ? AND a.quantity > 0
+                           ORDER BY c.category_name ASC");
+$cat_stmt->bind_param('i', $office_id);
+$cat_stmt->execute();
+$cat_res = $cat_stmt->get_result();
+while ($cat = $cat_res->fetch_assoc()) { $asset_categories[] = $cat; }
+$cat_stmt->close();
 
 ?>
 
@@ -164,9 +176,53 @@ $office_id = $_SESSION['office_id'];
             <input type="hidden" name="office" value="<?= $office_id ?>">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
               <h5 class="mb-0">Asset List</h5>
-              <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm">
-                <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
-              </button>
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <div class="dropdown">
+                  <button class="btn btn-outline-secondary btn-sm rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-funnel"></i> Filters
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 280px;">
+                    <div class="mb-2">
+                      <label class="form-label form-label-sm mb-1">Date range</label>
+                      <div class="d-flex gap-2">
+                        <input type="date" id="assetsFromDate" class="form-control form-control-sm" />
+                        <input type="date" id="assetsToDate" class="form-control form-control-sm" />
+                      </div>
+                    </div>
+                    <div class="mb-2">
+                      <label class="form-label form-label-sm mb-1">Category</label>
+                      <select id="assetsCategory" class="form-select form-select-sm">
+                        <option value="all">All</option>
+                        <?php foreach ($asset_categories as $cat): ?>
+                          <option value="<?= (int)$cat['id'] ?>"><?= htmlspecialchars($cat['category_name']) ?></option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+                    <div class="mb-2">
+                      <label class="form-label form-label-sm mb-1">Status</label>
+                      <select id="assetsStatus" class="form-select form-select-sm">
+                        <option value="all">All</option>
+                        <option value="available">Available</option>
+                        <option value="borrowed">Borrowed</option>
+                        <option value="unserviceable">Unserviceable</option>
+                        <option value="red_tagged">Red Tagged</option>
+                      </select>
+                    </div>
+                    <div class="text-end">
+                      <button type="button" class="btn btn-sm btn-primary"><i class="bi bi-check2"></i> Apply</button>
+                    </div>
+                  </div>
+                </div>
+                <a href="#" id="btnAssetsCsv" class="btn btn-outline-secondary rounded-pill btn-sm">
+                  <i class="bi bi-filetype-csv"></i> Export CSV
+                </a>
+                <a href="#" id="btnAssetsPdf" class="btn btn-outline-danger rounded-pill btn-sm">
+                  <i class="bi bi-filetype-pdf"></i> Export PDF
+                </a>
+                <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm">
+                  <i class="bi bi-file-earmark-arrow-down"></i> Generate Selected
+                </button>
+              </div>
             </div>
 
             <div class="card-body table-responsive">
@@ -269,9 +325,34 @@ $office_id = $_SESSION['office_id'];
             <input type="hidden" name="office" value="<?= $office_id ?>">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
               <h5 class="mb-0">Consumable List</h5>
-              <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm">
-                <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
-              </button>
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <div class="dropdown">
+                  <button class="btn btn-outline-secondary btn-sm rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-funnel"></i> Filters
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 280px;">
+                    <div class="mb-2">
+                      <label class="form-label form-label-sm mb-1">Date range</label>
+                      <div class="d-flex gap-2">
+                        <input type="date" id="consFromDate" class="form-control form-control-sm" />
+                        <input type="date" id="consToDate" class="form-control form-control-sm" />
+                      </div>
+                    </div>
+                    <div class="text-end">
+                      <button type="button" class="btn btn-sm btn-primary"><i class="bi bi-check2"></i> Apply</button>
+                    </div>
+                  </div>
+                </div>
+                <a href="#" id="btnConsCsv" class="btn btn-outline-secondary rounded-pill btn-sm">
+                  <i class="bi bi-filetype-csv"></i> Export CSV
+                </a>
+                <a href="#" id="btnConsPdf" class="btn btn-outline-danger rounded-pill btn-sm">
+                  <i class="bi bi-filetype-pdf"></i> Export PDF
+                </a>
+                <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm">
+                  <i class="bi bi-file-earmark-arrow-down"></i> Generate Selected
+                </button>
+              </div>
             </div>
 
             <div class="card-body table-responsive">
@@ -403,6 +484,78 @@ $office_id = $_SESSION['office_id'];
           });
       });
     });
+
+    // ---- Export URL builders ----
+    (function() {
+      const officeId = <?= (int)$office_id ?>;
+
+      function buildDateParams(fromEl, toEl) {
+        const from = fromEl.value;
+        const to = toEl.value;
+        if (from && to) {
+          return `&filter_type=custom&from_date=${encodeURIComponent(from)}&to_date=${encodeURIComponent(to)}`;
+        }
+        return '&filter_type=all';
+      }
+
+      // Assets: CSV/PDF
+      const assetsFrom = document.getElementById('assetsFromDate');
+      const assetsTo = document.getElementById('assetsToDate');
+      const assetsCat = document.getElementById('assetsCategory');
+      const assetsStatus = document.getElementById('assetsStatus');
+
+      function buildAssetsQuery() {
+        let q = `?office=${officeId}`;
+        q += buildDateParams(assetsFrom, assetsTo);
+        const cat = assetsCat ? assetsCat.value : 'all';
+        const status = assetsStatus ? assetsStatus.value : 'all';
+        if (cat && cat !== 'all') q += `&category=${encodeURIComponent(cat)}`;
+        if (status && status !== 'all') q += `&status=${encodeURIComponent(status)}`;
+        return q;
+      }
+
+      const btnAssetsCsv = document.getElementById('btnAssetsCsv');
+      const btnAssetsPdf = document.getElementById('btnAssetsPdf');
+      if (btnAssetsCsv) {
+        btnAssetsCsv.addEventListener('click', function(e) {
+          e.preventDefault();
+          const url = `../MAIN_ADMIN/export_assets_csv.php${buildAssetsQuery()}`;
+          window.open(url, '_blank');
+        });
+      }
+      if (btnAssetsPdf) {
+        btnAssetsPdf.addEventListener('click', function(e) {
+          e.preventDefault();
+          const url = `../MAIN_ADMIN/export_assets_pdf.php${buildAssetsQuery()}`;
+          window.open(url, '_blank');
+        });
+      }
+
+      // Consumables: CSV/PDF (date filter only)
+      const consFrom = document.getElementById('consFromDate');
+      const consTo = document.getElementById('consToDate');
+      const btnConsCsv = document.getElementById('btnConsCsv');
+      const btnConsPdf = document.getElementById('btnConsPdf');
+      function buildConsQuery() {
+        let q = `?office=${officeId}`;
+        q += buildDateParams(consFrom, consTo);
+        return q;
+      }
+      if (btnConsCsv) {
+        btnConsCsv.addEventListener('click', function(e) {
+          e.preventDefault();
+          const url = `../MAIN_ADMIN/export_consumables_csv.php${buildConsQuery()}`;
+          window.open(url, '_blank');
+        });
+      }
+      if (btnConsPdf) {
+        btnConsPdf.addEventListener('click', function(e) {
+          e.preventDefault();
+          const url = `../MAIN_ADMIN/export_consumables_pdf.php${buildConsQuery()}`;
+          window.open(url, '_blank');
+        });
+      }
+    })();
   </script>
 
 </body>
