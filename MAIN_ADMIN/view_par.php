@@ -102,11 +102,7 @@ $stmt->close();
         </div>
       <?php endif; ?>
 
-      <div class="d-flex justify-content-end gap-2 mb-3 no-print">
-        <a href="generate_par_pdf.php?id=<?= (int)$par['par_id'] ?>" target="_blank" class="btn btn-outline-dark">
-          <i class="bi bi-printer"></i> Print
-        </a>
-      </div>
+      
 
       <form action="save_par_items.php" method="POST">
         <input type="hidden" name="existing_par_id" value="<?= (int)$par['par_id'] ?>" />
@@ -241,7 +237,14 @@ $stmt->close();
           <button type="submit" class="btn btn-primary">
             <i class="bi bi-save"></i> Save Changes
           </button>
+          <a href="generate_par_pdf.php?id=<?= (int)$par['par_id'] ?>" target="_blank" class="btn btn-outline-dark">
+          <i class="bi bi-printer"></i> Print
+        </a>
         </div>
+
+        
+       
+      
       </form>
     </div>
   </div>

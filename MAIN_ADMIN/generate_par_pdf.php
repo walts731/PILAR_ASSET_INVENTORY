@@ -18,6 +18,7 @@ $sql = "SELECT f.id AS par_id, f.header_image, f.entity_name, f.fund_cluster, f.
                f.position_office_left, f.position_office_right,
                f.received_by_name, f.issued_by_name,
                f.date_received_left, f.date_received_right, f.created_at,
+               f.office_id,
                o.office_name
         FROM par_form f
         LEFT JOIN offices o ON f.office_id = o.id
@@ -106,7 +107,20 @@ if (!empty($par['header_image'])) {
     }
 }
 
-// Meta section (underlined fields; Office excluded)
+// Office/Location centered (to mirror par_form top-center display)
+$officeText = '';
+if (!empty($par['office_id']) && $par['office_id'] === 'outside_lgu') {
+    $officeText = 'Outside LGU';
+} elseif (!empty($par['office_name'])) {
+    $officeText = $par['office_name'];
+}
+if ($officeText !== '') {
+    $html .= '<div style="text-align:center; margin: 2px 0 8px 0;">'
+           . '  <strong>Office/Location:</strong> <span class="uline">' . htmlspecialchars($officeText) . '</span>'
+           . '</div>';
+}
+
+// Meta section (underlined fields)
 $html .= '
 <div class="meta">
   <p>
