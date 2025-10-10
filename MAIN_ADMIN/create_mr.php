@@ -1006,17 +1006,10 @@ if ($baseSerial !== '') {
                                             <i class="bi bi-building me-1 text-primary"></i>Office Location
                                             <span class="text-danger">*</span>
                                         </label>
-                                        <select class="form-select" name="office_location" required>
-                                            <option value="" disabled <?= empty($office_name) ? 'selected' : '' ?>>Select Office Location</option>
-                                            <?php foreach ($offices as $office): ?>
-                                                <option value="<?= htmlspecialchars($office['office_name']) ?>" 
-                                                    <?= (isset($asset_details['office_id']) && $asset_details['office_id'] == $office['id']) || 
-                                                        (isset($office_name) && $office_name == $office['office_name']) ? 'selected' : '' ?>>
-                                                    <?= htmlspecialchars($office['office_name']) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                        <div class="form-text">Select the office, department, or location where this asset is assigned</div>
+                                        <?php $__officeDisplay = trim((string)$office_name); ?>
+                                        <input type="text" class="form-control" value="<?= htmlspecialchars($__officeDisplay !== '' ? $__officeDisplay : 'Unassigned / Outside LGU') ?>" readonly>
+                                        <input type="hidden" name="office_location" value="<?= htmlspecialchars($__officeDisplay) ?>">
+                                        <div class="form-text">This MR uses the asset's current office. Office selection is managed on the source form (ICS/PAR/RIS).</div>
                                     </div>
 
                                     <div class="col-md-8">
