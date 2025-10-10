@@ -19,7 +19,7 @@ $ics_form_id = $_GET['form_id'] ?? '';
 $sql = "SELECT f.id AS ics_id, f.header_image, f.entity_name, f.fund_cluster, f.ics_no,
                f.received_from_name, f.received_from_position,
                f.received_by_name, f.received_by_position, f.created_at,
-               o.office_name
+               f.office_id, o.office_name
         FROM ics_form f
         LEFT JOIN offices o ON f.office_id = o.id
         WHERE f.id = ?";
@@ -28,7 +28,19 @@ $stmt->bind_param("i", $ics_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $ics = $result->fetch_assoc();
+
 $stmt->close();
+
+// Apply {OFFICE} placeholder for display if present in ICS No
+$icsOfficeDisplay = ($ics['office_name'] ?: ($ics['entity_name'] ?? ''));
+$icsNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $icsOfficeDisplay, $ics['ics_no'] ?? '');
+
+// Load offices for dropdown
+$offices = [];
+$offices_result = $conn->query("SELECT id, office_name FROM offices ORDER BY office_name ASC");
+if ($offices_result && $offices_result->num_rows) {
+  $offices = $offices_result->fetch_all(MYSQLI_ASSOC);
+}
 
 if (!$ics) {
   die("ICS record not found.");
@@ -53,7 +65,7 @@ $stmt->close();
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ICS Details - <?= htmlspecialchars($ics['ics_no']) ?></title>
+  <title>ICS Details - <?= htmlspecialchars($icsNoDisplay) ?></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="css/dashboard.css" />
@@ -101,6 +113,17 @@ $stmt->close();
                 <label class="form-label fw-semibold ">Entity Name</label>
                 <input type="text" class="form-control shadow" name="entity_name" value="<?= htmlspecialchars($ics['entity_name']) ?>" required />
               </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Office/Unit</label>
+                <select class="form-select shadow" name="office_id">
+                  <option value="outside_lgu" <?= (empty($ics['office_id']) ? 'selected' : '') ?>>Outside LGU</option>
+                  <?php foreach ($offices as $office): ?>
+                    <option value="<?= (int)$office['id'] ?>" <?= ((int)$office['id'] === (int)($ics['office_id'] ?? 0)) ? 'selected' : '' ?>>
+                      <?= htmlspecialchars($office['office_name']) ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
             </div>
 
             <div class="row mb-3">
@@ -110,9 +133,11 @@ $stmt->close();
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-semibold">ICS No.</label>
-                <input type="text" class="form-control shadow" name="ics_no" value="<?= htmlspecialchars($ics['ics_no']) ?>" required />
+                <input type="hidden" id="ics_no_template" value="<?= htmlspecialchars($ics['ics_no'] ?? '') ?>">
+                <input type="text" class="form-control shadow" name="ics_no" value="<?= htmlspecialchars($icsNoDisplay) ?>" required />
               </div>
             </div>
+
 
             <hr>
 
@@ -221,6 +246,46 @@ $stmt->close();
         if (totalEl) totalEl.value = (qty * unit).toFixed(2);
       });
     });
+
+    // Dynamic Entity/ICS No update from Office selection and Entity typing
+    (function() {
+      const officeSel = document.querySelector('select[name="office_id"]');
+      const entityInput = document.querySelector('input[name="entity_name"]');
+      const icsNoInput = document.querySelector('input[name="ics_no"]');
+      const icsNoTemplateEl = document.getElementById('ics_no_template');
+      const icsNoTemplate = icsNoTemplateEl ? icsNoTemplateEl.value : '';
+
+      function computeIcsNo(currentOfficeName, currentEntityName) {
+        if (!icsNoTemplate) return icsNoInput ? icsNoInput.value : '';
+        const nameForPlaceholder = currentOfficeName || currentEntityName || '';
+        return icsNoTemplate.replace(/\{OFFICE\}|OFFICE/g, nameForPlaceholder);
+      }
+
+      function handleOfficeChange() {
+        if (!officeSel || !entityInput || !icsNoInput) return;
+        const selOpt = officeSel.options[officeSel.selectedIndex];
+        const isOutside = officeSel.value === 'outside_lgu';
+        const officeName = isOutside ? '' : (selOpt ? selOpt.text.trim() : '');
+        if (officeName) {
+          entityInput.value = officeName;
+        }
+        icsNoInput.value = computeIcsNo(officeName, entityInput.value);
+      }
+
+      function handleEntityInput() {
+        if (!officeSel || !entityInput || !icsNoInput) return;
+        const selOpt = officeSel.options[officeSel.selectedIndex];
+        const isOutside = officeSel.value === 'outside_lgu';
+        const officeName = isOutside ? '' : (selOpt ? selOpt.text.trim() : '');
+        icsNoInput.value = computeIcsNo(officeName, entityInput.value);
+      }
+
+      if (officeSel) officeSel.addEventListener('change', handleOfficeChange);
+      if (entityInput) entityInput.addEventListener('input', handleEntityInput);
+
+      // Initial compute on load
+      handleOfficeChange();
+    })();
   </script>
 </body>
 
