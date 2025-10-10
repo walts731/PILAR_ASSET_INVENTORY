@@ -17,8 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $header_image = $_POST['header_image'] ?? '';
     $entity_name = $_POST['entity_name'] ?? '';
     $fund_cluster = $_POST['fund_cluster'] ?? '';
-    // Generate automatic PAR number
-    $par_no = generateTag('par_no');
+    // Generate automatic PAR number (supports {OFFICE} placeholder)
+    // We'll determine office code from selected office (if any) and pass as replacement
+    $par_no = null; // initialize; will be set after office handling below
     $position_left = $_POST['position_office_left'] ?? '';
     $position_right = $_POST['position_office_right'] ?? '';
     $received_by_name = trim($_POST['received_by_name'] ?? '');
@@ -30,6 +31,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $office_input = $_POST['office_id'] ?? 0;
     $is_outside_lgu = ($office_input === 'outside_lgu');
     $office_id = $is_outside_lgu ? null : intval($office_input);
+
+    // Build office code for tag generation (e.g., MEO, HRMO)
+    $office_code = 'OFFICE';
+    if (!$is_outside_lgu && !empty($office_id)) {
+        $stmt_off = $conn->prepare("SELECT office_name FROM offices WHERE id = ? LIMIT 1");
+        if ($stmt_off) {
+            $stmt_off->bind_param('i', $office_id);
+            if ($stmt_off->execute()) {
+                $res_off = $stmt_off->get_result();
+                $row_off = $res_off ? $res_off->fetch_assoc() : null;
+                if ($row_off && !empty($row_off['office_name'])) {
+                    $name = strtoupper(trim($row_off['office_name']));
+                    // Derive acronym from words (take first letter of each word)
+                    $parts = preg_split('/\s+/', $name);
+                    $acronym = '';
+                    foreach ($parts as $p) {
+                        $first = preg_replace('/[^A-Z0-9]/', '', mb_substr($p, 0, 1));
+                        $acronym .= $first;
+                    }
+                    // Fallback: remove spaces if acronym became empty
+                    if ($acronym === '') {
+                        $acronym = preg_replace('/[^A-Z0-9]/', '', $name);
+                    }
+                    $office_code = $acronym ?: 'OFFICE';
+                }
+            }
+            $stmt_off->close();
+        }
+    } else {
+        // Outside LGU or no office selected; keep generic token
+        $office_code = 'OUT';
+    }
+
+    // Now generate the PAR number with OFFICE replacement
+    $par_no = generateTag('par_no', ['OFFICE' => $office_code]);
 
     // --- Insert PAR form ---
     $stmt = $conn->prepare("INSERT INTO par_form 

@@ -242,6 +242,10 @@ class TagFormatHelper {
             
             // Replace date placeholders (if any)
             $template = $this->replaceDatePlaceholders($template);
+
+            // Preview-friendly replacement for OFFICE placeholder, if used
+            // Actual generation will receive a concrete value via $replacements in generateNextTag()
+            $template = str_replace(['{OFFICE}', 'OFFICE'], 'OFFICE', $template);
             
             // Get current counter (without incrementing) - using global counter
             $prefixHash = md5($format['prefix']);

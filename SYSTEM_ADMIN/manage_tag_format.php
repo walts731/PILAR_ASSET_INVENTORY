@@ -170,6 +170,12 @@ if (isset($_SESSION['flash'])) {
                                 </h6>
                             </div>
                             <div class="card-body">
+                            <div class="d-flex justify-content-end align-items-center mb-2">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="toggleOfficePreview" checked>
+                                    <label class="form-check-label" for="toggleOfficePreview" title="When ON, {OFFICE} shows as an acronym (e.g., MEO) in preview cards; when OFF, {OFFICE} is omitted">Include OFFICE in preview</label>
+                                </div>
+                            </div>
                                 <!-- Current Format Display -->
                                 <div class="current-format">
                                     <small class="text-muted d-block">Current Format:</small>
@@ -192,6 +198,62 @@ if (isset($_SESSION['flash'])) {
                                         <div class="placeholder-help mt-1">
                                             Use: {####} = Auto-increment (recommended format: PREFIX-{####})
                                         </div>
+                                        <!-- Dynamic Builder -->
+                                        <div class="card mt-2">
+                                            <div class="card-body py-2">
+                                                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="autoDashSwitch_<?= htmlspecialchars($format['tag_type']) ?>" checked>
+                                                        <label class="form-check-label small" for="autoDashSwitch_<?= htmlspecialchars($format['tag_type']) ?>">Auto add dash between elements</label>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearTemplate(this.form)"><i class="bi bi-x-circle"></i> Clear</button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="undoTemplate(this.form)"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
+                                                </div>
+                                                <div class="row g-2">
+                                                    <div class="col-12 col-md-6 col-xl-4">
+                                                        <div class="small text-muted mb-1"><i class="bi bi-calendar"></i> Date</div>
+                                                        <div class="d-flex flex-wrap gap-2">
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="appendTokenToTemplate(this.form, '{YYYY}')">{YYYY}</button>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="appendTokenToTemplate(this.form, '{YY}')">{YY}</button>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="appendTokenToTemplate(this.form, '{MM}')">{MM}</button>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="appendTokenToTemplate(this.form, '{DD}')">{DD}</button>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="appendTokenToTemplate(this.form, '{YYYYMM}')">{YYYYMM}</button>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="appendTokenToTemplate(this.form, '{YYYYMMDD}')">{YYYYMMDD}</button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12 col-md-6 col-xl-4">
+                                                        <div class="small text-muted mb-1"><i class="bi bi-hash"></i> Digits</div>
+                                                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                                                            <button type="button" class="btn btn-sm btn-outline-success" onclick="appendTokenToTemplate(this.form, '{#}')">{#}</button>
+                                                            <button type="button" class="btn btn-sm btn-outline-success" onclick="appendTokenToTemplate(this.form, '{##}')">{##}</button>
+                                                            <button type="button" class="btn btn-sm btn-outline-success" onclick="appendTokenToTemplate(this.form, '{###}')">{###}</button>
+                                                            <button type="button" class="btn btn-sm btn-outline-success" onclick="appendTokenToTemplate(this.form, '{####}')">{####}</button>
+                                                            <div class="input-group input-group-sm" style="width: 160px;">
+                                                                <span class="input-group-text">#</span>
+                                                                <input type="number" min="1" max="12" class="form-control" placeholder="digits" onkeydown="return event.key !== 'Enter'">
+                                                                <button class="btn btn-outline-success" type="button" onclick="appendCustomDigits(this)">Add</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12 col-md-6 col-xl-4">
+                                                        <div class="small text-muted mb-1"><i class="bi bi-plus-square"></i> Other</div>
+                                                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                                                            <?php if ($format['tag_type'] === 'asset_code'): ?>
+                                                                <button type="button" class="btn btn-sm btn-outline-dark" onclick="appendTokenToTemplate(this.form, '{CODE}')">{CODE}</button>
+                                                            <?php else: ?>
+                                                                <button type="button" class="btn btn-sm btn-outline-dark" onclick="appendTokenToTemplate(this.form, '{OFFICE}')">{OFFICE}</button>
+                                                            <?php endif; ?>
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="appendTokenToTemplate(this.form, '-')">-</button>
+                                                            <div class="input-group input-group-sm" style="width: 220px;">
+                                                                <span class="input-group-text">Text</span>
+                                                                <input type="text" class="form-control" placeholder="literal (e.g., PAR)">
+                                                                <button class="btn btn-outline-secondary" type="button" onclick="appendLiteral(this)">Add</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <?php if ($format['tag_type'] === 'asset_code'): ?>
                                         <div class="alert alert-info mt-2 mb-0">
                                             <i class="bi bi-info-circle me-2"></i>
@@ -201,43 +263,7 @@ if (isset($_SESSION['flash'])) {
                                         <?php endif; ?>
                                     </div>
                                     
-                                    <div class="row">
-                                        <div class="col-md-8">
-                                            <label class="form-label">Prefix</label>
-                                            <input type="text" name="prefix" class="form-control" 
-                                                   value="<?= htmlspecialchars($format['prefix']) ?>" 
-                                                   placeholder="e.g., PAR-">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Digits</label>
-                                            <select name="increment_digits" class="form-select">
-                                                <option value="3" <?= $format['increment_digits'] == 3 ? 'selected' : '' ?>>3 (001)</option>
-                                                <option value="4" <?= $format['increment_digits'] == 4 ? 'selected' : '' ?>>4 (0001)</option>
-                                                <option value="5" <?= $format['increment_digits'] == 5 ? 'selected' : '' ?>>5 (00001)</option>
-                                                <option value="6" <?= $format['increment_digits'] == 6 ? 'selected' : '' ?>>6 (000001)</option>
-                                            </select>
-                                        </div>
-                                    </div>
                                     
-                                    <div class="row mt-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Date Format</label>
-                                            <select name="date_format" class="form-select">
-                                                <option value="" <?= empty($format['date_format']) ? 'selected' : '' ?>>No Date (disabled)</option>
-                                                <option value="YYYY" <?= $format['date_format'] == 'YYYY' ? 'selected' : '' ?>>YYYY (<?= date('Y') ?>)</option>
-                                                <option value="YY" <?= $format['date_format'] == 'YY' ? 'selected' : '' ?>>YY (<?= date('y') ?>)</option>
-                                                <option value="YYYYMM" <?= $format['date_format'] == 'YYYYMM' ? 'selected' : '' ?>>YYYYMM (<?= date('Ym') ?>)</option>
-                                                <option value="YYYYMMDD" <?= $format['date_format'] == 'YYYYMMDD' ? 'selected' : '' ?>>YYYYMMDD (<?= date('Ymd') ?>)</option>
-                                            </select>
-                                            <small class="text-muted">Date will be added as prefix to the format</small>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Suffix (Optional)</label>
-                                            <input type="text" name="suffix" class="form-control" 
-                                                   value="<?= htmlspecialchars($format['suffix']) ?>" 
-                                                   placeholder="e.g., -FINAL">
-                                        </div>
-                                    </div>
                                     
                                     <div class="mt-3 pt-3 border-top">
                                         <button type="submit" class="btn btn-primary btn-sm">
@@ -470,6 +496,7 @@ if (isset($_SESSION['flash'])) {
                         <li><code>{#####}</code> - 5-digit increment (00001, 00002...)</li>
                         <li><code>{######}</code> - 6-digit increment (000001, 000002...)</li>
                         <li><em>And so on... Use any number of # symbols for custom digit lengths!</em></li>
+                        <li><code>{OFFICE}</code> - Selected office code/acronym (e.g., MEO, HRMO). Used in PAR/other forms that supply an office.</li>
                     </ul>
                     
                     <h6 class="mt-3">Date Placeholders:</h6>
@@ -485,6 +512,7 @@ if (isset($_SESSION['flash'])) {
                     <h6 class="mt-3">Examples:</h6>
                     <ul>
                         <li><code>PAR-{####}</code> → PAR-0001, PAR-0002, PAR-0003...</li>
+                        <li><code>PAR-{OFFICE}-{###}</code> → PAR-MEO-001, PAR-HRMO-002 (depending on selected office)</li>
                         <li><code>{YYYY}-PAR-{####}</code> → <?= date('Y') ?>-PAR-0001, <?= date('Y') ?>-PAR-0002...</li>
                         <li><code>ICS-{YYYYMM}-{###}</code> → ICS-<?= date('Ym') ?>-001, ICS-<?= date('Ym') ?>-002...</li>
                         <li><code>RT-{#####}</code> → RT-00001, RT-00002, RT-00003...</li>
@@ -554,6 +582,37 @@ if (isset($_SESSION['flash'])) {
             }
             
             return result;
+        }
+        
+        // Global flag to control OFFICE placeholder rendering in previews
+        let includeOfficeInPreview = true;
+        const officePreviewAcronym = 'MEO'; // sample acronym used in previews
+        
+        // Toggle handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const t = document.getElementById('toggleOfficePreview');
+            if (t) {
+                includeOfficeInPreview = !!t.checked;
+                t.addEventListener('change', () => {
+                    includeOfficeInPreview = !!t.checked;
+                });
+            }
+        });
+        
+        // Apply OFFICE toggle to a template string
+        function applyOfficePlaceholderPolicy(template) {
+            let out = template;
+            if (includeOfficeInPreview) {
+                // Render a readable acronym for both braced and bare placeholders
+                out = out.replace(/\{OFFICE\}|OFFICE/g, officePreviewAcronym);
+            } else {
+                // Remove {OFFICE}/OFFICE and any adjacent single dashes
+                out = out.replace(/-?\{OFFICE\}-?/g, '');
+                out = out.replace(/-?OFFICE-?/g, '');
+                // Cleanup duplicated or trailing dashes
+                out = out.replace(/--+/g, '-').replace(/^-|-$/g, '');
+            }
+            return out;
         }
         
         function buildCodeFromCategory(catCode) {
@@ -716,6 +775,9 @@ if (isset($_SESSION['flash'])) {
             // Replace date placeholders
             let preview = replaceDatePlaceholders(template);
             
+            // Apply OFFICE include/omit policy
+            preview = applyOfficePlaceholderPolicy(preview);
+            
             // Replace increment placeholders
             preview = preview.replace(/\{####\}/g, '0001');
             preview = preview.replace(/\{###\}/g, '001');
@@ -767,6 +829,98 @@ if (isset($_SESSION['flash'])) {
             modal.addEventListener('hidden.bs.modal', () => {
                 document.body.removeChild(modal);
             });
+        }
+        
+        // ==========================
+        // Dynamic Template Builder
+        // ==========================
+        const templateHistories = new Map();
+        let __tfFormCounter = 0;
+
+        function ensureFormId(form) {
+            if (!form.dataset.tfbid) {
+                __tfFormCounter += 1;
+                form.dataset.tfbid = 'tf_' + __tfFormCounter;
+            }
+            return form.dataset.tfbid;
+        }
+
+        function getTemplateInput(form) {
+            return form.querySelector('input[name="format_template"]');
+        }
+
+        function getAutoDashEnabled(form) {
+            const sw = form.querySelector('input[id^="autoDashSwitch_"]');
+            return sw ? !!sw.checked : true;
+        }
+
+        function pushHistory(form, value) {
+            const id = ensureFormId(form);
+            if (!templateHistories.has(id)) templateHistories.set(id, []);
+            const stack = templateHistories.get(id);
+            stack.push(value);
+        }
+
+        function setTemplateValue(form, newValue) {
+            const input = getTemplateInput(form);
+            if (!input) return;
+            input.value = newValue;
+            // Live inline preview reuse
+            previewFormat(form);
+        }
+
+        function getCurrentTemplate(form) {
+            const input = getTemplateInput(form);
+            return input ? String(input.value || '') : '';
+        }
+
+        function appendTokenToTemplate(form, token) {
+            const prev = getCurrentTemplate(form);
+            pushHistory(form, prev);
+            const autoDash = getAutoDashEnabled(form);
+            let next = prev;
+            const isDash = token === '-';
+            if (autoDash && !isDash && prev.length > 0) {
+                if (!prev.endsWith('-')) next += '-';
+            }
+            next += token;
+            next = next.replace(/-+/g, '-').replace(/^-|-$/g, '');
+            setTemplateValue(form, next);
+        }
+
+        function appendCustomDigits(buttonEl) {
+            const group = buttonEl.closest('.input-group');
+            const form = buttonEl.closest('form');
+            if (!group || !form) return;
+            const input = group.querySelector('input[type="number"]');
+            const n = Math.max(1, Math.min(12, parseInt((input && input.value) ? input.value : '0', 10)));
+            if (!n) return;
+            const token = '{' + '#'.repeat(n) + '}';
+            appendTokenToTemplate(form, token);
+        }
+
+        function appendLiteral(buttonEl) {
+            const group = buttonEl.closest('.input-group');
+            const form = buttonEl.closest('form');
+            if (!group || !form) return;
+            const input = group.querySelector('input[type="text"]');
+            const txt = input ? input.value.trim() : '';
+            if (!txt) return;
+            appendTokenToTemplate(form, txt);
+        }
+
+        function clearTemplate(form) {
+            const prev = getCurrentTemplate(form);
+            pushHistory(form, prev);
+            setTemplateValue(form, '');
+        }
+
+        function undoTemplate(form) {
+            const id = ensureFormId(form);
+            const stack = templateHistories.get(id) || [];
+            if (stack.length === 0) return;
+            const last = stack.pop();
+            setTemplateValue(form, last);
         }
         
         // Generate new code with different sequence
@@ -908,6 +1062,9 @@ if (isset($_SESSION['flash'])) {
             
             // Replace asset code placeholder (both with and without braces)
             preview = preview.replace(/\{CODE\}|CODE/g, 'COMP');
+            
+            // Apply OFFICE include/omit policy
+            preview = applyOfficePlaceholderPolicy(preview);
             
             // Also render inline preview near the form (visible without modal)
             if (templateOrForm && typeof templateOrForm.querySelector === 'function') {
