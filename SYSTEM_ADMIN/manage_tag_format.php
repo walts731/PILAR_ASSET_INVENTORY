@@ -158,101 +158,39 @@ if (isset($_SESSION['flash'])) {
                 </div>
             <?php endif; ?>
 
-            <!-- Tag Format Cards -->
-            <div class="row">
-                <?php foreach ($tagFormats as $format): ?>
-                    <div class="col-lg-6 col-xl-4 mb-4">
-                        <div class="card tag-type-card shadow-sm h-100">
-                            <div class="card-header bg-primary text-white">
-                                <h6 class="mb-0">
-                                    <i class="bi bi-tag"></i> 
-                                    <?= strtoupper(str_replace('_', ' ', $format['tag_type'])) ?>
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <!-- Current Format Display -->
-                                <div class="current-format">
-                                    <small class="text-muted d-block">Current Format:</small>
-                                    <div class="format-preview"><?= htmlspecialchars($format['format_template']) ?></div>
-                                    <small class="text-muted d-block mt-1">
-                                        Next: <strong><?= htmlspecialchars($tagHelper->previewNextTag($format['tag_type'])) ?></strong>
-                                    </small>
-                                </div>
-
-                                <!-- Edit Form -->
-                                <form method="POST" class="tag-format-form">
-                                    <input type="hidden" name="action" value="update_format">
-                                    <input type="hidden" name="tag_type" value="<?= htmlspecialchars($format['tag_type']) ?>">
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label">Format Template</label>
-                                        <input type="text" name="format_template" class="form-control" 
-                                               value="<?= htmlspecialchars($format['format_template']) ?>" 
-                                               placeholder="e.g., PAR-{####}" required>
-                                        <div class="placeholder-help mt-1">
-                                            Use: {####} = Auto-increment (recommended format: PREFIX-{####})
-                                        </div>
-                                        <?php if ($format['tag_type'] === 'asset_code'): ?>
-                                        <div class="alert alert-info mt-2 mb-0">
-                                            <i class="bi bi-info-circle me-2"></i>
-                                            <strong>Asset Code Format:</strong> Must include <code>{CODE}</code> placeholder for category codes. 
-                                            This format is used in <strong>create_mr.php</strong> for asset creation.
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    
-                                    <div class="row">
-                                        <div class="col-md-8">
-                                            <label class="form-label">Prefix</label>
-                                            <input type="text" name="prefix" class="form-control" 
-                                                   value="<?= htmlspecialchars($format['prefix']) ?>" 
-                                                   placeholder="e.g., PAR-">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Digits</label>
-                                            <select name="increment_digits" class="form-select">
-                                                <option value="3" <?= $format['increment_digits'] == 3 ? 'selected' : '' ?>>3 (001)</option>
-                                                <option value="4" <?= $format['increment_digits'] == 4 ? 'selected' : '' ?>>4 (0001)</option>
-                                                <option value="5" <?= $format['increment_digits'] == 5 ? 'selected' : '' ?>>5 (00001)</option>
-                                                <option value="6" <?= $format['increment_digits'] == 6 ? 'selected' : '' ?>>6 (000001)</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="row mt-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Date Format</label>
-                                            <select name="date_format" class="form-select">
-                                                <option value="" <?= empty($format['date_format']) ? 'selected' : '' ?>>No Date (disabled)</option>
-                                                <option value="YYYY" <?= $format['date_format'] == 'YYYY' ? 'selected' : '' ?>>YYYY (<?= date('Y') ?>)</option>
-                                                <option value="YY" <?= $format['date_format'] == 'YY' ? 'selected' : '' ?>>YY (<?= date('y') ?>)</option>
-                                                <option value="YYYYMM" <?= $format['date_format'] == 'YYYYMM' ? 'selected' : '' ?>>YYYYMM (<?= date('Ym') ?>)</option>
-                                                <option value="YYYYMMDD" <?= $format['date_format'] == 'YYYYMMDD' ? 'selected' : '' ?>>YYYYMMDD (<?= date('Ymd') ?>)</option>
-                                            </select>
-                                            <small class="text-muted">Date will be added as prefix to the format</small>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Suffix (Optional)</label>
-                                            <input type="text" name="suffix" class="form-control" 
-                                                   value="<?= htmlspecialchars($format['suffix']) ?>" 
-                                                   placeholder="e.g., -FINAL">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="mt-3 pt-3 border-top">
-                                        <button type="submit" class="btn btn-primary btn-sm">
-                                            <i class="bi bi-save"></i> Update Format
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm ms-2" 
-                                                onclick="previewFormat(this.form)">
-                                            <i class="bi bi-eye"></i> Preview
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+            <!-- Tag Formats Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-list-ul"></i> Tag Formats</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tag Type</th>
+                                    <th>Current Template</th>
+                                    <th>Next Preview</th>
+                                    <th style="width: 120px;" class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($tagFormats as $format): ?>
+                                    <tr>
+                                        <td><strong><?= strtoupper(str_replace('_', ' ', $format['tag_type'])) ?></strong></td>
+                                        <td><code><?= htmlspecialchars($format['format_template']) ?></code></td>
+                                        <td><code><?= htmlspecialchars($tagHelper->previewNextTag($format['tag_type'])) ?></code></td>
+                                        <td class="text-center">
+                                            <a href="edit_tag_format.php?type=<?= urlencode($format['tag_type']) ?>" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil-square"></i> Edit
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
-                <?php endforeach; ?>
+                </div>
             </div>
 
             <!-- Asset Code Testing Section -->
@@ -322,32 +260,29 @@ if (isset($_SESSION['flash'])) {
                                     </h6>
                                     <div class="row">
                                         <div class="col-md-4">
-                                            <div class="card border-primary format-example-card" style="cursor: pointer;" onclick="applyFormatExample('YYYY-CODE-{####}')">
+                                            <div class="card border-primary format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">Standard Format</h6>
                                                     <code class="d-block mb-2">YYYY-CODE-{####}</code>
                                                     <small class="text-muted">2025-COMP-0001</small>
-                                                    <div class="mt-2"><small class="text-primary">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <div class="card border-success format-example-card" style="cursor: pointer;" onclick="applyFormatExample('{YYYY}{CODE}{####}')">
+                                            <div class="card border-success format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">Compact Format</h6>
                                                     <code class="d-block mb-2">{YYYY}{CODE}{####}</code>
                                                     <small class="text-muted">2025COMP0001</small>
-                                                    <div class="mt-2"><small class="text-success">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <div class="card border-warning format-example-card" style="cursor: pointer;" onclick="applyFormatExample('{CODE}-{YYYY}-{###}')">
+                                            <div class="card border-warning format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">Custom Format</h6>
                                                     <code class="d-block mb-2">{CODE}-{YYYY}-{###}</code>
                                                     <small class="text-muted">COMP-2025-001</small>
-                                                    <div class="mt-2"><small class="text-warning">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -361,42 +296,38 @@ if (isset($_SESSION['flash'])) {
                                             </h6>
                                         </div>
                                         <div class="col-md-3">
-                                            <div class="card border-info format-example-card" style="cursor: pointer;" onclick="testTagFormat('{YYYY}-PAR-{####}')">
+                                            <div class="card border-info format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">With Year</h6>
                                                     <code class="d-block mb-2">{YYYY}-PAR-{####}</code>
                                                     <small class="text-muted"><?= date('Y') ?>-PAR-0001</small>
-                                                    <div class="mt-2"><small class="text-info">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
-                                            <div class="card border-secondary format-example-card" style="cursor: pointer;" onclick="testTagFormat('ICS-{YYYYMM}-{###}')">
+                                            <div class="card border-secondary format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">Year-Month</h6>
                                                     <code class="d-block mb-2">ICS-{YYYYMM}-{###}</code>
                                                     <small class="text-muted">ICS-<?= date('Ym') ?>-001</small>
-                                                    <div class="mt-2"><small class="text-secondary">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
-                                            <div class="card border-dark format-example-card" style="cursor: pointer;" onclick="testTagFormat('{YYYYMMDD}-RT-{#####}')">
+                                            <div class="card border-dark format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">Full Date</h6>
                                                     <code class="d-block mb-2">{YYYYMMDD}-RT-{#####}</code>
                                                     <small class="text-muted"><?= date('Ymd') ?>-RT-00001</small>
-                                                    <div class="mt-2"><small class="text-dark">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
-                                            <div class="card border-danger format-example-card" style="cursor: pointer;" onclick="testTagFormat('ITR{YY}{MM}-{####}')">
+                                            <div class="card border-danger format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">Short Date</h6>
                                                     <code class="d-block mb-2">ITR{YY}{MM}-{####}</code>
                                                     <small class="text-muted">ITR<?= date('ym') ?>-0001</small>
-                                                    <div class="mt-2"><small class="text-danger">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -470,6 +401,7 @@ if (isset($_SESSION['flash'])) {
                         <li><code>{#####}</code> - 5-digit increment (00001, 00002...)</li>
                         <li><code>{######}</code> - 6-digit increment (000001, 000002...)</li>
                         <li><em>And so on... Use any number of # symbols for custom digit lengths!</em></li>
+                        <li><code>{OFFICE}</code> - Selected office code/acronym (e.g., MEO, HRMO). Used in PAR/other forms that supply an office.</li>
                     </ul>
                     
                     <h6 class="mt-3">Date Placeholders:</h6>
@@ -485,6 +417,7 @@ if (isset($_SESSION['flash'])) {
                     <h6 class="mt-3">Examples:</h6>
                     <ul>
                         <li><code>PAR-{####}</code> → PAR-0001, PAR-0002, PAR-0003...</li>
+                        <li><code>PAR-{OFFICE}-{###}</code> → PAR-MEO-001, PAR-HRMO-002 (depending on selected office)</li>
                         <li><code>{YYYY}-PAR-{####}</code> → <?= date('Y') ?>-PAR-0001, <?= date('Y') ?>-PAR-0002...</li>
                         <li><code>ICS-{YYYYMM}-{###}</code> → ICS-<?= date('Ym') ?>-001, ICS-<?= date('Ym') ?>-002...</li>
                         <li><code>RT-{#####}</code> → RT-00001, RT-00002, RT-00003...</li>
@@ -554,6 +487,37 @@ if (isset($_SESSION['flash'])) {
             }
             
             return result;
+        }
+        
+        // Global flag to control OFFICE placeholder rendering in previews
+        let includeOfficeInPreview = true;
+        const officePreviewAcronym = 'MEO'; // sample acronym used in previews
+        
+        // Toggle handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const t = document.getElementById('toggleOfficePreview');
+            if (t) {
+                includeOfficeInPreview = !!t.checked;
+                t.addEventListener('change', () => {
+                    includeOfficeInPreview = !!t.checked;
+                });
+            }
+        });
+        
+        // Apply OFFICE toggle to a template string
+        function applyOfficePlaceholderPolicy(template) {
+            let out = template;
+            if (includeOfficeInPreview) {
+                // Render a readable acronym for both braced and bare placeholders
+                out = out.replace(/\{OFFICE\}|OFFICE/g, officePreviewAcronym);
+            } else {
+                // Remove {OFFICE}/OFFICE and any adjacent single dashes
+                out = out.replace(/-?\{OFFICE\}-?/g, '');
+                out = out.replace(/-?OFFICE-?/g, '');
+                // Cleanup duplicated or trailing dashes
+                out = out.replace(/--+/g, '-').replace(/^-|-$/g, '');
+            }
+            return out;
         }
         
         function buildCodeFromCategory(catCode) {
@@ -716,6 +680,9 @@ if (isset($_SESSION['flash'])) {
             // Replace date placeholders
             let preview = replaceDatePlaceholders(template);
             
+            // Apply OFFICE include/omit policy
+            preview = applyOfficePlaceholderPolicy(preview);
+            
             // Replace increment placeholders
             preview = preview.replace(/\{####\}/g, '0001');
             preview = preview.replace(/\{###\}/g, '001');
@@ -767,6 +734,98 @@ if (isset($_SESSION['flash'])) {
             modal.addEventListener('hidden.bs.modal', () => {
                 document.body.removeChild(modal);
             });
+        }
+        
+        // ==========================
+        // Dynamic Template Builder
+        // ==========================
+        const templateHistories = new Map();
+        let __tfFormCounter = 0;
+
+        function ensureFormId(form) {
+            if (!form.dataset.tfbid) {
+                __tfFormCounter += 1;
+                form.dataset.tfbid = 'tf_' + __tfFormCounter;
+            }
+            return form.dataset.tfbid;
+        }
+
+        function getTemplateInput(form) {
+            return form.querySelector('input[name="format_template"]');
+        }
+
+        function getAutoDashEnabled(form) {
+            const sw = form.querySelector('input[id^="autoDashSwitch_"]');
+            return sw ? !!sw.checked : true;
+        }
+
+        function pushHistory(form, value) {
+            const id = ensureFormId(form);
+            if (!templateHistories.has(id)) templateHistories.set(id, []);
+            const stack = templateHistories.get(id);
+            stack.push(value);
+        }
+
+        function setTemplateValue(form, newValue) {
+            const input = getTemplateInput(form);
+            if (!input) return;
+            input.value = newValue;
+            // Live inline preview reuse
+            previewFormat(form);
+        }
+
+        function getCurrentTemplate(form) {
+            const input = getTemplateInput(form);
+            return input ? String(input.value || '') : '';
+        }
+
+        function appendTokenToTemplate(form, token) {
+            const prev = getCurrentTemplate(form);
+            pushHistory(form, prev);
+            const autoDash = getAutoDashEnabled(form);
+            let next = prev;
+            const isDash = token === '-';
+            if (autoDash && !isDash && prev.length > 0) {
+                if (!prev.endsWith('-')) next += '-';
+            }
+            next += token;
+            next = next.replace(/-+/g, '-').replace(/^-|-$/g, '');
+            setTemplateValue(form, next);
+        }
+
+        function appendCustomDigits(buttonEl) {
+            const group = buttonEl.closest('.input-group');
+            const form = buttonEl.closest('form');
+            if (!group || !form) return;
+            const input = group.querySelector('input[type="number"]');
+            const n = Math.max(1, Math.min(12, parseInt((input && input.value) ? input.value : '0', 10)));
+            if (!n) return;
+            const token = '{' + '#'.repeat(n) + '}';
+            appendTokenToTemplate(form, token);
+        }
+
+        function appendLiteral(buttonEl) {
+            const group = buttonEl.closest('.input-group');
+            const form = buttonEl.closest('form');
+            if (!group || !form) return;
+            const input = group.querySelector('input[type="text"]');
+            const txt = input ? input.value.trim() : '';
+            if (!txt) return;
+            appendTokenToTemplate(form, txt);
+        }
+
+        function clearTemplate(form) {
+            const prev = getCurrentTemplate(form);
+            pushHistory(form, prev);
+            setTemplateValue(form, '');
+        }
+
+        function undoTemplate(form) {
+            const id = ensureFormId(form);
+            const stack = templateHistories.get(id) || [];
+            if (stack.length === 0) return;
+            const last = stack.pop();
+            setTemplateValue(form, last);
         }
         
         // Generate new code with different sequence
@@ -908,6 +967,9 @@ if (isset($_SESSION['flash'])) {
             
             // Replace asset code placeholder (both with and without braces)
             preview = preview.replace(/\{CODE\}|CODE/g, 'COMP');
+            
+            // Apply OFFICE include/omit policy
+            preview = applyOfficePlaceholderPolicy(preview);
             
             // Also render inline preview near the form (visible without modal)
             if (templateOrForm && typeof templateOrForm.querySelector === 'function') {

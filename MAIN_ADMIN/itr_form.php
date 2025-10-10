@@ -44,6 +44,15 @@ if ($res && $res->num_rows > 0) {
 
 $itr_id = (int)$itr['itr_id'];
 
+// Fetch active ITR template for dynamic preview
+$itr_template = '';
+if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'itr_no' AND is_active = 1 LIMIT 1")) {
+  $st_fmt->execute();
+  $rs_fmt = $st_fmt->get_result();
+  if ($rs_fmt && ($r = $rs_fmt->fetch_assoc())) { $itr_template = $r['format_template'] ?? ''; }
+  $st_fmt->close();
+}
+
 // Always start with a BLANK items table for new ITR entries.
 // Do NOT load items from the most recent ITR submission.
 // If an asset_id is provided via GET (from Transfer), preselection logic below will add a single row.
@@ -441,6 +450,35 @@ if (!empty($_SESSION['flash'])) {
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Dynamic ITR No preview based on Date field
+    const ITR_TEMPLATE = <?= json_encode($itr_template) ?>;
+    function formatFromDate(tpl, dateStr){
+      const d = dateStr ? new Date(dateStr) : new Date();
+      const Y = d.getFullYear().toString();
+      const M = String(d.getMonth()+1).padStart(2,'0');
+      const D = String(d.getDate()).padStart(2,'0');
+      let out = (tpl||'');
+      out = out.replace(/\{YYYY\}|YYYY/g, Y)
+               .replace(/\{YY\}|YY/g, Y.slice(-2))
+               .replace(/\{MM\}|MM/g, M)
+               .replace(/\{DD\}|DD/g, D)
+               .replace(/\{YYYYMM\}|YYYYMM/g, Y+M)
+               .replace(/\{YYYYMMDD\}|YYYYMMDD/g, Y+M+D);
+      // pad digits as preview next (1)
+      out = out.replace(/\{(#+)\}/g, (m, hashes)=>{ const w=hashes.length; return '0'.repeat(Math.max(0,w-1))+'1'; });
+      return out.replace(/--+/g,'-').replace(/^-|-$/g,'');
+    }
+    function computeItrPreview(){
+      const field = document.getElementById('itr_no');
+      if (!field) return;
+      if (!ITR_TEMPLATE) return;
+      const dateInput = document.getElementById('date');
+      const dateVal = dateInput ? dateInput.value : '';
+      field.value = formatFromDate(ITR_TEMPLATE, dateVal);
+    }
+    const dateInput = document.getElementById('date');
+    if (dateInput) dateInput.addEventListener('change', computeItrPreview);
+    computeItrPreview();
     // Toggle other transfer type field (radio-based)
     const ttOthers = document.getElementById('tt_others');
     const ttOtherWrap = document.getElementById('transfer_type_other_wrap');
