@@ -388,56 +388,60 @@ $stmt->close();
                   if ($selected_office === "all") {
                     $stmt = $conn->prepare("
   SELECT 
-    an.id AS an_id,
-    an.description,
-    an.quantity,
-    an.unit,
-    an.unit_cost,
-    an.date_created,
-    COALESCE(
-      (
-        SELECT c.category_name 
-        FROM assets a 
-        LEFT JOIN categories c ON a.category = c.id 
-        WHERE a.asset_new_id = an.id 
-        ORDER BY a.id ASC 
-        LIMIT 1
-      ), 'Uncategorized'
-    ) AS category_name,
-    f.ics_no AS ics_no,
-    p.par_no AS par_no
-  FROM assets_new an
-  LEFT JOIN ics_form f ON f.id = an.ics_id
-  LEFT JOIN par_form p ON p.id = an.par_id
-  WHERE an.quantity > 0
-  ORDER BY an.date_created DESC
+  an.id AS an_id,
+  an.description,
+  an.quantity,
+  an.unit,
+  an.unit_cost,
+  an.date_created,
+  COALESCE(
+    (
+      SELECT c.category_name 
+      FROM assets a 
+      LEFT JOIN categories c ON a.category = c.id 
+      WHERE a.asset_new_id = an.id 
+      ORDER BY a.id ASC 
+      LIMIT 1
+    ), 'Uncategorized'
+  ) AS category_name,
+  f.ics_no AS ics_no,
+  p.par_no AS par_no,
+  o.office_name AS office_name
+FROM assets_new an
+LEFT JOIN ics_form f ON f.id = an.ics_id
+LEFT JOIN par_form p ON p.id = an.par_id
+LEFT JOIN offices o ON an.office_id = o.id
+WHERE an.quantity > 0
+ORDER BY an.date_created DESC
 ");
                   } else {
                     $stmt = $conn->prepare("
   SELECT 
-    an.id AS an_id,
-    an.description,
-    an.quantity,
-    an.unit,
-    an.unit_cost,
-    an.date_created,
-    COALESCE(
-      (
-        SELECT c.category_name 
-        FROM assets a 
-        LEFT JOIN categories c ON a.category = c.id 
-        WHERE a.asset_new_id = an.id 
-        ORDER BY a.id ASC 
-        LIMIT 1
-      ), 'Uncategorized'
-    ) AS category_name,
-    f.ics_no AS ics_no,
-    p.par_no AS par_no
-  FROM assets_new an
-  LEFT JOIN ics_form f ON f.id = an.ics_id
-  LEFT JOIN par_form p ON p.id = an.par_id
-  WHERE an.office_id = ? AND an.quantity > 0
-  ORDER BY an.date_created DESC
+  an.id AS an_id,
+  an.description,
+  an.quantity,
+  an.unit,
+  an.unit_cost,
+  an.date_created,
+  COALESCE(
+    (
+      SELECT c.category_name 
+      FROM assets a 
+      LEFT JOIN categories c ON a.category = c.id 
+      WHERE a.asset_new_id = an.id 
+      ORDER BY a.id ASC 
+      LIMIT 1
+    ), 'Uncategorized'
+  ) AS category_name,
+  f.ics_no AS ics_no,
+  p.par_no AS par_no,
+  o.office_name AS office_name
+FROM assets_new an
+LEFT JOIN ics_form f ON f.id = an.ics_id
+LEFT JOIN par_form p ON p.id = an.par_id
+LEFT JOIN offices o ON an.office_id = o.id
+WHERE an.quantity > 0
+ORDER BY an.date_created DESC
 ");
                     $stmt->bind_param("i", $selected_office);
                   }
@@ -450,17 +454,26 @@ $stmt->close();
                     <tr>
                       <td><input type="checkbox" class="asset-checkbox" name="selected_assets_new[]" value="<?= $row['an_id'] ?>"></td>
                       <td>
-                        <?php
-                        $nums = [];
-                        if (!empty($row['ics_no'])) {
-                          $nums[] = 'ICS: ' . htmlspecialchars($row['ics_no']);
-                        }
-                        if (!empty($row['par_no'])) {
-                          $nums[] = 'PAR: ' . htmlspecialchars($row['par_no']);
-                        }
-                        echo $nums ? implode(' | ', $nums) : 'N/A';
-                        ?>
-                      </td>
+  <?php
+  $nums = [];
+  $officeName = trim((string)($row['office_name'] ?? ''));
+  if (!empty($row['ics_no'])) {
+    $icsDisplay = $row['ics_no'];
+    if ($officeName !== '') {
+      $icsDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $icsDisplay);
+    }
+    $nums[] = 'ICS: ' . htmlspecialchars($icsDisplay);
+  }
+  if (!empty($row['par_no'])) {
+    $parDisplay = $row['par_no'];
+    if ($officeName !== '') {
+      $parDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $parDisplay);
+    }
+    $nums[] = 'PAR: ' . htmlspecialchars($parDisplay);
+  }
+  echo $nums ? implode(' | ', $nums) : 'N/A';
+  ?>
+</td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td><?= htmlspecialchars($row['category_name']) ?></td>
                       <td><?= (int)$row['quantity'] ?></td>
