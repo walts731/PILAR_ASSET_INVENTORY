@@ -404,10 +404,24 @@ if (!empty($_SESSION['flash'])) {
       <!-- Hidden script data for all assets -->
       <script type="application/json" id="allAssetsData">
         <?php
+        // Include ICS/PAR linkage and fund clusters for auto-fill
         $all_assets = [];
-        $assets_q = $conn->query("SELECT id, description, property_no, acquisition_date, value, status, employee_id FROM assets WHERE type='asset' AND employee_id IS NOT NULL ORDER BY description ASC");
-        while ($a = $assets_q->fetch_assoc()) {
-          $all_assets[] = $a;
+        $assets_sql = "
+          SELECT 
+            a.id, a.description, a.property_no, a.acquisition_date, a.value, a.status, a.employee_id,
+            a.ics_id, a.par_id,
+            f.fund_cluster AS ics_fund_cluster,
+            p.fund_cluster AS par_fund_cluster
+          FROM assets a
+          LEFT JOIN ics_form f ON a.ics_id = f.id
+          LEFT JOIN par_form p ON a.par_id = p.id
+          WHERE a.type='asset' AND a.employee_id IS NOT NULL
+          ORDER BY a.description ASC
+        ";
+        if ($assets_q = $conn->query($assets_sql)) {
+          while ($a = $assets_q->fetch_assoc()) {
+            $all_assets[] = $a;
+          }
         }
         echo json_encode($all_assets);
         ?>
@@ -562,6 +576,9 @@ if (!empty($_SESSION['flash'])) {
         option.dataset.acquisition_date = asset.acquisition_date || '';
         option.dataset.value = asset.value || '';
         option.dataset.status = asset.status || '';
+        // Pass through ICS/PAR fund clusters for auto-fill (prefer PAR when present)
+        option.dataset.icsFundCluster = asset.ics_fund_cluster || '';
+        option.dataset.parFundCluster = asset.par_fund_cluster || '';
         option.dataset.displayText = `${asset.description} (${asset.property_no || 'No Property No'})`; // For display reference
         assetsDatalist.appendChild(option);
       });
@@ -714,7 +731,17 @@ if (!empty($_SESSION['flash'])) {
       const preselectedAssetId = '<?= $preselected_asset['id'] ?>';
       selectedAssetIds.add(preselectedAssetId);
       const preselectedOption = document.querySelector(`#assetsList option[data-id="${preselectedAssetId}"]`);
-      if (preselectedOption) preselectedOption.style.display = 'none';
+      if (preselectedOption) {
+        preselectedOption.style.display = 'none';
+        // If fund cluster is empty, attempt to auto-fill from preselected asset's datasets
+        const fundClusterInput = document.getElementById('fund_cluster');
+        if (fundClusterInput && !fundClusterInput.value) {
+          const parFC = preselectedOption.dataset.parFundCluster || '';
+          const icsFC = preselectedOption.dataset.icsFundCluster || '';
+          const chosenFC = parFC || icsFC;
+          if (chosenFC) fundClusterInput.value = chosenFC;
+        }
+      }
       const firstRow = table.querySelector('tr');
       if (firstRow) {
         const descriptionInput = firstRow.querySelector('input[name="description[]"]');
@@ -834,6 +861,15 @@ if (!empty($_SESSION['flash'])) {
 
         // Set condition based on asset status
         row.querySelector('input[name="condition_of_PPE[]"]').value = getConditionFromStatus(option.dataset.status);
+
+        // Auto-fill ITR header Fund Cluster if empty (prefer PAR's fund cluster, else ICS)
+        const fundClusterInput = document.getElementById('fund_cluster');
+        if (fundClusterInput && !fundClusterInput.value) {
+          const parFC = option.dataset.parFundCluster || '';
+          const icsFC = option.dataset.icsFundCluster || '';
+          const chosenFC = parFC || icsFC;
+          if (chosenFC) fundClusterInput.value = chosenFC;
+        }
 
         // Track selected
         input.dataset.selectedAssetId = assetId;
