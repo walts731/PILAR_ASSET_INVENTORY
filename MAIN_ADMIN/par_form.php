@@ -363,14 +363,14 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
         if (!field) return;
         let tpl = (PAR_TEMPLATE || '').trim();
         if (!tpl) { field.value = field.value || ''; return; }
-        // OFFICE from select text
+        // OFFICE from select text (use full name)
         const sel = document.querySelector('select[name="office_id"]');
         let officeAcr = 'OFFICE';
         if (sel) {
             const opt = sel.options[sel.selectedIndex];
             const txt = opt ? (opt.text || '') : '';
-            if (sel.value && sel.value !== 'outside_lgu') officeAcr = deriveOfficeAcronym(txt);
-            else officeAcr = 'OUT';
+            if (sel.value && sel.value !== 'outside_lgu') officeAcr = (txt || '').trim() || 'OFFICE';
+            else officeAcr = 'Outside LGU';
         }
         tpl = replaceDatePlaceholdersLocal(tpl);
         tpl = tpl.replace(/\{OFFICE\}|OFFICE/g, officeAcr);

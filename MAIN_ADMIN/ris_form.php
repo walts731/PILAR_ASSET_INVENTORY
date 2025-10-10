@@ -259,7 +259,7 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
       if (!sel) return 'OFFICE';
       const opt = sel.options[sel.selectedIndex];
       const txt = opt ? (opt.text||'') : '';
-      return sel.value ? deriveOfficeAcronym(txt) : 'OFFICE';
+      return sel.value ? ((txt || '').trim() || 'OFFICE') : 'OFFICE';
     }
     function updatePreviews(){
       const officeAcr = computeOfficeAcr();

@@ -382,7 +382,7 @@ if ($thrRes && $thrRes->num_rows > 0) {
             if (sel) {
                 const opt = sel.options[sel.selectedIndex];
                 const txt = opt ? (opt.text || '') : '';
-                if (sel.value && sel.value !== 'outside_lgu') officeAcr = deriveOfficeAcronym(txt); else officeAcr = 'OUT';
+                if (sel.value && sel.value !== 'outside_lgu') officeAcr = (txt || '').trim() || 'OFFICE'; else officeAcr = 'Outside LGU';
             }
             tpl = replaceDatePlaceholdersLocal(tpl);
             tpl = tpl.replace(/\{OFFICE\}|OFFICE/g, officeAcr);

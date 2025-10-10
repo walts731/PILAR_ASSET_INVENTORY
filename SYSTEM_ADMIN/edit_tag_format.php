@@ -192,7 +192,7 @@ if ($res_off && $res_off->num_rows > 0) {
                 <label class="form-label">Preview Office</label>
                 <select id="previewOfficeSelect" class="form-select" onchange="previewFormat(this.form)">
                   <?php foreach ($offices as $o): ?>
-                    <option value="<?= (int)$o['id'] ?>" data-acr="<?= htmlspecialchars($o['office_acronym']) ?>">
+                    <option value="<?= (int)$o['id'] ?>" data-acr="<?= htmlspecialchars($o['office_acronym']) ?>" data-name="<?= htmlspecialchars($o['office_name']) ?>">
                       <?= htmlspecialchars($o['office_name']) ?> (<?= htmlspecialchars($o['office_acronym']) ?>)
                     </option>
                   <?php endforeach; ?>
@@ -246,7 +246,7 @@ function replaceDatePlaceholders(template){
   let out=template; for(const [k,v] of Object.entries(map)){ out=out.replace(new RegExp(k,'g'),v);} return out;
 }
 
-let includeOfficeInPreview=true; const officePreviewAcronym='MEO';
+let includeOfficeInPreview=true; const officePreviewAcronym='OFFICE';
 document.addEventListener('DOMContentLoaded',()=>{ const t=document.getElementById('toggleOfficePreview'); if(t){ includeOfficeInPreview=!!t.checked; t.addEventListener('change',()=>{ includeOfficeInPreview=!!t.checked; const form=document.querySelector('.tag-format-form'); if(form) previewFormat(form); }); }});
 
 // Dynamic controls: Office select and Counter
@@ -254,7 +254,11 @@ function getSelectedOfficeAcronym(){
   const sel = document.getElementById('previewOfficeSelect');
   if (!sel) return officePreviewAcronym;
   const opt = sel.options[sel.selectedIndex];
-  return (opt && opt.getAttribute('data-acr')) ? opt.getAttribute('data-acr') : officePreviewAcronym;
+  if (!opt) return officePreviewAcronym;
+  const fullName = opt.getAttribute('data-name');
+  if (fullName && fullName.trim()) return fullName.trim();
+  const acr = opt.getAttribute('data-acr');
+  return (acr && acr.trim()) ? acr.trim() : officePreviewAcronym;
 }
 function getPreviewCounter(){
   const inp = document.getElementById('previewCounter');
