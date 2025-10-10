@@ -440,10 +440,10 @@ FROM assets_new an
 LEFT JOIN ics_form f ON f.id = an.ics_id
 LEFT JOIN par_form p ON p.id = an.par_id
 LEFT JOIN offices o ON an.office_id = o.id
-WHERE an.quantity > 0
+WHERE an.office_id = ? AND an.quantity > 0
 ORDER BY an.date_created DESC
 ");
-                    $stmt->bind_param("i", $selected_office);
+$stmt->bind_param("i", $selected_office);
                   }
 
                   $stmt->execute();
