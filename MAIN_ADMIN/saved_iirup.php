@@ -96,8 +96,11 @@ if ($result && $result->num_rows > 0) {
                       <td><?= htmlspecialchars($iirup['office'] ?? 'N/A') ?></td>
                       <td><?= $iirup['created_at'] ? date('F d, Y g:i A', strtotime($iirup['created_at'])) : 'N/A' ?></td>
                       <td class="text-center">
-                        <a href="view_iirup.php?id=<?= $iirup['iirup_id'] ?>&form_id=<?= $form_id ?>" class="btn btn-sm btn-primary">
+                        <a href="view_iirup.php?id=<?= $iirup['iirup_id'] ?>&form_id=<?= urlencode((string)$form_id) ?>" class="btn btn-sm btn-primary me-1">
                           <i class="bi bi-eye"></i> View
+                        </a>
+                        <a href="generate_iirup_pdf.php?id=<?= $iirup['iirup_id'] ?>" target="_blank" class="btn btn-sm btn-outline-danger" title="Open PDF">
+                          <i class="bi bi-filetype-pdf"></i> PDF
                         </a>
                       </td>
                     </tr>

@@ -100,8 +100,11 @@ if ($result && $result->num_rows > 0) {
                         <div><strong><?= htmlspecialchars($par['issued_by_name'] ?? '') ?></strong></div>
                       </td>
                       <td class="text-center">
-                        <a href="view_par.php?id=<?= $par['par_id'] ?>&form_id=<?= htmlspecialchars($form_id) ?>" class="btn btn-sm btn-primary">
+                        <a href="view_par.php?id=<?= $par['par_id'] ?>&form_id=<?= urlencode((string)$form_id) ?>" class="btn btn-sm btn-primary me-1">
                           <i class="bi bi-eye"></i> View
+                        </a>
+                        <a href="generate_par_pdf.php?id=<?= $par['par_id'] ?>" target="_blank" class="btn btn-sm btn-outline-danger" title="Open PDF">
+                          <i class="bi bi-filetype-pdf"></i> PDF
                         </a>
                       </td>
                     </tr>

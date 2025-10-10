@@ -80,8 +80,11 @@ if ($result && $result->num_rows > 0) {
                   <td><?= htmlspecialchars($ris['issued_by_name']) ?></td>
                   <td><?= htmlspecialchars($ris['received_by_name']) ?></td>
                   <td class="text-center">
-                    <a href="view_ris.php?id=<?= $ris['ris_id'] ?>&form_id=<?php echo $form_id ?>" class="btn btn-sm btn-primary">
+                    <a href="view_ris.php?id=<?= $ris['ris_id'] ?>&form_id=<?= urlencode((string)$form_id) ?>" class="btn btn-sm btn-primary me-1">
                       <i class="bi bi-eye"></i> View
+                    </a>
+                    <a href="generate_ris_pdf.php?id=<?= $ris['ris_id'] ?>" target="_blank" class="btn btn-sm btn-outline-danger" title="Open PDF">
+                      <i class="bi bi-filetype-pdf"></i> PDF
                     </a>
                   </td>
                 </tr>
