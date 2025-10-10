@@ -158,127 +158,39 @@ if (isset($_SESSION['flash'])) {
                 </div>
             <?php endif; ?>
 
-            <!-- Tag Format Cards -->
-            <div class="row">
-                <?php foreach ($tagFormats as $format): ?>
-                    <div class="col-lg-6 col-xl-4 mb-4">
-                        <div class="card tag-type-card shadow-sm h-100">
-                            <div class="card-header bg-primary text-white">
-                                <h6 class="mb-0">
-                                    <i class="bi bi-tag"></i> 
-                                    <?= strtoupper(str_replace('_', ' ', $format['tag_type'])) ?>
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                            <div class="d-flex justify-content-end align-items-center mb-2">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="toggleOfficePreview" checked>
-                                    <label class="form-check-label" for="toggleOfficePreview" title="When ON, {OFFICE} shows as an acronym (e.g., MEO) in preview cards; when OFF, {OFFICE} is omitted">Include OFFICE in preview</label>
-                                </div>
-                            </div>
-                                <!-- Current Format Display -->
-                                <div class="current-format">
-                                    <small class="text-muted d-block">Current Format:</small>
-                                    <div class="format-preview"><?= htmlspecialchars($format['format_template']) ?></div>
-                                    <small class="text-muted d-block mt-1">
-                                        Next: <strong><?= htmlspecialchars($tagHelper->previewNextTag($format['tag_type'])) ?></strong>
-                                    </small>
-                                </div>
-
-                                <!-- Edit Form -->
-                                <form method="POST" class="tag-format-form">
-                                    <input type="hidden" name="action" value="update_format">
-                                    <input type="hidden" name="tag_type" value="<?= htmlspecialchars($format['tag_type']) ?>">
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label">Format Template</label>
-                                        <input type="text" name="format_template" class="form-control" 
-                                               value="<?= htmlspecialchars($format['format_template']) ?>" 
-                                               placeholder="e.g., PAR-{####}" required>
-                                        <div class="placeholder-help mt-1">
-                                            Use: {####} = Auto-increment (recommended format: PREFIX-{####})
-                                        </div>
-                                        <!-- Dynamic Builder -->
-                                        <div class="card mt-2">
-                                            <div class="card-body py-2">
-                                                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" id="autoDashSwitch_<?= htmlspecialchars($format['tag_type']) ?>" checked>
-                                                        <label class="form-check-label small" for="autoDashSwitch_<?= htmlspecialchars($format['tag_type']) ?>">Auto add dash between elements</label>
-                                                    </div>
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearTemplate(this.form)"><i class="bi bi-x-circle"></i> Clear</button>
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="undoTemplate(this.form)"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
-                                                </div>
-                                                <div class="row g-2">
-                                                    <div class="col-12 col-md-6 col-xl-4">
-                                                        <div class="small text-muted mb-1"><i class="bi bi-calendar"></i> Date</div>
-                                                        <div class="d-flex flex-wrap gap-2">
-                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="appendTokenToTemplate(this.form, '{YYYY}')">{YYYY}</button>
-                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="appendTokenToTemplate(this.form, '{YY}')">{YY}</button>
-                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="appendTokenToTemplate(this.form, '{MM}')">{MM}</button>
-                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="appendTokenToTemplate(this.form, '{DD}')">{DD}</button>
-                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="appendTokenToTemplate(this.form, '{YYYYMM}')">{YYYYMM}</button>
-                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="appendTokenToTemplate(this.form, '{YYYYMMDD}')">{YYYYMMDD}</button>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-12 col-md-6 col-xl-4">
-                                                        <div class="small text-muted mb-1"><i class="bi bi-hash"></i> Digits</div>
-                                                        <div class="d-flex flex-wrap gap-2 align-items-center">
-                                                            <button type="button" class="btn btn-sm btn-outline-success" onclick="appendTokenToTemplate(this.form, '{#}')">{#}</button>
-                                                            <button type="button" class="btn btn-sm btn-outline-success" onclick="appendTokenToTemplate(this.form, '{##}')">{##}</button>
-                                                            <button type="button" class="btn btn-sm btn-outline-success" onclick="appendTokenToTemplate(this.form, '{###}')">{###}</button>
-                                                            <button type="button" class="btn btn-sm btn-outline-success" onclick="appendTokenToTemplate(this.form, '{####}')">{####}</button>
-                                                            <div class="input-group input-group-sm" style="width: 160px;">
-                                                                <span class="input-group-text">#</span>
-                                                                <input type="number" min="1" max="12" class="form-control" placeholder="digits" onkeydown="return event.key !== 'Enter'">
-                                                                <button class="btn btn-outline-success" type="button" onclick="appendCustomDigits(this)">Add</button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-12 col-md-6 col-xl-4">
-                                                        <div class="small text-muted mb-1"><i class="bi bi-plus-square"></i> Other</div>
-                                                        <div class="d-flex flex-wrap gap-2 align-items-center">
-                                                            <?php if ($format['tag_type'] === 'asset_code'): ?>
-                                                                <button type="button" class="btn btn-sm btn-outline-dark" onclick="appendTokenToTemplate(this.form, '{CODE}')">{CODE}</button>
-                                                            <?php else: ?>
-                                                                <button type="button" class="btn btn-sm btn-outline-dark" onclick="appendTokenToTemplate(this.form, '{OFFICE}')">{OFFICE}</button>
-                                                            <?php endif; ?>
-                                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="appendTokenToTemplate(this.form, '-')">-</button>
-                                                            <div class="input-group input-group-sm" style="width: 220px;">
-                                                                <span class="input-group-text">Text</span>
-                                                                <input type="text" class="form-control" placeholder="literal (e.g., PAR)">
-                                                                <button class="btn btn-outline-secondary" type="button" onclick="appendLiteral(this)">Add</button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <?php if ($format['tag_type'] === 'asset_code'): ?>
-                                        <div class="alert alert-info mt-2 mb-0">
-                                            <i class="bi bi-info-circle me-2"></i>
-                                            <strong>Asset Code Format:</strong> Must include <code>{CODE}</code> placeholder for category codes. 
-                                            This format is used in <strong>create_mr.php</strong> for asset creation.
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    
-                                    
-                                    
-                                    <div class="mt-3 pt-3 border-top">
-                                        <button type="submit" class="btn btn-primary btn-sm">
-                                            <i class="bi bi-save"></i> Update Format
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm ms-2" 
-                                                onclick="previewFormat(this.form)">
-                                            <i class="bi bi-eye"></i> Preview
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+            <!-- Tag Formats Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-list-ul"></i> Tag Formats</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tag Type</th>
+                                    <th>Current Template</th>
+                                    <th>Next Preview</th>
+                                    <th style="width: 120px;" class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($tagFormats as $format): ?>
+                                    <tr>
+                                        <td><strong><?= strtoupper(str_replace('_', ' ', $format['tag_type'])) ?></strong></td>
+                                        <td><code><?= htmlspecialchars($format['format_template']) ?></code></td>
+                                        <td><code><?= htmlspecialchars($tagHelper->previewNextTag($format['tag_type'])) ?></code></td>
+                                        <td class="text-center">
+                                            <a href="edit_tag_format.php?type=<?= urlencode($format['tag_type']) ?>" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil-square"></i> Edit
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
-                <?php endforeach; ?>
+                </div>
             </div>
 
             <!-- Asset Code Testing Section -->
