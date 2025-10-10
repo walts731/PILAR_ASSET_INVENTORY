@@ -629,24 +629,28 @@ $stmt->bind_param("i", $selected_office);
                   if ($selected_office === "all") {
                     $stmt = $conn->prepare("
     SELECT a.*, 
-           COALESCE(c.category_name, 'Uncategorized') AS category_name,
-           rf.ris_no
-    FROM assets a 
-    LEFT JOIN categories c ON a.category = c.id 
-    LEFT JOIN ris_form rf ON a.ris_id = rf.id
-    WHERE a.type = 'consumable' AND a.quantity > 0
+       COALESCE(c.category_name, 'Uncategorized') AS category_name,
+       rf.ris_no,
+       o.office_name AS office_name
+FROM assets a 
+LEFT JOIN categories c ON a.category = c.id 
+LEFT JOIN ris_form rf ON a.ris_id = rf.id
+LEFT JOIN offices o ON a.office_id = o.id
+WHERE a.type = 'consumable' AND a.quantity > 0
   ");
                   } else {
                     $stmt = $conn->prepare("
     SELECT a.*, 
            COALESCE(c.category_name, 'Uncategorized') AS category_name,
-           rf.ris_no
+           rf.ris_no,
+           o.office_name AS office_name
     FROM assets a 
     LEFT JOIN categories c ON a.category = c.id 
     LEFT JOIN ris_form rf ON a.ris_id = rf.id
+    LEFT JOIN offices o ON a.office_id = o.id
     WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0
   ");
-                    $stmt->bind_param("i", $selected_office);
+$stmt->bind_param("i", $selected_office);
                   }
 
                   $stmt->execute();
@@ -658,11 +662,21 @@ $stmt->bind_param("i", $selected_office);
                       <td><input type="checkbox" class="consumable-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
                       <td>
   <?php
+    $officeName = trim((string)($row['office_name'] ?? ''));
+    $displayRaw = '';
+
     if (!empty($row['ris_no'])) {
-      echo htmlspecialchars($row['ris_no']);
+      $displayRaw = $row['ris_no'];
     } elseif (!empty($row['property_no'])) {
       // Fallback to stock no if RIS is not linked
-      echo htmlspecialchars($row['property_no']);
+      $displayRaw = $row['property_no'];
+    }
+
+    if ($displayRaw !== '') {
+      if ($officeName !== '') {
+        $displayRaw = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $displayRaw);
+      }
+      echo htmlspecialchars($displayRaw);
     } else {
       echo 'N/A';
     }
