@@ -72,7 +72,7 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
       <input type="text" class="form-control shadow" id="responsibility_center" name="responsibility_center" placeholder="Enter Responsibility Center">
     </div>
     <div class="col-md-3">
-      <label for="ris_no" class="form-label fw-semibold">RIS No. (Auto-generated)</label>
+      <label for="ris_no" class="form-label fw-semibold">RIS No. (Auto-generated) <span style="color: red;">*</span></label>
       <div class="input-group">
         <input type="text" class="form-control shadow" id="ris_no" name="ris_no" value="<?= previewTag('ris_no') ?>" readonly>
         <span class="input-group-text">
@@ -91,7 +91,7 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
   <!-- Row 2: Office, Responsibility Code, SAI No., Reason for Transfer -->
   <div class="row mb-3">
     <div class="col-md-3">
-      <label for="office_id" class="form-label fw-semibold">Office/Unit</label>
+      <label for="office_id" class="form-label fw-semibold">Office/Unit <span style="color: red;">*</span></label>
       <select class="form-select shadow" id="office_id" name="office_id" required>
         <option value="" disabled selected>Select Office</option>
         <?php
@@ -107,7 +107,7 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
       <input type="text" class="form-control shadow" id="responsibility_code" name="responsibility_code" placeholder="Enter Code">
     </div>
     <div class="col-md-3">
-      <label for="sai_no" class="form-label fw-semibold">SAI No. (Auto-generated)</label>
+      <label for="sai_no" class="form-label fw-semibold">SAI No. (Auto-generated) <span style="color: red;">*</span></label>
       <div class="input-group">
         <input type="text" class="form-control shadow" id="sai_no" name="sai_no" value="<?= previewTag('sai_no') ?>" readonly>
         <span class="input-group-text">
@@ -146,7 +146,7 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
           <input type="hidden" name="asset_id[]">
           <td><input type="text" class="form-control shadow" name="stock_no[]" value="1" readonly></td>
           <td>
-            <select name="unit[]" class="form-select shadow">
+            <select name="unit[]" class="form-select shadow" required>
               <option value="" disabled selected>Select Unit</option>
               <?php
               $unit_query = $conn->query("SELECT id, unit_name FROM unit ORDER BY unit_name ASC");
@@ -158,12 +158,12 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
           </td>
           <td style="position: relative;">
             <div class="input-group">
-              <input type="text" class="form-control description-input shadow" name="description[]" autocomplete="off">
+              <input type="text" class="form-control description-input shadow" name="description[]" autocomplete="off" required>
               <button type="button" class="btn btn-link p-0 ms-1 text-danger clear-description">&times;</button>
             </div>
           </td>
-          <td><input type="number" class="form-control shadow" name="req_quantity[]" min="1"></td>
-          <td><input type="number" step="0.01" class="form-control shadow" name="price[]"></td>
+          <td><input type="number" class="form-control shadow" name="req_quantity[]" min="1" required></td>
+          <td><input type="number" step="0.01" class="form-control shadow" name="price[]" required></td>
           <td><input type="text" class="form-control total shadow" name="total[]" readonly></td>
           <td>
             <button type="button" class="btn btn-outline-danger btn-sm remove-row">Remove</button>
@@ -176,8 +176,8 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
 
   <!-- Purpose -->
   <div class="mb-3">
-    <label for="purpose" class="form-label fw-bold">PURPOSE:</label>
-    <textarea class="form-control shadow" name="purpose" id="purpose" rows="2"></textarea>
+    <label for="purpose" class="form-label fw-bold">PURPOSE: <span style="color: red;">*</span></label>
+    <textarea class="form-control shadow" name="purpose" id="purpose" rows="2" required></textarea>
   </div>
 
   <!-- Footer Table -->
@@ -185,7 +185,7 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
     <thead class="table-secondary">
       <tr>
         <th></th>
-        <th>REQUESTED BY:</th>
+        <th>REQUESTED BY: </th>
         <th>APPROVED BY:</th>
         <th>ISSUED BY:</th>
         <th>RECEIVED BY:</th>
@@ -193,18 +193,18 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
     </thead>
     <tbody>
       <tr>
-        <td>Printed Name:</td>
-        <td><input type="text" class="form-control shadow" name="requested_by_name" value="<?= htmlspecialchars($ris_data['requested_by_name'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control shadow" name="approved_by_name" value="<?= htmlspecialchars($ris_data['approved_by_name'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control shadow" name="issued_by_name" value="<?= htmlspecialchars($ris_data['issued_by_name'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control shadow" name="received_by_name" ></td>
+        <td>Printed Name: <span style="color: red;">*</span></td>
+        <td><input type="text" class="form-control shadow" name="requested_by_name" value="" required></td>
+        <td><input type="text" class="form-control shadow" name="approved_by_name" value="<?= htmlspecialchars($ris_data['approved_by_name'] ?? '') ?>"required></td>
+        <td><input type="text" class="form-control shadow" name="issued_by_name" value="<?= htmlspecialchars($ris_data['issued_by_name'] ?? '') ?>"required></td>
+        <td><input type="text" class="form-control shadow" name="received_by_name" required></td>
       </tr>
       <tr>
-        <td>Designation:</td>
-        <td><input type="text" class="form-control shadow" name="requested_by_designation" value="<?= htmlspecialchars($ris_data['requested_by_designation'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control shadow" name="approved_by_designation" value="<?= htmlspecialchars($ris_data['approved_by_designation'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control shadow" name="issued_by_designation" value="<?= htmlspecialchars($ris_data['issued_by_designation'] ?? '') ?>"></td>
-        <td><input type="text" class="form-control shadow" name="received_by_designation" ></td>
+        <td>Designation: <span style="color: red;">*</span></td>
+        <td><input type="text" class="form-control shadow" name="requested_by_designation" value=""required></td>
+        <td><input type="text" class="form-control shadow" name="approved_by_designation" value="<?= htmlspecialchars($ris_data['approved_by_designation'] ?? '') ?>"required></td>
+        <td><input type="text" class="form-control shadow" name="issued_by_designation" value="<?= htmlspecialchars($ris_data['issued_by_designation'] ?? '') ?>"required></td>
+        <td><input type="text" class="form-control shadow" name="received_by_designation" required></td>
       </tr>
       <tr>
         <td>Date:</td>
@@ -222,7 +222,7 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
 
     </tbody>
   </table>
-
+  <span style="color: red;">*</span> Required Fields
   <button type="submit" class="btn btn-primary"><i class="bi bi-send-check-fill"></i>Save</button>
 </form>
 

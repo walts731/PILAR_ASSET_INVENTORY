@@ -47,7 +47,30 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <?php $risOfficeDisplay = ($ris_data['office_name'] ?: ($ris_data['division'] ?? '')); $risNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $risOfficeDisplay, $ris_data['ris_no'] ?? ''); $saiNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $risOfficeDisplay, $ris_data['sai_no'] ?? ''); ?>
+    <?php 
+    // Prepare display values and keep originals for fallback
+    $originalRisNo = $ris_data['ris_no'] ?? '';
+    $originalSaiNo = $ris_data['sai_no'] ?? '';
+    $risOfficeDisplay = ($ris_data['office_name'] ?: ($ris_data['division'] ?? ''));
+    $risNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $risOfficeDisplay, $originalRisNo);
+    $saiNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $risOfficeDisplay, $originalSaiNo);
+
+    // Fetch active templates for dynamic previews (same as ris_form.php)
+    $ris_template = '';
+    $sai_template = '';
+    if ($st1 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'ris_no' AND is_active = 1 LIMIT 1")) {
+      $st1->execute();
+      $r1 = $st1->get_result();
+      if ($r1 && ($row = $r1->fetch_assoc())) { $ris_template = $row['format_template'] ?? ''; }
+      $st1->close();
+    }
+    if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'sai_no' AND is_active = 1 LIMIT 1")) {
+      $st2->execute();
+      $r2 = $st2->get_result();
+      if ($r2 && ($row2 = $r2->fetch_assoc())) { $sai_template = $row2['format_template'] ?? ''; }
+      $st2->close();
+    }
+    ?>
     <title><?= $ris_data ? htmlspecialchars($risNoDisplay ?: 'RIS Form') : 'Form Viewer' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
@@ -88,7 +111,7 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">RIS No.</label>
-                    <input type="text" class="form-control" name="ris_no" value="<?= htmlspecialchars($risNoDisplay) ?>">
+                    <input type="text" class="form-control" id="ris_no" name="ris_no" value="<?= htmlspecialchars($risNoDisplay) ?>" data-original="<?= htmlspecialchars($originalRisNo) ?>">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Date</label>
@@ -99,7 +122,7 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
             <div class="row mb-3">
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Office/Unit</label>
-                    <select class="form-select" name="office_id">
+                    <select class="form-select" id="office_id" name="office_id">
                         <?php foreach ($offices as $office): ?>
                             <option value="<?= $office['id'] ?>" <?= ($office['id'] == $ris_data['office_id']) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($office['office_name']) ?>
@@ -114,7 +137,7 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">SAI No.</label>
-                    <input type="text" class="form-control" name="sai_no" value="<?= htmlspecialchars($saiNoDisplay) ?>">
+                    <input type="text" class="form-control" id="sai_no" name="sai_no" value="<?= htmlspecialchars($saiNoDisplay) ?>" data-original="<?= htmlspecialchars($originalSaiNo) ?>">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Date</label>
@@ -227,6 +250,64 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/dashboard.js"></script>
+    <script>
+      // Match ris_form.php behavior: use active templates, full office name, date placeholders, and digit padding
+      (function(){
+        const RIS_TEMPLATE = <?= json_encode($ris_template) ?>;
+        const SAI_TEMPLATE = <?= json_encode($sai_template) ?>;
+
+        function applyDate(tpl, dateStr){
+          const d = dateStr ? new Date(dateStr) : new Date();
+          const Y = d.getFullYear().toString();
+          const M = String(d.getMonth()+1).padStart(2,'0');
+          const D = String(d.getDate()).padStart(2,'0');
+          return (tpl||'')
+            .replace(/\{YYYY\}|YYYY/g, Y)
+            .replace(/\{YY\}|YY/g, Y.slice(-2))
+            .replace(/\{MM\}|MM/g, M)
+            .replace(/\{DD\}|DD/g, D)
+            .replace(/\{YYYYMM\}|YYYYMM/g, Y+M)
+            .replace(/\{YYYYMMDD\}|YYYYMMDD/g, Y+M+D);
+        }
+        function padDigits(tpl){
+          return (tpl||'').replace(/\{(#+)\}/g,(m,hs)=>{ const w = hs.length; return '0'.repeat(Math.max(0,w-1))+'1'; });
+        }
+        function getFullOfficeName(){
+          const sel = document.getElementById('office_id');
+          if (!sel) return 'OFFICE';
+          const opt = sel.options[sel.selectedIndex];
+          const txt = opt ? (opt.text||'') : '';
+          return sel.value ? ((txt || '').trim() || 'OFFICE') : 'OFFICE';
+        }
+        function updatePreviews(){
+          const officeName = getFullOfficeName();
+          // Prefer the main RIS date field
+          const risDate = document.querySelector("input[name='date']");
+          const dateVal = risDate ? risDate.value : '';
+
+          const risField = document.getElementById('ris_no');
+          const saiField = document.getElementById('sai_no');
+          if (risField && RIS_TEMPLATE){
+            let t = applyDate(RIS_TEMPLATE, dateVal).replace(/\{OFFICE\}|OFFICE/g, officeName);
+            t = padDigits(t).replace(/--+/g,'-').replace(/^-|-$/g,'');
+            risField.value = t;
+          }
+          if (saiField && SAI_TEMPLATE){
+            let t2 = applyDate(SAI_TEMPLATE, dateVal).replace(/\{OFFICE\}|OFFICE/g, officeName);
+            t2 = padDigits(t2).replace(/--+/g,'-').replace(/^-|-$/g,'');
+            saiField.value = t2;
+          }
+        }
+
+        const officeSel = document.getElementById('office_id');
+        if (officeSel) officeSel.addEventListener('change', updatePreviews);
+        const dateInputs = document.querySelectorAll("input[name='date'], input[name='sai_date']");
+        dateInputs.forEach(d => d.addEventListener('change', updatePreviews));
+
+        // Initialize on load
+        updatePreviews();
+      })();
+    </script>
 </body>
 
 </html>
