@@ -183,6 +183,13 @@ if ($emp_assets_q) {
   }
 }
 
+// Offices for dropdown to drive Entity Name and {OFFICE} in preview
+$itr_offices = [];
+$itr_off_res = $conn->query("SELECT id, office_name FROM offices ORDER BY office_name");
+if ($itr_off_res && $itr_off_res->num_rows > 0) {
+  while ($or = $itr_off_res->fetch_assoc()) { $itr_offices[] = $or; }
+}
+
 
 // Header image handling - simplified like ics_form.php
 
@@ -232,6 +239,16 @@ if (!empty($_SESSION['flash'])) {
 
 
       <div class="row g-3 mt-2">
+        <div class="col-md-4">
+          <label for="itr_office" class="form-label">Office (sets Entity Name)</label>
+          <select id="itr_office" class="form-select shadow">
+            <option value="">Select office...</option>
+            <?php foreach ($itr_offices as $o): ?>
+              <option value="<?= (int)$o['id'] ?>"><?= htmlspecialchars($o['office_name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+          <div class="form-text">Changing this fills the Entity Name and ITR No preview.</div>
+        </div>
         <div class="col-md-4">
           <label for="entity_name" class="form-label">Entity Name <span style="color: red;">*</span></label>
           <input type="text" id="entity_name" name="entity_name" class="form-control shadow" placeholder="Enter Entity Name" required>
@@ -474,11 +491,31 @@ if (!empty($_SESSION['flash'])) {
       if (!ITR_TEMPLATE) return;
       const dateInput = document.getElementById('date');
       const dateVal = dateInput ? dateInput.value : '';
-      field.value = formatFromDate(ITR_TEMPLATE, dateVal);
+      let out = formatFromDate(ITR_TEMPLATE, dateVal);
+      const sel = document.getElementById('itr_office');
+      let officeName = 'OFFICE';
+      if (sel) {
+        const opt = sel.options[sel.selectedIndex];
+        const txt = opt ? (opt.text || '') : '';
+        if (sel.value) officeName = (txt || '').trim() || 'OFFICE';
+      }
+      out = out.replace(/\{OFFICE\}|OFFICE/g, officeName).replace(/--+/g,'-').replace(/^-|-$/g,'');
+      field.value = out;
     }
     const dateInput = document.getElementById('date');
     if (dateInput) dateInput.addEventListener('change', computeItrPreview);
     computeItrPreview();
+    // Office dropdown: autofill entity name and update preview
+    const itrOfficeSel = document.getElementById('itr_office');
+    const entityNameInput = document.getElementById('entity_name');
+    if (itrOfficeSel) {
+      itrOfficeSel.addEventListener('change', function(){
+        const opt = this.options[this.selectedIndex];
+        const txt = opt ? (opt.text || '') : '';
+        if (entityNameInput) entityNameInput.value = txt;
+        computeItrPreview();
+      });
+    }
     // Toggle other transfer type field (radio-based)
     const ttOthers = document.getElementById('tt_others');
     const ttOtherWrap = document.getElementById('transfer_type_other_wrap');
