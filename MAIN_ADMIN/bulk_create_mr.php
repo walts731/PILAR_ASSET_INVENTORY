@@ -388,13 +388,9 @@ $tagHelper = new TagFormatHelper($conn);
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-floating mb-3">
-                                                <select class="form-select" id="office" name="office" required>
-                                                    <option value="">Select Office</option>
-                                                    <?php while ($office = $officesResult->fetch_assoc()): ?>
-                                                        <option value="<?= $office['id'] ?>"><?= htmlspecialchars($office['office_name']) ?></option>
-                                                    <?php endwhile; ?>
-                                                </select>
-                                                <label for="office">Office *</label>
+                                                <input type="text" class="form-control" id="officeLocation" name="office_location" placeholder="Office/Location" readonly>
+                                                <label for="officeLocation">Office / Location</label>
+                                                <input type="hidden" id="office" name="office" value="">
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -481,7 +477,51 @@ $tagHelper = new TagFormatHelper($conn);
             const storedAssets = sessionStorage.getItem('selectedAssets');
             if (storedAssets) {
                 selectedAssets = JSON.parse(storedAssets);
-                displayAssets();
+                // Validate that all selected assets belong to the same asset_new_id group
+                validateSameAssetNewGroup(selectedAssets)
+                  .then((ok) => {
+                    if (!ok) {
+                      // Mixed groups detected. Clear selection and redirect back with message
+                      alert('Selected assets belong to different groups and cannot be processed together. Redirecting back to Inventory.');
+                      try { sessionStorage.removeItem('selectedAssets'); } catch (e) {}
+                      const url = new URL(window.location.origin + window.location.pathname.replace('bulk_create_mr.php','inventory.php'));
+                      url.searchParams.set('bulk_mr_msg', 'mixed_asset_new');
+                      window.location.href = url.toString();
+                      return;
+                    }
+                    // Set Office/Location from the first selected asset and then render assets
+                    try {
+                        const first = selectedAssets[0];
+                        if (first && first.id) {
+                            fetch(`get_asset_office.php?id=${encodeURIComponent(first.id)}`, { credentials: 'same-origin' })
+                              .then(r => r.ok ? r.json() : Promise.reject())
+                              .then(data => {
+                                  const officeName = (data && data.office_name) ? data.office_name : '';
+                                  const officeId = (data && data.office_id) ? data.office_id : '';
+                                  $('#officeLocation').val(officeName);
+                                  $('#office').val(officeId);
+                              })
+                              .catch(() => {
+                                  $('#officeLocation').val('');
+                                  $('#office').val('');
+                              })
+                              .finally(() => {
+                                  displayAssets();
+                              });
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch office for first asset', e);
+                    }
+                    // Fallback: render assets even if office fetch fails
+                    displayAssets();
+                  })
+                  .catch((err) => {
+                    console.error('Validation failed:', err);
+                    alert('Failed to validate selected assets. Redirecting back to Inventory.');
+                    try { sessionStorage.removeItem('selectedAssets'); } catch (e) {}
+                    window.location.href = 'inventory.php?bulk_mr_msg=validation_error';
+                  });
             } else {
                 // Redirect back if no assets selected
                 alert('No assets selected. Redirecting back to inventory.');
@@ -501,6 +541,39 @@ $tagHelper = new TagFormatHelper($conn);
             setAccountableName();
             $('#accountablePerson').on('change', setAccountableName);
         });
+
+        // Validate that all asset ids map to the same asset_new_id
+        async function validateSameAssetNewGroup(assets) {
+            try {
+                const ids = assets.map(a => parseInt(a.id, 10)).filter(n => n > 0);
+                if (!ids.length) return false;
+                const form = new FormData();
+                ids.forEach(id => form.append('ids[]', id));
+                const resp = await fetch('get_asset_new_ids.php', {
+                    method: 'POST',
+                    body: form,
+                    credentials: 'same-origin'
+                });
+                if (!resp.ok) return false;
+                const data = await resp.json();
+                if (!data || data.error) return false;
+
+                // Build set including null group if present
+                const map = data.map || {};
+                const groups = new Set();
+                let hasNull = false;
+                Object.values(map).forEach(v => {
+                    if (v === null) { hasNull = true; }
+                    else { groups.add(String(v)); }
+                });
+                // Count distinct groups: non-null groups + possibly one null group
+                const distinctCount = groups.size + (hasNull ? 1 : 0);
+                return distinctCount <= 1;
+            } catch (e) {
+                console.error('validateSameAssetNewGroup error:', e);
+                return false;
+            }
+        }
 
         function displayAssets() {
             const container = $('#assetsContainer');

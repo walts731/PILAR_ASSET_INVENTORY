@@ -388,58 +388,62 @@ $stmt->close();
                   if ($selected_office === "all") {
                     $stmt = $conn->prepare("
   SELECT 
-    an.id AS an_id,
-    an.description,
-    an.quantity,
-    an.unit,
-    an.unit_cost,
-    an.date_created,
-    COALESCE(
-      (
-        SELECT c.category_name 
-        FROM assets a 
-        LEFT JOIN categories c ON a.category = c.id 
-        WHERE a.asset_new_id = an.id 
-        ORDER BY a.id ASC 
-        LIMIT 1
-      ), 'Uncategorized'
-    ) AS category_name,
-    f.ics_no AS ics_no,
-    p.par_no AS par_no
-  FROM assets_new an
-  LEFT JOIN ics_form f ON f.id = an.ics_id
-  LEFT JOIN par_form p ON p.id = an.par_id
-  WHERE an.quantity > 0
-  ORDER BY an.date_created DESC
+  an.id AS an_id,
+  an.description,
+  an.quantity,
+  an.unit,
+  an.unit_cost,
+  an.date_created,
+  COALESCE(
+    (
+      SELECT c.category_name 
+      FROM assets a 
+      LEFT JOIN categories c ON a.category = c.id 
+      WHERE a.asset_new_id = an.id 
+      ORDER BY a.id ASC 
+      LIMIT 1
+    ), 'Uncategorized'
+  ) AS category_name,
+  f.ics_no AS ics_no,
+  p.par_no AS par_no,
+  o.office_name AS office_name
+FROM assets_new an
+LEFT JOIN ics_form f ON f.id = an.ics_id
+LEFT JOIN par_form p ON p.id = an.par_id
+LEFT JOIN offices o ON an.office_id = o.id
+WHERE an.quantity > 0
+ORDER BY an.date_created DESC
 ");
                   } else {
                     $stmt = $conn->prepare("
   SELECT 
-    an.id AS an_id,
-    an.description,
-    an.quantity,
-    an.unit,
-    an.unit_cost,
-    an.date_created,
-    COALESCE(
-      (
-        SELECT c.category_name 
-        FROM assets a 
-        LEFT JOIN categories c ON a.category = c.id 
-        WHERE a.asset_new_id = an.id 
-        ORDER BY a.id ASC 
-        LIMIT 1
-      ), 'Uncategorized'
-    ) AS category_name,
-    f.ics_no AS ics_no,
-    p.par_no AS par_no
-  FROM assets_new an
-  LEFT JOIN ics_form f ON f.id = an.ics_id
-  LEFT JOIN par_form p ON p.id = an.par_id
-  WHERE an.office_id = ? AND an.quantity > 0
-  ORDER BY an.date_created DESC
+  an.id AS an_id,
+  an.description,
+  an.quantity,
+  an.unit,
+  an.unit_cost,
+  an.date_created,
+  COALESCE(
+    (
+      SELECT c.category_name 
+      FROM assets a 
+      LEFT JOIN categories c ON a.category = c.id 
+      WHERE a.asset_new_id = an.id 
+      ORDER BY a.id ASC 
+      LIMIT 1
+    ), 'Uncategorized'
+  ) AS category_name,
+  f.ics_no AS ics_no,
+  p.par_no AS par_no,
+  o.office_name AS office_name
+FROM assets_new an
+LEFT JOIN ics_form f ON f.id = an.ics_id
+LEFT JOIN par_form p ON p.id = an.par_id
+LEFT JOIN offices o ON an.office_id = o.id
+WHERE an.office_id = ? AND an.quantity > 0
+ORDER BY an.date_created DESC
 ");
-                    $stmt->bind_param("i", $selected_office);
+$stmt->bind_param("i", $selected_office);
                   }
 
                   $stmt->execute();
@@ -450,17 +454,26 @@ $stmt->close();
                     <tr>
                       <td><input type="checkbox" class="asset-checkbox" name="selected_assets_new[]" value="<?= $row['an_id'] ?>"></td>
                       <td>
-                        <?php
-                        $nums = [];
-                        if (!empty($row['ics_no'])) {
-                          $nums[] = 'ICS: ' . htmlspecialchars($row['ics_no']);
-                        }
-                        if (!empty($row['par_no'])) {
-                          $nums[] = 'PAR: ' . htmlspecialchars($row['par_no']);
-                        }
-                        echo $nums ? implode(' | ', $nums) : 'N/A';
-                        ?>
-                      </td>
+  <?php
+  $nums = [];
+  $officeName = trim((string)($row['office_name'] ?? ''));
+  if (!empty($row['ics_no'])) {
+    $icsDisplay = $row['ics_no'];
+    if ($officeName !== '') {
+      $icsDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $icsDisplay);
+    }
+    $nums[] = 'ICS: ' . htmlspecialchars($icsDisplay);
+  }
+  if (!empty($row['par_no'])) {
+    $parDisplay = $row['par_no'];
+    if ($officeName !== '') {
+      $parDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $parDisplay);
+    }
+    $nums[] = 'PAR: ' . htmlspecialchars($parDisplay);
+  }
+  echo $nums ? implode(' | ', $nums) : 'N/A';
+  ?>
+</td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td><?= htmlspecialchars($row['category_name']) ?></td>
                       <td><?= (int)$row['quantity'] ?></td>
@@ -601,7 +614,7 @@ $stmt->close();
                 <thead class="table-light">
                   <tr>
                     <th><input type="checkbox" id="selectAllConsumables" /></th>
-                    <th>Stock No</th>
+                    <th>RIS No</th>
                     <th>Description</th>
                     <th>On Hand</th>
                     <th>Unit</th>
@@ -615,19 +628,29 @@ $stmt->close();
                   $threshold = 5; // adjust threshold if needed
                   if ($selected_office === "all") {
                     $stmt = $conn->prepare("
-                        SELECT a.*, COALESCE(c.category_name, 'Uncategorized') AS category_name 
-                        FROM assets a 
-                        LEFT JOIN categories c ON a.category = c.id 
-                        WHERE a.type = 'consumable' AND a.quantity > 0
-                      ");
+    SELECT a.*, 
+       COALESCE(c.category_name, 'Uncategorized') AS category_name,
+       rf.ris_no,
+       o.office_name AS office_name
+FROM assets a 
+LEFT JOIN categories c ON a.category = c.id 
+LEFT JOIN ris_form rf ON a.ris_id = rf.id
+LEFT JOIN offices o ON a.office_id = o.id
+WHERE a.type = 'consumable' AND a.quantity > 0
+  ");
                   } else {
                     $stmt = $conn->prepare("
-                        SELECT a.*, COALESCE(c.category_name, 'Uncategorized') AS category_name 
-                        FROM assets a 
-                        LEFT JOIN categories c ON a.category = c.id 
-                        WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0
-                      ");
-                    $stmt->bind_param("i", $selected_office);
+    SELECT a.*, 
+           COALESCE(c.category_name, 'Uncategorized') AS category_name,
+           rf.ris_no,
+           o.office_name AS office_name
+    FROM assets a 
+    LEFT JOIN categories c ON a.category = c.id 
+    LEFT JOIN ris_form rf ON a.ris_id = rf.id
+    LEFT JOIN offices o ON a.office_id = o.id
+    WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0
+  ");
+$stmt->bind_param("i", $selected_office);
                   }
 
                   $stmt->execute();
@@ -637,7 +660,28 @@ $stmt->close();
                   ?>
                     <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
                       <td><input type="checkbox" class="consumable-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
-                      <td><?= htmlspecialchars($row['property_no']) ?></td>
+                      <td>
+  <?php
+    $officeName = trim((string)($row['office_name'] ?? ''));
+    $displayRaw = '';
+
+    if (!empty($row['ris_no'])) {
+      $displayRaw = $row['ris_no'];
+    } elseif (!empty($row['property_no'])) {
+      // Fallback to stock no if RIS is not linked
+      $displayRaw = $row['property_no'];
+    }
+
+    if ($displayRaw !== '') {
+      if ($officeName !== '') {
+        $displayRaw = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $displayRaw);
+      }
+      echo htmlspecialchars($displayRaw);
+    } else {
+      echo 'N/A';
+    }
+  ?>
+</td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['quantity'] ?></td>
                       <td><?= $row['unit'] ?></td>
@@ -706,18 +750,20 @@ $stmt->close();
         <?php
         // Query for assets missing inventory_tag (not filtered by office)
         $stmtNP = $conn->prepare("
-          SELECT 
-            a.*, 
-            COALESCE(c.category_name, 'Uncategorized') AS category_name, 
-            f.ics_no,
-            p.par_no
-          FROM assets a
-          LEFT JOIN categories c ON a.category = c.id
-          LEFT JOIN ics_form f ON a.ics_id = f.id
-          LEFT JOIN par_form p ON a.par_id = p.id
-          WHERE a.type = 'asset' AND a.quantity > 0 AND (a.inventory_tag IS NULL OR a.inventory_tag = '')
-          ORDER BY a.last_updated DESC
-        ");
+  SELECT 
+    a.*, 
+    COALESCE(c.category_name, 'Uncategorized') AS category_name, 
+    f.ics_no,
+    p.par_no,
+    o.office_name AS office_name
+  FROM assets a
+  LEFT JOIN categories c ON a.category = c.id
+  LEFT JOIN ics_form f ON a.ics_id = f.id
+  LEFT JOIN par_form p ON a.par_id = p.id
+  LEFT JOIN offices o ON a.office_id = o.id
+  WHERE a.type = 'asset' AND a.quantity > 0 AND (a.inventory_tag IS NULL OR a.inventory_tag = '')
+  ORDER BY a.last_updated DESC
+");
 
         $stmtNP->execute();
         $npResult = $stmtNP->get_result();
@@ -765,19 +811,25 @@ $stmt->close();
                         data-category-id="<?= $row['category'] ?>">
                     </td>
                     <td>
-                      <?php
-                      $displayNo = 'N/A';
-                      // Prefer PAR number if linked; otherwise use ICS number if linked
-                      if (!empty($row['par_no'])) {
-                        $displayNo = htmlspecialchars($row['par_no']);
-                      } elseif (!empty($row['ics_no'])) {
-                        $displayNo = htmlspecialchars($row['ics_no']);
-                      } else {
-                        $displayNo = 'N/A';
-                      }
-                      echo $displayNo;
-                      ?>
-                    </td>
+  <?php
+  $officeName = trim((string)($row['office_name'] ?? ''));
+  $displayRaw = '';
+  if (!empty($row['par_no'])) {
+    $displayRaw = $row['par_no'];
+  } elseif (!empty($row['ics_no'])) {
+    $displayRaw = $row['ics_no'];
+  }
+
+  if ($displayRaw !== '') {
+    if ($officeName !== '') {
+      $displayRaw = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $displayRaw);
+    }
+    echo htmlspecialchars($displayRaw);
+  } else {
+    echo 'N/A';
+  }
+  ?>
+</td>
                     <td><?= htmlspecialchars($row['description']) ?></td>
                     <td><?= htmlspecialchars($row['category_name']) ?></td>
                     <td><?= $row['quantity'] ?></td>

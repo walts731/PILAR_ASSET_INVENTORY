@@ -63,11 +63,7 @@ $stmt->close();
         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="mb-0">User Management </h5>
 
-            <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
-                <a href="#" class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                    <i class="bi bi-person-plus-fill me-1"></i> New User
-                </a>
-            </div>
+            
         </div>
 
         <div class="card-body table-responsive">
@@ -125,15 +121,7 @@ $stmt->close();
                                     </form>
                                 <?php endif; ?>
 
-                                <!-- Delete Button -->
-                                <button class="btn btn-sm btn-outline-dark rounded-pill deleteUserBtn"
-                                    data-id="<?= $user['id'] ?>"
-                                    data-fullname="<?= htmlspecialchars($user['fullname']) ?>"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#deleteUserModal"
-                                    title="Delete User">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+                                
                             </td>
                         </tr>
                     <?php endwhile; ?>

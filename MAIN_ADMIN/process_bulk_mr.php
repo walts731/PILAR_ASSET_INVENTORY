@@ -246,7 +246,7 @@ try {
 
             // Map our data to the actual table structure
             $serviceable_status = 1; // Default to serviceable
-            $office_location = $office; // Use office ID as location
+            $office_location = $office; // Use selected office as location for all
             
             $mr_stmt->bind_param('iisssssisssssss', 
                 $asset_id,        // item_id (using asset_id)
@@ -277,6 +277,7 @@ try {
             $mr_stmt->close();
 
             // Check which columns exist in assets table before updating
+            // Update asset and set its office to the selected one
             $columns_to_update = ['property_no', 'inventory_tag', 'employee_id', 'office_id', 'status'];
             $values_to_bind = [$property_no, $inventory_tag, $accountable_person, $office, 'serviceable'];
             $bind_types = 'ssiis';
