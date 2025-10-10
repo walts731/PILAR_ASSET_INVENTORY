@@ -47,7 +47,8 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><?= $ris_data ? htmlspecialchars($ris_data['ris_no'] ?? 'RIS Form') : 'Form Viewer' ?></title>
+    <?php $risOfficeDisplay = ($ris_data['office_name'] ?: ($ris_data['division'] ?? '')); $risNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $risOfficeDisplay, $ris_data['ris_no'] ?? ''); $saiNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $risOfficeDisplay, $ris_data['sai_no'] ?? ''); ?>
+    <title><?= $ris_data ? htmlspecialchars($risNoDisplay ?: 'RIS Form') : 'Form Viewer' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
     <link rel="stylesheet" href="css/dashboard.css" />
@@ -87,7 +88,7 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">RIS No.</label>
-                    <input type="text" class="form-control" name="ris_no" value="<?= htmlspecialchars($ris_data['ris_no'] ?? '') ?>">
+                    <input type="text" class="form-control" name="ris_no" value="<?= htmlspecialchars($risNoDisplay) ?>">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Date</label>
@@ -113,7 +114,7 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">SAI No.</label>
-                    <input type="text" class="form-control" name="sai_no" value="<?= htmlspecialchars($ris_data['sai_no'] ?? '') ?>">
+                    <input type="text" class="form-control" name="sai_no" value="<?= htmlspecialchars($saiNoDisplay) ?>">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Date</label>

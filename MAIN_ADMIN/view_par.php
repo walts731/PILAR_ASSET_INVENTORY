@@ -54,7 +54,8 @@ $stmt->close();
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PAR Details - <?= htmlspecialchars($par['par_no']) ?></title>
+  <?php $parOfficeDisplay = ($par['office_name'] ?: ($par['entity_name'] ?? '')); $parNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $parOfficeDisplay, $par['par_no'] ?? ''); ?>
+  <title>PAR Details - <?= htmlspecialchars($parNoDisplay) ?></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="css/dashboard.css" />
@@ -137,7 +138,7 @@ $stmt->close();
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">PAR No.</label>
-              <input type="text" class="form-control shadow" name="par_no" value="<?= htmlspecialchars($par['par_no']) ?>" readonly />
+              <input type="text" class="form-control shadow" name="par_no" value="<?= htmlspecialchars($parNoDisplay) ?>" readonly />
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">Office</label>

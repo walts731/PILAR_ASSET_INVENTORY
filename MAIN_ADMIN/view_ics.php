@@ -53,7 +53,8 @@ $stmt->close();
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ICS Details - <?= htmlspecialchars($ics['ics_no']) ?></title>
+  <?php $icsOfficeDisplay = ($ics['office_name'] ?: ($ics['entity_name'] ?? '')); $icsNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $icsOfficeDisplay, $ics['ics_no'] ?? ''); ?>
+  <title>ICS Details - <?= htmlspecialchars($icsNoDisplay) ?></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="css/dashboard.css" />
@@ -110,7 +111,7 @@ $stmt->close();
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-semibold">ICS No.</label>
-                <input type="text" class="form-control shadow" name="ics_no" value="<?= htmlspecialchars($ics['ics_no']) ?>" required />
+                <input type="text" class="form-control shadow" name="ics_no" value="<?= htmlspecialchars($icsNoDisplay) ?>" required />
               </div>
             </div>
 
