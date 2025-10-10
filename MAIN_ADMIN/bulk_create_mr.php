@@ -388,13 +388,9 @@ $tagHelper = new TagFormatHelper($conn);
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-floating mb-3">
-                                                <select class="form-select" id="office" name="office" required>
-                                                    <option value="">Select Office</option>
-                                                    <?php while ($office = $officesResult->fetch_assoc()): ?>
-                                                        <option value="<?= $office['id'] ?>"><?= htmlspecialchars($office['office_name']) ?></option>
-                                                    <?php endwhile; ?>
-                                                </select>
-                                                <label for="office">Office *</label>
+                                                <input type="text" class="form-control" id="officeLocation" name="office_location" placeholder="Office/Location" readonly>
+                                                <label for="officeLocation">Office / Location</label>
+                                                <input type="hidden" id="office" name="office" value="">
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -493,7 +489,31 @@ $tagHelper = new TagFormatHelper($conn);
                       window.location.href = url.toString();
                       return;
                     }
-                    // Proceed to render assets
+                    // Set Office/Location from the first selected asset and then render assets
+                    try {
+                        const first = selectedAssets[0];
+                        if (first && first.id) {
+                            fetch(`get_asset_office.php?id=${encodeURIComponent(first.id)}`, { credentials: 'same-origin' })
+                              .then(r => r.ok ? r.json() : Promise.reject())
+                              .then(data => {
+                                  const officeName = (data && data.office_name) ? data.office_name : '';
+                                  const officeId = (data && data.office_id) ? data.office_id : '';
+                                  $('#officeLocation').val(officeName);
+                                  $('#office').val(officeId);
+                              })
+                              .catch(() => {
+                                  $('#officeLocation').val('');
+                                  $('#office').val('');
+                              })
+                              .finally(() => {
+                                  displayAssets();
+                              });
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch office for first asset', e);
+                    }
+                    // Fallback: render assets even if office fetch fails
                     displayAssets();
                   })
                   .catch((err) => {
