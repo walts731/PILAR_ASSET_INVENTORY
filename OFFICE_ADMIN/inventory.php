@@ -266,9 +266,9 @@ $cat_stmt->close();
                       <td>&#8369; <?= number_format($row['value'], 2) ?></td>
                       <td class="text-nowrap">
                         <div class="btn-group" role="group">
-                          <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal"><i class="bi bi-eye"></i>View</button>
-                          
-                         
+                          <a href="view_asset_details.php?id=<?= (int)$row['id'] ?>" class="btn btn-sm btn-outline-info rounded-pill">
+                            <i class="bi bi-eye"></i>View
+                          </a>
                         </div>
                       </td>
                     </tr>
