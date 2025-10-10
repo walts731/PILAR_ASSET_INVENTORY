@@ -614,7 +614,7 @@ $stmt->bind_param("i", $selected_office);
                 <thead class="table-light">
                   <tr>
                     <th><input type="checkbox" id="selectAllConsumables" /></th>
-                    <th>Stock No</th>
+                    <th>RIS No</th>
                     <th>Description</th>
                     <th>On Hand</th>
                     <th>Unit</th>
@@ -628,18 +628,24 @@ $stmt->bind_param("i", $selected_office);
                   $threshold = 5; // adjust threshold if needed
                   if ($selected_office === "all") {
                     $stmt = $conn->prepare("
-                        SELECT a.*, COALESCE(c.category_name, 'Uncategorized') AS category_name 
-                        FROM assets a 
-                        LEFT JOIN categories c ON a.category = c.id 
-                        WHERE a.type = 'consumable' AND a.quantity > 0
-                      ");
+    SELECT a.*, 
+           COALESCE(c.category_name, 'Uncategorized') AS category_name,
+           rf.ris_no
+    FROM assets a 
+    LEFT JOIN categories c ON a.category = c.id 
+    LEFT JOIN ris_form rf ON a.ris_id = rf.id
+    WHERE a.type = 'consumable' AND a.quantity > 0
+  ");
                   } else {
                     $stmt = $conn->prepare("
-                        SELECT a.*, COALESCE(c.category_name, 'Uncategorized') AS category_name 
-                        FROM assets a 
-                        LEFT JOIN categories c ON a.category = c.id 
-                        WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0
-                      ");
+    SELECT a.*, 
+           COALESCE(c.category_name, 'Uncategorized') AS category_name,
+           rf.ris_no
+    FROM assets a 
+    LEFT JOIN categories c ON a.category = c.id 
+    LEFT JOIN ris_form rf ON a.ris_id = rf.id
+    WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0
+  ");
                     $stmt->bind_param("i", $selected_office);
                   }
 
@@ -650,7 +656,18 @@ $stmt->bind_param("i", $selected_office);
                   ?>
                     <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
                       <td><input type="checkbox" class="consumable-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
-                      <td><?= htmlspecialchars($row['property_no']) ?></td>
+                      <td>
+  <?php
+    if (!empty($row['ris_no'])) {
+      echo htmlspecialchars($row['ris_no']);
+    } elseif (!empty($row['property_no'])) {
+      // Fallback to stock no if RIS is not linked
+      echo htmlspecialchars($row['property_no']);
+    } else {
+      echo 'N/A';
+    }
+  ?>
+</td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['quantity'] ?></td>
                       <td><?= $row['unit'] ?></td>
