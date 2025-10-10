@@ -202,6 +202,7 @@ if ($stmt) {
             </div>
 
             <!-- Available Assets -->
+            <?php include 'modals/view_asset_modal.php'; ?>
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">Available Assets from Other Departments</h5>
@@ -228,7 +229,13 @@ if ($stmt) {
                                             <td><?= htmlspecialchars($asset['category_name'] ?? 'N/A') ?></td>
                                             <td><?= $asset['quantity'] ?></td>
                                             <td><?= htmlspecialchars($asset['office_name']) ?></td>
-                                            <td>
+                                            <td class="text-nowrap">
+                                                <button class="btn btn-sm btn-info view-asset" 
+                                                        data-bs-toggle="tooltip" 
+                                                        title="View Details"
+                                                        data-asset-id="<?= $asset['id'] ?>">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
                                                 <button class="btn btn-sm btn-primary add-to-cart" 
                                                         data-bs-toggle="modal" 
                                                         data-bs-target="#addToCartModal"
@@ -321,7 +328,87 @@ if ($stmt) {
 </style>
 
 <script>
-$(document).ready(function() {
+    // View asset details
+    $(document).on('click', '.view-asset', function() {
+        const assetId = $(this).data('asset-id');
+        
+        // Show loading state
+        $('#viewAssetModal').modal('show');
+        $('.modal-body').html('<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+        
+        // Fetch asset details via AJAX
+        $.ajax({
+            url: 'get_asset_details.php',
+            type: 'GET',
+            data: { id: assetId },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Update modal with asset details
+                    const asset = response.data;
+                    
+                    // Basic Information
+                    $('#viewDescription').text(asset.description || 'N/A');
+                    $('#viewCategoryName').text(asset.category_name || 'N/A');
+                    $('#viewOfficeName').text(asset.office_name || 'N/A');
+                    $('#viewType').text(asset.type || 'N/A');
+                    $('#viewStatus').text(asset.status || 'N/A');
+                    $('#viewQuantity').text(asset.quantity || '0');
+                    $('#viewUnit').text(asset.unit || 'N/A');
+                    
+                    // Identification
+                    $('#viewSerialNo').text(asset.serial_number || 'N/A');
+                    $('#viewCode').text(asset.code || 'N/A');
+                    $('#viewPropertyNo').text(asset.property_no || 'N/A');
+                    
+                    // Specifications
+                    $('#viewModel').text(asset.model || 'N/A');
+                    $('#viewBrand').text(asset.brand || 'N/A');
+                    
+                    // Dates and Values
+                    $('#viewAcquisitionDate').text(asset.acquisition_date || 'N/A');
+                    $('#viewLastUpdated').text(asset.updated_at || 'N/A');
+                    $('#viewValue').text(asset.value ? '₱' + parseFloat(asset.value).toFixed(2) : 'N/A');
+                    $('#viewTotalValue').text(asset.value && asset.quantity ? '₱' + (parseFloat(asset.value) * parseInt(asset.quantity)).toFixed(2) : 'N/A');
+                    
+                    // Images
+                    if (asset.image_path) {
+                        $('#viewAssetImage').attr('src', '../' + asset.image_path).show();
+                    } else {
+                        $('#viewAssetImage').hide();
+                    }
+                    
+                    // QR Code
+                    if (asset.qr_code_path) {
+                        $('#viewQrCode').attr('src', '../' + asset.qr_code_path).show();
+                    } else {
+                        $('#viewQrCode').hide();
+                    }
+                    
+                    // Municipal Logo
+                    if (asset.municipal_logo_path) {
+                        $('#municipalLogoImg').attr('src', '../' + asset.municipal_logo_path).show();
+                    } else {
+                        $('#municipalLogoImg').hide();
+                    }
+                    
+                    // Inventory Tag
+                    $('#viewInventoryTag').text(asset.inventory_tag || 'N/A');
+                    
+                    // Show the modal with content
+                    $('.modal-body').html($('.modal-body').html()); // Refresh the modal content
+                } else {
+                    alert(response.message || 'Failed to load asset details');
+                    $('#viewAssetModal').modal('hide');
+                }
+            },
+            error: function() {
+                alert('Error loading asset details');
+                $('#viewAssetModal').modal('hide');
+            }
+        });
+    });
+
     // Reset form when modal is hidden
     $('#addToCartModal').on('hidden.bs.modal', function () {
         $(this).find('form')[0].reset();
@@ -458,6 +545,95 @@ $(document).ready(function() {
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     
     <script>
+    // View asset details functionality
+    $(document).on('click', '.view-asset', function() {
+        const assetId = $(this).data('asset-id');
+        
+        // Show loading state
+        $('#viewAssetModal').modal('show');
+        $('.modal-body').html('<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+        
+        // Fetch asset details via AJAX
+        $.ajax({
+            url: 'get_asset_details.php',
+            type: 'GET',
+            data: { id: assetId },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Update modal with asset details
+                    const asset = response.data;
+                    
+                    // Basic Information
+                    $('#viewDescription').text(asset.description || 'N/A');
+                    $('#viewCategoryName').text(asset.category_name || 'N/A');
+                    $('#viewOfficeName').text(asset.office_name || 'N/A');
+                    $('#viewType').text(asset.type || 'N/A');
+                    $('#viewStatus').text(asset.status || 'N/A');
+                    $('#viewQuantity').text(asset.quantity || '0');
+                    $('#viewUnit').text(asset.unit || 'N/A');
+                    
+                    // Identification
+                    $('#viewSerialNo').text(asset.serial_number || 'N/A');
+                    $('#viewCode').text(asset.code || 'N/A');
+                    $('#viewPropertyNo').text(asset.property_no || 'N/A');
+                    
+                    // Specifications
+                    $('#viewModel').text(asset.model || 'N/A');
+                    $('#viewBrand').text(asset.brand || 'N/A');
+                    
+                    // Dates and Values
+                    $('#viewAcquisitionDate').text(asset.acquisition_date || 'N/A');
+                    $('#viewLastUpdated').text(asset.updated_at || 'N/A');
+                    $('#viewValue').text(asset.value ? '₱' + parseFloat(asset.value).toFixed(2) : 'N/A');
+                    
+                    // Calculate total value
+                    if (asset.value && asset.quantity) {
+                        const totalValue = parseFloat(asset.value) * parseInt(asset.quantity);
+                        $('#viewTotalValue').text('₱' + totalValue.toFixed(2));
+                    } else {
+                        $('#viewTotalValue').text('N/A');
+                    }
+                    
+                    // Images
+                    if (asset.image_path) {
+                        $('#viewAssetImage').attr('src', '../' + asset.image_path).show();
+                    } else {
+                        $('#viewAssetImage').hide();
+                    }
+                    
+                    // QR Code
+                    if (asset.qr_code_path) {
+                        $('#viewQrCode').attr('src', '../' + asset.qr_code_path).show();
+                    } else {
+                        $('#viewQrCode').hide();
+                    }
+                    
+                    // Municipal Logo
+                    if (asset.municipal_logo_path) {
+                        $('#municipalLogoImg').attr('src', '../' + asset.municipal_logo_path).show();
+                    } else {
+                        $('#municipalLogoImg').hide();
+                    }
+                    
+                    // Inventory Tag
+                    $('#viewInventoryTag').text(asset.inventory_tag || 'N/A');
+                    
+                    // Show the modal with content
+                    $('.modal-body').show();
+                } else {
+                    alert(response.message || 'Failed to load asset details');
+                    $('#viewAssetModal').modal('hide');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                alert('Error loading asset details. Please check console for more information.');
+                $('#viewAssetModal').modal('hide');
+            }
+        });
+    });
+
     $(document).ready(function() {
         // Initialize DataTable
         $('.data-table').DataTable({
