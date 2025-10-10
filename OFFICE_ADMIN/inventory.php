@@ -214,8 +214,8 @@ $office_id = $_SESSION['office_id'];
                       <td>&#8369; <?= number_format($row['value'] * $row['quantity'], 2) ?></td>
                       <td class="text-nowrap">
                         <div class="btn-group" role="group">
-                          <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal"><i class="bi bi-eye"></i></button>
-                          <button type="button" class="btn btn-sm btn-outline-primary rounded-pill updateAssetBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#updateAssetModal"><i class="bi bi-pencil-square"></i></button>
+                          <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal"><i class="bi bi-eye"></i>View</button>
+                          
                          
                         </div>
                       </td>
@@ -283,24 +283,17 @@ $office_id = $_SESSION['office_id'];
                 <thead class="table-light">
                   <tr>
                     <th><input type="checkbox" id="selectAllConsumables" /></th>
-                    <th>Stock No</th>
                     <th>Description</th>
                     <th>On Hand</th>
-                    <th>Restocked Qty</th>
                     <th>Unit</th>
                     <th>Status</th>
-                    <th>Last Updated</th>
-                    <th>Actions</th>
+                  <th>Last Updated</th>
+                  <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   <?php
-                  $stmt = $conn->prepare("
-                      SELECT a.*, c.category_name 
-                      FROM assets a 
-                      JOIN categories c ON a.category = c.id 
-                      WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0
-                  ");
+                  $stmt = $conn->prepare("\n                      SELECT a.*, c.category_name \n                      FROM assets a \n                      LEFT JOIN categories c ON a.category = c.id \n                      WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0\n                  ");
                   $stmt->bind_param("i", $office_id);
                   $stmt->execute();
                   $result = $stmt->get_result();
@@ -309,17 +302,16 @@ $office_id = $_SESSION['office_id'];
                   ?>
                     <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
                       <td><input type="checkbox" class="consumable-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
-                      <td><?= htmlspecialchars($row['property_no']) ?></td>
+                      
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['quantity'] ?></td>
-                      <td><?= $row['added_stock'] ?></td>
                       <td><?= $row['unit'] ?></td>
                       <td><span class="badge bg-<?= $row['status'] === 'available' ? 'success' : 'secondary' ?>"><?= ucfirst($row['status']) ?></span></td>
                       <td><?= date('M d, Y', strtotime($row['last_updated'])) ?></td>
                       <td>
-                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal"><i class="bi bi-eye"></i></button>
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill updateConsumableBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#updateConsumableModal"><i class="bi bi-pencil-square"></i></button>
-                       
+                        
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill updateConsumableBtn" data-id="<?= $row['id'] ?>" data-status="<?= htmlspecialchars($row['status']) ?>" data-bs-toggle="modal" data-bs-target="#updateConsumableModal"><i class="bi bi-pencil-square"></i></button>
+                        
                         <button type="button" class="btn btn-sm btn-outline-success rounded-pill dispenseBtn"
                           data-id="<?= $row['id'] ?>"
                           data-name="<?= htmlspecialchars($row['description']) ?>"
