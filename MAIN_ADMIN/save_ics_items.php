@@ -72,11 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // UPDATE flow when editing existing ICS
     if ($existing_ics_id > 0) {
         $ics_id = $existing_ics_id;
-        // Update ICS form header fields (optionally update header_image if provided)
+        // Update ICS form header fields (optionally update header_image if provided) and office
         if (!empty($header_image)) {
-            $stmt = $conn->prepare("UPDATE ics_form SET header_image = ?, entity_name = ?, fund_cluster = ?, ics_no = ?, received_from_name = ?, received_from_position = ?, received_by_name = ?, received_by_position = ? WHERE id = ?");
+            $stmt = $conn->prepare("UPDATE ics_form SET header_image = ?, entity_name = ?, fund_cluster = ?, ics_no = ?, received_from_name = ?, received_from_position = ?, received_by_name = ?, received_by_position = ?, office_id = ? WHERE id = ?");
             $stmt->bind_param(
-                "ssssssssi",
+                "ssssssssii",
                 $header_image,
                 $entity_name,
                 $fund_cluster,
@@ -85,12 +85,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $received_from_position,
                 $received_by_name,
                 $received_by_position,
+                $office_id,
                 $ics_id
             );
         } else {
-            $stmt = $conn->prepare("UPDATE ics_form SET entity_name = ?, fund_cluster = ?, ics_no = ?, received_from_name = ?, received_from_position = ?, received_by_name = ?, received_by_position = ? WHERE id = ?");
+            $stmt = $conn->prepare("UPDATE ics_form SET entity_name = ?, fund_cluster = ?, ics_no = ?, received_from_name = ?, received_from_position = ?, received_by_name = ?, received_by_position = ?, office_id = ? WHERE id = ?");
             $stmt->bind_param(
-                "sssssssi",
+                "ssssssiii",
                 $entity_name,
                 $fund_cluster,
                 $ics_no,
@@ -98,11 +99,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $received_from_position,
                 $received_by_name,
                 $received_by_position,
+                $office_id,
                 $ics_id
             );
         }
         $stmt->execute();
         $stmt->close();
+
+        // Propagate office change to linked assets and assets_new
+        if ($office_input !== null) {
+            // Update item-level assets created for this ICS
+            $stmtUpdAssets = $conn->prepare("UPDATE assets SET office_id = ? WHERE ics_id = ?");
+            if ($stmtUpdAssets) { $stmtUpdAssets->bind_param('ii', $office_id, $ics_id); $stmtUpdAssets->execute(); $stmtUpdAssets->close(); }
+
+            // Update assets_new rows created for this ICS
+            $stmtUpdAssetsNew = $conn->prepare("UPDATE assets_new SET office_id = ? WHERE ics_id = ?");
+            if ($stmtUpdAssetsNew) { $stmtUpdAssetsNew->bind_param('ii', $office_id, $ics_id); $stmtUpdAssetsNew->execute(); $stmtUpdAssetsNew->close(); }
+        }
 
         // Log ICS form update
         $logger = new AuditLogger($conn);

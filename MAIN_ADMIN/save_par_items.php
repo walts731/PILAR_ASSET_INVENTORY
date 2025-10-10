@@ -21,9 +21,22 @@ if ($par_id <= 0) {
   exit();
 }
 
-// Begin transaction for safety
-$conn->begin_transaction();
-try {
+  // Begin transaction for safety
+  $conn->begin_transaction();
+  try {
+  // Lookup PAR office_id for propagation to assets
+  $par_office_id = 0;
+  $stmt_off = $conn->prepare("SELECT office_id FROM par_form WHERE id = ? LIMIT 1");
+  if ($stmt_off) {
+    $stmt_off->bind_param('i', $par_id);
+    if ($stmt_off->execute()) {
+      $res_off = $stmt_off->get_result();
+      $row_off = $res_off ? $res_off->fetch_assoc() : null;
+      $par_office_id = $row_off ? (int)$row_off['office_id'] : 0;
+    }
+    $stmt_off->close();
+  }
+
   // Update PAR header fields
   $entity_name = trim($_POST['entity_name'] ?? '');
   $fund_cluster = trim($_POST['fund_cluster'] ?? '');
@@ -114,6 +127,16 @@ try {
       if (!$stmt->execute()) { throw new Exception('Failed to sync asset #' . $asset_id . ': ' . $stmt->error); }
       $stmt->close();
 
+      // Also propagate office to the asset when PAR office is available
+      if ($par_office_id > 0) {
+        $stmt_off_upd = $conn->prepare('UPDATE assets SET office_id = ? WHERE id = ?');
+        if ($stmt_off_upd) {
+          $stmt_off_upd->bind_param('ii', $par_office_id, $asset_id);
+          if (!$stmt_off_upd->execute()) { throw new Exception('Failed to update asset office for #' . $asset_id . ': ' . $stmt_off_upd->error); }
+          $stmt_off_upd->close();
+        }
+      }
+
       // Also sync to assets_new via assets.asset_new_id
       $stmt_lookup = $conn->prepare("SELECT asset_new_id FROM assets WHERE id = ? LIMIT 1");
       if ($stmt_lookup) {
@@ -128,6 +151,15 @@ try {
             $stmt_upd_assets_new->bind_param('sidsi', $description, $qty_int, $unit_price, $unit, $asset_new_id);
             if (!$stmt_upd_assets_new->execute()) {
               throw new Exception('Failed to sync assets_new #' . $asset_new_id . ': ' . $stmt_upd_assets_new->error);
+            }
+            // Also propagate office_id to assets_new row
+            if ($par_office_id > 0) {
+              $stmt_off_new = $conn->prepare('UPDATE assets_new SET office_id = ? WHERE id = ?');
+              if ($stmt_off_new) {
+                $stmt_off_new->bind_param('ii', $par_office_id, $asset_new_id);
+                if (!$stmt_off_new->execute()) { throw new Exception('Failed to update assets_new office #' . $asset_new_id . ': ' . $stmt_off_new->error); }
+                $stmt_off_new->close();
+              }
             }
           }
         }

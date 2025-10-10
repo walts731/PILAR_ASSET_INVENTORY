@@ -74,6 +74,16 @@ if (!$conn->query($sql)) {
     die("Update failed: " . $conn->error);
 }
 
+// Propagate office change to assets linked to this RIS
+if ($office_id > 0) {
+    $updAssets = $conn->prepare("UPDATE assets SET office_id = ? WHERE ris_id = ?");
+    if ($updAssets) {
+        $updAssets->bind_param('ii', $office_id, $form_id);
+        $updAssets->execute();
+        $updAssets->close();
+    }
+}
+
 // Redirect back to view with success
 header("Location: view_ris.php?id=" . $form_id . "&updated=1");
 exit();
