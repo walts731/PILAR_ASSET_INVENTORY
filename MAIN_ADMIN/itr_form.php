@@ -502,10 +502,7 @@ if (!empty($_SESSION['flash'])) {
     function computeItrPreview(){
       const field = document.getElementById('itr_no');
       if (!field) return;
-      if (!ITR_TEMPLATE) return;
-      const dateInput = document.getElementById('date');
-      const dateVal = dateInput ? dateInput.value : '';
-      let out = formatFromDate(ITR_TEMPLATE, dateVal);
+      // Determine office display from dropdown
       const sel = document.getElementById('itr_office');
       let officeName = 'OFFICE';
       if (sel) {
@@ -513,8 +510,9 @@ if (!empty($_SESSION['flash'])) {
         const txt = opt ? (opt.text || '') : '';
         if (sel.value) officeName = (txt || '').trim() || 'OFFICE';
       }
-      out = out.replace(/\{OFFICE\}|OFFICE/g, officeName).replace(/--+/g,'-').replace(/^-|-$/g,'');
-      field.value = out;
+      // Preserve digits; only swap OFFICE tokens in current value
+      const current = field.value || '';
+      field.value = current.replace(/\bOFFICE\b|\{OFFICE\}/g, officeName);
     }
     const dateInput = document.getElementById('date');
     if (dateInput) dateInput.addEventListener('change', computeItrPreview);

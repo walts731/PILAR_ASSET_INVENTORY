@@ -260,18 +260,15 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
       return sel.value ? ((txt || '').trim() || 'OFFICE') : 'OFFICE';
     }
     function updatePreviews(){
-      const officeAcr = computeOfficeAcr();
-      const dateInput = document.getElementById('date');
-      const dateVal = dateInput ? dateInput.value : '';
-      if (RIS_TEMPLATE) {
-        let t = applyDate(RIS_TEMPLATE, dateVal).replace(/\{OFFICE\}|OFFICE/g, officeAcr);
-        t = padDigits(t).replace(/--+/g,'-').replace(/^-|-$/g,'');
-        const f = document.getElementById('ris_no'); if (f) f.value = t;
+      const officeDisp = computeOfficeAcr();
+      // Preserve digits already in fields; only swap OFFICE tokens
+      const f = document.getElementById('ris_no');
+      if (f && f.value) {
+        f.value = f.value.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
       }
-      if (SAI_TEMPLATE) {
-        let t2 = applyDate(SAI_TEMPLATE, dateVal).replace(/\{OFFICE\}|OFFICE/g, officeAcr);
-        t2 = padDigits(t2).replace(/--+/g,'-').replace(/^-|-$/g,'');
-        const f2 = document.getElementById('sai_no'); if (f2) f2.value = t2;
+      const f2 = document.getElementById('sai_no');
+      if (f2 && f2.value) {
+        f2.value = f2.value.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
       }
     }
     const officeSel = document.getElementById('office_id');

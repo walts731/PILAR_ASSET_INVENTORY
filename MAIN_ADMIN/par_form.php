@@ -361,30 +361,26 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
     function computeParPreview(){
         const field = document.getElementById('parNoField');
         if (!field) return;
-        let tpl = (PAR_TEMPLATE || '').trim();
-        if (!tpl) { field.value = field.value || ''; return; }
-        // OFFICE from select text (use full name)
+        // Determine OFFICE display from select or entity name
         const sel = document.querySelector('select[name="office_id"]');
-        let officeAcr = 'OFFICE';
+        let officeDisp = 'OFFICE';
         if (sel) {
             const opt = sel.options[sel.selectedIndex];
             const txt = opt ? (opt.text || '') : '';
-            if (sel.value && sel.value !== 'outside_lgu') officeAcr = (txt || '').trim() || 'OFFICE';
-            else {
+            if (sel.value && sel.value !== 'outside_lgu') {
+                officeDisp = (txt || '').trim() || 'OFFICE';
+            } else {
                 const en = document.getElementById('parEntityName');
-                officeAcr = (en && en.value.trim()) ? en.value.trim() : 'OFFICE';
+                officeDisp = (en && en.value.trim()) ? en.value.trim() : 'OFFICE';
             }
         }
-        // Always keep auto-preview read-only; value comes from template
+        // Preserve digits; only update OFFICE tokens in current value
+        const current = field.value || '';
+        const updated = current.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
         field.readOnly = true;
         field.required = false;
         field.placeholder = '';
-        tpl = replaceDatePlaceholdersLocal(tpl);
-        tpl = tpl.replace(/\{OFFICE\}|OFFICE/g, officeAcr);
-        tpl = padDigitsForPreview(tpl);
-        // Cleanup stray dashes
-        tpl = tpl.replace(/--+/g,'-').replace(/^-|-$/g,'');
-        field.value = tpl;
+        field.value = updated;
     }
     document.addEventListener('DOMContentLoaded', ()=>{
         const sel = document.querySelector('select[name="office_id"]');

@@ -251,11 +251,23 @@ class TagFormatHelper {
             $prefixHash = md5($format['prefix']);
             $counter = $this->getOrCreateCounter($format['tag_type'], 'global', $prefixHash);
             $nextNumber = $counter + 1;
-            
-            // Replace increment placeholder
-            $incrementPlaceholder = '{' . str_repeat('#', $format['increment_digits']) . '}';
-            $formattedNumber = str_pad($nextNumber, $format['increment_digits'], '0', STR_PAD_LEFT);
-            $template = str_replace($incrementPlaceholder, $formattedNumber, $template);
+
+            // Replace any {#+} occurrences with padded nextNumber (flexible, like generateNextTag)
+            $template = preg_replace_callback('/\{(#+)\}/', function($matches) use ($nextNumber) {
+                $digitCount = strlen($matches[1]);
+                return str_pad($nextNumber, $digitCount, '0', STR_PAD_LEFT);
+            }, $template);
+
+            // Legacy support for specific patterns and XXXX format in preview
+            $template = str_replace('{XXXX}', str_pad($nextNumber, 4, '0', STR_PAD_LEFT), $template);
+            $template = str_replace('XXXX', str_pad($nextNumber, 4, '0', STR_PAD_LEFT), $template);
+
+            // Fallback for database-configured increment_digits
+            if (isset($format['increment_digits']) && $format['increment_digits'] > 0) {
+                $incrementPlaceholder = '{' . str_repeat('#', $format['increment_digits']) . '}';
+                $formattedNumber = str_pad($nextNumber, $format['increment_digits'], '0', STR_PAD_LEFT);
+                $template = str_replace($incrementPlaceholder, $formattedNumber, $template);
+            }
             
             return $template;
             

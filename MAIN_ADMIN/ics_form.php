@@ -371,31 +371,26 @@ if ($thrRes && $thrRes->num_rows > 0) {
         function computeIcsPreview(){
             const field = document.getElementById('icsNoField');
             if (!field) return;
-            let tpl = (ICS_TEMPLATE || '').trim();
-            if (!tpl) return;
+            // Determine OFFICE display
             const sel = document.getElementById('destinationOffice');
-            let officeAcr = 'OFFICE';
-            let isOutside = false;
+            let officeDisp = 'OFFICE';
             if (sel) {
                 const opt = sel.options[sel.selectedIndex];
                 const txt = opt ? (opt.text || '') : '';
-                if (sel.value && sel.value !== 'outside_lgu') { officeAcr = (txt || '').trim() || 'OFFICE'; }
-                else {
-                    // Use Entity Name as OFFICE when Outside LGU
+                if (sel.value && sel.value !== 'outside_lgu') {
+                    officeDisp = (txt || '').trim() || 'OFFICE';
+                } else {
                     const en = document.getElementById('entityName');
-                    officeAcr = (en && en.value.trim()) ? en.value.trim() : 'OFFICE';
-                    isOutside = true;
+                    officeDisp = (en && en.value.trim()) ? en.value.trim() : 'OFFICE';
                 }
             }
-            // Always keep read-only; preview drives the value
+            // Preserve digits; only update OFFICE tokens in current value
+            const current = field.value || '';
+            const updated = current.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
             field.readOnly = true;
             field.required = false;
             field.placeholder = '';
-            tpl = replaceDatePlaceholdersLocal(tpl);
-            tpl = tpl.replace(/\{OFFICE\}|OFFICE/g, officeAcr);
-            tpl = padDigitsForPreview(tpl);
-            tpl = tpl.replace(/--+/g,'-').replace(/^-|-$/g,'');
-            field.value = tpl;
+            field.value = updated;
         }
         const destSel = document.getElementById('destinationOffice');
         if (destSel) destSel.addEventListener('change', computeIcsPreview);
