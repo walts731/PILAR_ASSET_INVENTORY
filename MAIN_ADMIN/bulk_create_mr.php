@@ -481,7 +481,27 @@ $tagHelper = new TagFormatHelper($conn);
             const storedAssets = sessionStorage.getItem('selectedAssets');
             if (storedAssets) {
                 selectedAssets = JSON.parse(storedAssets);
-                displayAssets();
+                // Validate that all selected assets belong to the same asset_new_id group
+                validateSameAssetNewGroup(selectedAssets)
+                  .then((ok) => {
+                    if (!ok) {
+                      // Mixed groups detected. Clear selection and redirect back with message
+                      alert('Selected assets belong to different groups and cannot be processed together. Redirecting back to Inventory.');
+                      try { sessionStorage.removeItem('selectedAssets'); } catch (e) {}
+                      const url = new URL(window.location.origin + window.location.pathname.replace('bulk_create_mr.php','inventory.php'));
+                      url.searchParams.set('bulk_mr_msg', 'mixed_asset_new');
+                      window.location.href = url.toString();
+                      return;
+                    }
+                    // Proceed to render assets
+                    displayAssets();
+                  })
+                  .catch((err) => {
+                    console.error('Validation failed:', err);
+                    alert('Failed to validate selected assets. Redirecting back to Inventory.');
+                    try { sessionStorage.removeItem('selectedAssets'); } catch (e) {}
+                    window.location.href = 'inventory.php?bulk_mr_msg=validation_error';
+                  });
             } else {
                 // Redirect back if no assets selected
                 alert('No assets selected. Redirecting back to inventory.');
@@ -501,6 +521,39 @@ $tagHelper = new TagFormatHelper($conn);
             setAccountableName();
             $('#accountablePerson').on('change', setAccountableName);
         });
+
+        // Validate that all asset ids map to the same asset_new_id
+        async function validateSameAssetNewGroup(assets) {
+            try {
+                const ids = assets.map(a => parseInt(a.id, 10)).filter(n => n > 0);
+                if (!ids.length) return false;
+                const form = new FormData();
+                ids.forEach(id => form.append('ids[]', id));
+                const resp = await fetch('get_asset_new_ids.php', {
+                    method: 'POST',
+                    body: form,
+                    credentials: 'same-origin'
+                });
+                if (!resp.ok) return false;
+                const data = await resp.json();
+                if (!data || data.error) return false;
+
+                // Build set including null group if present
+                const map = data.map || {};
+                const groups = new Set();
+                let hasNull = false;
+                Object.values(map).forEach(v => {
+                    if (v === null) { hasNull = true; }
+                    else { groups.add(String(v)); }
+                });
+                // Count distinct groups: non-null groups + possibly one null group
+                const distinctCount = groups.size + (hasNull ? 1 : 0);
+                return distinctCount <= 1;
+            } catch (e) {
+                console.error('validateSameAssetNewGroup error:', e);
+                return false;
+            }
+        }
 
         function displayAssets() {
             const container = $('#assetsContainer');
