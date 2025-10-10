@@ -21,18 +21,29 @@ $office_filter = $_GET['office'] ?? 'all';
 $category_filter = $_GET['category'] ?? 'all';
 $status_filter = $_GET['status'] ?? 'all';
 
-// Get system information and logo
-$logoPath = '../img/PILAR LOGO TRANSPARENT.png';
-$logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
-
+// Get system information and logo (prefer logo from system table if present)
+$defaultLogoPath = '../img/PILAR LOGO TRANSPARENT.png';
 $system_info = [
   'system_title' => 'PILAR Asset Inventory System',
-  'logo' => $logoBase64
+  'logo' => (file_exists($defaultLogoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($defaultLogoPath)) : '')
 ];
 
 $system_query = $conn->query("SELECT system_title, logo FROM system LIMIT 1");
 if ($system_query && $system_row = $system_query->fetch_assoc()) {
   $system_info['system_title'] = $system_row['system_title'] ?? $system_info['system_title'];
+  if (!empty($system_row['logo'])) {
+    // Try uploads/logos first (current storage), then img/ as fallback
+    $candidatePaths = [
+      '../uploads/logos/' . $system_row['logo'],
+      '../img/' . $system_row['logo']
+    ];
+    foreach ($candidatePaths as $p) {
+      if (is_file($p)) {
+        $system_info['logo'] = 'data:image/png;base64,' . base64_encode(file_get_contents($p));
+        break;
+      }
+    }
+  }
 }
 
 // Get office name for filtering
@@ -50,7 +61,7 @@ if ($office_filter !== 'all') {
 
 // Build SQL query with date and office filtering
 $sql = "SELECT 
-          a.inventory_tag,
+          a.property_no,
           a.description,
           c.category_name,
           o.office_name,
@@ -241,10 +252,9 @@ if (empty($records)) {
     <table>
         <thead>
             <tr>
-                <th>Inv. Tag</th>
+                <th>Property No</th>
                 <th>Description</th>
                 <th>Category</th>
-                <th>Office</th>
                 <th>Status</th>
                 <th>Employee</th>
                 <th>End User</th>
@@ -260,10 +270,9 @@ if (empty($records)) {
     foreach ($records as $record) {
         $html .= '
             <tr>
-                <td>' . htmlspecialchars($record['inventory_tag'] ?? '') . '</td>
+                <td>' . htmlspecialchars($record['property_no'] ?? '') . '</td>
                 <td>' . htmlspecialchars($record['description'] ?? '') . '</td>
                 <td>' . htmlspecialchars($record['category_name'] ?? '') . '</td>
-                <td>' . htmlspecialchars($record['office_name'] ?? '') . '</td>
                 <td>' . htmlspecialchars(ucfirst($record['status'] ?? '')) . '</td>
                 <td>' . htmlspecialchars($record['employee_name'] ?? '') . '</td>
                 <td>' . htmlspecialchars($record['end_user'] ?? '') . '</td>
