@@ -86,32 +86,74 @@ if ($result) {
     }
 }
 
-// Get all permissions
-$permissions = [];
-$result = $conn->query("SELECT * FROM permissions ORDER BY name");
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $permissions[] = $row;
-    }
-}
+// Get all permissions grouped by category
+$permissionsByCategory = getPermissionsByCategory($conn);
 
 // Get permissions for a specific role
-function getRolePermissions($conn, $roleName) {
+function getRolePermissions($conn, $roleId) {
     $rolePermissions = [];
     $stmt = $conn->prepare("
         SELECT p.name 
         FROM permissions p
-        JOIN user_permissions up ON p.name = up.permission
-        JOIN users u ON up.user_id = u.id
-        WHERE u.role = ?
+        JOIN role_permissions rp ON p.id = rp.permission_id
+        WHERE rp.role_id = ?
     ");
-    $stmt->bind_param('s', $roleName);
+    $stmt->bind_param('i', $roleId);
     $stmt->execute();
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
         $rolePermissions[] = $row['name'];
     }
     return $rolePermissions;
+}
+
+// Get all permissions grouped by category
+function getPermissionsByCategory($conn) {
+    $permissions = [];
+    $result = $conn->query("SELECT * FROM permissions ORDER BY name");
+    
+    if (!$result) {
+        error_log("Error fetching permissions: " . $conn->error);
+        return [];
+    }
+    
+    // Define categories based on permission name patterns
+    $categories = [
+        'Dashboard' => ['view_dashboard'],
+        'User Management' => ['view_users', 'view_users_'],
+        'Role Management' => ['view_roles', 'view_roles_'],
+        'Permission Management' => ['view_permissions', 'view_permissions_'],
+        'Asset Management' => ['view_assets', 'view_assets_'],
+        'Category Management' => ['view_categories', 'view_categories_'],
+        'Location Management' => ['view_locations', 'view_locations_'],
+        'Supplier Management' => ['view_suppliers', 'view_suppliers_'],
+        'Status Management' => ['view_status', 'view_status_'],
+        'Type Management' => ['view_types', 'view_types_']
+    ];
+    
+    while ($row = $result->fetch_assoc()) {
+        $category = 'Other';
+        
+        // Determine category based on permission name
+        foreach ($categories as $catName => $patterns) {
+            foreach ($patterns as $pattern) {
+                if (strpos($row['name'], $pattern) === 0) {
+                    $category = $catName;
+                    break 2;
+                }
+            }
+        }
+        
+        if (!isset($permissions[$category])) {
+            $permissions[$category] = [];
+        }
+        $permissions[$category][] = $row;
+    }
+    
+    // Sort categories alphabetically
+    ksort($permissions);
+    
+    return $permissions;
 }
 
 // Validate and sanitize role_id from query string
@@ -132,19 +174,18 @@ if ($selectedRoleId === null && !empty($roles)) {
     $selectedRoleId = $roles[0]['id'];
 }
 
-// Get permissions for the selected role
-$roleName = '';
+// Get role details and permissions for the selected role
+$roleDetails = null;
 if ($selectedRoleId) {
-    // Find the role name by ID
-    $stmt = $conn->prepare("SELECT role FROM users WHERE id = ? LIMIT 1");
+    // Get role details
+    $stmt = $conn->prepare("SELECT * FROM roles WHERE id = ?");
     $stmt->bind_param('i', $selectedRoleId);
     $stmt->execute();
-    $result = $stmt->get_result();
-    if ($row = $result->fetch_assoc()) {
-        $roleName = $row['role'];
-    }
+    $roleDetails = $stmt->get_result()->fetch_assoc();
 }
-$rolePermissions = $roleName ? getRolePermissions($conn, $roleName) : [];
+
+// Get permissions for the selected role
+$rolePermissions = $selectedRoleId ? getRolePermissions($conn, $selectedRoleId) : [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -193,6 +234,35 @@ $rolePermissions = $roleName ? getRolePermissions($conn, $roleName) : [];
             border-radius: 0.5rem;
             box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
             margin-bottom: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+        }
+        
+        .permission-item {
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            transition: background-color 0.2s;
+        }
+        
+        .permission-item:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .form-check-input:checked {
+            background-color: #4e73df;
+            border-color: #4e73df;
+        }
+        
+        /* Search highlight */
+        .highlight {
+            background-color: #fff3cd;
+            padding: 0.1rem 0.2rem;
+            border-radius: 0.2rem;
         }
         .card-header {
             background-color: #f8f9fc;
@@ -333,40 +403,42 @@ $rolePermissions = $roleName ? getRolePermissions($conn, $roleName) : [];
                                 <form method="post" action="">
                                     <input type="hidden" name="role_id" value="<?php echo $selectedRoleId; ?>">
                                     
-                                    <div class="row g-4">
-                                        <?php 
-                                        // Group permissions by their prefix (e.g., 'manage_', 'view_', etc.)
-                                        $groupedPermissions = [];
-                                        foreach ($permissions as $permission) {
-                                            $prefix = strtok($permission['name'], '_') . '_';
-                                            $groupedPermissions[$prefix][] = $permission;
-                                        }
-                                        
-                                        foreach ($groupedPermissions as $prefix => $permissionGroup): 
-                                            $groupName = ucwords(str_replace('_', ' ', rtrim($prefix, '_'))) . ' Permissions';
-                                        ?>
-                                            <div class="col-12 col-md-6">
-                                                <div class="permission-group">
-                                                    <h6 class="font-weight-bold text-primary mb-3">
-                                                        <i class="bi bi-shield-lock me-2"></i><?php echo $groupName; ?>
+                                    <div class="permission-categories">
+                                        <?php foreach ($permissionsByCategory as $category => $permissions): ?>
+                                            <div class="card mb-4 category-card">
+                                                <div class="card-header d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0">
+                                                        <?php echo htmlspecialchars($category); ?>
                                                     </h6>
-                                                    <div class="permission-list">
-                                                        <?php foreach ($permissionGroup as $permission): ?>
-                                                            <div class="permission-item">
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary select-category" data-category="<?php echo htmlspecialchars($category); ?>">
+                                                            <i class="bi bi-check2-all me-1"></i> Select All
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary deselect-category" data-category="<?php echo htmlspecialchars($category); ?>">
+                                                            <i class="bi bi-x-lg me-1"></i> Deselect All
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="row g-3">
+                                                        <?php foreach ($permissions as $permission): ?>
+                                                            <div class="col-md-6 permission-item" data-category="<?php echo htmlspecialchars($category); ?>" data-name="<?php echo htmlspecialchars(strtolower($permission['name'] . ' ' . $permission['description'])); ?>">
                                                                 <div class="form-check">
-                                                                    <input class="form-check-input" type="checkbox" 
-                                                                            name="permissions[]" 
-                                                                            value="<?php echo $permission['id']; ?>"
-                                                                            id="perm_<?php echo $permission['id']; ?>"
-                                                                            <?php echo in_array($permission['id'], $rolePermissions) ? 'checked' : ''; ?>>
-                                                                    <label class="form-check-label w-100" for="perm_<?php echo $permission['id']; ?>">
-                                                                        <div class="font-weight-medium">
-                                                                            <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $permission['name']))); ?>
-                                                                        </div>
-                                                                        <div class="small text-muted">
+                                                                    <input class="form-check-input permission-checkbox" 
+                                                                           type="checkbox" 
+                                                                           name="permissions[]" 
+                                                                           value="<?php echo $permission['id']; ?>"
+                                                                           id="perm_<?php echo $permission['id']; ?>"
+                                                                           data-category="<?php echo htmlspecialchars($category); ?>"
+                                                                           <?php echo in_array($permission['name'], $rolePermissions) ? 'checked' : ''; ?>>
+                                                                    <label class="form-check-label" for="perm_<?php echo $permission['id']; ?>">
+                                                                        <strong><?php echo htmlspecialchars($permission['name']); ?></strong>
+                                                                    </label>
+                                                                    <?php if (!empty($permission['description'])): ?>
+                                                                        <div class="form-text text-muted small">
                                                                             <?php echo htmlspecialchars($permission['description']); ?>
                                                                         </div>
-                                                                    </label>
+                                                                    <?php endif; ?>
                                                                 </div>
                                                             </div>
                                                         <?php endforeach; ?>
