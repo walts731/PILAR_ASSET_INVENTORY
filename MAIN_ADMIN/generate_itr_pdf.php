@@ -272,52 +272,36 @@ $html .= '</table>
 
 <div style="height: 20px;"></div>
 
-<table>
-    <tr style="text-align: center; font-weight: bold;">
-        <td style="width: 33.33%;">Approved by:</td>
-        <td style="width: 33.33%;">Released/Issued by:</td>
-        <td style="width: 33.33%;">Received by:</td>
-    </tr>
-    <tr>
-        <td style="height: 15px; text-align: center;">Signature:</td>
-        <td style="text-align: center;">Signature:</td>
-        <td style="text-align: center;">Signature:</td>
-    </tr>
-    <tr>
-        <td style="height: 20px; text-align: center;">___________________</td>
-        <td style="text-align: center;">___________________</td>
-        <td style="text-align: center;">___________________</td>
-    </tr>
-    <tr>
-        <td style="text-align: center; font-weight: bold;">Printed Name:</td>
-        <td style="text-align: center; font-weight: bold;">Printed Name:</td>
-        <td style="text-align: center; font-weight: bold;">Printed Name:</td>
-    </tr>
-    <tr>
-        <td style="text-align: center; font-weight: bold;">' . htmlspecialchars($itr['approved_by'] ?? 'MARK JAYSON NAMIA') . '</td>
-        <td style="text-align: center; font-weight: bold;">' . htmlspecialchars($itr['released_by'] ?? 'ROY RICARDO') . '</td>
-        <td style="text-align: center; font-weight: bold;">' . htmlspecialchars($itr['received_by'] ?? 'VLADIMIR M. ANDRES') . '</td>
-    </tr>
-    <tr>
-        <td style="text-align: center; font-weight: bold;">Designation:</td>
-        <td style="text-align: center; font-weight: bold;">Designation:</td>
-        <td style="text-align: center; font-weight: bold;">Designation:</td>
-    </tr>
-    <tr>
-        <td style="text-align: center;">' . htmlspecialchars($itr['approved_designation'] ?? 'PROPERTY CUSTODIAN') . '</td>
-        <td style="text-align: center;">' . htmlspecialchars($itr['released_designation'] ?? 'OFFICE CLERK') . '</td>
-        <td style="text-align: center;">' . htmlspecialchars($itr['received_designation'] ?? 'Administrative Aide VI') . '</td>
-    </tr>
-    <tr>
-        <td style="text-align: center; font-weight: bold;">Date:</td>
-        <td style="text-align: center; font-weight: bold;">Date:</td>
-        <td style="text-align: center; font-weight: bold;">Date:</td>
-    </tr>
-    <tr>
-        <td style="text-align: center;">' . ($itr['approved_date'] ? date('m/d/Y', strtotime($itr['approved_date'])) : '') . '</td>
-        <td style="text-align: center;">' . ($itr['released_date'] ? date('m/d/Y', strtotime($itr['released_date'])) : '') . '</td>
-        <td style="text-align: center;">' . ($itr['received_date'] ? date('m/d/Y', strtotime($itr['received_date'])) : '') . '</td>
-    </tr>
+<table style="width:100%; border:1px solid #000; border-collapse:collapse; margin-top:10px;">
+  <tr style="text-align:center; font-weight:bold;">
+    <td style="width:33.33%;">Approved by:</td>
+    <td style="width:33.33%;">Released/Issued by:</td>
+    <td style="width:33.33%;">Received by:</td>
+  </tr>
+
+  <tr>
+    <td colspan="3" style="height:25px;">Signature:</td>
+  </tr>
+
+  <tr>
+    <td style="width:33.33%;"><b>Printed Name:</b> ' . htmlspecialchars($itr['approved_by'] ?? '') . '</td>
+   <td style="width:33.33%; text-align:center; vertical-align:middle;">' . htmlspecialchars($itr['released_by'] ?? '') . '</td>
+<td style="width:33.33%; text-align:center; vertical-align:middle;">' . htmlspecialchars($itr['received_by'] ?? '') . '</td>
+
+  </tr>
+
+  <tr>
+    <td><b>Designation:</b> ' . htmlspecialchars($itr['approved_designation'] ?? 'PROPERTY CUSTODIAN') . '</td>
+    <td style="text-align:center; vertical-align:middle;"><b></b> ' . htmlspecialchars($itr['released_designation'] ?? '') . '</td>
+<td style="text-align:center; vertical-align:middle;"><b></b> ' . htmlspecialchars($itr['received_designation'] ?? '') . '</td>
+
+  </tr>
+
+  <tr>
+    <td><b>Date:</b></td>
+    <td style="text-align:center;">' . ($itr['released_date'] ? date('n/j/Y', strtotime($itr['released_date'])) : '') . '</td>
+    <td></td>
+  </tr>
 </table>
 
 </body>

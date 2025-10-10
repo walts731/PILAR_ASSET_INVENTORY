@@ -383,12 +383,12 @@ if (!empty($_SESSION['flash'])) {
               <td><input type="number" step="0.01" name="amount[]" class="form-control shadow" value="<?= htmlspecialchars($item['amount']) ?>" required></td>
               <td><input type="text" name="condition_of_PPE[]" class="form-control shadow" value="<?= htmlspecialchars($item['condition_of_PPE']) ?>" required></td>
               <td>
-                <button type="button" class="btn btn-sm btn-danger remove-row" title="Remove Row">
-                  <i class="bi bi-trash"></i>
-                </button>
-                <button type="button" class="btn btn-sm btn-warning clear-row ms-1" title="Clear Fields">
-                  <i class="bi bi-eraser"></i>
-                </button>
+                <!-- First row: no Remove, keep Clear; actions inline -->
+                <div class="d-inline-flex align-items-center">
+                  <button type="button" class="btn btn-sm btn-warning clear-row" title="Clear Fields">
+                    <i class="bi bi-eraser"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           <?php endfor; ?>
@@ -462,7 +462,7 @@ if (!empty($_SESSION['flash'])) {
             <label class="form-label mt-2"><?= ucfirst($role) ?> Designation <span style="color: red;">*</span></label>
             <input type="text" name="<?= $role ?>_designation" class="form-control shadow" value="<?= htmlspecialchars($itr[$role . '_designation']) ?>" required>
             <label class="form-label mt-2"><?= ucfirst($role) ?> Date</label>
-            <input type="date" name="<?= $role ?>_date" class="form-control shadow" value="<?= htmlspecialchars($itr[$role . '_date']) ?>">
+            <input type="date" name="<?= $role ?>_date" class="form-control shadow" value="">
           </div>
         <?php endforeach; ?>
       </div>
@@ -902,14 +902,17 @@ if (!empty($_SESSION['flash'])) {
         </td>
         <td><input type="number" step="0.01" name="amount[]" class="form-control shadow"></td>
         <td><input type="text" name="condition_of_PPE[]" class="form-control shadow"></td>
-        <td>
-          <button type="button" class="btn btn-sm btn-danger remove-row" title="Remove Row">
-            <i class="bi bi-trash"></i>
-          </button>
-          <button type="button" class="btn btn-sm btn-warning clear-row ms-1" title="Clear Fields">
-            <i class="bi bi-eraser"></i>
-          </button>
-        </td>
+        <td class="text-center">
+  <div class="d-inline-flex align-items-center gap-1">
+    <button type="button" class="btn btn-sm btn-danger remove-row" title="Remove Row">
+      <i class="bi bi-trash"></i>
+    </button>
+    <button type="button" class="btn btn-sm btn-warning clear-row" title="Clear Fields">
+      <i class="bi bi-eraser"></i>
+    </button>
+  </div>
+</td>
+
       `;
       table.appendChild(newRow);
       renumberItemNos();
