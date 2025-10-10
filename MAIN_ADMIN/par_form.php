@@ -147,7 +147,7 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
                 <tr>
                     <td>
                         <label class="form-label fw-semibold mb-0">Entity Name <span style="color: red;">*</span></label>
-                        <input type="text" name="entity_name" class="form-control shadow" required>
+                        <input type="text" id="parEntityName" name="entity_name" class="form-control shadow" required>
                     </td>
                     <td>
                         <!-- Blank right cell -->
@@ -370,8 +370,15 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
             const opt = sel.options[sel.selectedIndex];
             const txt = opt ? (opt.text || '') : '';
             if (sel.value && sel.value !== 'outside_lgu') officeAcr = (txt || '').trim() || 'OFFICE';
-            else officeAcr = 'Outside LGU';
+            else {
+                const en = document.getElementById('parEntityName');
+                officeAcr = (en && en.value.trim()) ? en.value.trim() : 'OFFICE';
+            }
         }
+        // Always keep auto-preview read-only; value comes from template
+        field.readOnly = true;
+        field.required = false;
+        field.placeholder = '';
         tpl = replaceDatePlaceholdersLocal(tpl);
         tpl = tpl.replace(/\{OFFICE\}|OFFICE/g, officeAcr);
         tpl = padDigitsForPreview(tpl);
@@ -382,6 +389,8 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
     document.addEventListener('DOMContentLoaded', ()=>{
         const sel = document.querySelector('select[name="office_id"]');
         if (sel) sel.addEventListener('change', computeParPreview);
+        const en = document.getElementById('parEntityName');
+        if (en) en.addEventListener('input', computeParPreview);
         computeParPreview();
     });
 
