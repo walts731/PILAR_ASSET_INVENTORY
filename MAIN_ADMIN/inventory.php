@@ -719,18 +719,20 @@ ORDER BY an.date_created DESC
         <?php
         // Query for assets missing inventory_tag (not filtered by office)
         $stmtNP = $conn->prepare("
-          SELECT 
-            a.*, 
-            COALESCE(c.category_name, 'Uncategorized') AS category_name, 
-            f.ics_no,
-            p.par_no
-          FROM assets a
-          LEFT JOIN categories c ON a.category = c.id
-          LEFT JOIN ics_form f ON a.ics_id = f.id
-          LEFT JOIN par_form p ON a.par_id = p.id
-          WHERE a.type = 'asset' AND a.quantity > 0 AND (a.inventory_tag IS NULL OR a.inventory_tag = '')
-          ORDER BY a.last_updated DESC
-        ");
+  SELECT 
+    a.*, 
+    COALESCE(c.category_name, 'Uncategorized') AS category_name, 
+    f.ics_no,
+    p.par_no,
+    o.office_name AS office_name
+  FROM assets a
+  LEFT JOIN categories c ON a.category = c.id
+  LEFT JOIN ics_form f ON a.ics_id = f.id
+  LEFT JOIN par_form p ON a.par_id = p.id
+  LEFT JOIN offices o ON a.office_id = o.id
+  WHERE a.type = 'asset' AND a.quantity > 0 AND (a.inventory_tag IS NULL OR a.inventory_tag = '')
+  ORDER BY a.last_updated DESC
+");
 
         $stmtNP->execute();
         $npResult = $stmtNP->get_result();
@@ -778,19 +780,25 @@ ORDER BY an.date_created DESC
                         data-category-id="<?= $row['category'] ?>">
                     </td>
                     <td>
-                      <?php
-                      $displayNo = 'N/A';
-                      // Prefer PAR number if linked; otherwise use ICS number if linked
-                      if (!empty($row['par_no'])) {
-                        $displayNo = htmlspecialchars($row['par_no']);
-                      } elseif (!empty($row['ics_no'])) {
-                        $displayNo = htmlspecialchars($row['ics_no']);
-                      } else {
-                        $displayNo = 'N/A';
-                      }
-                      echo $displayNo;
-                      ?>
-                    </td>
+  <?php
+  $officeName = trim((string)($row['office_name'] ?? ''));
+  $displayRaw = '';
+  if (!empty($row['par_no'])) {
+    $displayRaw = $row['par_no'];
+  } elseif (!empty($row['ics_no'])) {
+    $displayRaw = $row['ics_no'];
+  }
+
+  if ($displayRaw !== '') {
+    if ($officeName !== '') {
+      $displayRaw = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $displayRaw);
+    }
+    echo htmlspecialchars($displayRaw);
+  } else {
+    echo 'N/A';
+  }
+  ?>
+</td>
                     <td><?= htmlspecialchars($row['description']) ?></td>
                     <td><?= htmlspecialchars($row['category_name']) ?></td>
                     <td><?= $row['quantity'] ?></td>
