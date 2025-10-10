@@ -68,6 +68,15 @@ if ($result && $result->num_rows > 0) {
     }
 }
 
+// Fetch active ICS template
+$ics_template = '';
+if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'ics_no' AND is_active = 1 LIMIT 1")) {
+    $st_fmt->execute();
+    $rs_fmt = $st_fmt->get_result();
+    if ($rs_fmt && ($r = $rs_fmt->fetch_assoc())) { $ics_template = $r['format_template'] ?? ''; }
+    $st_fmt->close();
+}
+
 // Load ICS max threshold for client-side hints/validation
 $ics_max = 50000.00; // default fallback
 $thrRes = $conn->query("SELECT ics_max FROM form_thresholds ORDER BY id ASC LIMIT 1");
@@ -159,7 +168,7 @@ if ($thrRes && $thrRes->num_rows > 0) {
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">ICS NO. (Auto-generated)</label>
                     <div class="input-group">
-                        <input type="text" class="form-control shadow" name="ics_no" value="<?= previewTag('ics_no') ?>" readonly>
+                        <input type="text" class="form-control shadow" id="icsNoField" name="ics_no" value="<?= previewTag('ics_no') ?>" readonly>
                         <span class="input-group-text">
                             <i class="bi bi-magic" title="Auto-generated"></i>
                         </span>
@@ -336,6 +345,55 @@ if ($thrRes && $thrRes->num_rows > 0) {
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Dynamic ICS No preview
+        const ICS_TEMPLATE = <?= json_encode($ics_template) ?>;
+        function deriveOfficeAcronym(name) {
+            if (!name) return 'OFFICE';
+            const parts = String(name).trim().toUpperCase().split(/\s+/);
+            let ac = parts.map(p => (p[0] || '').replace(/[^A-Z0-9]/g,'')).join('');
+            if (!ac) ac = String(name).replace(/[^A-Z0-9]/g,'').toUpperCase();
+            return ac || 'OFFICE';
+        }
+        function replaceDatePlaceholdersLocal(tpl){
+            const now = new Date();
+            const Y = now.getFullYear().toString();
+            const M = String(now.getMonth()+1).padStart(2,'0');
+            const D = String(now.getDate()).padStart(2,'0');
+            return tpl
+                .replace(/\{YYYY\}|YYYY/g, Y)
+                .replace(/\{YY\}|YY/g, Y.slice(-2))
+                .replace(/\{MM\}|MM/g, M)
+                .replace(/\{DD\}|DD/g, D)
+                .replace(/\{YYYYMM\}|YYYYMM/g, Y+M)
+                .replace(/\{YYYYMMDD\}|YYYYMMDD/g, Y+M+D);
+        }
+        function padDigitsForPreview(tpl){
+            return tpl.replace(/\{(#+)\}/g, (m, hashes)=>{
+                const w = hashes.length; return '0'.repeat(Math.max(0,w-1)) + '1';
+            });
+        }
+        function computeIcsPreview(){
+            const field = document.getElementById('icsNoField');
+            if (!field) return;
+            let tpl = (ICS_TEMPLATE || '').trim();
+            if (!tpl) return;
+            const sel = document.getElementById('destinationOffice');
+            let officeAcr = 'OFFICE';
+            if (sel) {
+                const opt = sel.options[sel.selectedIndex];
+                const txt = opt ? (opt.text || '') : '';
+                if (sel.value && sel.value !== 'outside_lgu') officeAcr = deriveOfficeAcronym(txt); else officeAcr = 'OUT';
+            }
+            tpl = replaceDatePlaceholdersLocal(tpl);
+            tpl = tpl.replace(/\{OFFICE\}|OFFICE/g, officeAcr);
+            tpl = padDigitsForPreview(tpl);
+            tpl = tpl.replace(/--+/g,'-').replace(/^-|-$/g,'');
+            field.value = tpl;
+        }
+        const destSel = document.getElementById('destinationOffice');
+        if (destSel) destSel.addEventListener('change', computeIcsPreview);
+        computeIcsPreview();
+
         const ICS_MAX = parseFloat('<?= htmlspecialchars(number_format($ics_max, 2, '.', '')) ?>');
         const tableBody = document.getElementById('ics-items-body');
         const addRowBtn = document.getElementById('addRowBtn');

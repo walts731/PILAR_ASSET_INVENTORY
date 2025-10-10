@@ -54,6 +54,22 @@ $categories = [];
 $res_cats = $conn->query("SELECT id, category_name, category_code FROM categories ORDER BY category_name");
 if ($res_cats && $res_cats->num_rows > 0) { while ($cr = $res_cats->fetch_assoc()) { $categories[] = $cr; } }
 $code_format = $format['tag_type'] === 'asset_code' ? $format['format_template'] : '';
+
+// Offices for dynamic OFFICE preview (only used for non-asset_code types)
+$offices = [];
+$res_off = $conn->query("SELECT id, office_name FROM offices ORDER BY office_name");
+if ($res_off && $res_off->num_rows > 0) {
+    while ($or = $res_off->fetch_assoc()) {
+        // Derive acronym: first letter of each word, alnum only
+        $name = strtoupper(trim($or['office_name'] ?? ''));
+        $parts = preg_split('/\s+/', $name);
+        $ac = '';
+        foreach ($parts as $p) { $ac .= preg_replace('/[^A-Z0-9]/', '', substr($p, 0, 1)); }
+        if ($ac === '') { $ac = preg_replace('/[^A-Z0-9]/', '', $name); }
+        $or['office_acronym'] = $ac ?: 'OFFICE';
+        $offices[] = $or;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -169,6 +185,31 @@ $code_format = $format['tag_type'] === 'asset_code' ? $format['format_template']
               </div>
             </div>
 
+            <!-- Dynamic Preview Controls -->
+            <div class="row g-3 mt-2 align-items-end">
+              <?php if ($format['tag_type'] !== 'asset_code'): ?>
+              <div class="col-md-6">
+                <label class="form-label">Preview Office</label>
+                <select id="previewOfficeSelect" class="form-select" onchange="previewFormat(this.form)">
+                  <?php foreach ($offices as $o): ?>
+                    <option value="<?= (int)$o['id'] ?>" data-acr="<?= htmlspecialchars($o['office_acronym']) ?>">
+                      <?= htmlspecialchars($o['office_name']) ?> (<?= htmlspecialchars($o['office_acronym']) ?>)
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+              <?php endif; ?>
+              <div class="col-md-6">
+                <label class="form-label">Preview Counter</label>
+                <div class="input-group">
+                  <button class="btn btn-outline-secondary" type="button" onclick="bumpCounter(-1)">-</button>
+                  <input type="number" id="previewCounter" class="form-control" value="1" min="1" oninput="previewFormat(this.form)">
+                  <button class="btn btn-outline-secondary" type="button" onclick="bumpCounter(1)">+</button>
+                </div>
+                <small class="text-muted">Digits like {###} will show this counter padded (e.g., 1 → 001).</small>
+              </div>
+            </div>
+
             <?php if ($format['tag_type'] === 'asset_code'): ?>
             <div class="alert alert-info mt-2 mb-0">
               <i class="bi bi-info-circle me-2"></i>
@@ -206,8 +247,38 @@ function replaceDatePlaceholders(template){
 }
 
 let includeOfficeInPreview=true; const officePreviewAcronym='MEO';
-document.addEventListener('DOMContentLoaded',()=>{ const t=document.getElementById('toggleOfficePreview'); if(t){ includeOfficeInPreview=!!t.checked; t.addEventListener('change',()=>includeOfficeInPreview=!!t.checked); }});
-function applyOfficePlaceholderPolicy(t){ let out=t; if(includeOfficeInPreview){ out=out.replace(/\{OFFICE\}|OFFICE/g, officePreviewAcronym);} else { out=out.replace(/-?\{OFFICE\}-?/g,'').replace(/-?OFFICE-?/g,'').replace(/--+/g,'-').replace(/^-|-$/g,''); } return out; }
+document.addEventListener('DOMContentLoaded',()=>{ const t=document.getElementById('toggleOfficePreview'); if(t){ includeOfficeInPreview=!!t.checked; t.addEventListener('change',()=>{ includeOfficeInPreview=!!t.checked; const form=document.querySelector('.tag-format-form'); if(form) previewFormat(form); }); }});
+
+// Dynamic controls: Office select and Counter
+function getSelectedOfficeAcronym(){
+  const sel = document.getElementById('previewOfficeSelect');
+  if (!sel) return officePreviewAcronym;
+  const opt = sel.options[sel.selectedIndex];
+  return (opt && opt.getAttribute('data-acr')) ? opt.getAttribute('data-acr') : officePreviewAcronym;
+}
+function getPreviewCounter(){
+  const inp = document.getElementById('previewCounter');
+  const n = inp ? parseInt(inp.value || '1', 10) : 1;
+  return isNaN(n) || n < 1 ? 1 : n;
+}
+function bumpCounter(delta){
+  const inp = document.getElementById('previewCounter');
+  if (!inp) return;
+  let v = parseInt(inp.value || '1', 10); if (isNaN(v)) v = 1; v += delta; if (v < 1) v = 1; inp.value = v;
+  const form=document.querySelector('.tag-format-form'); if(form) previewFormat(form);
+}
+
+function applyOfficePlaceholderPolicy(t){
+  let out=t;
+  if(includeOfficeInPreview){
+    const acr = getSelectedOfficeAcronym();
+    out = out.replace(/\{OFFICE\}|OFFICE/g, acr);
+  } else {
+    out = out.replace(/-?\{OFFICE\}-?/g,'').replace(/-?OFFICE-?/g,'');
+    out = out.replace(/--+/g,'-').replace(/^-|-$/g,'');
+  }
+  return out;
+}
 
 function previewFormat(templateOrForm){
   let template='';
@@ -217,7 +288,14 @@ function previewFormat(templateOrForm){
   }
   let preview=template; const now=new Date(); const y=now.getFullYear(); const m=String(now.getMonth()+1).padStart(2,'0'); const d=String(now.getDate()).padStart(2,'0');
   preview=preview.replace(/\{YYYY\}|YYYY/g,y).replace(/\{YY\}|YY/g,y.toString().slice(-2)).replace(/\{MM\}|MM/g,m).replace(/\{DD\}|DD/g,d).replace(/\{YYYYMM\}|YYYYMM/g,y+m).replace(/\{YYYYMMDD\}|YYYYMMDD/g,y+m+d);
-  preview=preview.replace(/\{(#+)\}/g,(m,hs)=>'0'.repeat(Math.max(1,hs.length-1))+'1');
+  // Replace digit blocks using preview counter padded to number of #
+  const cnt = getPreviewCounter();
+  preview=preview.replace(/\{(#+)\}/g,(match, hashes)=>{
+    const width = hashes.length;
+    const s = String(cnt);
+    if (s.length >= width) return s;
+    return '0'.repeat(width - s.length) + s;
+  });
   preview=preview.replace(/\{CODE\}|CODE/g,'COMP');
   preview=applyOfficePlaceholderPolicy(preview);
   // Inline box

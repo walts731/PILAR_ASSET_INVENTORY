@@ -69,6 +69,15 @@ $unit_query = $conn->query("SELECT id, unit_name FROM unit");
 while ($row = $unit_query->fetch_assoc()) {
     $units[] = $row;
 }
+
+// Fetch active format template for par_no
+$par_template = '';
+if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'par_no' AND is_active = 1 LIMIT 1")) {
+    $st_fmt->execute();
+    $rs_fmt = $st_fmt->get_result();
+    if ($rs_fmt && ($r = $rs_fmt->fetch_assoc())) { $par_template = $r['format_template'] ?? ''; }
+    $st_fmt->close();
+}
 ?>
 
 <div class="d-flex justify-content-end mb-3">
@@ -154,7 +163,7 @@ while ($row = $unit_query->fetch_assoc()) {
                     <td>
                         <label class="form-label fw-semibold mb-0">PAR No. (Auto-generated)</label>
                         <div class="input-group">
-                            <input type="text" name="par_no" class="form-control shadow" value="<?= previewTag('par_no') ?>" readonly>
+                            <input type="text" id="parNoField" name="par_no" class="form-control shadow" value="<?= previewTag('par_no') ?>" readonly>
                             <span class="input-group-text">
                                 <i class="bi bi-magic" title="Auto-generated"></i>
                             </span>
@@ -321,6 +330,61 @@ while ($row = $unit_query->fetch_assoc()) {
 
 <?php include 'modals/par_duplicate_modal.php' ?>
 <script>
+    // Dynamic PAR preview using selected office and date
+    const PAR_TEMPLATE = <?= json_encode($par_template) ?>;
+    function deriveOfficeAcronym(name) {
+        if (!name) return 'OFFICE';
+        const parts = String(name).trim().toUpperCase().split(/\s+/);
+        let ac = parts.map(p => (p[0] || '').replace(/[^A-Z0-9]/g,'')).join('');
+        if (!ac) ac = String(name).replace(/[^A-Z0-9]/g,'').toUpperCase();
+        return ac || 'OFFICE';
+    }
+    function replaceDatePlaceholdersLocal(tpl){
+        const now = new Date();
+        const Y = now.getFullYear().toString();
+        const M = String(now.getMonth()+1).padStart(2,'0');
+        const D = String(now.getDate()).padStart(2,'0');
+        return tpl
+            .replace(/\{YYYY\}|YYYY/g, Y)
+            .replace(/\{YY\}|YY/g, Y.slice(-2))
+            .replace(/\{MM\}|MM/g, M)
+            .replace(/\{DD\}|DD/g, D)
+            .replace(/\{YYYYMM\}|YYYYMM/g, Y+M)
+            .replace(/\{YYYYMMDD\}|YYYYMMDD/g, Y+M+D);
+    }
+    function padDigitsForPreview(tpl){
+        // For preview only, show next as 1 padded to digit count
+        return tpl.replace(/\{(#+)\}/g, (m, hashes)=>{
+            const w = hashes.length; return '0'.repeat(Math.max(0,w-1)) + '1';
+        });
+    }
+    function computeParPreview(){
+        const field = document.getElementById('parNoField');
+        if (!field) return;
+        let tpl = (PAR_TEMPLATE || '').trim();
+        if (!tpl) { field.value = field.value || ''; return; }
+        // OFFICE from select text
+        const sel = document.querySelector('select[name="office_id"]');
+        let officeAcr = 'OFFICE';
+        if (sel) {
+            const opt = sel.options[sel.selectedIndex];
+            const txt = opt ? (opt.text || '') : '';
+            if (sel.value && sel.value !== 'outside_lgu') officeAcr = deriveOfficeAcronym(txt);
+            else officeAcr = 'OUT';
+        }
+        tpl = replaceDatePlaceholdersLocal(tpl);
+        tpl = tpl.replace(/\{OFFICE\}|OFFICE/g, officeAcr);
+        tpl = padDigitsForPreview(tpl);
+        // Cleanup stray dashes
+        tpl = tpl.replace(/--+/g,'-').replace(/^-|-$/g,'');
+        field.value = tpl;
+    }
+    document.addEventListener('DOMContentLoaded', ()=>{
+        const sel = document.querySelector('select[name="office_id"]');
+        if (sel) sel.addEventListener('change', computeParPreview);
+        computeParPreview();
+    });
+
     let rowIndex = 1; // Start after the initial 1 row
     let selectedDescriptions = new Set(); // Track selected asset descriptions
 

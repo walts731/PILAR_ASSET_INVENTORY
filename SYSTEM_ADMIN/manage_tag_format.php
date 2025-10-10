@@ -260,32 +260,29 @@ if (isset($_SESSION['flash'])) {
                                     </h6>
                                     <div class="row">
                                         <div class="col-md-4">
-                                            <div class="card border-primary format-example-card" style="cursor: pointer;" onclick="applyFormatExample('YYYY-CODE-{####}')">
+                                            <div class="card border-primary format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">Standard Format</h6>
                                                     <code class="d-block mb-2">YYYY-CODE-{####}</code>
                                                     <small class="text-muted">2025-COMP-0001</small>
-                                                    <div class="mt-2"><small class="text-primary">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <div class="card border-success format-example-card" style="cursor: pointer;" onclick="applyFormatExample('{YYYY}{CODE}{####}')">
+                                            <div class="card border-success format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">Compact Format</h6>
                                                     <code class="d-block mb-2">{YYYY}{CODE}{####}</code>
                                                     <small class="text-muted">2025COMP0001</small>
-                                                    <div class="mt-2"><small class="text-success">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <div class="card border-warning format-example-card" style="cursor: pointer;" onclick="applyFormatExample('{CODE}-{YYYY}-{###}')">
+                                            <div class="card border-warning format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">Custom Format</h6>
                                                     <code class="d-block mb-2">{CODE}-{YYYY}-{###}</code>
                                                     <small class="text-muted">COMP-2025-001</small>
-                                                    <div class="mt-2"><small class="text-warning">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -299,42 +296,38 @@ if (isset($_SESSION['flash'])) {
                                             </h6>
                                         </div>
                                         <div class="col-md-3">
-                                            <div class="card border-info format-example-card" style="cursor: pointer;" onclick="testTagFormat('{YYYY}-PAR-{####}')">
+                                            <div class="card border-info format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">With Year</h6>
                                                     <code class="d-block mb-2">{YYYY}-PAR-{####}</code>
                                                     <small class="text-muted"><?= date('Y') ?>-PAR-0001</small>
-                                                    <div class="mt-2"><small class="text-info">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
-                                            <div class="card border-secondary format-example-card" style="cursor: pointer;" onclick="testTagFormat('ICS-{YYYYMM}-{###}')">
+                                            <div class="card border-secondary format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">Year-Month</h6>
                                                     <code class="d-block mb-2">ICS-{YYYYMM}-{###}</code>
                                                     <small class="text-muted">ICS-<?= date('Ym') ?>-001</small>
-                                                    <div class="mt-2"><small class="text-secondary">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
-                                            <div class="card border-dark format-example-card" style="cursor: pointer;" onclick="testTagFormat('{YYYYMMDD}-RT-{#####}')">
+                                            <div class="card border-dark format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">Full Date</h6>
                                                     <code class="d-block mb-2">{YYYYMMDD}-RT-{#####}</code>
                                                     <small class="text-muted"><?= date('Ymd') ?>-RT-00001</small>
-                                                    <div class="mt-2"><small class="text-dark">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
-                                            <div class="card border-danger format-example-card" style="cursor: pointer;" onclick="testTagFormat('ITR{YY}{MM}-{####}')">
+                                            <div class="card border-danger format-example-card">
                                                 <div class="card-body text-center">
                                                     <h6 class="card-title">Short Date</h6>
                                                     <code class="d-block mb-2">ITR{YY}{MM}-{####}</code>
                                                     <small class="text-muted">ITR<?= date('ym') ?>-0001</small>
-                                                    <div class="mt-2"><small class="text-danger">Click to test</small></div>
                                                 </div>
                                             </div>
                                         </div>

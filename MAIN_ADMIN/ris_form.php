@@ -16,6 +16,23 @@ $stmt->close();
 // via $ris_data above and shown as an editable field.
 
 ?>
+<?php
+// Fetch active templates for dynamic previews
+$ris_template = '';
+$sai_template = '';
+if ($st1 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'ris_no' AND is_active = 1 LIMIT 1")) {
+  $st1->execute();
+  $r1 = $st1->get_result();
+  if ($r1 && ($row = $r1->fetch_assoc())) { $ris_template = $row['format_template'] ?? ''; }
+  $st1->close();
+}
+if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'sai_no' AND is_active = 1 LIMIT 1")) {
+  $st2->execute();
+  $r2 = $st2->get_result();
+  if ($r2 && ($row2 = $r2->fetch_assoc())) { $sai_template = $row2['format_template'] ?? ''; }
+  $st2->close();
+}
+?>
 <?php if (isset($_GET['add']) && $_GET['add'] === 'success'): ?>
   <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
     <strong>Success!</strong> RIS Form & Items saved successfully.
@@ -211,6 +228,59 @@ $stmt->close();
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {
+    // Dynamic preview for RIS and SAI numbers
+    const RIS_TEMPLATE = <?= json_encode($ris_template) ?>;
+    const SAI_TEMPLATE = <?= json_encode($sai_template) ?>;
+    function deriveOfficeAcronym(name){
+      if (!name) return 'OFFICE';
+      const parts = String(name).trim().toUpperCase().split(/\s+/);
+      let ac = parts.map(p => (p[0]||'').replace(/[^A-Z0-9]/g,'')).join('');
+      if (!ac) ac = String(name).replace(/[^A-Z0-9]/g,'').toUpperCase();
+      return ac || 'OFFICE';
+    }
+    function applyDate(tpl, dateStr){
+      const d = dateStr ? new Date(dateStr) : new Date();
+      const Y = d.getFullYear().toString();
+      const M = String(d.getMonth()+1).padStart(2,'0');
+      const D = String(d.getDate()).padStart(2,'0');
+      return (tpl||'')
+        .replace(/\{YYYY\}|YYYY/g, Y)
+        .replace(/\{YY\}|YY/g, Y.slice(-2))
+        .replace(/\{MM\}|MM/g, M)
+        .replace(/\{DD\}|DD/g, D)
+        .replace(/\{YYYYMM\}|YYYYMM/g, Y+M)
+        .replace(/\{YYYYMMDD\}|YYYYMMDD/g, Y+M+D);
+    }
+    function padDigits(tpl){
+      return tpl.replace(/\{(#+)\}/g,(m,hs)=>{ const w = hs.length; return '0'.repeat(Math.max(0,w-1))+'1'; });
+    }
+    function computeOfficeAcr(){
+      const sel = document.getElementById('office_id');
+      if (!sel) return 'OFFICE';
+      const opt = sel.options[sel.selectedIndex];
+      const txt = opt ? (opt.text||'') : '';
+      return sel.value ? deriveOfficeAcronym(txt) : 'OFFICE';
+    }
+    function updatePreviews(){
+      const officeAcr = computeOfficeAcr();
+      const dateInput = document.getElementById('date');
+      const dateVal = dateInput ? dateInput.value : '';
+      if (RIS_TEMPLATE) {
+        let t = applyDate(RIS_TEMPLATE, dateVal).replace(/\{OFFICE\}|OFFICE/g, officeAcr);
+        t = padDigits(t).replace(/--+/g,'-').replace(/^-|-$/g,'');
+        const f = document.getElementById('ris_no'); if (f) f.value = t;
+      }
+      if (SAI_TEMPLATE) {
+        let t2 = applyDate(SAI_TEMPLATE, dateVal).replace(/\{OFFICE\}|OFFICE/g, officeAcr);
+        t2 = padDigits(t2).replace(/--+/g,'-').replace(/^-|-$/g,'');
+        const f2 = document.getElementById('sai_no'); if (f2) f2.value = t2;
+      }
+    }
+    const officeSel = document.getElementById('office_id');
+    if (officeSel) officeSel.addEventListener('change', updatePreviews);
+    const dateInputs = document.querySelectorAll('input[type="date"]#date');
+    dateInputs.forEach(d => d.addEventListener('change', updatePreviews));
+    updatePreviews();
     const tableBody = document.querySelector("tbody");
 
     // Add Row button click - clones structure consistent with the first row
