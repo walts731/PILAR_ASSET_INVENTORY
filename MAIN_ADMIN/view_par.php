@@ -127,14 +127,14 @@ $stmt->close();
           <div class="row mb-3">
             <div class="col-md-6">
               <label class="form-label fw-semibold">Entity Name</label>
-              <input type="text" class="form-control shadow" name="entity_name" value="<?= htmlspecialchars($par['entity_name']) ?>" required />
+              <input type="text" class="form-control shadow" name="entity_name" value="<?= htmlspecialchars($par['entity_name']) ?>" readonly />
             </div>
           </div>
 
           <div class="row mb-3">
             <div class="col-md-4">
               <label class="form-label fw-semibold">Fund Cluster</label>
-              <input type="text" class="form-control shadow" name="fund_cluster" value="<?= htmlspecialchars($par['fund_cluster']) ?>" />
+              <input type="text" class="form-control shadow" name="fund_cluster" value="<?= htmlspecialchars($par['fund_cluster']) ?>" readonly />
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">PAR No.</label>

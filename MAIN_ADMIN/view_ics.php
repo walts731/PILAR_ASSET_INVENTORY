@@ -95,27 +95,22 @@ $stmt->close();
               <?php else: ?>
                 <p class="text-muted">No header image</p>
               <?php endif; ?>
-            </div>
-
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <label class="form-label fw-semibold ">Entity Name</label>
-                <input type="text" class="form-control shadow" name="entity_name" value="<?= htmlspecialchars($ics['entity_name']) ?>" required />
-              </div>
-            </div>
-
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Fund Cluster</label>
-                <input type="text" class="form-control shadow" name="fund_cluster" value="<?= htmlspecialchars($ics['fund_cluster']) ?>" />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">ICS No.</label>
-                <input type="text" class="form-control shadow" name="ics_no" value="<?= htmlspecialchars($icsNoDisplay) ?>" required />
-              </div>
-            </div>
-
             <hr>
+            <!-- Readonly Header Fields -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Entity Name</label>
+                <input type="text" class="form-control shadow" value="<?= htmlspecialchars($ics['entity_name'] ?? '') ?>" readonly />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Fund Cluster</label>
+                <input type="text" class="form-control shadow" value="<?= htmlspecialchars($ics['fund_cluster'] ?? '') ?>" readonly />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">ICS No.</label>
+                <input type="text" class="form-control shadow" value="<?= htmlspecialchars($icsNoDisplay) ?>" readonly />
+              </div>
+            </div>
 
             <!-- Items Table -->
             <div class="table-responsive">

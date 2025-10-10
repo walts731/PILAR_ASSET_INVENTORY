@@ -181,12 +181,12 @@ $stmt->close();
               <div class="col-md-4">
                 <label for="entity_name" class="form-label">Entity Name <span style="color: red;">*</span></label>
                 <input type="text" id="entity_name" name="entity_name" class="form-control shadow" 
-                       value="<?= htmlspecialchars($itr['entity_name'] ?? '') ?>" required>
+                       value="<?= htmlspecialchars($itr['entity_name'] ?? '') ?>" readonly>
               </div>
               <div class="col-md-4">
                 <label for="fund_cluster" class="form-label">Fund Cluster <span style="color: red;">*</span></label>
                 <input type="text" id="fund_cluster" name="fund_cluster" class="form-control shadow" 
-                       value="<?= htmlspecialchars($itr['fund_cluster'] ?? '') ?>" required>
+                       value="<?= htmlspecialchars($itr['fund_cluster'] ?? '') ?>" readonly>
               </div>
               <div class="col-md-4">
                 <label for="date" class="form-label">Date</label>

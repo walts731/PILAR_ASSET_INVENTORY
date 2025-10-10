@@ -87,15 +87,15 @@ if ($res_off && $res_off->num_rows) {
 
         <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 10px;" class="mb-3">
           <div style="flex: 1; margin: 0 5px;">
-            <input type="text" name="accountable_officer" value="<?= htmlspecialchars($hdr['accountable_officer']) ?>" style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;">
+            <input type="text" name="accountable_officer" value="<?= htmlspecialchars($hdr['accountable_officer']) ?>" style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;" readonly>
             <br><small><em>(Name of Accountable Officer)</em></small>
           </div>
           <div style="flex: 1; margin: 0 5px;">
-            <input type="text" name="designation" value="<?= htmlspecialchars($hdr['designation']) ?>" style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;">
+            <input type="text" name="designation" value="<?= htmlspecialchars($hdr['designation']) ?>" style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;" readonly>
             <br><small><em>(Designation)</em></small>
           </div>
           <div style="flex: 1; margin: 0 5px;">
-            <select name="office" style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;">
+            <select name="office" style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;" disabled>
               <option value="">-- Select Office --</option>
               <?php foreach ($offices as $o): ?>
                 <option value="<?= htmlspecialchars($o['office_name']) ?>" <?= ($hdr['office'] == $o['office_name']) ? 'selected' : '' ?>><?= htmlspecialchars($o['office_name']) ?></option>

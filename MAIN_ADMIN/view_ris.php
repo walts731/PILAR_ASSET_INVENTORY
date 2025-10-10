@@ -80,26 +80,26 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
             <div class="row mb-3">
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Division</label>
-                    <input type="text" class="form-control" name="division" value="<?= htmlspecialchars($ris_data['division'] ?? '') ?>">
+                    <input type="text" class="form-control" name="division" value="<?= htmlspecialchars($ris_data['division'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Responsibility Center</label>
-                    <input type="text" class="form-control" name="responsibility_center" value="<?= htmlspecialchars($ris_data['responsibility_center'] ?? '') ?>">
+                    <input type="text" class="form-control" name="responsibility_center" value="<?= htmlspecialchars($ris_data['responsibility_center'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">RIS No.</label>
-                    <input type="text" class="form-control" name="ris_no" value="<?= htmlspecialchars($risNoDisplay) ?>">
+                    <input type="text" class="form-control" name="ris_no" value="<?= htmlspecialchars($risNoDisplay) ?>" readonly>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Date</label>
-                    <input type="date" class="form-control" name="date" value="<?= htmlspecialchars($ris_data['date'] ?? '') ?>">
+                    <input type="date" class="form-control" name="date" value="<?= htmlspecialchars($ris_data['date'] ?? '') ?>" readonly>
                 </div>
             </div>
 
             <div class="row mb-3">
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Office/Unit</label>
-                    <select class="form-select" name="office_id">
+                    <select class="form-select" name="office_id" disabled>
                         <?php foreach ($offices as $office): ?>
                             <option value="<?= $office['id'] ?>" <?= ($office['id'] == $ris_data['office_id']) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($office['office_name']) ?>
@@ -110,15 +110,15 @@ $units = $units_result ? $units_result->fetch_all(MYSQLI_ASSOC) : [];
 
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Code</label>
-                    <input type="text" class="form-control" name="responsibility_code" value="<?= htmlspecialchars($ris_data['responsibility_code'] ?? '') ?>">
+                    <input type="text" class="form-control" name="responsibility_code" value="<?= htmlspecialchars($ris_data['responsibility_code'] ?? '') ?>" readonly>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">SAI No.</label>
-                    <input type="text" class="form-control" name="sai_no" value="<?= htmlspecialchars($saiNoDisplay) ?>">
+                    <input type="text" class="form-control" name="sai_no" value="<?= htmlspecialchars($saiNoDisplay) ?>" readonly>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Date</label>
-                    <input type="date" class="form-control" name="sai_date" value="<?= htmlspecialchars($ris_data['date'] ?? '') ?>">
+                    <input type="date" class="form-control" name="sai_date" value="<?= htmlspecialchars($ris_data['date'] ?? '') ?>" readonly>
                 </div>
             </div>
 
