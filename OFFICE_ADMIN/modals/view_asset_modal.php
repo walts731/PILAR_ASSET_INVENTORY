@@ -1,94 +1,135 @@
 <div class="modal fade" id="viewAssetModal" tabindex="-1" aria-labelledby="viewAssetModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content shadow border border-dark">
-      <div class="modal-body p-4" style="font-family: 'Courier New', Courier, monospace;">
-        <div class="border border-2 border-dark rounded p-3">
-
-          <!-- HEADER -->
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <img id="municipalLogoImg" src="" alt="Municipal Logo" style="height: 70px;">
-            <div class="text-center flex-grow-1">
-              <h6 class="m-0 text-uppercase fw-bold">Government Property</h6>
-              <p class="m-0"><strong>Inventory Tag:</strong> <span id="viewInventoryTag"></span></p>
-            </div>
-            <img id="viewQrCode" src="" alt="QR Code" style="height: 70px;">
-          </div>
-
-          <hr class="border-dark">
-
-          <!-- SECTION 1: DESCRIPTION -->
-          <div class="mb-3">
-            <h6 class="fw-bold text-decoration-underline">Description</h6>
-            <p class="mb-1"><span id="viewDescription"></span></p>
-          </div>
-
-          <!-- SECTION 2: IMAGE + BASIC DETAILS -->
-          <div class="row mb-3">
-            <div class="col-5 text-center">
-              <img id="viewAssetImage" src="" alt="Asset Image"
-                   class="img-fluid border border-dark rounded"
-                   style="max-height: 150px; object-fit: contain;">
-            </div>
-            <div class="col-7">
-              <h6 class="fw-bold text-decoration-underline">Basic Information</h6>
-              <p class="mb-1"><strong>Office:</strong> <span id="viewOfficeName"></span></p>
-              <p class="mb-1"><strong>Category:</strong> <span id="viewCategoryName"></span></p>
-              <p class="mb-1"><strong>Type:</strong> <span id="viewType"></span></p>
-              <p class="mb-1"><strong>Status:</strong> <span id="viewStatus"></span></p>
-              <p class="mb-1"><strong>Quantity:</strong> <span id="viewQuantity"></span></p>
-              <p class="mb-1"><strong>Unit:</strong> <span id="viewUnit"></span></p>
-            </div>
-          </div>
-
-          <hr class="border-dark">
-
-          <!-- SECTION 3: IDENTIFICATION NUMBERS -->
-          <div class="mb-3">
-            <h6 class="fw-bold text-decoration-underline">Identification</h6>
-            <div class="row">
-              <div class="col-6">
-                <p class="mb-1"><strong>Serial No.:</strong> <span id="viewSerialNo"></span></p>
-                <p class="mb-1"><strong>Code:</strong> <span id="viewCode"></span></p>
-              </div>
-              <div class="col-6">
-                <p class="mb-1"><strong>Property No.:</strong> <span id="viewPropertyNo"></span></p>
-              </div>
-            </div>
-          </div>
-
-          <hr class="border-dark">
-
-          <!-- SECTION 4: SPECIFICATIONS + ASSIGNMENT -->
-          <div class="mb-3">
-            <h6 class="fw-bold text-decoration-underline">Specifications & Assignment</h6>
-            <div class="row">
-              <div class="col-6">
-                <p class="mb-1"><strong>Model:</strong> <span id="viewModel"></span></p>
-                <p class="mb-1"><strong>Brand:</strong> <span id="viewBrand"></span></p>
-              </div>
-              <div class="col-6">
-                <p class="mb-1"><strong>Person Accountable:</strong> <span id="viewEmployeeName"></span></p>
-              </div>
-            </div>
-          </div>
-
-          <hr class="border-dark">
-
-          <!-- SECTION 5: VALUE + DATES -->
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content shadow-sm border-0">
+      <div class="modal-header" style="background: linear-gradient(135deg, #f8f9fa 0%, #eef3ff 100%);">
+        <div class="d-flex align-items-center gap-2">
+          <img id="municipalLogoImg" src="" alt="Logo" class="rounded" style="height: 40px; width: 40px; object-fit: contain;">
           <div>
-            <h6 class="fw-bold text-decoration-underline">Valuation & Dates</h6>
-            <div class="row">
-              <div class="col-6">
-                <p class="mb-1"><strong>Acquisition Date:</strong> <span id="viewAcquisitionDate"></span></p>
-                <p class="mb-1"><strong>Last Updated:</strong> <span id="viewLastUpdated"></span></p>
-              </div>
-              <div class="col-6">
-                <p class="mb-1"><strong>Unit Cost:</strong> ₱ <span id="viewValue"></span></p>
-                <p class="mb-1"><strong>Total Value:</strong> ₱ <span id="viewTotalValue"></span></p>
+            <h5 class="modal-title mb-0">Asset Details</h5>
+            <small class="text-muted">Inventory Tag: <span id="viewInventoryTag"></span></small>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span id="viewStatus" class="badge bg-secondary"></span>
+          <img id="viewQrCode" src="" alt="QR Code" class="border rounded" style="height: 40px; width: 40px; object-fit: contain;">
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+      </div>
+
+      <div class="modal-body p-3">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <div class="card h-100">
+              <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                <img id="viewAssetImage" src="" alt="Asset Image" class="img-fluid rounded border" style="max-height: 220px; object-fit: contain;">
+                <div class="mt-2 small text-muted text-center">Preview</div>
               </div>
             </div>
           </div>
+          <div class="col-md-7">
+            <div class="card h-100">
+              <div class="card-body">
+                <h6 class="fw-semibold mb-2">Description</h6>
+                <p class="mb-3" id="viewDescription"></p>
 
+                <div class="row g-2">
+                  <div class="col-6">
+                    <div class="small text-muted">Office</div>
+                    <div id="viewOfficeName"></div>
+                  </div>
+                  <div class="col-6">
+                    <div class="small text-muted">Category</div>
+                    <div id="viewCategoryName"></div>
+                  </div>
+                  <div class="col-4">
+                    <div class="small text-muted">Type</div>
+                    <div id="viewType"></div>
+                  </div>
+                  <div class="col-4">
+                    <div class="small text-muted">Quantity</div>
+                    <div id="viewQuantity"></div>
+                  </div>
+                  <div class="col-4">
+                    <div class="small text-muted">Unit</div>
+                    <div id="viewUnit"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-body">
+                <h6 class="fw-semibold mb-2">Identification</h6>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <div class="small text-muted">Serial No.</div>
+                    <div id="viewSerialNo"></div>
+                  </div>
+                  <div class="col-6">
+                    <div class="small text-muted">Code</div>
+                    <div id="viewCode"></div>
+                  </div>
+                  <div class="col-12">
+                    <div class="small text-muted">Property No.</div>
+                    <div id="viewPropertyNo"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-body">
+                <h6 class="fw-semibold mb-2">Assignment & Specs</h6>
+                <div class="row g-2">
+                  <div class="col-12">
+                    <div class="small text-muted">Person Accountable</div>
+                    <div id="viewEmployeeName"></div>
+                  </div>
+                  <div class="col-6">
+                    <div class="small text-muted">Model</div>
+                    <div id="viewModel"></div>
+                  </div>
+                  <div class="col-6">
+                    <div class="small text-muted">Brand</div>
+                    <div id="viewBrand"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-md-12">
+            <div class="card h-100">
+              <div class="card-body">
+                <h6 class="fw-semibold mb-2">Valuation & Dates</h6>
+                <div class="row g-2">
+                  <div class="col-4">
+                    <div class="small text-muted">Unit Cost (₱)</div>
+                    <div id="viewValue"></div>
+                  </div>
+                  <div class="col-4">
+                    <div class="small text-muted">Total Value (₱)</div>
+                    <div id="viewTotalValue"></div>
+                  </div>
+                  <div class="col-4">
+                    <div class="small text-muted">Acquired</div>
+                    <div id="viewAcquisitionDate"></div>
+                  </div>
+                  <div class="col-4">
+                    <div class="small text-muted">Last Updated</div>
+                    <div id="viewLastUpdated"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

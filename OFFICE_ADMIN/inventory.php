@@ -177,11 +177,9 @@ $office_id = $_SESSION['office_id'];
                     <th>Property no</th>
                     <th>Description</th>
                     <th>Category</th>
-                    <th>Qty</th>
-                    <th>Unit</th>
+                    <th>Qty / Unit</th>
                     <th>Status</th>
-                    <th>Unit Cost</th>
-                    <th>Total Value</th>
+                    <th>Value</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -205,13 +203,11 @@ $office_id = $_SESSION['office_id'];
                       <td><?= htmlspecialchars($row['property_no']) ?></td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td><?= htmlspecialchars($row['category_name']) ?></td>
-                      <td><?= $row['quantity'] ?></td>
-                      <td><?= $row['unit'] ?></td>
+                      <td><?= (int)$row['quantity'] ?> <?= htmlspecialchars($row['unit']) ?></td>
                       <td>
                         <span class="badge bg-<?= $status_class ?>"><?= $row['red_tagged'] ? 'Red-Tagged' : ucfirst($row['status']) ?></span>
                       </td>
                       <td>&#8369; <?= number_format($row['value'], 2) ?></td>
-                      <td>&#8369; <?= number_format($row['value'] * $row['quantity'], 2) ?></td>
                       <td class="text-nowrap">
                         <div class="btn-group" role="group">
                           <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal"><i class="bi bi-eye"></i>View</button>
