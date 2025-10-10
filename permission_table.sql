@@ -1,9 +1,49 @@
+-- Ensure the permissions table exists with the correct structure
 CREATE TABLE IF NOT EXISTS `permissions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `description` text DEFAULT NULL,
-  `category` varchar(50) DEFAULT NULL,
-  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Insert base permissions
+INSERT INTO `permissions` (`name`, `description`) VALUES
+  ('view_dashboard', 'View the dashboard'),
+  ('view_users', 'View users'),
+  ('view_roles', 'View roles'),
+  ('view_permissions', 'View permissions'),
+  ('view_assets', 'View assets'),
+  ('view_categories', 'View categories'),
+  ('view_locations', 'View locations'),
+  ('view_suppliers', 'View suppliers'),
+  ('view_status', 'View status'),
+  ('view_types', 'View types'),
+  ('view_users_create', 'Create users'),
+  ('view_users_edit', 'Edit users'),
+  ('view_users_delete', 'Delete users'),
+  ('view_roles_create', 'Create roles'),
+  ('view_roles_edit', 'Edit roles'),
+  ('view_roles_delete', 'Delete roles'),
+  ('view_permissions_create', 'Create permissions'),
+  ('view_permissions_edit', 'Edit permissions'),
+  ('view_permissions_delete', 'Delete permissions'),
+  ('view_assets_create', 'Create assets'),
+  ('view_assets_edit', 'Edit assets'),
+  ('view_assets_delete', 'Delete assets'),
+  ('view_categories_create', 'Create categories'),
+  ('view_categories_edit', 'Edit categories'),
+  ('view_categories_delete', 'Delete categories'),
+  ('view_locations_create', 'Create locations'),
+  ('view_locations_edit', 'Edit locations'),
+  ('view_locations_delete', 'Delete locations'),
+  ('view_suppliers_create', 'Create suppliers'),
+  ('view_suppliers_edit', 'Edit suppliers'),
+  ('view_suppliers_delete', 'Delete suppliers'),
+  ('view_status_create', 'Create status'),
+  ('view_status_edit', 'Edit status'),
+  ('view_status_delete', 'Delete status'),
+  ('view_types_create', 'Create types'),
+  ('view_types_edit', 'Edit types'),
+  ('view_types_delete', 'Delete types');
