@@ -89,6 +89,7 @@ if ($result && $result->num_rows > 0) {
                 <thead class="text-center">
                   <tr>
                     <th>ITR No.</th>
+                    <th>Office</th>
                     <th>Entity Name</th>
                     <th>From Officer</th>
                     <th>To Officer</th>
@@ -100,7 +101,12 @@ if ($result && $result->num_rows > 0) {
                 <tbody>
                   <?php foreach ($itr_forms as $itr): ?>
                     <tr>
-                      <td><?= htmlspecialchars($itr['itr_no'] ?? '') ?></td>
+                      <td><?php 
+                        $officeDisplay = $itr['entity_name'] ?? '';
+                        $itrNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeDisplay, $itr['itr_no'] ?? '');
+                        echo htmlspecialchars($itrNoDisplay);
+                      ?></td>
+                      <td><?= htmlspecialchars($itr['entity_name'] ?? 'N/A') ?></td>
                       <td><?= htmlspecialchars($itr['entity_name'] ?? '') ?></td>
                       <td><?= htmlspecialchars($itr['from_accountable_officer'] ?? '') ?></td>
                       <td><?= htmlspecialchars($itr['to_accountable_officer'] ?? '') ?></td>

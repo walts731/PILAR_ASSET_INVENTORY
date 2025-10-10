@@ -87,8 +87,12 @@ if ($result && $result->num_rows > 0) {
                 <tbody>
                   <?php foreach ($ics_forms as $ics): ?>
                     <tr>
-                      <td class="text-center"><?= htmlspecialchars($ics['ics_no']) ?></td>
-                      <td><?= htmlspecialchars($ics['office_name'] ?? 'N/A') ?></td>
+                      <td class="text-center"><?php 
+                        $officeDisplay = $ics['office_name'] ?: ($ics['entity_name'] ?? '');
+                        $icsNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeDisplay, $ics['ics_no'] ?? '');
+                        echo htmlspecialchars($icsNoDisplay);
+                      ?></td>
+                      <td><?php $officeDisplay = $ics['office_name'] ?: ($ics['entity_name'] ?? ''); echo htmlspecialchars($officeDisplay !== '' ? $officeDisplay : 'N/A'); ?></td>
                       <td class="text-center"><?= date('F d, Y', strtotime($ics['created_at'])) ?></td>
                       <td><?= htmlspecialchars($ics['received_from_name']) ?></td>
                       <td><?= htmlspecialchars($ics['received_by_name']) ?></td>

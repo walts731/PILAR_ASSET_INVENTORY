@@ -68,8 +68,12 @@ if ($result && $result->num_rows > 0) {
             <tbody>
               <?php foreach ($ris_forms as $ris): ?>
                 <tr>
-                  <td class="text-center"><?= htmlspecialchars($ris['ris_no']) ?></td>
-                  <td><?= htmlspecialchars($ris['office_name'] ?? 'N/A') ?></td>
+                  <td class="text-center"><?php 
+                    $officeDisplay = $ris['office_name'] ?: ($ris['division'] ?? '');
+                    $risNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeDisplay, $ris['ris_no'] ?? '');
+                    echo htmlspecialchars($risNoDisplay);
+                  ?></td>
+                  <td><?php $officeDisplay = $ris['office_name'] ?: ($ris['division'] ?? ''); echo htmlspecialchars($officeDisplay !== '' ? $officeDisplay : 'N/A'); ?></td>
                   <td class="text-center"><?= date('F d, Y', strtotime($ris['date'])) ?></td>
                   <td><?= htmlspecialchars($ris['requested_by_name']) ?></td>
                   <td><?= htmlspecialchars($ris['approved_by_name']) ?></td>

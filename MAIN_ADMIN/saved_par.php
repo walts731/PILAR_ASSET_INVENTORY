@@ -86,8 +86,12 @@ if ($result && $result->num_rows > 0) {
                 <tbody>
                   <?php foreach ($par_forms as $par): ?>
                     <tr>
-                      <td class="text-center"><?= htmlspecialchars($par['par_no']) ?></td>
-                      <td><?= htmlspecialchars($par['office_name'] ?? 'N/A') ?></td>
+                      <td class="text-center"><?php 
+                        $officeDisplay = $par['office_name'] ?: ($par['entity_name'] ?? ''); 
+                        $parNoDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeDisplay, $par['par_no'] ?? '');
+                        echo htmlspecialchars($parNoDisplay);
+                      ?></td>
+                      <td><?php $officeDisplay = $par['office_name'] ?: ($par['entity_name'] ?? ''); echo htmlspecialchars($officeDisplay !== '' ? $officeDisplay : 'N/A'); ?></td>
                       <td class="text-center"><?= date('F d, Y', strtotime($par['created_at'])) ?></td>
                       <td class="text-center">
                         <div><strong><?= htmlspecialchars($par['received_by_name'] ?? '') ?></strong></div>
