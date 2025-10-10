@@ -20,6 +20,7 @@ if ($q === '' || mb_strlen($q) < 2) {
 $like = '%' . $conn->real_escape_string($q) . '%';
 
 // Search main assets table for items (type='asset')
+// Include related offices to resolve {OFFICE} placeholder for ICS & PAR numbers
 $sql = "
   SELECT 
     a.id,
@@ -29,11 +30,19 @@ $sql = "
     a.serial_no,
     c.category_name,
     f.ics_no,
-    p.par_no
+    f.office_id AS ics_office_id,
+    o_ics.office_name AS ics_office_name,
+    p.par_no,
+    p.office_id AS par_office_id,
+    o_par.office_name AS par_office_name,
+    o_asset.office_name AS asset_office_name
   FROM assets a
   LEFT JOIN categories c ON a.category = c.id
+  LEFT JOIN offices o_asset ON a.office_id = o_asset.id
   LEFT JOIN ics_form f ON a.ics_id = f.id
+  LEFT JOIN offices o_ics ON f.office_id = o_ics.id
   LEFT JOIN par_form p ON a.par_id = p.id
+  LEFT JOIN offices o_par ON p.office_id = o_par.id
   WHERE a.type = 'asset'
     AND a.quantity > 0
     AND (
@@ -58,6 +67,21 @@ $stmt->execute();
 $res = $stmt->get_result();
 $rows = [];
 while ($row = $res->fetch_assoc()) {
+  // Resolve office names for ICS/PAR; prefer form office, fallback to asset office
+  $icsOfficeName = $row['ics_office_name'] ?: $row['asset_office_name'] ?: '';
+  $parOfficeName = $row['par_office_name'] ?: $row['asset_office_name'] ?: '';
+
+  // Apply {OFFICE} dynamic replacement using full office name
+  $icsNo = $row['ics_no'];
+  if ($icsNo !== null && $icsNo !== '') {
+    $icsNo = preg_replace('/\{OFFICE\}|OFFICE/', $icsOfficeName, $icsNo);
+  }
+
+  $parNo = $row['par_no'];
+  if ($parNo !== null && $parNo !== '') {
+    $parNo = preg_replace('/\{OFFICE\}|OFFICE/', $parOfficeName, $parNo);
+  }
+
   $rows[] = [
     'id' => (int)$row['id'],
     'description' => $row['description'],
@@ -65,8 +89,8 @@ while ($row = $res->fetch_assoc()) {
     'property_no' => $row['property_no'],
     'serial_no' => $row['serial_no'],
     'category_name' => $row['category_name'],
-    'ics_no' => $row['ics_no'],
-    'par_no' => $row['par_no'],
+    'ics_no' => $icsNo,
+    'par_no' => $parNo,
   ];
 }
 $stmt->close();
