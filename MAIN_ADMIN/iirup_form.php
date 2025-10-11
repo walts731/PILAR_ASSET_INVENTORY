@@ -80,7 +80,7 @@ if ($result_assets && $result_assets->num_rows > 0) {
 
 <!-- IIRUP FORM HEADER -->
 <div class="d-flex justify-content-end mb-2">
-    <a href="saved_iirup.php?id=<?= isset($_GET['id']) ? intval($_GET['id']) : 7 ?>" class="btn btn-outline-info btn-sm">
+    <a href="saved_iirup.php?id=<?= isset($_GET['id']) ? intval($_GET['id']) : 7 ?>" class="btn btn-info btn-sm">
         <i class="bi bi-folder-check"></i> View Saved IIRUP
     </a>
 &nbsp;
@@ -127,18 +127,18 @@ if ($result_assets && $result_assets->num_rows > 0) {
 <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 10px;" class="mb-3">
     <div style="flex: 1; margin: 0 5px;">
         <input type="text" name="accountable_officer" value="<?= $accountable_officer ?>"
-            style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;">
+            style="width: 100%; border: none; outline: none; text-align: center; background: transparent;">
         <br>
         <small><em>(Name of Accountable Officer)</em></small>
     </div>
     <div style="flex: 1; margin: 0 5px;">
         <input type="text" name="designation" value="<?= $designation ?>"
-            style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;">
+            style="width: 100%; border: none; outline: none; text-align: center; background: transparent;">
         <br>
         <small><em>(Designation)</em></small>
     </div>
     <div style="flex: 1; margin: 0 5px;">
-        <select name="office" style="width: 100%; border: none; border-bottom: 1px solid black; text-align: center;">
+        <select name="office" style="width: 100%; border: none; outline: none; text-align: center; background: transparent;">
             <option value="">-- Select Office --</option>
             <?php foreach ($offices as $o): ?>
                 <option value="<?= htmlspecialchars($o['office_name']) ?>"
@@ -151,6 +151,7 @@ if ($result_assets && $result_assets->num_rows > 0) {
         <small><em>(Department/Office)</em></small>
     </div>
 </div>
+
 
 <style>
     /* Enhanced IIRUP Table Styling */
@@ -550,7 +551,7 @@ if ($result_assets && $result_assets->num_rows > 0) {
 
 <!-- Row Management Buttons -->
 <div class="d-flex justify-content-start gap-2 mt-2 mb-3">
-    <button type="button" id="addRowBtn" class="btn btn-success btn-sm">
+    <button type="button" id="addRowBtn" class="btn btn-primary btn-sm">
         <i class="bi bi-plus-circle"></i> Add Row
     </button>
     <button type="button" id="removeRowBtn" class="btn btn-danger btn-sm">
@@ -838,9 +839,7 @@ if ($result_footer && $result_footer->num_rows > 0) {
 </div>
 
 <div class="d-flex justify-content-end gap-2" style="margin-top:10px;">
-    <a href="saved_iirup.php?id=<?= isset($_GET['id']) ? intval($_GET['id']) : 7 ?>" class="btn btn-success">
-        <i class="bi bi-folder-check"></i> View Saved IIRUP
-    </a>
+    
     <button type="submit" name="save_iirup" class="btn btn-primary">Submit IIRUP</button>
     
 </div>

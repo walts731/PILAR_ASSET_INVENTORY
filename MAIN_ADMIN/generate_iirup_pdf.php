@@ -62,14 +62,15 @@ $html = '<!DOCTYPE html>
 
   table { width: 100%; border-collapse: collapse; }
   table.items-table { border: 1px solid #000; }
-  thead th { font-weight: bold; border: none; font-size: 9px; padding: 2px; }
-  table.items-table thead th { border-bottom: 1px solid #000; }
+  thead th { font-weight: bold; font-size: 9px; padding: 2px; border: 1px solid #000; vertical-align: middle; }
   th, td { border: 1px solid #000; padding: 2px; text-align: center; font-size: 9px; }
-  th:last-child, td:last-child { border-right: none; }
+  th:last-child, td:last-child { border-right: 1px solid #000; }
 
-  .static-footer { width:100%; border-collapse: collapse; margin-top: 10px; font-size: 9px; }
-  .static-footer td { vertical-align: top; padding: 4px; }
-  .static-footer .labels td { text-align: center; font-weight: bold; padding-top: 8px; }
+  .static-footer { width:100%; border-collapse: collapse; margin-top: 10px; font-size: 9px; border: 1px solid #000; }
+  .static-footer td { vertical-align: top; padding: 4px; border: 1px solid #000; }
+  .static-footer .labels td { text-align: left; font-weight: bold; padding-top: 6px; }
+  .sig-line { display:inline-block; border-bottom:1px solid #000; padding-bottom:1px; width:95%; font-weight:bold; text-transform:uppercase; }
+  .note { font-size:9px; margin-top:3px; }
   .asof { text-align:center; font-size:9px; margin-bottom:6px; }
 </style>
 </head>
@@ -94,51 +95,59 @@ if (!empty($form['header_image'])) {
 
 // Header fields
 $html .= '<table class="hdr-table">
-  <tr>
-    <td>
-      <span class="hdr-underline">' . htmlspecialchars($form['accountable_officer']) . '</span><br>
-      <small>(Name of Accountable Officer)</small>
+  <tr style="border:none;">
+    <td style="border:none;">
+        <span class="hdr-underline">' . htmlspecialchars($form['accountable_officer']) . '</span><br>
+        <small>(Name of Accountable Officer)</small>
     </td>
-    <td>
-      <span class="hdr-underline">' . htmlspecialchars($form['designation']) . '</span><br>
-      <small>(Designation)</small>
+    <td style="border:none;">
+        <span class="hdr-underline">' . htmlspecialchars($form['designation']) . '</span><br>
+        <small>(Designation)</small>
     </td>
-   <td style="border-right:1px solid #000;">
-  <span class="hdr-underline">' . htmlspecialchars($form['office']) . '</span><br>
-  <small>(Department/Office)</small>
-</td>
+    <td style="border:none;">
+        <span class="hdr-underline">' . htmlspecialchars($form['office']) . '</span><br>
+        <small>(Department/Office)</small>
+    </td>
+</tr>
 
-  </tr>
 </table>
 
 <table class="items-table">
   <thead>
+    <!-- Row 1: Main Groups -->
     <tr>
       <th colspan="10">INVENTORY</th>
       <th colspan="6">INSPECTION and DISPOSAL</th>
       <th colspan="2">RECORD OF SALES</th>
-      <th rowspan="2">DEPT/OFFICE</th>
-      <th rowspan="2">CODE</th>
-      <th rowspan="2">DATE RECEIVED</th>
+      <th rowspan="3">DEPT/OFFICE</th>
+      <th rowspan="3">CODE</th>
+      <th rowspan="3">DATE RECEIVED</th>
     </tr>
+    <!-- Row 2: Inventory leaf headers (rowspan=2), Inspection subgroup, and prepare for sales children -->
     <tr>
-      <th>Date Acquired</th>
-      <th>Particulars/Articles</th>
-      <th>Property No.</th>
-      <th>Qty</th>
-      <th>Unit Cost</th>
-      <th>Total Cost</th>
-      <th>Accumulated Depreciation</th>
-      <th>Accumulated Impairment Losses</th>
-      <th>Carrying Amount</th>
-      <th>Remarks</th>
+      <th rowspan="2">Date Acquired</th>
+      <th rowspan="2">Particulars/Articles</th>
+      <th rowspan="2">Property No.</th>
+      <th rowspan="2">Qty</th>
+      <th rowspan="2">Unit Cost</th>
+      <th rowspan="2">Total Cost</th>
+      <th rowspan="2">Accumulated Depreciation</th>
+      <th rowspan="2">Accumulated Impairment Losses</th>
+      <th rowspan="2">Carrying Amount</th>
+      <th rowspan="2">Remarks</th>
+      <th colspan="5">DISPOSAL</th>
+      <th rowspan="2">Appraised Value</th>
+      <!-- RECORD OF SALES children will appear in next row -->
+      <th colspan="2">&nbsp;</th>
+    </tr>
+    <!-- Row 3: Disposal children and Record of Sales children -->
+    <tr>
       <th>Sale</th>
       <th>Transfer</th>
       <th>Destruction</th>
-      <th>Others</th>
+      <th>Others (Specify)</th>
       <th>Total</th>
-      <th>Appraised Value</th>
-      <th>OR No.</th>
+      <th>O.R. No.</th>
       <th>Amount</th>
     </tr>
   </thead>
@@ -179,68 +188,7 @@ if (!empty($items)) {
 $html .= '</tbody>
 </table>
 
-<!-- Static footer text block (mirrors view_iirup.php) -->
-<table class="static-footer" style="width:100%; border:1px solid #000; border-collapse:collapse; margin-top:10px;">
-  <tr style="border:none;">
-    <td colspan="2" style="width:50%; text-align:left; vertical-align:top; border:none;">
-      I HEREBY request inspection and disposition, pursuant to Section 79 of PD 1445, of the property enumerated above.
-    </td>
-    <td style="width:25%; text-align:left; vertical-align:top; border:none;">
-      I CERTIFY that I have inspected each and every article enumerated in this report, and that the disposition made thereof was, in my judgment, the best for the public interest.
-    </td>
-    <td style="width:25%; text-align:left; vertical-align:top; border:none;">
-      I CERTIFY that I have witnessed the disposition of the articles enumerated on this report this ____ day of _____________, _____.
-    </td>
-  </tr>
-
-  <!-- Labels -->
-  <tr class="labels" style="border:none;">
-    <td style="padding-top:12px; font-weight:bold; text-align:center; border:none;">Requested by:</td>
-    <td style="padding-top:12px; font-weight:bold; text-align:center; border:none;">Approved by:</td>
-    <td style="padding-top:12px; border:none;"></td>
-    <td style="padding-top:12px; border:none;"></td>
-  </tr>
-
-    <!-- Signatories inline with their labels (centered) -->
-  <tr style="border:none;">
-    <!-- Requested by -->
-    <td style="text-align:center; padding-top:20px; border:none;">
-      <div style="font-weight:bold; text-transform:uppercase; display:inline-block; border-bottom:1px solid #000; padding-bottom:1px; width:80%;">
-        ' . htmlspecialchars($form['footer_accountable_officer'] ?? '') . '
-      </div>
-      <div style="font-size:9px; margin-top:3px;">(Signature over Printed Name of Accountable Officer)</div>
-      <div style="font-style:italic; margin-top:2px;">
-        ' . htmlspecialchars($form['footer_designation_officer'] ?? '') . '
-      </div>
-      <div style="font-size:9px; margin-top:1px;">(Designation of Accountable Officer)</div>
-    </td>
-
-    <!-- Approved by -->
-    <td style="text-align:center; padding-top:20px; border:none;">
-      <div style="font-weight:bold; text-transform:uppercase; display:inline-block; border-bottom:1px solid #000; padding-bottom:1px; width:80%;">
-        ' . htmlspecialchars($form['footer_authorized_official'] ?? '') . '
-      </div>
-      <div style="font-size:9px; margin-top:3px;">(Signature over Printed Name of Authorized Official)</div>
-      <div style="font-style:italic; margin-top:2px;">
-        ' . htmlspecialchars($form['footer_designation_official'] ?? '') . '
-      </div>
-      <div style="font-size:9px; margin-top:1px;">(Designation of Authorized Official)</div>
-    </td>
-
-    <!-- Inspection Officer -->
-    <td style="text-align:center; vertical-align:bottom; padding-top:20px; border:none;">
-      <div style="border-bottom:1px solid #000; width:80%; margin:0 auto; height:0;"></div>
-      <div style="font-size:9px; margin-top:3px;">(Signature over Printed Name of Inspection Officer)</div>
-    </td>
-
-    <!-- Witness -->
-    <td style="text-align:center; vertical-align:bottom; padding-top:20px; border:none;">
-      <div style="border-bottom:1px solid #000; width:80%; margin:0 auto; height:0;"></div>
-      <div style="font-size:9px; margin-top:3px;">(Signature over Printed Name of Witness)</div>
-    </td>
-  </tr>
-
-</table>
+<!-- Static footer text block (mirrors view_iirup.php) --> <table class="static-footer" style="width:100%; border:1px solid #000; border-collapse:collapse; margin-top:10px;"> <tr style="border:none;"> <td colspan="2" style="width:50%; text-align:left; vertical-align:top; border:none;"> I HEREBY request inspection and disposition, pursuant to Section 79 of PD 1445, of the property enumerated above. </td> <td style="width:25%; text-align:left; vertical-align:top; border:none;"> I CERTIFY that I have inspected each and every article enumerated in this report, and that the disposition made thereof was, in my judgment, the best for the public interest. </td> <td style="width:25%; text-align:left; vertical-align:top; border:none;"> I CERTIFY that I have witnessed the disposition of the articles enumerated on this report this ____ day of _____________, _____. </td> </tr> <!-- Labels --> <tr class="labels" style="border:none;"> <td style="padding-top:12px; font-weight:bold; text-align:center; border:none;">Requested by:</td> <td style="padding-top:12px; font-weight:bold; text-align:center; border:none;">Approved by:</td> <td style="padding-top:12px; border:none;"></td> <td style="padding-top:12px; border:none;"></td> </tr> <!-- Signatories inline with their labels (centered) --> <tr style="border:none;"> <!-- Requested by --> <td style="text-align:center; padding-top:20px; border:none;"> <div style="font-weight:bold; text-transform:uppercase; display:inline-block; border-bottom:1px solid #000; padding-bottom:1px; width:80%;"> ' . htmlspecialchars($form['footer_accountable_officer'] ?? '') . ' </div> <div style="font-size:9px; margin-top:3px;">(Signature over Printed Name of Accountable Officer)</div> <div style="font-style:italic; margin-top:2px;"> ' . htmlspecialchars($form['footer_designation_officer'] ?? '') . ' </div> <div style="font-size:9px; margin-top:1px;">(Designation of Accountable Officer)</div> </td> <!-- Approved by --> <td style="text-align:center; padding-top:20px; border:none;"> <div style="font-weight:bold; text-transform:uppercase; display:inline-block; border-bottom:1px solid #000; padding-bottom:1px; width:80%;"> ' . htmlspecialchars($form['footer_authorized_official'] ?? '') . ' </div> <div style="font-size:9px; margin-top:3px;">(Signature over Printed Name of Authorized Official)</div> <div style="font-style:italic; margin-top:2px;"> ' . htmlspecialchars($form['footer_designation_official'] ?? '') . ' </div> <div style="font-size:9px; margin-top:1px;">(Designation of Authorized Official)</div> </td> <!-- Inspection Officer --> <td style="text-align:center; vertical-align:bottom; padding-top:20px; border:none;"> <div style="border-bottom:1px solid #000; width:80%; margin:0 auto; height:0;"></div> <div style="font-size:9px; margin-top:3px;">(Signature over Printed Name of Inspection Officer)</div> </td> <!-- Witness --> <td style="text-align:center; vertical-align:bottom; padding-top:20px; border:none;"> <div style="border-bottom:1px solid #000; width:80%; margin:0 auto; height:0;"></div> <div style="font-size:9px; margin-top:3px;">(Signature over Printed Name of Witness)</div> </td> </tr> </table>
 
 
 
