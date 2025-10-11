@@ -90,37 +90,25 @@ $stmt->close();
                             <td><?= date('F j, Y', strtotime($user['created_at'])) ?></td>
                             <td>
                                 <!-- Edit Button -->
-                                <button class="btn btn-sm btn-outline-primary editUserBtn rounded-pill"
-                                    data-id="<?= $user['id'] ?>"
-                                    data-fullname="<?= htmlspecialchars($user['fullname']) ?>"
-                                    data-username="<?= htmlspecialchars($user['username']) ?>"
-                                    data-email="<?= htmlspecialchars($user['email']) ?>"
-                                    data-role="<?= $user['role'] ?>"
-                                    data-status="<?= $user['status'] ?>"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#editUserModal">
-                                    <i class="bi bi-pencil-square"></i>
-                                </button>
-
-                                <!-- Activate/Deactivate -->
-                                <?php if ($user['status'] === 'active'): ?>
-                                    <?php if ($user['role'] !== 'admin'): ?>
-                                        <form method="POST" action="deactivate_user.php" class="d-inline">
-                                            <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Deactivate User">
-                                                <i class="bi bi-person-dash"></i>
-                                            </button>
-                                        </form>
-                                    <?php endif; ?>
+                                <?php if (in_array($user['role'], ['user', 'admin'])): ?>
+                                    <button class="btn btn-sm btn-outline-secondary rounded-pill" disabled title="Editing disabled for global roles">
+                                        <i class="bi bi-lock"></i>
+                                        Edit
+                                    </button>
                                 <?php else: ?>
-                                    <form method="POST" action="activate_user.php" class="d-inline">
-                                        <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
-                                        <button type="submit" class="btn btn-sm btn-outline-success rounded-pill" title="Activate User">
-                                            <i class="bi bi-person-check"></i>
-                                        </button>
-                                    </form>
+                                    <button class="btn btn-sm btn-outline-primary editUserBtn rounded-pill"
+                                        data-id="<?= $user['id'] ?>"
+                                        data-fullname="<?= htmlspecialchars($user['fullname']) ?>"
+                                        data-username="<?= htmlspecialchars($user['username']) ?>"
+                                        data-email="<?= htmlspecialchars($user['email']) ?>"
+                                        data-role="<?= $user['role'] ?>"
+                                        data-status="<?= $user['status'] ?>"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editUserModal">
+                                        <i class="bi bi-pencil-square"></i>
+                                        Edit
+                                    </button>
                                 <?php endif; ?>
-
                                 
                             </td>
                         </tr>

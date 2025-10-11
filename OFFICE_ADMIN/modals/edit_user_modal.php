@@ -33,8 +33,6 @@
               <div class="mb-3">
                 <label for="editRole" class="form-label">Role</label>
                 <select class="form-select" name="role" id="editRole" required>
-                  <option value="admin">Admin</option>
-                  <option value="user">User</option>
                   <option value="office_user">Office User</option>
                   <option value="office_admin">Office Admin</option>
                 </select>
