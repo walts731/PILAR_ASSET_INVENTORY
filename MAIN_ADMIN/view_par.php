@@ -35,6 +35,12 @@ if (!$par) {
   die("PAR record not found.");
 }
 
+// Fetch offices for dropdown
+$offices = [];
+if ($resOff = $conn->query("SELECT id, office_name FROM offices ORDER BY office_name")) {
+  while ($row = $resOff->fetch_assoc()) { $offices[] = $row; }
+}
+
 // Fetch PAR items (include asset_id for potential tag actions)
 $sql_items = "SELECT item_id, asset_id, quantity, unit, description, property_no, date_acquired, unit_price, amount
               FROM par_items
@@ -87,7 +93,12 @@ $stmt->close();
 
   <div class="main">
     <?php include 'includes/topbar.php' ?>
-
+    <div class="text-end">
+    <a href="generate_par_pdf.php?id=<?= (int)$par['par_id'] ?>" target="_blank" class="btn btn-info">
+          <i class="bi bi-printer"></i> Print
+        </a>
+    </div>
+    
     <div class="container py-4">
       <?php if (isset($_SESSION['flash'])): ?>
         <div class="alert alert-<?= htmlspecialchars($_SESSION['flash']['type'] ?? 'info') ?> alert-dismissible fade show" role="alert">
@@ -123,7 +134,19 @@ $stmt->close();
           <div class="row mb-3">
             <div class="col-md-6">
               <label class="form-label fw-semibold">Entity Name</label>
-              <input type="text" class="form-control shadow" name="entity_name" value="<?= htmlspecialchars($par['entity_name']) ?>" />
+              <input type="text" id="entity_name" class="form-control shadow" name="entity_name" value="<?= htmlspecialchars($par['entity_name']) ?>" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Office</label>
+              <select id="par_office" name="office_id" class="form-select shadow">
+                <option value="">Select office...</option>
+                <?php foreach ($offices as $o): ?>
+                  <option value="<?= (int)$o['id'] ?>" <?= ((int)($par['office_id'] ?? 0) === (int)$o['id']) ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($o['office_name']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+              <div class="form-text">Changing this will fill Entity Name and update PAR No preview.</div>
             </div>
           </div>
 
@@ -134,11 +157,7 @@ $stmt->close();
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">PAR No.</label>
-              <input type="text" class="form-control shadow" name="par_no" value="<?= htmlspecialchars($parNoDisplay) ?>" />
-            </div>
-            <div class="col-md-4">
-              <label class="form-label fw-semibold">Office</label>
-              <input type="text" class="form-control shadow" value="<?= htmlspecialchars($par['office_name'] ?? 'N/A') ?>" disabled />
+              <input type="text" id="par_no" class="form-control shadow" name="par_no" value="<?= htmlspecialchars($parNoDisplay) ?>" />
             </div>
           </div>
 
@@ -237,9 +256,6 @@ $stmt->close();
           <button type="submit" class="btn btn-primary">
             <i class="bi bi-save"></i> Save Changes
           </button>
-          <a href="generate_par_pdf.php?id=<?= (int)$par['par_id'] ?>" target="_blank" class="btn btn-outline-dark">
-          <i class="bi bi-printer"></i> Print
-        </a>
         </div>
 
         
@@ -263,6 +279,23 @@ $stmt->close();
         if (amtEl) amtEl.value = (qty * price).toFixed(2);
       });
     });
+
+    // Update Entity Name and PAR No when Office changes
+    (function(){
+      const officeSel = document.getElementById('par_office');
+      const entityInput = document.getElementById('entity_name');
+      const parNoInput = document.getElementById('par_no');
+      function updateFromOffice(){
+        if (!officeSel) return;
+        const txt = officeSel.value ? (officeSel.options[officeSel.selectedIndex]?.text || '').trim() : '';
+        if (entityInput) entityInput.value = txt;
+        if (parNoInput) {
+          const cur = parNoInput.value || '';
+          parNoInput.value = cur.replace(/\bOFFICE\b|\{OFFICE\}/g, txt || 'OFFICE');
+        }
+      }
+      if (officeSel) officeSel.addEventListener('change', updateFromOffice);
+    })();
   </script>
 </body>
 </html>
