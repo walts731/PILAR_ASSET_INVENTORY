@@ -22,13 +22,17 @@ ensureLifecycleTable($conn);
 // Fetch asset details from the assets table including red tag status and additional images
 $sql = "SELECT a.*, c.category_name, o.office_name, e.name AS employee_name,
                CASE WHEN rt.id IS NOT NULL THEN 1 ELSE 0 END as has_red_tag,
-               ii.iirup_id
+               ii.iirup_id,
+               pf.fund_cluster AS par_fund_cluster,
+               ifc.fund_cluster AS ics_fund_cluster
         FROM assets a
         LEFT JOIN categories c ON a.category = c.id
         LEFT JOIN offices o ON a.office_id = o.id
         LEFT JOIN employees e ON a.employee_id = e.employee_id
         LEFT JOIN red_tags rt ON rt.asset_id = a.id
         LEFT JOIN iirup_items ii ON ii.asset_id = a.id
+        LEFT JOIN par_form pf ON pf.id = a.par_id
+        LEFT JOIN ics_form ifc ON ifc.id = a.ics_id
         WHERE a.id = ?";
 
 $stmt = $conn->prepare($sql);
@@ -388,6 +392,12 @@ $stmt->close();
                                     </a>
                                     <!-- Transfer Button - Only show if asset has inventory tag -->
                                     <?php if (!empty($asset['inventory_tag'])): ?>
+                                        <?php
+                                            // Determine preferred fund cluster: PAR first, then ICS
+                                            $fund_cluster_pref = '';
+                                            if (!empty($asset['par_fund_cluster'])) { $fund_cluster_pref = $asset['par_fund_cluster']; }
+                                            elseif (!empty($asset['ics_fund_cluster'])) { $fund_cluster_pref = $asset['ics_fund_cluster']; }
+                                        ?>
                                         <button class="btn btn-outline-info transfer-asset"
                                             data-asset-id="<?= $asset['id'] ?>"
                                             data-inventory-tag="<?= htmlspecialchars($asset['inventory_tag'] ?? '') ?>"
@@ -397,7 +407,8 @@ $stmt->close();
                                             data-property-no="<?= htmlspecialchars($asset['property_no'] ?? '') ?>"
                                             data-unit-price="<?= $asset['value'] ?? '' ?>"
                                             data-status="<?= $asset['status'] ?? '' ?>"
-                                            data-employee-name="<?= htmlspecialchars($asset['employee_name'] ?? '') ?>">
+                                            data-employee-name="<?= htmlspecialchars($asset['employee_name'] ?? '') ?>"
+                                            data-fund-cluster="<?= htmlspecialchars($fund_cluster_pref) ?>">
                                             <i class="bi bi-arrow-left-right me-2"></i>Transfer Asset
                                         </button>
                                     <?php endif; ?>
@@ -552,6 +563,7 @@ $stmt->close();
                 const unitPrice = $(this).data('unit-price');
                 const status = $(this).data('status');
                 const employeeName = $(this).data('employee-name');
+                const fundCluster = $(this).data('fund-cluster') || '';
 
                 console.log('Asset data:', {
                     assetId,
@@ -567,7 +579,7 @@ $stmt->close();
 
                 // Redirect to forms.php with ITR form ID 9 and all asset parameters
                 const ITR_FORM_ID = 9;
-                const url = `forms.php?id=${ITR_FORM_ID}&asset_id=${assetId}&inventory_tag=${encodeURIComponent(inventoryTag)}&current_employee_id=${currentEmployeeId}&description=${encodeURIComponent(description)}&acquisition_date=${acquisitionDate}&property_no=${encodeURIComponent(propertyNo)}&unit_price=${unitPrice}&status=${status}&employee_name=${encodeURIComponent(employeeName)}`;
+                const url = `forms.php?id=${ITR_FORM_ID}&asset_id=${assetId}&inventory_tag=${encodeURIComponent(inventoryTag)}&current_employee_id=${currentEmployeeId}&description=${encodeURIComponent(description)}&acquisition_date=${acquisitionDate}&property_no=${encodeURIComponent(propertyNo)}&unit_price=${unitPrice}&status=${status}&employee_name=${encodeURIComponent(employeeName)}&fund_cluster=${encodeURIComponent(fundCluster)}`;
                 console.log('Redirecting to:', url); // Debug log
 
                 window.location.href = url;

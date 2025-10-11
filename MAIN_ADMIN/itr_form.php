@@ -255,7 +255,7 @@ if (!empty($_SESSION['flash'])) {
         </div>
         <div class="col-md-4">
           <label for="fund_cluster" class="form-label">Fund Cluster <span style="color: red;">*</span></label>
-          <input type="text" id="fund_cluster" name="fund_cluster" class="form-control shadow" placeholder="Enter Fund Cluster" required>
+          <input type="text" id="fund_cluster" name="fund_cluster" class="form-control shadow" placeholder="Enter Fund Cluster" value="<?= htmlspecialchars($_GET['fund_cluster'] ?? ($itr['fund_cluster'] ?? '')) ?>" required>
         </div>
         <div class="col-md-4">
           <label for="date" class="form-label">Date</label>
