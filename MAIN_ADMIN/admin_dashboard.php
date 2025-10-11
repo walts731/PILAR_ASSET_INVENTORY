@@ -29,6 +29,19 @@ $stmt->bind_result($fullname);
 $stmt->fetch();
 $stmt->close();
 
+// Fetch current office name for placeholder replacement
+$current_office_name = '';
+if (!empty($_SESSION['office_id'])) {
+  $oid = (int)$_SESSION['office_id'];
+  if ($stmt = $conn->prepare("SELECT office_name FROM offices WHERE id = ? LIMIT 1")) {
+    $stmt->bind_param("i", $oid);
+    $stmt->execute();
+    $stmt->bind_result($oname);
+    if ($stmt->fetch()) { $current_office_name = $oname ?? ''; }
+    $stmt->close();
+  }
+}
+
 // ✅ Fetch Most Consumed Items
 $consumedData = ["labels" => [], "data" => []];
 $res = $conn->query("
@@ -464,7 +477,13 @@ try {
                           <span class="badge <?= $badge ?>"><?= htmlspecialchars($actionTxt) ?></span>
                           <span class="badge bg-light text-dark border"><?= htmlspecialchars($module) ?></span>
                         </div>
-                        <div class="text-muted-small text-truncate-ellipsis" title="<?= htmlspecialchars($details) ?>"><?= htmlspecialchars($details) ?></div>
+                        <?php
+                          $details_render = $details;
+                          if ($details_render && $current_office_name) {
+                            $details_render = str_replace('{OFFICE}', $current_office_name, $details_render);
+                          }
+                        ?>
+                        <div class="text-muted-small text-truncate-ellipsis" title="<?= htmlspecialchars($details_render) ?>"><?= htmlspecialchars($details_render) ?></div>
                         <div class="text-muted-small"><i class="bi bi-clock me-1"></i><?= htmlspecialchars($dt) ?></div>
                       </div>
                     </li>

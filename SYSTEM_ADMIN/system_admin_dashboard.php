@@ -271,7 +271,13 @@ if (!empty($metrics['last_backup'])) {
                           <span class="text-muted small"><?php echo date('M d, Y h:i A', strtotime($log['created_at'])); ?></span>
                         </div>
                         <div class="mt-1 fw-semibold"><?php echo htmlspecialchars($log['username'] ?? 'System'); ?></div>
-                        <div class="text-muted small"><?php echo htmlspecialchars($log['details'] ?? ''); ?></div>
+                        <?php
+                          $details_text = $log['details'] ?? '';
+                          if ($details_text && $current_office_name) {
+                            $details_text = str_replace('{OFFICE}', $current_office_name, $details_text);
+                          }
+                        ?>
+                        <div class="text-muted small"><?php echo htmlspecialchars($details_text); ?></div>
                       </div>
                     </li>
                   <?php endforeach; ?>
