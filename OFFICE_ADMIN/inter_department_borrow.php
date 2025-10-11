@@ -323,31 +323,48 @@ if ($stmt) {
     
     .sidebar-collapsed .main-content {
         margin-left: 60px !important;
-                            </div>
-                        <?php else: ?>
-                            <div class="alert alert-info mb-0">
-                                No assets available for inter-department borrowing at the moment.
-                            </div>
-                        <?php endif; ?>
+    }
+}
+</style>
+
+<!-- View Asset Details Modal -->
+<div class="modal fade" id="viewAssetModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Asset Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be loaded here via JavaScript -->
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
+                    <p class="mt-2">Loading asset details...</p>
                 </div>
             </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
+    </div>
+</div>
 
-        <!-- Add to Cart Modal -->
-        <div class="modal fade" id="addToCartModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form id="addToCartForm" method="POST" action="add_to_inter_dept_cart.php">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Add to Box</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label">Asset</label>
-                                <input type="text" class="form-control" id="assetNameDisplay" readonly>
-                                <input type="hidden" name="asset_id" id="assetId">
+<!-- Add to Cart Modal -->
+<div class="modal fade" id="addToCartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addToCartForm" method="POST" action="add_to_inter_dept_cart.php">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add to Box</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Asset</label>
+                        <input type="text" class="form-control" id="assetName" readonly>
+                        <input type="hidden" name="asset_id" id="assetId">
                                 <input type="hidden" name="asset_name" id="assetName">
                             </div>
                             <div class="mb-3">
