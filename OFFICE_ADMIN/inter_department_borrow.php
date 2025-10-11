@@ -512,11 +512,22 @@ if ($stmt) {
                 e.preventDefault();
                 const assetId = $(this).data('asset-id');
                 const assetName = $(this).data('asset-name');
+                const sourceOffice = $(this).data('source-office');
+                const sourceOfficeId = $(this).data('source-office-id');
+                const maxQuantity = $(this).data('max-quantity') || 1;
+                
+                // Set form values
+                $('#assetId').val(assetId);
+                $('#assetName').val(assetName);
+                $('#assetNameDisplay').val(assetName);
+                $('#sourceOffice').val(sourceOffice);
+                $('#sourceOfficeId').val(sourceOfficeId);
+                $('#sourceOfficeName').val(sourceOffice);
+                $('#quantity').attr('max', maxQuantity).val(1);
+                $('#maxQuantity').text(maxQuantity);
                 
                 // Show modal with form
                 $('#addToCartModal').modal('show');
-                $('#assetId').val(assetId);
-                $('#assetName').text(assetName);
             });
 
             // Form submission
