@@ -103,7 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iissssssssssssssssssss", 
+        // Types: form_id (i), office_id (i), then 21 strings
+        $stmt->bind_param("iisssssssssssssssssssss", 
             $form_id, $office_id, $header_image, $division, $responsibility_center, $responsibility_code,
             $ris_no, $sai_no, $date,
             $requested_by_name, $requested_by_designation, $requested_by_date,

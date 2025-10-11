@@ -3,8 +3,8 @@ require_once '../connect.php';
 
 $form_id = $_GET['id'] ?? null;
 
-
 $ics_data = [
+    'id' => null,
     'header_image' => '',
     'entity_name' => '',
     'fund_cluster' => '',
@@ -32,6 +32,9 @@ if ($result && $result->num_rows > 0) {
 
 <form method="POST" action="save_ics_header_footer.php" enctype="multipart/form-data">
     <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
+    <?php if (!empty($ics_data['id'])): ?>
+        <input type="hidden" name="ics_row_id" value="<?= (int)$ics_data['id'] ?>">
+    <?php endif; ?>
 
     <!-- ICS Header Image Upload -->
     <div class="mb-3">
