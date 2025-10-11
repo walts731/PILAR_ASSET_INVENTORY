@@ -241,7 +241,7 @@ if (!empty($_SESSION['flash'])) {
       <div class="row g-3 mt-2">
         <div class="col-md-4">
           <label for="itr_office" class="form-label">Office (sets Entity Name)</label>
-          <select id="itr_office" class="form-select shadow">
+          <select id="itr_office" name="office_id" class="form-select shadow">
             <option value="">Select office...</option>
             <?php foreach ($itr_offices as $o): ?>
               <option value="<?= (int)$o['id'] ?>"><?= htmlspecialchars($o['office_name']) ?></option>

@@ -39,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $received_designation = $_POST['received_designation'] ?? '';
         $received_date = $_POST['received_date'] ?? '';
         $end_user = trim($_POST['end_user'] ?? '');
+        $to_office_id = isset($_POST['office_id']) && $_POST['office_id'] !== '' ? (int)$_POST['office_id'] : null;
 
         // Handle transfer type - if "Others" is selected, use the custom value
         if ($transfer_type === 'Others' && !empty($transfer_type_other)) {
@@ -253,9 +254,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Update assets table: set end_user and optionally employee_id for transferred assets (per-asset)
         if (!empty($assets_to_update)) {
             if ($to_employee_id) {
-                $update_assets_stmt = $conn->prepare("UPDATE assets SET end_user = ?, employee_id = ? WHERE id = ?");
+                if ($to_office_id) {
+                    $update_assets_stmt = $conn->prepare("UPDATE assets SET end_user = ?, employee_id = ?, office_id = ? WHERE id = ?");
+                } else {
+                    $update_assets_stmt = $conn->prepare("UPDATE assets SET end_user = ?, employee_id = ? WHERE id = ?");
+                }
                 foreach ($assets_to_update as $aid_int) {
-                    $update_assets_stmt->bind_param('sii', $end_user, $to_employee_id, $aid_int);
+                    if ($to_office_id) {
+                        $update_assets_stmt->bind_param('siii', $end_user, $to_employee_id, $to_office_id, $aid_int);
+                    } else {
+                        $update_assets_stmt->bind_param('sii', $end_user, $to_employee_id, $aid_int);
+                    }
                     if (!$update_assets_stmt->execute()) {
                         throw new Exception('Failed to update asset assignments: ' . $update_assets_stmt->error);
                     }
@@ -267,9 +276,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $update_assets_stmt->close();
             } else {
                 // Update only end_user when employee_id couldn't be resolved
-                $update_assets_stmt = $conn->prepare("UPDATE assets SET end_user = ? WHERE id = ?");
+                if ($to_office_id) {
+                    $update_assets_stmt = $conn->prepare("UPDATE assets SET end_user = ?, office_id = ? WHERE id = ?");
+                } else {
+                    $update_assets_stmt = $conn->prepare("UPDATE assets SET end_user = ? WHERE id = ?");
+                }
                 foreach ($assets_to_update as $aid_int) {
-                    $update_assets_stmt->bind_param('si', $end_user, $aid_int);
+                    if ($to_office_id) {
+                        $update_assets_stmt->bind_param('sii', $end_user, $to_office_id, $aid_int);
+                    } else {
+                        $update_assets_stmt->bind_param('si', $end_user, $aid_int);
+                    }
                     if (!$update_assets_stmt->execute()) {
                         throw new Exception('Failed to update asset end_user: ' . $update_assets_stmt->error);
                     }
@@ -310,6 +327,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $update_mr_by_tag_stmt->close();
         }
 
+        // Lifecycle logging for office change per asset (TRANSFERRED with office context)
+        if (function_exists('logLifecycleEvent') && !empty($assets_to_update)) {
+            foreach ($assets_to_update as $aid_int) {
+                $from_emp = $from_employee_map[$aid_int] ?? null;
+                // Resolve previous office_id for from_office_id
+                $prev_office_id = null;
+                if ($stPrev = $conn->prepare("SELECT office_id FROM assets WHERE id = ? LIMIT 1")) {
+                    $stPrev->bind_param('i', $aid_int);
+                    $stPrev->execute();
+                    $rsPrev = $stPrev->get_result();
+                    if ($rsPrev && ($rPrev = $rsPrev->fetch_assoc())) { $prev_office_id = $rPrev['office_id'] ?? null; }
+                    $stPrev->close();
+                }
+                // Only log office IDs when destination office is provided
+                $note = sprintf('ITR %s; Reason: %s; To: %s', (string)$itr_no, (string)$reason_for_transfer, (string)$to_accountable_officer);
+                logLifecycleEvent((int)$aid_int, 'TRANSFERRED', 'itr_form', (int)$itr_id, $from_emp ? (int)$from_emp : null, $to_employee_id ? (int)$to_employee_id : null, $prev_office_id ? (int)$prev_office_id : null, $to_office_id ? (int)$to_office_id : null, $note);
+            }
+        }
+
         // Log the ITR creation
         if (function_exists('logAssetActivity')) {
             $action = 'ITR_CREATE';
@@ -317,14 +353,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             logAssetActivity($action, $description, $itr_id, "Transfer Type: {$final_transfer_type}, End User: {$end_user}");
         }
 
-        // Lifecycle: TRANSFERRED per asset
-        if (function_exists('logLifecycleEvent') && !empty($assets_to_update)) {
-            foreach ($assets_to_update as $aid_int) {
-                $from_emp = $from_employee_map[$aid_int] ?? null;
-                $note = sprintf('ITR %s; Reason: %s; To: %s', (string)$itr_no, (string)$reason_for_transfer, (string)$to_accountable_officer);
-                logLifecycleEvent((int)$aid_int, 'TRANSFERRED', 'itr_form', (int)$itr_id, $from_emp ? (int)$from_emp : null, $to_employee_id ? (int)$to_employee_id : null, null, null, $note);
-            }
-        }
+        // (Removed duplicate lifecycle logging - now handled above with office context)
 
         $conn->commit();
 
