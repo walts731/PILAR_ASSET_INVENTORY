@@ -221,7 +221,12 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
     </tbody>
   </table>
   <span style="color: red;">*</span> Required Fields
-  <button type="submit" class="btn btn-primary"><i class="bi bi-send-check-fill"></i>Save</button>
+  <div class="text-start mt-3">
+  <button type="submit" class="btn btn-primary">
+    <i class="bi bi-send-check-fill"></i> Save
+  </button>
+</div>
+
 </form>
 
   <script>

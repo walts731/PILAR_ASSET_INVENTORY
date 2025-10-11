@@ -76,6 +76,13 @@ $stmt->close();
 
   <div class="main">
     <?php include 'includes/topbar.php' ?>
+    <div class="text-end mb-3">
+  <a href="generate_ics_pdf.php?id=<?= (int)$ics['ics_id'] ?>" 
+     class="btn btn-info">
+    <i class="bi bi-printer"></i> Print / Export PDF
+  </a>
+</div>
+
 
     <div class="container py-4">
       <?php if (isset($_SESSION['flash'])): ?>
@@ -226,9 +233,7 @@ $stmt->close();
           <button type="submit" class="btn btn-primary">
             <i class="bi bi-save"></i> Save Changes
           </button>
-          <a href="generate_ics_pdf.php?id=<?= $ics['ics_id'] ?>" class="btn btn-success">
-            <i class="bi bi-printer"></i> Print / Export PDF
-          </a>
+          
         </div>
       </form>
     </div>

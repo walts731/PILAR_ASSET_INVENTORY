@@ -211,7 +211,7 @@ if (!empty($_SESSION['flash'])) {
 <!-- Header with Saved ITR Button -->
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4 class="mb-0">Inventory Transfer Receipt (ITR) Form</h4>
-  <a href="saved_itr.php" class="btn btn-outline-primary">
+  <a href="saved_itr.php" class="btn btn-info">
     <i class="bi bi-file-earmark-text me-2"></i>Saved ITR
   </a>
 </div>
@@ -297,34 +297,44 @@ if (!empty($_SESSION['flash'])) {
         </div>
 
         <!-- Transfer type radios -->
-        <div class="col-md-6">
-          <label class="form-label d-block">Transfer Type <span style="color: red;">*</span></label>
-          <?php
-          // Determine selected transfer type; legacy values may be comma-separated, use first
-          $raw_transfer = (string)$itr['transfer_type'];
-          $parts = array_map('trim', array_filter(explode(',', $raw_transfer)));
-          $selectedType = $parts[0] ?? 'Reassignment'; // Default to Reassignment
-          $known = ['Donation', 'Reassignment', 'Relocate'];
-          $otherValue = '';
-          if ($selectedType !== '' && !in_array($selectedType, $known, true)) {
-            $otherValue = $selectedType; // Legacy/custom value
-            $selectedType = 'Others';
-          }
-          ?>
-          <?php foreach ($known as $k): ?>
-            <div class="form-check form-check-inline">
-              <input class="form-check-input transfer-type" type="radio" name="transfer_type" id="tt_<?= strtolower($k) ?>" value="<?= $k ?>" <?= ($selectedType === $k) ? 'checked' : '' ?>>
-              <label class="form-check-label" for="tt_<?= strtolower($k) ?>"><?= $k ?></label>
-            </div>
-          <?php endforeach; ?>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="tt_others" name="transfer_type" value="Others" <?= ($selectedType === 'Others') ? 'checked' : '' ?>>
-            <label class="form-check-label" for="tt_others">Others</label>
-          </div>
-          <div id="transfer_type_other_wrap" class="mt-2" style="display: <?= ($selectedType === 'Others') ? 'block' : 'none' ?>;">
-            <input type="text" id="transfer_type_other" name="transfer_type_other" class="form-control shadow" placeholder="Specify other transfer type" value="<?= htmlspecialchars($otherValue) ?>">
-          </div>
-        </div>
+<div class="col-md-6">
+  <label class="form-label d-block">Transfer Type <span style="color: red;">*</span></label>
+  <?php
+  // Determine selected transfer type
+  $raw_transfer = trim((string)($itr['transfer_type'] ?? ''));
+  $parts = array_map('trim', array_filter(explode(',', $raw_transfer)));
+  $selectedType = $parts[0] ?? '';
+  $known = ['Donation', 'Reassignment', 'Relocate'];
+  $otherValue = '';
+
+  // If the value is invalid or empty, default to "Reassignment"
+  if (!in_array($selectedType, array_merge($known, ['Others']), true)) {
+    $selectedType = 'Reassignment';
+  }
+
+  // Show "Others" text field only if "Others" is actually selected
+  if ($selectedType === 'Others') {
+    $otherValue = htmlspecialchars($itr['transfer_type_other'] ?? '');
+  }
+  ?>
+
+  <?php foreach ($known as $k): ?>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input transfer-type" type="radio" name="transfer_type" id="tt_<?= strtolower($k) ?>" value="<?= $k ?>" <?= ($selectedType === $k) ? 'checked' : '' ?>>
+      <label class="form-check-label" for="tt_<?= strtolower($k) ?>"><?= $k ?></label>
+    </div>
+  <?php endforeach; ?>
+
+  <div class="form-check form-check-inline">
+    <input class="form-check-input" type="radio" id="tt_others" name="transfer_type" value="Others" <?= ($selectedType === 'Others') ? 'checked' : '' ?>>
+    <label class="form-check-label" for="tt_others">Others</label>
+  </div>
+
+  <div id="transfer_type_other_wrap" class="mt-2" style="display: <?= ($selectedType === 'Others') ? 'block' : 'none' ?>;">
+    <input type="text" id="transfer_type_other" name="transfer_type_other" class="form-control shadow" placeholder="Specify other transfer type" value="<?= $otherValue ?>">
+  </div>
+</div>
+
 
         <div class="col-md-6">
           <label for="itr_no" class="form-label">ITR No. (Auto-generated)</label>
@@ -370,18 +380,18 @@ if (!empty($_SESSION['flash'])) {
             <tr>
               <td><input type="date" name="date_acquired[]" class="form-control shadow" value="<?= htmlspecialchars($item['date_acquired']) ?>" required></td>
               <td><input type="text" name="item_no[]" class="form-control shadow" value="1" required></td>
-              <td><input type="text" name="property_no[]" class="form-control property-search shadow" value="<?= htmlspecialchars($item['property_no']) ?>" required></td>
+              <td><input type="text" name="property_no[]" class="form-control property-search shadow" value="<?= htmlspecialchars($item['property_no']) ?>" autocomplete="off" required></td>
               <td>
                 <input type="hidden" name="asset_id[]" value="<?= htmlspecialchars($item['asset_id'] ?? '') ?>">
                 <input type="text" name="description[]"
                   class="form-control asset-search shadow"
                   list="assetsList"
                   placeholder="Search description or property no" 
-                  value="<?= htmlspecialchars($item['description']) ?>" required>
+                  value="<?= htmlspecialchars($item['description']) ?>" autocomplete="off" required>
               </td>
 
               <td><input type="number" step="0.01" name="amount[]" class="form-control shadow" value="<?= htmlspecialchars($item['amount']) ?>" required></td>
-              <td><input type="text" name="condition_of_PPE[]" class="form-control shadow" value="<?= htmlspecialchars($item['condition_of_PPE']) ?>" required></td>
+              <td><input type="text" name="condition_of_PPE[]" class="form-control shadow" value="<?= htmlspecialchars($item['condition_of_PPE']) ?>" autocomplete="off" required></td>
               <td>
                 <!-- First row: no Remove, keep Clear; actions inline -->
                 <div class="d-inline-flex align-items-center">
@@ -473,9 +483,12 @@ if (!empty($_SESSION['flash'])) {
 
 
   <!-- Single Save Button -->
-  <div class="d-flex justify-content-end gap-2 mt-3">
-    <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save </button>
-  </div>
+<div class="d-flex justify-content-start gap-2 mt-3 text-start">
+  <button type="submit" class="btn btn-primary">
+    <i class="bi bi-save"></i> Save
+  </button>
+</div>
+
 
 </form>
 

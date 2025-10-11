@@ -296,7 +296,7 @@ if ($thrRes && $thrRes->num_rows > 0) {
                     <td style="text-align:center;">
                         <input type="text" name="received_by_name"
                             class="form-control text-center fw-bold shadow"
-                            value="<?= htmlspecialchars($ics_data['received_by_name']) ?>"
+                            value=""
                             placeholder="Enter name"
                             style="text-decoration:underline;">
                     </td>
@@ -311,7 +311,7 @@ if ($thrRes && $thrRes->num_rows > 0) {
                     <td style="text-align:center;">
                         <input type="text" name="received_by_position"
                             class="form-control text-center shadow"
-                            value="<?= htmlspecialchars($ics_data['received_by_position']) ?>"
+                            value=""
                             placeholder="Enter position">
                     </td>
                 </tr>

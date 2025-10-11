@@ -324,7 +324,12 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
 
         <small class="text-muted"><span style="color: red;">*</span> Required Fields</small>
 
-        <button type="submit" class="btn btn-primary"><i class="bi bi-send-check-fill"></i>Save</button>
+        <div class="text-start mt-3">
+  <button type="submit" class="btn btn-primary">
+    <i class="bi bi-send-check-fill"></i> Save
+  </button>
+</div>
+
     </form>
 </div>
 

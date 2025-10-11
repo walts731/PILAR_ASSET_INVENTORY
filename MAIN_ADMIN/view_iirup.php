@@ -55,8 +55,17 @@ if ($res_off && $res_off->num_rows) {
   <?php include 'includes/sidebar.php' ?>
   <div class="main">
     <?php include 'includes/topbar.php' ?>
+    <div class="text-end mb-3">
+  <a href="generate_iirup_pdf.php?id=<?= (int)$iirup_id ?>" 
+     target="_blank" 
+     class="btn btn-info">
+    <i class="bi bi-printer"></i> Print
+  </a>
+</div>
+
 
     <div class="container py-4">
+      
       <?php if (isset($_SESSION['flash'])): ?>
         <div class="alert alert-<?= htmlspecialchars($_SESSION['flash']['type'] ?? 'success') ?> alert-dismissible fade show" role="alert">
           <?= htmlspecialchars($_SESSION['flash']['message'] ?? 'Changes saved successfully.') ?>
@@ -81,8 +90,7 @@ if ($res_off && $res_off->num_rows) {
       <form method="POST" action="save_iirup_view.php" enctype="multipart/form-data">
         <input type="hidden" name="iirup_id" value="<?= (int)$iirup_id ?>">
         <div class="mb-3" style="text-align:center;">
-          <label class="form-label">Header Image</label>
-          <input type="file" name="header_image" class="form-control" style="max-width: 400px; margin: 0 auto;">
+          <label class="form-label"></label>
         </div>
 
         <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 10px;" class="mb-3">
@@ -625,8 +633,7 @@ if ($res_off && $res_off->num_rows) {
 
         <div class="d-flex gap-2 my-3">
           <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save</button>
-          <a href="generate_iirup_pdf.php?id=<?= (int)$iirup_id ?>" target="_blank" class="btn btn-success"><i class="bi bi-printer"></i> Print</a>
-          <a href="saved_iirup.php" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+          
         </div>
       </form>
     </div>
