@@ -1,3 +1,5 @@
+import WebSocketClient from './WebSocketClient.js';
+
 class NotificationManager {
     constructor() {
         this.notificationDropdown = document.getElementById('notificationDropdown');
@@ -5,13 +7,27 @@ class NotificationManager {
         this.notificationList = document.querySelector('.notification-list');
         this.markAllAsReadBtn = document.getElementById('markAllAsRead');
         this.viewAllLink = document.getElementById('viewAllNotifications');
-        this.pollingInterval = 60000; // 1 minute
         this.isOpen = false;
+        this.userId = document.body.dataset.userId; // Make sure to add data-user-id to your body tag
+        
+        // Initialize WebSocket client
+        this.wsClient = WebSocketClient;
         
         this.initialize();
     }
     
     initialize() {
+        if (!this.userId) {
+            console.error('User ID not found. Make sure to add data-user-id to the body tag.');
+            return;
+        }
+
+        // Initialize WebSocket connection
+        this.wsClient.connect(this.userId);
+        
+        // Set up WebSocket event handlers
+        this.setupWebSocketHandlers();
+        
         // Load notifications when dropdown is shown
         $(this.notificationDropdown).on('show.bs.dropdown', () => {
             this.isOpen = true;
@@ -33,8 +49,45 @@ class NotificationManager {
             this.markAllAsRead();
         });
         
-        // Start polling for new notifications
-        this.startPolling();
+        // Initial load of notifications
+        this.loadNotifications();
+    }
+    
+    setupWebSocketHandlers() {
+        // Handle new notification event
+        this.wsClient.on('new_notification', (data) => {
+            // Add new notification to the top of the list
+            this.prependNotification(data.notification);
+            
+            // Update badge count
+            this.updateBadge(data.unreadCount);
+            
+            // Show desktop notification if not in focus
+            if (document.visibilityState !== 'visible') {
+                this.showDesktopNotification(data.notification);
+            }
+        });
+        
+        // Handle notification read event
+        this.wsClient.on('notification_read', (data) => {
+            this.updateNotificationReadStatus(data.notificationId, true);
+            this.updateBadge(data.unreadCount);
+        });
+        
+        // Handle all notifications read event
+        this.wsClient.on('all_notifications_read', (data) => {
+            this.markAllAsReadInUI();
+            this.updateBadge(0);
+        });
+        
+        // Handle connection status changes
+        this.wsClient.on('connect', () => {
+            console.log('Connected to WebSocket server');
+        });
+        
+        this.wsClient.on('disconnect', () => {
+            console.log('Disconnected from WebSocket server');
+        });
     }
     
     async loadNotifications() {
