@@ -255,7 +255,7 @@ if (!empty($_SESSION['flash'])) {
         </div>
         <div class="col-md-4">
           <label for="fund_cluster" class="form-label">Fund Cluster <span style="color: red;">*</span></label>
-          <input type="text" id="fund_cluster" name="fund_cluster" class="form-control shadow" placeholder="Enter Fund Cluster" required>
+          <input type="text" id="fund_cluster" name="fund_cluster" class="form-control shadow" placeholder="Enter Fund Cluster" value="<?= htmlspecialchars($_GET['fund_cluster'] ?? ($itr['fund_cluster'] ?? '')) ?>" required>
         </div>
         <div class="col-md-4">
           <label for="date" class="form-label">Date</label>
@@ -750,7 +750,11 @@ if (!empty($_SESSION['flash'])) {
           const parFC = preselectedOption.dataset.parFundCluster || '';
           const icsFC = preselectedOption.dataset.icsFundCluster || '';
           const chosenFC = parFC || icsFC;
-          if (chosenFC) fundClusterInput.value = chosenFC;
+          if (chosenFC) {
+            fundClusterInput.value = chosenFC;
+            // Mark that fund cluster was set by this asset id
+            fundClusterInput.dataset.setByAssetId = preselectedAssetId;
+          }
         }
       }
       const firstRow = table.querySelector('tr');
@@ -778,11 +782,29 @@ if (!empty($_SESSION['flash'])) {
         const option = document.querySelector(`#assetsList option[data-id="${assetId}"]`);
         if (option) option.style.display = '';
         delete descriptionInput.dataset.selectedAssetId;
+
+        // If Fund Cluster was auto-set by this asset, clear it as well
+        const fundClusterInput = document.getElementById('fund_cluster');
+        if (fundClusterInput && fundClusterInput.dataset.setByAssetId === String(assetId)) {
+          fundClusterInput.value = '';
+          delete fundClusterInput.dataset.setByAssetId;
+        }
       }
       row.querySelectorAll('input').forEach(input => {
         if (input.name === 'item_no[]') return; // keep item numbering
         input.value = '';
       });
+
+      // If no assets remain selected anywhere in the table, clear Fund Cluster regardless of origin
+      if (selectedAssetIds.size === 0) {
+        const fundClusterInput = document.getElementById('fund_cluster');
+        if (fundClusterInput) {
+          fundClusterInput.value = '';
+          if (fundClusterInput.dataset.setByAssetId) {
+            delete fundClusterInput.dataset.setByAssetId;
+          }
+        }
+      }
     }
 
     // Function to clear all asset selections in the table
@@ -879,7 +901,11 @@ if (!empty($_SESSION['flash'])) {
           const parFC = option.dataset.parFundCluster || '';
           const icsFC = option.dataset.icsFundCluster || '';
           const chosenFC = parFC || icsFC;
-          if (chosenFC) fundClusterInput.value = chosenFC;
+          if (chosenFC) {
+            fundClusterInput.value = chosenFC;
+            // Track which asset set the Fund Cluster
+            fundClusterInput.dataset.setByAssetId = String(assetId);
+          }
         }
 
         // Track selected
