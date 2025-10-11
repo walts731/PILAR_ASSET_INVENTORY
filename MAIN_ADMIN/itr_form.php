@@ -404,7 +404,7 @@ if (!empty($_SESSION['flash'])) {
           <?php endfor; ?>
         </tbody>
       </table>
-      <button type="button" id="addRow" class="btn btn-secondary btn-sm mt-2"><i class="bi bi-plus"></i> Add Row</button>
+      <button type="button" id="addRow" class="btn btn-primary btn-sm mt-2"><i class="bi bi-plus"></i> Add Row</button>
 
       <!-- Asset datalist for search - will be populated dynamically based on selected employee -->
       <datalist id="assetsList">

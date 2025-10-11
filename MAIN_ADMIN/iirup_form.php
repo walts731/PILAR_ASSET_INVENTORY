@@ -96,11 +96,9 @@ if ($result_assets && $result_assets->num_rows > 0) {
 <?php if (!empty($temp_items)): ?>
     <div class="alert alert-info alert-dismissible fade show" role="alert">
         <strong><i class="bi bi-info-circle"></i> Temporary Items Ready!</strong> 
-        You have <?= count($temp_items) ?> item(s) ready to be loaded into this IIRUP form.
+        You have <?= count($temp_items) ?> item(s) that are loaded into this IIRUP form.
         <div class="mt-2">
-            <button type="button" class="btn btn-sm btn-primary me-2" onclick="loadTempItems()">
-                <i class="bi bi-download"></i> Load Items
-            </button>
+           
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearTempItems()">
                 <i class="bi bi-trash"></i> Clear All
             </button>
@@ -125,31 +123,36 @@ if ($result_assets && $result_assets->num_rows > 0) {
     <input type="hidden" name="header_image" value="<?= htmlspecialchars($header_image) ?>">
 
 <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 10px;" class="mb-3">
+<div style="flex: 1; margin: 0 5px;">
+    <input type="text" name="accountable_officer" value="<?= htmlspecialchars($accountable_officer) ?>"
+        style="width: 100%; border: none; border-bottom: 1px solid black; outline: none; text-align: center; background: transparent;" required>
+    <br>
+    <small><em>(Name of Accountable Officer)</em> <span style="color: red;">*</span></small>
+</div>
+
     <div style="flex: 1; margin: 0 5px;">
-        <input type="text" name="accountable_officer" value="<?= $accountable_officer ?>"
-            style="width: 100%; border: none; outline: none; text-align: center; background: transparent;">
-        <br>
-        <small><em>(Name of Accountable Officer)</em></small>
-    </div>
-    <div style="flex: 1; margin: 0 5px;">
-        <input type="text" name="designation" value="<?= $designation ?>"
-            style="width: 100%; border: none; outline: none; text-align: center; background: transparent;">
-        <br>
-        <small><em>(Designation)</em></small>
-    </div>
-    <div style="flex: 1; margin: 0 5px;">
-        <select name="office" style="width: 100%; border: none; outline: none; text-align: center; background: transparent;">
-            <option value="">-- Select Office --</option>
-            <?php foreach ($offices as $o): ?>
-                <option value="<?= htmlspecialchars($o['office_name']) ?>"
-                    <?= ($office == $o['office_name']) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($o['office_name']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-        <br>
-        <small><em>(Department/Office)</em></small>
-    </div>
+    <input type="text" name="designation" value=""
+        style="width: 100%; border: none; border-bottom: 1px solid black; outline: none; text-align: center; background: transparent;" required>
+    <br>
+    <small><em>(Designation)</em><span style="color: red;">*</span></small>
+</div>
+
+<div style="flex: 1; margin: 0 5px;">
+    <select name="office" required
+        style="width: 100%; border: none; border-bottom: 1px solid black; outline: none; text-align: center; background: transparent;">
+        <option value="" selected>-- Select Office --</option>
+        <?php foreach ($offices as $o): ?>
+            <option value="<?= htmlspecialchars($o['office_name']) ?>">
+                <?= htmlspecialchars($o['office_name']) ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+    <br>
+    <small><em>(Department/Office)</em> <span style="color: red;">*</span></small>
+</div>
+
+</div>
+
 </div>
 
 
@@ -795,11 +798,18 @@ if ($result_footer && $result_footer->num_rows > 0) {
         </tr>
         <tr><td colspan="4" style="height: 30px;"></td></tr>
         <tr>
-            <td>Requested by:</td>
-            <td>Approved by:</td>
-            <td>(Signature over Printed Name of Inspection Officer)</td>
-            <td>(Signature over Printed Name of Witness)</td>
-        </tr>
+    <td>Requested by:</td>
+    <td>Approved by:</td>
+    <td style="text-align: center;">
+        <div style="border-bottom: 1px solid black; width: 100%; height: 25px;"></div>
+        (Signature over Printed Name of Inspection Officer)
+    </td>
+    <td style="text-align: center;">
+        <div style="border-bottom: 1px solid black; width: 100%; height: 25px;"></div>
+        (Signature over Printed Name of Witness)
+    </td>
+</tr>
+
         <tr><td colspan="4" style="height: 50px;"></td></tr>
         <tr>
             <td>
@@ -838,10 +848,8 @@ if ($result_footer && $result_footer->num_rows > 0) {
     <br>
 </div>
 
-<div class="d-flex justify-content-end gap-2" style="margin-top:10px;">
-    
-    <button type="submit" name="save_iirup" class="btn btn-primary">Submit IIRUP</button>
-    
+<div class="d-flex justify-content-start gap-2" style="margin-top:10px;">
+    <button type="submit" name="save_iirup" class="btn btn-primary">Submit</button>
 </div>
 
 </form>
