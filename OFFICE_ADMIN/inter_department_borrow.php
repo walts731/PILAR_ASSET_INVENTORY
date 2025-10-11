@@ -262,47 +262,6 @@ if ($stmt) {
         </div>
     </div>
 
-    <!-- Add to Cart Modal -->
-<div class="modal fade" id="addToCartModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="addToCartForm" method="POST" action="add_to_inter_dept_cart.php">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add to Box</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Asset</label>
-                        <input type="text" class="form-control" id="assetNameDisplay" readonly>
-                        <input type="hidden" name="asset_id" id="assetId">
-                        <input type="hidden" name="asset_name" id="assetName">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Source Office</label>
-                        <input type="text" class="form-control" id="sourceOffice" readonly>
-                        <input type="hidden" name="source_office_id" id="sourceOfficeId">
-                        <input type="hidden" name="source_office_name" id="sourceOfficeName">
-                    </div>
-                    <div class="mb-3">
-                        <label for="quantity" class="form-label">Quantity</label>
-                        <input type="number" class="form-control" id="quantity" name="quantity" min="1" value="1" required>
-                        <small class="form-text text-muted">Maximum available: <span id="maxQuantity">0</span></small>
-                    </div>
-                    <input type="hidden" name="purpose" value="">
-                    <input type="hidden" name="requested_return_date" value="">
-                </div>
-                <div class="modal-footer">
-                    <div class="me-auto text-muted small">
-                        <span class="text-danger">*</span> Required field
-                    </div>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add to Box</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <style>
 /* Main content area */
@@ -362,36 +321,39 @@ if ($stmt) {
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Asset</label>
-                        <input type="text" class="form-control" id="assetName" readonly>
-                        <input type="hidden" name="asset_id" id="assetId">
-                                <input type="hidden" name="asset_name" id="assetName">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Source Office</label>
-                                <input type="text" class="form-control" id="sourceOffice" readonly>
-                                <input type="hidden" name="source_office_id" id="sourceOfficeId">
-                                <input type="hidden" name="source_office_name" id="sourceOfficeName">
-                            </div>
-                            <div class="mb-3">
-                                <label for="quantity" class="form-label">Quantity</label>
-                                <input type="number" class="form-control" id="quantity" name="quantity" min="1" value="1" required>
-                                <small class="form-text text-muted">Maximum available: <span id="maxQuantity">0</span></small>
-                            </div>
-                            <input type="hidden" name="purpose" value="">
-                            <input type="hidden" name="requested_return_date" value="">
-                        </div>
-                        <div class="modal-footer">
-                            <div class="me-auto text-muted small">
-                                <span class="text-danger">*</span> Required field
-                            </div>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Add to Box</button>
-                        </div>
-                    </form>
+                        <label class="form-label">
+                            Asset
+                            <input type="text" class="form-control mt-1" id="assetNameDisplay" readonly>
+                            <input type="hidden" name="asset_id" id="assetId">
+                            <input type="hidden" name="asset_name" id="assetName">
+                        </label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Source Office
+                            <input type="text" class="form-control mt-1" id="sourceOffice" readonly>
+                            <input type="hidden" name="source_office_id" id="sourceOfficeId">
+                            <input type="hidden" name="source_office_name" id="sourceOfficeName">
+                        </label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Quantity <span class="text-danger">*</span>
+                            <input type="number" class="form-control mt-1" id="quantity" name="quantity" min="1" value="1" required>
+                            <small class="form-text text-muted">Maximum available: <span id="maxQuantity">0</span></small>
+                        </label>
+                    </div>
+                    <input type="hidden" name="purpose" id="purpose" value="">
+                    <input type="hidden" name="requested_return_date" id="requestedReturnDate" value="">
                 </div>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add to Box</button>
+                </div>
+            </form>
         </div>
+    </div>
+</div>
 
         <style>
         /* Main content area */
@@ -416,9 +378,21 @@ if ($stmt) {
         }
         </style>
 
+        <!-- jQuery and Bootstrap JS -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        
+        <!-- DataTables JS -->
+        <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+        
         <script>
         $(document).ready(function() {
             // Initialize DataTable
+            if ($.fn.DataTable.isDataTable('.data-table')) {
+                $('.data-table').DataTable().destroy();
+            }
+            
             $('.data-table').DataTable({
                 responsive: true,
                 language: {
