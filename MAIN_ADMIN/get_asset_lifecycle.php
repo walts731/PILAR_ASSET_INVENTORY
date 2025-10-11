@@ -76,6 +76,13 @@ try {
 
     $events = [];
     while ($row = $result->fetch_assoc()) {
+        // Resolve dynamic office placeholders in notes for display (handles historical rows)
+        $resolvedNotes = resolveLifecycleNotes(
+            $row['notes'] ?? '',
+            $row['from_office_id'] ?? null,
+            $row['to_office_id'] ?? null
+        );
+
         $events[] = [
             'id' => (int)$row['id'],
             'asset_id' => (int)$row['asset_id'],
@@ -86,7 +93,7 @@ try {
             'to_employee' => $row['to_employee_name'] ?? null,
             'from_office' => $row['from_office_name'] ?? null,
             'to_office' => $row['to_office_name'] ?? null,
-            'notes' => $row['notes'] ?? '',
+            'notes' => $resolvedNotes,
             'created_at' => $row['created_at'],
         ];
     }

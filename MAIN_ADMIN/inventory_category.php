@@ -180,7 +180,7 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
                     <thead class="table-light">
                       <tr>
                         <th><input type="checkbox" id="selectAllAssetsCat" /></th>
-                        <th>ICS No</th>
+                        <th>ICS/PAR No</th>
                         <th>Description</th>
                         <th>Category</th>
                         <th>Qty</th>
