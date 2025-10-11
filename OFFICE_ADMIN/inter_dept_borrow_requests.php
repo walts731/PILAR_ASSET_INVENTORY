@@ -260,7 +260,8 @@ $my_requests_sql = "
            so.office_name as source_office_name, 
            do.office_name as dest_office_name,
            ia.status as office_head_approval,
-           isa.status as source_office_approval
+           isa.status as source_office_approval,
+           br.purpose as purpose
     FROM borrow_requests br
     JOIN assets a ON br.asset_id = a.id
     JOIN offices so ON br.source_office_id = so.id
@@ -774,6 +775,7 @@ $(document).ready(function() {
     // Handle view details button
     $('.view-details').on('click', function() {
         const request = $(this).data('request');
+        console.log('Request data:', request);
         let detailsHtml = `
             <div class="row mb-4">
                 <div class="col-md-6">
