@@ -304,8 +304,8 @@ $stmt->close();
         <p class="small mt-4"> <span style="color: red;">*</span> Required fields</p>
 
         <!-- Save Button -->
-        <div class="text-center mt-4 no-print">
-          <button type="submit" class="btn btn-success btn-lg">
+        <div class=" mt-4 no-print text-start">
+          <button type="submit" class="btn btn-primary btn-lg">
             <i class="bi bi-save"></i> Save Changes
           </button>
         </div>
