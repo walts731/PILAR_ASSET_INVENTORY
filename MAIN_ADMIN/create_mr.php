@@ -1434,7 +1434,24 @@ if ($baseSerial !== '') {
                                         <?= $existing_mr_check ? 'Update Property Tag' : 'Create Property Tag' ?>
                                     </button>
                                     <?php if ($existing_mr_check): ?>
-                                        <a href="print_mr.php?asset_id=<?= htmlspecialchars($asset_id) ?>" class="btn btn-info ms-2 shadow-sm">
+                                        <?php
+                                            // Determine MR ID for printing (prefer mapping by item_id+asset_id)
+                                            $mr_id_for_print = null;
+                                            if (isset($asset_id) && !empty($asset_id)) {
+                                                if ($stFindBtn = $conn->prepare("SELECT mr_id FROM mr_details WHERE (item_id = ? OR (? IS NULL AND item_id IS NULL)) AND asset_id = ? ORDER BY mr_id DESC LIMIT 1")) {
+                                                    // $mr_item_id may be null (PAR-origin) which is handled by the OR clause
+                                                    $temp_item_id = isset($mr_item_id) ? $mr_item_id : null;
+                                                    $stFindBtn->bind_param('iii', $temp_item_id, $temp_item_id, $asset_id);
+                                                    $stFindBtn->execute();
+                                                    $rsBtn = $stFindBtn->get_result();
+                                                    if ($rsBtn && ($rowBtn = $rsBtn->fetch_assoc())) {
+                                                        $mr_id_for_print = (int)$rowBtn['mr_id'];
+                                                    }
+                                                    $stFindBtn->close();
+                                                }
+                                            }
+                                        ?>
+                                        <a href="bulk_print_mr.php?ids=<?= htmlspecialchars((string)$mr_id_for_print) ?>" class="btn btn-info ms-2 shadow-sm" <?= empty($mr_id_for_print) ? 'disabled' : '' ?>>
                                             <i class="bi bi-printer me-1"></i>Print Tag
                                         </a>
                                     <?php endif; ?>

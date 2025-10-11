@@ -77,6 +77,18 @@ function getQRData($asset_id, $conn) {
     }
     return "";
 }
+
+// Helper: normalize dates to avoid placeholders like 0-0-0-0-0 or 0000-00-00
+if (!function_exists('formatDateSafe')) {
+    function formatDateSafe($val) {
+        $v = trim((string)($val ?? ''));
+        if ($v === '' || $v === '0000-00-00') { return ''; }
+        if ($v === '0-0-0-0-0' || $v === '0-0-0' || $v === '00-00-0000') { return ''; }
+        $ts = strtotime($v);
+        if ($ts && $ts > 0) { return date('Y-m-d', $ts); }
+        return htmlspecialchars($v);
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -255,6 +267,10 @@ function getQRData($asset_id, $conn) {
                 $serviceableChecked = ($mr['serviceable'] == 1) ? '☑' : '☐';
                 $unserviceableChecked = ($mr['unserviceable'] == 1) ? '☑' : '☐';
                 $qrData = getQRData($mr['asset_id'], $conn);
+                $acqDisp = formatDateSafe($mr['acquired_date'] ?? '');
+                $countDisp = formatDateSafe($mr['counted_date'] ?? '');
+                $modelRaw = trim((string)($mr['model_no'] ?? ''));
+                $modelDisp = ($modelRaw !== '') ? htmlspecialchars($modelRaw) : str_repeat('&nbsp;', 12);
             ?>
             <div class="mr-record">
                 <div class="mr-header">
@@ -288,8 +304,7 @@ function getQRData($asset_id, $conn) {
                 </div>
 
                 <div class="mr-field">
-                    <span class="mr-field-label">Model No.:</span>
-                    <span class="mr-field-value"><?= htmlspecialchars($mr['model_no']) ?></span>
+                    <span class="mr-field-label">Model No.:</span><span class="mr-field-value"><?= $modelDisp ?></span>
                     &nbsp;&nbsp;
                     Serial No.: <span class="mr-field-value"><?= htmlspecialchars($mr['serial_no']) ?></span>
                 </div>
@@ -312,8 +327,8 @@ function getQRData($asset_id, $conn) {
                 </div>
 
                 <div class="mr-dates">
-                    <div>Date: (acquired) <span class="mr-field-value"><?= htmlspecialchars($mr['acquired_date']) ?></span></div>
-                    <div>Date: (counted) <span class="mr-field-value"><?= htmlspecialchars($mr['counted_date']) ?></span></div>
+                    <div>Date: (acquired) <span class="mr-field-value"><?= ($acqDisp !== '' ? htmlspecialchars($acqDisp) : str_repeat('&nbsp;', 12)) ?></span></div>
+                    <div>Date: (counted) <span class="mr-field-value"><?= ($countDisp !== '' ? htmlspecialchars($countDisp) : str_repeat('&nbsp;', 12)) ?></span></div>
                 </div>
 
                 <div class="mr-signatures">

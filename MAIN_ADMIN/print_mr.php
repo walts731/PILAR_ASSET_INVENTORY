@@ -1,6 +1,7 @@
 <?php
 require_once '../vendor/autoload.php';
 require_once '../connect.php';
+session_start();
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -86,6 +87,24 @@ if ($asset_id_param || $item_id) {
     $serviceableChecked = ($mr_details['serviceable'] == 1) ? 'checked' : '';
     $unserviceableChecked = ($mr_details['unserviceable'] == 1) ? 'checked' : '';
 
+    // Normalize dates to avoid showing placeholders like 0-0-0-0-0 or 0000-00-00
+    $formatDateSafe = function($val) {
+        $v = trim((string)($val ?? ''));
+        if ($v === '' || $v === '0000-00-00') { return ''; }
+        // Common garbage pattern sometimes saved
+        if ($v === '0-0-0-0-0' || $v === '0-0-0' || $v === '00-00-0000') { return ''; }
+        $ts = strtotime($v);
+        if ($ts && $ts > 0) { return date('Y-m-d', $ts); }
+        // If unparsable but not obviously junk, return as-is
+        return htmlspecialchars($v);
+    };
+    $acquired_disp = $formatDateSafe($mr_details['acquired_date'] ?? '');
+    $counted_disp  = $formatDateSafe($mr_details['counted_date'] ?? '');
+
+    // Prepare Model No. with blank underline if empty
+    $model_raw = trim((string)($mr_details['model_no'] ?? ''));
+    $model_disp = ($model_raw !== '') ? htmlspecialchars($model_raw) : str_repeat('&nbsp;', 12);
+
     // HTML structure for the property sticker
     $html = "
 <html>
@@ -141,7 +160,7 @@ if ($asset_id_param || $item_id) {
         <div class='line'></div>
 
         <p><span class='field-label'>Description of the property:</span> <u>" . htmlspecialchars($mr_details['description']) . "</u></p>
-        <p><span class='field-label'>Model No.:</span> <u>" . htmlspecialchars($mr_details['model_no']) . "</u> &nbsp;&nbsp;&nbsp; Serial No.: <u>" . htmlspecialchars($mr_details['serial_no']) . "</u></p>
+        <p><span class='field-label'>Model No.:</span><u>" . ($model_disp) . "</u> &nbsp;&nbsp;&nbsp; Serial No.: <u>" . htmlspecialchars($mr_details['serial_no']) . "</u></p>
         
         <p>
             <input type='checkbox' $serviceableChecked> Serviceable
@@ -154,8 +173,8 @@ if ($asset_id_param || $item_id) {
 
         <!-- Date Section (Inline) -->
         <div class='row'>
-            <div class='inline-date'>Date: (acquired) &nbsp;&nbsp; <u>" . htmlspecialchars($mr_details['acquired_date']) . "</u></div>
-            <div class='inline-date'>Date: (counted) &nbsp;&nbsp; <u>" . htmlspecialchars($mr_details['counted_date']) . "</u></div>
+            <div class='inline-date'>Date: (acquired) &nbsp;&nbsp; <u>" . ($acquired_disp !== '' ? $acquired_disp : str_repeat('&nbsp;', 12)) . "</u></div>
+            <div class='inline-date'>Date: (counted) &nbsp;&nbsp; <u>" . ($counted_disp !== '' ? $counted_disp : str_repeat('&nbsp;', 12)) . "</u></div>
         </div>
 
         <!-- Signature Section (Inline) -->
@@ -178,15 +197,51 @@ if ($asset_id_param || $item_id) {
     // Generate PDF
     $options = new Options();
     $options->set('isHtml5ParserEnabled', true);
-    $options->set('fontDir', '/path/to/your/fonts'); // Path to the font directory
-    $options->set('fontCache', '/path/to/your/font/cache'); // Path to the font cache
+    // Use default Dompdf font paths to avoid invalid placeholders
     $dompdf = new Dompdf($options);
 
     $dompdf->loadHtml($html);
     $dompdf->setPaper('A5', 'landscape'); // Tag size
     $dompdf->render();
 
-    $dompdf->stream("inventory_tag_{$item_id}.pdf", ["Attachment" => 0]);
+    // Save PDF to generated_reports directory and log it
+    try {
+        $output = $dompdf->output();
+
+        // Ensure directory exists
+        $reportsDir = __DIR__ . '/../generated_reports';
+        if (!is_dir($reportsDir)) {
+            @mkdir($reportsDir, 0755, true);
+        }
+
+        // Build filename: MR_Tag_{mr_id or item_id}_{timestamp}.pdf
+        $mrId = isset($mr_details['mr_id']) ? (int)$mr_details['mr_id'] : null;
+        $stamp = date('Ymd_His');
+        $fileBase = $mrId ? "MR_Tag_{$mrId}_{$stamp}.pdf" : (isset($item_id) && $item_id ? "MR_Tag_ITEM_{$item_id}_{$stamp}.pdf" : "MR_Tag_{$stamp}.pdf");
+        $filePath = $reportsDir . DIRECTORY_SEPARATOR . $fileBase;
+
+        // Write file
+        file_put_contents($filePath, $output);
+
+        // Insert into generated_reports (if table exists)
+        if (isset($_SESSION) && isset($_SESSION['user_id'])) {
+            $user_id = (int)$_SESSION['user_id'];
+            $office_id = isset($_SESSION['office_id']) ? (int)$_SESSION['office_id'] : null;
+            // Use relative path from project root for filename, as in other exports
+            $filenameForDb = 'generated_reports/' . $fileBase;
+            if ($stmtIns = $conn->prepare("INSERT INTO generated_reports (user_id, office_id, filename, generated_at) VALUES (?, ?, ?, NOW())")) {
+                $stmtIns->bind_param('iis', $user_id, $office_id, $filenameForDb);
+                $stmtIns->execute();
+                $stmtIns->close();
+            }
+        }
+    } catch (Throwable $e) {
+        // Non-fatal: continue to stream to browser even if save/log fails
+    }
+
+    // Stream to browser
+    $streamName = isset($mrId) && $mrId ? ("mr_tag_{$mrId}.pdf") : (isset($item_id) && $item_id ? "inventory_tag_{$item_id}.pdf" : "mr_tag.pdf");
+    $dompdf->stream($streamName, ["Attachment" => 0]);
 } else {
     echo "Item ID not provided.";
 }
