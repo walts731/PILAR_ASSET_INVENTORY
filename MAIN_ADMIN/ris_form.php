@@ -224,7 +224,7 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
   <button type="submit" class="btn btn-primary"><i class="bi bi-send-check-fill"></i>Save</button>
 </form>
 
-<script>
+  <script>
   document.addEventListener("DOMContentLoaded", function() {
     // Dynamic preview for RIS and SAI numbers
     const RIS_TEMPLATE = <?= json_encode($ris_template) ?>;
@@ -259,16 +259,46 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
       const txt = opt ? (opt.text||'') : '';
       return sel.value ? ((txt || '').trim() || 'OFFICE') : 'OFFICE';
     }
+    function escapeRegex(s){ return String(s||'').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+    function buildNumberFromTemplate(tpl, dateStr, officeName){
+      let s = padDigits(applyDate(tpl || '', dateStr));
+      return s.replace(/\{OFFICE\}|OFFICE/g, officeName || 'OFFICE');
+    }
     function updatePreviews(){
       const officeDisp = computeOfficeAcr();
-      // Preserve digits already in fields; only swap OFFICE tokens
+      const dateEl = document.querySelector('input[type="date"]#date');
+      const dateVal = dateEl ? dateEl.value : null;
+
       const f = document.getElementById('ris_no');
-      if (f && f.value) {
-        f.value = f.value.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
+      if (f) {
+        if (RIS_TEMPLATE && RIS_TEMPLATE.trim()) {
+          f.value = buildNumberFromTemplate(RIS_TEMPLATE, dateVal, officeDisp);
+        } else if (f.value) {
+          const last = f.dataset.lastOffice || '';
+          if (last) {
+            const re = new RegExp('\\b' + escapeRegex(last) + '\\b','g');
+            f.value = f.value.replace(re, officeDisp);
+          } else {
+            f.value = f.value.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
+          }
+          f.dataset.lastOffice = officeDisp;
+        }
       }
+
       const f2 = document.getElementById('sai_no');
-      if (f2 && f2.value) {
-        f2.value = f2.value.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
+      if (f2) {
+        if (SAI_TEMPLATE && SAI_TEMPLATE.trim()) {
+          f2.value = buildNumberFromTemplate(SAI_TEMPLATE, dateVal, officeDisp);
+        } else if (f2.value) {
+          const last2 = f2.dataset.lastOffice || '';
+          if (last2) {
+            const re2 = new RegExp('\\b' + escapeRegex(last2) + '\\b','g');
+            f2.value = f2.value.replace(re2, officeDisp);
+          } else {
+            f2.value = f2.value.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
+          }
+          f2.dataset.lastOffice = officeDisp;
+        }
       }
     }
     const officeSel = document.getElementById('office_id');
