@@ -65,24 +65,40 @@ $html = '<!DOCTYPE html>
 <meta charset="UTF-8">
 <style>
   @page { margin: 12mm; }
-  body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
+  html, body {
+    height: 100%;
+    font-family: DejaVu Sans, sans-serif;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+  }
   h2 { text-align: center; margin: 0; font-size: 16px; }
   .meta { margin: 10px 0; font-size: 12px; }
   .uline { display: inline-block; border-bottom: 1px solid #000; min-width: 220px; padding: 0 4px; }
 
-  table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    border: 1px solid #000; /* keep outer border */
+  .content {
+    flex: 1; /* fills available vertical space */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
-  th, td { 
-    border-right: 1px solid #000;  /* only vertical column lines */
-    padding: 4px; 
-    text-align: center; 
-    font-size: 11px; 
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #000;
+    flex-grow: 1;
   }
-  th:last-child, td:last-child { border-right: none; } /* remove last column border */
-  th { font-weight: bold; border-bottom: 1px solid #000; } /* header has bottom line */
+  th, td {
+    border: 1px solid #000;
+    padding: 4px;
+    text-align: center;
+    font-size: 11px;
+  }
+  th {
+    font-weight: bold;
+    background-color: #f9f9f9;
+  }
 
   .grand-total { color: red; font-weight: bold; }
   .designation { font-size: 10px; }
@@ -107,7 +123,7 @@ if (!empty($par['header_image'])) {
     }
 }
 
-// Office/Location centered (to mirror par_form top-center display)
+// Office/Location
 $officeText = '';
 if (!empty($par['office_id']) && $par['office_id'] === 'outside_lgu') {
     $officeText = 'Outside LGU';
@@ -115,12 +131,12 @@ if (!empty($par['office_id']) && $par['office_id'] === 'outside_lgu') {
     $officeText = $par['office_name'];
 }
 if ($officeText !== '') {
-    $html .= '<div style="text-align:center; margin: 2px 0 8px 0;">'
-           . '  <strong>Office/Location:</strong> <span class="uline">' . htmlspecialchars($officeText) . '</span>'
-           . '</div>';
+  $html .= '<div style="text-align:center; margin: 2px 0 8px 0;">'
+  . '  <span class="uline">' . htmlspecialchars($officeText) . '</span><br>'
+  . '  <strong>Office/Location</strong>'
+  . '</div>';
 }
 
-// Meta section (underlined fields)
 $html .= '
 <div class="meta">
   <p>
@@ -130,6 +146,7 @@ $html .= '
   <p><strong>Fund Cluster:</strong> <span class="uline">' . htmlspecialchars($par['fund_cluster']) . '</span></p>
 </div>
 
+<div class="content">
 <table>
   <thead>
     <tr>
@@ -144,6 +161,7 @@ $html .= '
   </thead>
   <tbody>';
 
+// Items section
 if (!empty($par['items'])) {
     foreach ($par['items'] as $item) {
         $html .= '<tr>
@@ -156,87 +174,58 @@ if (!empty($par['items'])) {
           <td>' . number_format((float)($item['amount'] ?? 0), 2) . '</td>
         </tr>';
     }
-    
-    // Add "nothing follows" row if there are items
-    if (!empty($par['items'])) {
-        $html .= '
-        <tr>
-          <td colspan="7" style="text-align: center; font-style: italic; padding: 6px 0; border-top: 1px solid #000;">— NOTHING FOLLOWS —</td>
-        </tr>';
-    }
+    $html .= '<tr>
+      <td colspan="7" style="text-align: center; font-style: italic; padding: 6px 0;">— NOTHING FOLLOWS —</td>
+    </tr>';
 } else {
     $html .= '<tr><td colspan="7">No items found.</td></tr>';
 }
 
-// Add empty rows for spacing if few items
-for ($i = count($par['items']); $i < 10; $i++) {
-    $html .= '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+// Fill empty rows so table reaches bottom
+$totalRows = count($par['items']);
+$minRows = 20; // adjust as needed to ensure full-page fill
+if ($totalRows < $minRows) {
+    for ($i = $totalRows; $i < $minRows; $i++) {
+        $html .= '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+    }
 }
 
-// (Total row moved below to sit at the top of the footer section)
-
-// Dynamic spacer height to push footer close to page bottom (bounds-safe)
-$itemsCount = is_array($par['items']) ? count($par['items']) : 0;
-$spacerHeight = 0;
-if ($itemsCount <= 5) {
-    $spacerHeight = 260; // px
-} elseif ($itemsCount <= 10) {
-    $spacerHeight = 180; // px
-} elseif ($itemsCount <= 15) {
-    $spacerHeight = 100; // px
-} else {
-    $spacerHeight = 20; // px minimal when many items
-}
-
-// Spacer row to push footer down while keeping vertical column lines
-$html .= '<tr>
-  <td style="height:' . (int)$spacerHeight . 'px;"></td>
-  <td></td>
-  <td></td>
-  <td></td>
-  <td></td>
-  <td></td>
-  <td></td>
-</tr>';
-
-// Horizontal separator line across full width (connects to vertical lines)
-$html .= '<tr>
-  <td style="padding:0; border-top:1px solid #000;"></td>
-  <td style="padding:0; border-top:1px solid #000;"></td>
-  <td style="padding:0; border-top:1px solid #000;"></td>
-  <td style="padding:0; border-top:1px solid #000;"></td>
-  <td style="padding:0; border-top:1px solid #000;"></td>
-  <td style="padding:0; border-top:1px solid #000;"></td>
-  <td style="padding:0; border-top:1px solid #000;"></td>
-</tr>';
-
-// Grand total row (now at the top of the footer section). Vertical lines continue via table cell borders.
+// Grand total
 $html .= '<tr>
   <td colspan="5"></td>
   <td><strong>Total</strong></td>
   <td class="grand-total">' . number_format($grandTotal, 2) . '</td>
 </tr>';
 
-// Footer/signatories inside main table to keep vertical lines
+// Footer/signatories
 $html .= '<tr>
-  <td colspan="3" style="height:80px; vertical-align:bottom; text-align:center;">
-    <strong>Received by:</strong><br><br>
-    <u>' . strtoupper(htmlspecialchars($par['received_by_name'] ?? '')) . '</u><br>
-    <span class="designation">' . htmlspecialchars($par['position_office_left'] ?? '') . '</span><br>
-    Date: ' . (!empty($par['date_received_left']) ? htmlspecialchars(date('Y-m-d', strtotime($par['date_received_left']))) : '____________') . '
+  <td colspan="3" style="height:120px; vertical-align:bottom; text-align:center;">
+    <strong><i>Received by:</i></strong><br><br>
+    <strong><u>' . strtoupper(htmlspecialchars($par['received_by_name'] ?? '')) . '</u></strong><br>
+    <span style="display:block; text-align:center; margin-top:2px;">Signature over Printed Name</span><br>
+    <strong><u>' . htmlspecialchars($par['position_office_left'] ?? '____________') . '</u></strong><br>
+    <span style="display:block; text-align:center; margin-top:2px;">Position / Office</span><br>
+    <strong><u>' . (!empty($par['date_received_left']) ? htmlspecialchars(date('Y-m-d', strtotime($par['date_received_left']))) : '____________') . '</u></strong><br>
+    <span style="display:block; text-align:center; margin-top:2px;">Date</span>
   </td>
   <td></td>
-  <td colspan="3" style="height:80px; vertical-align:bottom; text-align:center;">
-    <strong>Issued by:</strong><br><br>
-    <u>' . strtoupper(htmlspecialchars($par['issued_by_name'] ?? '')) . '</u><br>
-    <span class="designation">' . htmlspecialchars($par['position_office_right'] ?? '') . '</span><br>
-    Date: ' . (!empty($par['date_received_right']) ? htmlspecialchars(date('Y-m-d', strtotime($par['date_received_right']))) : '____________') . '
+  <td colspan="3" style="height:120px; vertical-align:bottom; text-align:center;">
+    <strong><i>Issued by:</i></strong><br><br>
+    <strong><u>' . strtoupper(htmlspecialchars($par['issued_by_name'] ?? '')) . '</u></strong><br>
+    <span style="display:block; text-align:center; margin-top:2px;">Signature over Printed Name</span><br>
+    <strong><u>' . htmlspecialchars($par['position_office_right'] ?? '____________') . '</u></strong><br>
+    <span style="display:block; text-align:center; margin-top:2px;">Position / Office</span><br>
+    <strong><u>' . (!empty($par['date_received_right']) ? htmlspecialchars(date('Y-m-d', strtotime($par['date_received_right']))) : '____________') . '</u></strong><br>
+    <span style="display:block; text-align:center; margin-top:2px;">Date</span>
   </td>
-</tr>';
+</tr>
+</tbody>
+</table>
+</div>
+</body>
+</html>';
 
-$html .= '</tbody></table></body></html>';
-
-// Load HTML and generate PDF
+// Generate PDF
 $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();

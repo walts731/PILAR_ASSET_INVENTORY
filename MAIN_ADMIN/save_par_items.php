@@ -24,18 +24,8 @@ if ($par_id <= 0) {
   // Begin transaction for safety
   $conn->begin_transaction();
   try {
-  // Lookup PAR office_id for propagation to assets
-  $par_office_id = 0;
-  $stmt_off = $conn->prepare("SELECT office_id FROM par_form WHERE id = ? LIMIT 1");
-  if ($stmt_off) {
-    $stmt_off->bind_param('i', $par_id);
-    if ($stmt_off->execute()) {
-      $res_off = $stmt_off->get_result();
-      $row_off = $res_off ? $res_off->fetch_assoc() : null;
-      $par_office_id = $row_off ? (int)$row_off['office_id'] : 0;
-    }
-    $stmt_off->close();
-  }
+  // Get posted office_id (new office selection)
+  $posted_office_id = isset($_POST['office_id']) ? (int)$_POST['office_id'] : 0;
 
   // Update PAR header fields
   $entity_name = trim($_POST['entity_name'] ?? '');
@@ -48,24 +38,60 @@ if ($par_id <= 0) {
   $date_received_left = $_POST['date_received_left'] ?? null;
   $date_received_right = $_POST['date_received_right'] ?? null;
 
-  $stmt_hdr = $conn->prepare("UPDATE par_form SET entity_name = ?, fund_cluster = ?, par_no = ?, position_office_left = ?, position_office_right = ?, date_received_left = ?, date_received_right = ?, received_by_name = ?, issued_by_name = ? WHERE id = ?");
-  $stmt_hdr->bind_param(
-    'sssssssssi',
-    $entity_name,
-    $fund_cluster,
-    $par_no,
-    $position_office_left,
-    $position_office_right,
-    $date_received_left,
-    $date_received_right,
-    $received_by_name,
-    $issued_by_name,
-    $par_id
-  );
+  // Update header (conditionally include office_id when provided)
+  if ($posted_office_id > 0) {
+    $stmt_hdr = $conn->prepare("UPDATE par_form SET entity_name = ?, fund_cluster = ?, par_no = ?, position_office_left = ?, position_office_right = ?, date_received_left = ?, date_received_right = ?, received_by_name = ?, issued_by_name = ?, office_id = ? WHERE id = ?");
+    if (!$stmt_hdr) { throw new Exception('Prepare par_form header (with office) failed: ' . $conn->error); }
+    $stmt_hdr->bind_param(
+      'ssssssssssi',
+      $entity_name,
+      $fund_cluster,
+      $par_no,
+      $position_office_left,
+      $position_office_right,
+      $date_received_left,
+      $date_received_right,
+      $received_by_name,
+      $issued_by_name,
+      $posted_office_id,
+      $par_id
+    );
+  } else {
+    $stmt_hdr = $conn->prepare("UPDATE par_form SET entity_name = ?, fund_cluster = ?, par_no = ?, position_office_left = ?, position_office_right = ?, date_received_left = ?, date_received_right = ?, received_by_name = ?, issued_by_name = ? WHERE id = ?");
+    if (!$stmt_hdr) { throw new Exception('Prepare par_form header (no office) failed: ' . $conn->error); }
+    $stmt_hdr->bind_param(
+      'sssssssssi',
+      $entity_name,
+      $fund_cluster,
+      $par_no,
+      $position_office_left,
+      $position_office_right,
+      $date_received_left,
+      $date_received_right,
+      $received_by_name,
+      $issued_by_name,
+      $par_id
+    );
+  }
   if (!$stmt_hdr->execute()) {
     throw new Exception('Failed to update PAR header: ' . $stmt_hdr->error);
   }
   $stmt_hdr->close();
+
+  // Determine office_id to propagate (prefer posted)
+  $par_office_id = $posted_office_id;
+  if ($par_office_id <= 0) {
+    $stmt_off = $conn->prepare("SELECT office_id FROM par_form WHERE id = ? LIMIT 1");
+    if ($stmt_off) {
+      $stmt_off->bind_param('i', $par_id);
+      if ($stmt_off->execute()) {
+        $res_off = $stmt_off->get_result();
+        $row_off = $res_off ? $res_off->fetch_assoc() : null;
+        $par_office_id = $row_off ? (int)$row_off['office_id'] : 0;
+      }
+      $stmt_off->close();
+    }
+  }
 
   // Update items
   $items = $_POST['items'] ?? [];

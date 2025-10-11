@@ -278,7 +278,7 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
                 </tr>
             </tfoot>
         </table>
-        <button type="button" class="btn btn-outline-primary mt-2" onclick="addRow()">+ Add Item</button>
+        <button type="button" class="btn btn-primary mt-2" onclick="addRow()">+ Add Item</button>
 
         <hr class="mt-5 mb-4">
 

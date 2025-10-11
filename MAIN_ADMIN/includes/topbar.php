@@ -299,10 +299,7 @@ $low_stock_count = count($low_stock_items);
       <i class="bi bi-qr-code-scan text-primary" style="font-size: 1.8rem;"></i>
     </a>
 
-    <!-- Theme Toggle -->
-    <button id="themeToggle" class="btn btn-sm text-dark" title="Toggle Night Mode">
-      <i id="themeIcon" class="bi bi-moon-fill text-info" style="font-size: 1.5rem;"></i>
-    </button>
+    
 
 
     <!-- Notifications -->

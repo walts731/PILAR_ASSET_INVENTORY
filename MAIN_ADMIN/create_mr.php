@@ -677,11 +677,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt_ai->close();
             // Send notification email and log (UPDATE path)
             $mrIdForLog = null;
-            if ($stFind = $conn->prepare("SELECT id FROM mr_details WHERE (item_id = ? OR (? IS NULL AND item_id IS NULL)) AND asset_id = ? ORDER BY id DESC LIMIT 1")) {
+            if ($stFind = $conn->prepare("SELECT mr_id FROM mr_details WHERE (item_id = ? OR (? IS NULL AND item_id IS NULL)) AND asset_id = ? ORDER BY mr_id DESC LIMIT 1")) {
                 $stFind->bind_param('iii', $mr_item_id, $mr_item_id, $asset_id_form);
                 $stFind->execute();
                 $rsFind = $stFind->get_result();
-                if ($rsFind && ($rowF = $rsFind->fetch_assoc())) { $mrIdForLog = (int)$rowF['id']; }
+                if ($rsFind && ($rowF = $rsFind->fetch_assoc())) { $mrIdForLog = (int)$rowF['mr_id']; }
                 $stFind->close();
             }
             sendMrEmailAndLog($conn, $employee_id, $person_accountable_name, $asset_id_form, $mrIdForLog, $office_location, $inventory_tag_gen, $description, $property_no, $serial_no);
