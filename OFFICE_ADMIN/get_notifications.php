@@ -23,23 +23,33 @@ try {
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
     $userId = $_SESSION['user_id'];
 
-    // Build the query
-    $query = "SELECT n.*, u.first_name, u.last_name 
-              FROM notifications n 
-              LEFT JOIN users u ON n.sender_id = u.id 
-              WHERE n.receiver_id = ? ";
+    // Build the query to get user notifications with notification details
+    $query = "SELECT 
+                n.id, 
+                n.title, 
+                n.message, 
+                nt.name as type,
+                n.related_entity_type,
+                n.related_entity_id,
+                un.is_read,
+                n.created_at
+              FROM user_notifications un
+              JOIN notifications n ON un.notification_id = n.id
+              JOIN notification_types nt ON n.type_id = nt.id
+              WHERE un.user_id = ? 
+              AND un.deleted_at IS NULL";
     
     $params = [$userId];
     $types = "i";
     
     if ($unreadOnly) {
-        $query .= " AND n.is_read = 0 ";
+        $query .= " AND un.is_read = 0";
     }
     
-    $query .= " ORDER BY n.created_at DESC ";
+    $query .= " ORDER BY n.created_at DESC";
     
     if ($limit > 0) {
-        $query .= " LIMIT ? ";
+        $query .= " LIMIT ?";
         $params[] = $limit;
         $types .= "i";
     }
@@ -66,7 +76,10 @@ try {
             'type' => $row['type'],
             'is_read' => (bool)$row['is_read'],
             'created_at' => $row['created_at'],
-            'sender_name' => $row['first_name'] . ' ' . $row['last_name']
+            'related_entity' => [
+                'type' => $row['related_entity_type'],
+                'id' => $row['related_entity_id']
+            ]
         ];
     }
     
@@ -75,8 +88,16 @@ try {
         $notificationIds = array_column($notifications, 'id');
         $placeholders = rtrim(str_repeat('?,', count($notificationIds)), ',');
         
-        $updateStmt = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE id IN ($placeholders)");
-        $updateStmt->bind_param(str_repeat('i', count($notificationIds)), ...$notificationIds);
+        $updateStmt = $conn->prepare("
+            UPDATE user_notifications 
+            SET is_read = 1, 
+                read_at = NOW() 
+            WHERE user_id = ? 
+            AND notification_id IN ($placeholders)
+        ");
+        
+        $updateParams = array_merge([$userId], $notificationIds);
+        $updateStmt->bind_param(str_repeat('i', count($updateParams)), ...$updateParams);
         $updateStmt->execute();
     }
     
@@ -84,7 +105,10 @@ try {
     $response['notifications'] = $notifications;
     
 } catch (Exception $e) {
-    $response['message'] = $e->getMessage();
+    // Log the error for debugging
+    error_log("Error in get_notifications.php: " . $e->getMessage());
+    
+    $response['message'] = 'An error occurred while fetching notifications.';
     http_response_code(500);
 }
 
