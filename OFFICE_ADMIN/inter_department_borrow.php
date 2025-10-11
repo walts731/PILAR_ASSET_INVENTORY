@@ -512,17 +512,19 @@ if ($stmt) {
                 e.preventDefault();
                 const assetId = $(this).data('asset-id');
                 const assetName = $(this).data('asset-name');
-                const sourceOffice = $(this).data('source-office');
-                const sourceOfficeId = $(this).data('source-office-id');
-                const maxQuantity = $(this).data('max-quantity') || 1;
+                const officeName = $(this).data('office-name');
+                const officeId = $(this).data('office-id');
+                const maxQuantity = $(this).data('max-qty') || 1;
+                
+                console.log('Office Data:', { officeName, officeId, maxQuantity }); // Debug log
                 
                 // Set form values
                 $('#assetId').val(assetId);
                 $('#assetName').val(assetName);
                 $('#assetNameDisplay').val(assetName);
-                $('#sourceOffice').val(sourceOffice);
-                $('#sourceOfficeId').val(sourceOfficeId);
-                $('#sourceOfficeName').val(sourceOffice);
+                $('#sourceOffice').val(officeName);
+                $('#sourceOfficeId').val(officeId);
+                $('#sourceOfficeName').val(officeName);
                 $('#quantity').attr('max', maxQuantity).val(1);
                 $('#maxQuantity').text(maxQuantity);
                 
