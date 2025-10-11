@@ -323,372 +323,240 @@ if ($stmt) {
     
     .sidebar-collapsed .main-content {
         margin-left: 60px !important;
-    }
-}
-</style>
-
-<script>
-    // View asset details
-    $(document).on('click', '.view-asset', function() {
-        const assetId = $(this).data('asset-id');
-        
-        // Show loading state
-        $('#viewAssetModal').modal('show');
-        $('.modal-body').html('<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-        
-        // Fetch asset details via AJAX
-        $.ajax({
-            url: 'get_asset_details.php',
-            type: 'GET',
-            data: { id: assetId },
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Update modal with asset details
-                    const asset = response.data;
-                    
-                    // Basic Information
-                    $('#viewDescription').text(asset.description || 'N/A');
-                    $('#viewCategoryName').text(asset.category_name || 'N/A');
-                    $('#viewOfficeName').text(asset.office_name || 'N/A');
-                    $('#viewType').text(asset.type || 'N/A');
-                    $('#viewStatus').text(asset.status || 'N/A');
-                    $('#viewQuantity').text(asset.quantity || '0');
-                    $('#viewUnit').text(asset.unit || 'N/A');
-                    
-                    // Identification
-                    $('#viewSerialNo').text(asset.serial_number || 'N/A');
-                    $('#viewCode').text(asset.code || 'N/A');
-                    $('#viewPropertyNo').text(asset.property_no || 'N/A');
-                    
-                    // Specifications
-                    $('#viewModel').text(asset.model || 'N/A');
-                    $('#viewBrand').text(asset.brand || 'N/A');
-                    
-                    // Dates and Values
-                    $('#viewAcquisitionDate').text(asset.acquisition_date || 'N/A');
-                    $('#viewLastUpdated').text(asset.updated_at || 'N/A');
-                    $('#viewValue').text(asset.value ? '₱' + parseFloat(asset.value).toFixed(2) : 'N/A');
-                    $('#viewTotalValue').text(asset.value && asset.quantity ? '₱' + (parseFloat(asset.value) * parseInt(asset.quantity)).toFixed(2) : 'N/A');
-                    
-                    // Images
-                    if (asset.image_path) {
-                        $('#viewAssetImage').attr('src', '../' + asset.image_path).show();
-                    } else {
-                        $('#viewAssetImage').hide();
-                    }
-                    
-                    // QR Code
-                    if (asset.qr_code_path) {
-                        $('#viewQrCode').attr('src', '../' + asset.qr_code_path).show();
-                    } else {
-                        $('#viewQrCode').hide();
-                    }
-                    
-                    // Municipal Logo
-                    if (asset.municipal_logo_path) {
-                        $('#municipalLogoImg').attr('src', '../' + asset.municipal_logo_path).show();
-                    } else {
-                        $('#municipalLogoImg').hide();
-                    }
-                    
-                    // Inventory Tag
-                    $('#viewInventoryTag').text(asset.inventory_tag || 'N/A');
-                    
-                    // Show the modal with content
-                    $('.modal-body').html($('.modal-body').html()); // Refresh the modal content
-                } else {
-                    alert(response.message || 'Failed to load asset details');
-                    $('#viewAssetModal').modal('hide');
-                }
-            },
-            error: function() {
-                alert('Error loading asset details');
-                $('#viewAssetModal').modal('hide');
-            }
-        });
-    });
-
-    // Reset form when modal is hidden
-    $('#addToCartModal').on('hidden.bs.modal', function () {
-        $(this).find('form')[0].reset();
-        $('#maxQuantity').text('0');
-    });
-
-    // Handle Add to Cart button click
-    $('.add-to-cart').click(function() {
-        const assetId = $(this).data('asset-id');
-        const assetName = $(this).data('asset-name');
-        const officeId = $(this).data('office-id');
-        const officeName = $(this).data('office-name');
-        const maxQty = $(this).data('max-qty');
-        
-        // Set modal values
-        $('#assetId').val(assetId);
-        $('#assetName').val(assetName);
-        $('#assetNameDisplay').val(assetName);
-        $('#sourceOfficeId').val(officeId);
-        $('#sourceOffice').val(officeName);
-        $('#sourceOfficeName').val(officeName);
-        $('#quantity').attr('max', maxQty).val(1);
-        $('#maxQuantity').text(maxQty);
-        $('#purpose').val('');
-        $('#requested_return_date').val('');
-    });
-    
-    // Handle form submission
-    $('#addToCartForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        // Add loading state
-        const form = $(this);
-        const submitBtn = form.find('button[type="submit"]');
-        const originalText = submitBtn.html();
-        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...');
-        
-        // Create form data object with proper types
-        const formData = {
-            asset_id: parseInt(form.find('input[name="asset_id"]').val(), 10),
-            asset_name: form.find('input[name="asset_name"]').val(),
-            source_office_id: parseInt(form.find('input[name="source_office_id"]').val(), 10),
-            source_office_name: form.find('input[name="source_office_name"]').val(),
-            quantity: parseInt(form.find('input[name="quantity"]').val(), 10)
-        };
-        
-        console.log('Submitting form data:', formData);
-        
-        // Submit form via AJAX with JSON data
-        $.ajax({
-            url: 'add_to_inter_dept_cart.php',
-            type: 'POST',
-            contentType: 'application/json; charset=utf-8',
-            data: JSON.stringify(formData),
-            dataType: 'json',
-            success: function(response) {
-                console.log('Response:', response);
-                
-                if (response && response.success) {
-                    // Update cart count
-                    $('.cart-badge').text(response.cart_count > 0 ? response.cart_count : '');
-                    
-                    // Show success message
-                    const successAlert = `
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle me-2"></i>
-                            ${response.message}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    `;
-                    $('.main').prepend(successAlert);
-                    
-                    // Close the modal
-                    $('#addToCartModal').modal('hide');
-                } else {
-                    // Show error message with more details
-                    let errorMessage = 'An error occurred';
-                    if (response && response.message) {
-                        errorMessage = response.message;
-                    } else if (response && response.errors) {
-                        errorMessage = 'Validation errors: ' + response.errors.join(', ');
-                    }
-                    
-                    const errorAlert = `
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            ${errorMessage}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    `;
-                    $('.main').prepend(errorAlert);
-                }
-                submitBtn.prop('disabled', false).html(originalText);
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', {
-                    status: xhr.status,
-                    statusText: xhr.statusText,
-                    responseText: xhr.responseText,
-                    error: error
-                });
-                
-                let errorMessage = 'An error occurred while processing your request.';
-                
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    if (response && response.message) {
-                        errorMessage = response.message;
-                    }
-                } catch (e) {
-                    // If we can't parse the response, use the status text
-                    errorMessage = `Error ${xhr.status}: ${xhr.statusText || 'Unknown error'}`;
-                }
-                
-                const errorAlert = `
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        ${errorMessage}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                `;
-                $('.main').prepend(errorAlert);
-                submitBtn.prop('disabled', false).html(originalText);
-            }
-        });
-    });
-});
-</script>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    
-    <script>
-    // View asset details functionality
-    $(document).on('click', '.view-asset', function() {
-        const assetId = $(this).data('asset-id');
-        
-        // Show loading state
-        $('#viewAssetModal').modal('show');
-        $('.modal-body').html('<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-        
-        // Fetch asset details via AJAX
-        $.ajax({
-            url: 'get_asset_details.php',
-            type: 'GET',
-            data: { id: assetId },
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Update modal with asset details
-                    const asset = response.data;
-                    
-                    // Basic Information
-                    $('#viewDescription').text(asset.description || 'N/A');
-                    $('#viewCategoryName').text(asset.category_name || 'N/A');
-                    $('#viewOfficeName').text(asset.office_name || 'N/A');
-                    $('#viewType').text(asset.type || 'N/A');
-                    $('#viewStatus').text(asset.status || 'N/A');
-                    $('#viewQuantity').text(asset.quantity || '0');
-                    $('#viewUnit').text(asset.unit || 'N/A');
-                    
-                    // Identification
-                    $('#viewSerialNo').text(asset.serial_number || 'N/A');
-                    $('#viewCode').text(asset.code || 'N/A');
-                    $('#viewPropertyNo').text(asset.property_no || 'N/A');
-                    
-                    // Specifications
-                    $('#viewModel').text(asset.model || 'N/A');
-                    $('#viewBrand').text(asset.brand || 'N/A');
-                    
-                    // Dates and Values
-                    $('#viewAcquisitionDate').text(asset.acquisition_date || 'N/A');
-                    $('#viewLastUpdated').text(asset.updated_at || 'N/A');
-                    $('#viewValue').text(asset.value ? '₱' + parseFloat(asset.value).toFixed(2) : 'N/A');
-                    
-                    // Calculate total value
-                    if (asset.value && asset.quantity) {
-                        const totalValue = parseFloat(asset.value) * parseInt(asset.quantity);
-                        $('#viewTotalValue').text('₱' + totalValue.toFixed(2));
-                    } else {
-                        $('#viewTotalValue').text('N/A');
-                    }
-                    
-                    // Images
-                    if (asset.image_path) {
-                        $('#viewAssetImage').attr('src', '../' + asset.image_path).show();
-                    } else {
-                        $('#viewAssetImage').hide();
-                    }
-                    
-                    // QR Code
-                    if (asset.qr_code_path) {
-                        $('#viewQrCode').attr('src', '../' + asset.qr_code_path).show();
-                    } else {
-                        $('#viewQrCode').hide();
-                    }
-                    
-                    // Municipal Logo
-                    if (asset.municipal_logo_path) {
-                        $('#municipalLogoImg').attr('src', '../' + asset.municipal_logo_path).show();
-                    } else {
-                        $('#municipalLogoImg').hide();
-                    }
-                    
-                    // Inventory Tag
-                    $('#viewInventoryTag').text(asset.inventory_tag || 'N/A');
-                    
-                    // Show the modal with content
-                    $('.modal-body').show();
-                } else {
-                    alert(response.message || 'Failed to load asset details');
-                    $('#viewAssetModal').modal('hide');
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('Error:', error);
-                alert('Error loading asset details. Please check console for more information.');
-                $('#viewAssetModal').modal('hide');
-            }
-        });
-    });
-
-    $(document).ready(function() {
-        // Initialize DataTable
-        $('.data-table').DataTable({
-            responsive: true,
-            language: {
-                search: "_INPUT_",
-                searchPlaceholder: "Search...",
-            },
-            dom: '<"row"<"col-md-6"l><"col-md-6"f>>rt<"row"<"col-md-6"i><"col-md-6"p>>',
-            pageLength: 10,
-            lengthMenu: [10, 25, 50, 100],
-            order: [[0, 'desc']]
-        });
-
-        // Add to cart functionality
-        $('.add-to-cart').on('click', function(e) {
-            e.preventDefault();
-            const assetId = $(this).data('asset-id');
-            const assetName = $(this).data('asset-name');
-            
-            // Show modal with form
-            $('#addToCartModal').modal('show');
-            $('#assetId').val(assetId);
-            $('#assetName').text(assetName);
-        });
-
-        // Form submission
-        $('#addToCartForm').on('submit', function(e) {
-            e.preventDefault();
-            const formData = $(this).serialize();
-            
-            $.ajax({
-                type: 'POST',
-                url: 'add_to_cart.php',
-                data: formData,
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        // Update cart count
-                        $('.cart-count').text(response.cart_count);
-                        
-                        // Show success message
-                        const alert = `
-                            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                ${response.message}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
+                        <?php else: ?>
+                            <div class="alert alert-info mb-0">
+                                No assets available for inter-department borrowing at the moment.
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add to Cart Modal -->
+        <div class="modal fade" id="addToCartModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="addToCartForm" method="POST" action="add_to_inter_dept_cart.php">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Add to Box</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Asset</label>
+                                <input type="text" class="form-control" id="assetNameDisplay" readonly>
+                                <input type="hidden" name="asset_id" id="assetId">
+                                <input type="hidden" name="asset_name" id="assetName">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Source Office</label>
+                                <input type="text" class="form-control" id="sourceOffice" readonly>
+                                <input type="hidden" name="source_office_id" id="sourceOfficeId">
+                                <input type="hidden" name="source_office_name" id="sourceOfficeName">
+                            </div>
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" min="1" value="1" required>
+                                <small class="form-text text-muted">Maximum available: <span id="maxQuantity">0</span></small>
+                            </div>
+                            <input type="hidden" name="purpose" value="">
+                            <input type="hidden" name="requested_return_date" value="">
+                        </div>
+                        <div class="modal-footer">
+                            <div class="me-auto text-muted small">
+                                <span class="text-danger">*</span> Required field
+                            </div>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Add to Box</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <style>
+        /* Main content area */
+        .main-content {
+            flex: 1;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background: #f8f9fa;
+            transition: all 0.3s;
+            margin-left: 250px; /* Match sidebar width */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0 !important;
+            }
+            
+            .sidebar-collapsed .main-content {
+                margin-left: 60px !important;
+            }
+        }
+        </style>
+
+        <script>
+        $(document).ready(function() {
+            // Initialize DataTable
+            $('.data-table').DataTable({
+                responsive: true,
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search...",
+                },
+                dom: '<"row"<"col-md-6"l><"col-md-6"f>>rt<"row"<"col-md-6"i><"col-md-6"p>>',
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                order: [[0, 'desc']]
+            });
+
+            // View asset details
+            $(document).on('click', '.view-asset', function(e) {
+                e.preventDefault();
+                const assetId = $(this).data('asset-id');
+                const modal = $('#viewAssetModal');
+                
+                console.log('View asset clicked, ID:', assetId);
+                
+                // Show loading state
+                modal.modal('show');
+                modal.find('.modal-body').html(`
+                    <div class="text-center p-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading asset details...</p>
+                    </div>
+                `);
+                
+                // Fetch asset details via AJAX with absolute URL
+                const url = new URL('get_asset_details.php', window.location.origin + '/PILAR_ASSET_INVENTORY/OFFICE_ADMIN/');
+                url.searchParams.append('id', assetId);
+                
+                console.log('Fetching asset from:', url.toString());
+                
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(response => {
+                    console.log('AJAX Response:', response);
+                    
+                    if (response && response.status === 'success' && response.data) {
+                        const asset = response.data;
+                        console.log('Asset data:', asset);
+                        
+                        // Create modal content
+                        const modalBody = `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <h6>Asset Name</h6>
+                                        <p>${asset.asset_name || 'N/A'}</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <h6>Description</h6>
+                                        <p>${asset.description || 'N/A'}</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <h6>Category</h6>
+                                        <p>${asset.category_name || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <h6>Status</h6>
+                                        <p>${asset.status || 'N/A'}</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <h6>Quantity</h6>
+                                        <p>${asset.quantity || '0'} ${asset.unit || ''}</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <h6>Serial Number</h6>
+                                        <p>${asset.serial_number || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            ${asset.image_path ? `
+                                <div class="text-center mt-3">
+                                    <img src="../${asset.image_path}" alt="Asset Image" class="img-fluid" style="max-height: 200px;">
+                                </div>` 
+                                : ''
+                            }
                         `;
-                        $('.container-fluid').prepend(alert);
                         
-                        // Hide modal
-                        $('#addToCartModal').modal('hide');
-                        
-                        // Reset form
-                        $('#addToCartForm')[0].reset();
+                        modal.find('.modal-body').html(modalBody);
+                    } else {
+                        throw new Error(response?.message || 'Failed to load asset details');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    modal.find('.modal-body').html(`
+                        <div class="alert alert-danger">
+                            <h5>Error</h5>
+                            <p>${error.message}</p>
+                            <button class="btn btn-sm btn-secondary mt-2" onclick="$('#viewAssetModal').modal('hide')">Close</button>
+                        </div>
+                    `);
+                });
+            });
+
+            // Add to cart functionality
+            $(document).on('click', '.add-to-cart', function(e) {
+                e.preventDefault();
+                const assetId = $(this).data('asset-id');
+                const assetName = $(this).data('asset-name');
+                
+                // Show modal with form
+                $('#addToCartModal').modal('show');
+                $('#assetId').val(assetId);
+                $('#assetName').text(assetName);
+            });
+
+            // Form submission
+            $('#addToCartForm').on('submit', function(e) {
+                e.preventDefault();
+                const formData = $(this).serialize();
+                
+                $.ajax({
+                    type: 'POST',
+                    url: 'add_to_inter_dept_cart.php',
+                    data: formData,
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            // Update cart count
+                            $('.cart-count').text(response.cart_count);
+                            
+                            // Show success message
+                            const alert = `
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    ${response.message}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            `;
+                            $('.container-fluid').prepend(alert);
+                            
+                            // Hide modal
+                            $('#addToCartModal').modal('hide');
+                            
+                            // Reset form
+                            $('#addToCartForm')[0].reset();
                     } else {
                         // Show error message
                         const alert = `
