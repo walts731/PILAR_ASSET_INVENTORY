@@ -1282,9 +1282,10 @@ if ($baseSerial !== '') {
                                         <label for="serial_no" class="form-label fw-semibold">
                                             <i class="bi bi-hash me-1 text-success"></i>Serial Number
                                         </label>
+                                        <span class="text-danger">*</span>
                                         <input type="text" class="form-control" name="serial_no"
                                             value="<?= htmlspecialchars($display_serial_no) ?>"
-                                            placeholder="Auto-generated from tag format" <?= !empty($existing_serial_no) ? 'readonly' : '' ?> id="serial_no">
+                                            placeholder="Auto-generated from tag format" <?= !empty($existing_serial_no) ? 'readonly' : '' ?> id="serial_no" required>
                                         <div class="form-text">
                                             <i class="bi bi-info-circle me-1"></i>
                                             Auto-generated unique serial number - Format managed in 
@@ -1299,9 +1300,10 @@ if ($baseSerial !== '') {
                                         <label for="code" class="form-label fw-semibold">
                                             <i class="bi bi-upc me-1 text-success"></i>Asset Code
                                         </label>
+                                        <span class="text-danger">*</span>
                                         <input type="text" class="form-control" name="code" id="code"
                                             value="<?= htmlspecialchars($display_asset_code) ?>"
-                                            placeholder="Auto-generated based on category" <?= !empty($existing_asset_code) ? 'readonly' : '' ?>>
+                                            placeholder="Auto-generated based on category" <?= !empty($existing_asset_code) ? 'readonly' : '' ?> required>
                                         <div class="form-text">
                                             <i class="bi bi-info-circle me-1"></i>
                                             Internal asset classification code - Format managed in 
@@ -1312,9 +1314,10 @@ if ($baseSerial !== '') {
                                         <label for="property_no" class="form-label fw-semibold">
                                             <i class="bi bi-card-heading me-1 text-success"></i>Property Number
                                         </label>
+                                        <span class="text-danger">*</span>
                                         <input type="text" class="form-control" name="property_no" id="property_no"
                                             placeholder="<?= htmlspecialchars($placeholder_property_no) ?>"
-                                            value="<?= htmlspecialchars($display_property_no) ?>">
+                                            value="<?= htmlspecialchars($display_property_no) ?>" required>
                                         <div class="form-text">Official government property number</div>
                                     </div>
                                 </div>
