@@ -26,12 +26,14 @@ if (!isset($system) || !is_array($system)) {
   }
 }
 ?>
+<!-- SIDEBAR STYLES -->
 <style>
     /* Container */
     .sidebar {
         height: 100vh;
         overflow: hidden;
         background: linear-gradient(180deg, #0b5ed7 0%, #0a58ca 45%, #0948a6 100%);
+        color: #eaf2ff;
         border-right: 1px solid rgba(255, 255, 255, 0.15);
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     }
@@ -46,33 +48,28 @@ if (!isset($system) || !is_array($system)) {
 
     .sidebar .scrollable-nav::-webkit-scrollbar { display: none; }
 
-    /* Header */
     .sidebar .sidebar-brand {
         text-align: center;
         padding: 16px 10px 6px;
     }
 
     .sidebar .brand-logo-wrap {
-        width: 58px;
-        height: 58px;
+        width: 77px;
+        height: 77px;
         border-radius: 50%;
         background: #ffffff;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18), inset 0 0 0 6px rgba(255, 255, 255, 0.4);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2), inset 0 0 0 8px rgba(255, 255, 255, 0.4);
         margin-bottom: 8px;
     }
 
     .sidebar .brand-logo-wrap img {
-        width: 38px; height: 38px; object-fit: contain;
+        width: 75px; height: 75px; object-fit: contain;
         filter: none;
     }
 
-    .sidebar .brand-title {
-        color: #fff;
-        line-height: 1.1;
-    }
     .sidebar .brand-title strong {
         font-weight: 700;
         font-size: 0.98rem;
@@ -143,6 +140,13 @@ if (!isset($system) || !is_array($system)) {
         color: #e9f2ff;
         margin: 3px 0;
     }
+    /* Specific font styling for Inventory and Forms submenus */
+    #inventorySubMenu .nav-link,
+    #formsSubMenu .nav-link {
+        font-size: 0.92rem;
+        font-weight: 500;
+        letter-spacing: 0.1px;
+    }
     .sidebar .collapse .nav-link:hover { background: rgba(255, 255, 255, 0.12); }
     .sidebar .collapse .nav-link.active { background: rgba(255, 255, 255, 0.22); }
 
@@ -158,6 +162,7 @@ if (!isset($system) || !is_array($system)) {
     /* Focus visibility */
     .sidebar a:focus { outline: 2px solid rgba(255, 255, 255, 0.35); outline-offset: 2px; }
 </style>
+
 <div class="sidebar d-flex flex-column justify-content-between">
     <div>
         <!-- Brand header -->
@@ -167,7 +172,7 @@ if (!isset($system) || !is_array($system)) {
             </div>
             <div class="brand-title">
                 <strong><?= htmlspecialchars($system['system_title']) ?></strong>
-                <span>Guest</span>
+                <span>User</span>
             </div>
         </div>
         <hr>

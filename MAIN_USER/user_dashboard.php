@@ -164,13 +164,74 @@ if (!empty($_SESSION['is_guest'])) {
           </div>
         </div>
 
+        <!-- Filters and Export (standalone form) -->
+        <?php
+          // Fetch filters data (categories and offices)
+          $filter_offices = [];
+          if ($rOff = $conn->query("SELECT id, office_name FROM offices ORDER BY office_name")) {
+            while ($o = $rOff->fetch_assoc()) { $filter_offices[] = $o; }
+          }
+          $filter_categories = [];
+          if ($rCat = $conn->query("SELECT id, category_name FROM categories ORDER BY category_name")) {
+            while ($c = $rCat->fetch_assoc()) { $filter_categories[] = $c; }
+          }
+        ?>
+        <form id="assetsFilterForm" action="export_assets_report.php" method="POST" class="card shadow-sm mb-3">
+          <div class="card-header d-flex justify-content-between align-items-end flex-wrap gap-2">
+            <h6 class="mb-0">Filters & Export</h6>
+            <div class="d-flex flex-wrap align-items-end gap-2">
+              <div>
+                <label class="form-label mb-1 small">Office</label>
+                <select name="office_id" class="form-select form-select-sm">
+                  <option value="">All</option>
+                  <?php foreach ($filter_offices as $fo): ?>
+                    <option value="<?= (int)$fo['id'] ?>"><?= htmlspecialchars($fo['office_name']) ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+              <div>
+                <label class="form-label mb-1 small">Category</label>
+                <select name="category_id" class="form-select form-select-sm">
+                  <option value="">All</option>
+                  <?php foreach ($filter_categories as $fc): ?>
+                    <option value="<?= (int)$fc['id'] ?>"><?= htmlspecialchars($fc['category_name']) ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+              <div>
+                <label class="form-label mb-1 small">Status</label>
+                <select name="status" class="form-select form-select-sm">
+                  <option value="">All</option>
+                  <option value="serviceable">Serviceable</option>
+                  <option value="borrowed">Borrowed</option>
+                  <option value="unserviceable">Unserviceable</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label mb-1 small">Acquired From</label>
+                <input type="date" name="date_from" class="form-control form-control-sm" />
+              </div>
+              <div>
+                <label class="form-label mb-1 small">To</label>
+                <input type="date" name="date_to" class="form-control form-control-sm" />
+              </div>
+              <div class="d-flex gap-1">
+                <button type="submit" name="format" value="pdf" class="btn btn-outline-primary btn-sm">
+                  <i class="bi bi-filetype-pdf"></i> Export PDF
+                </button>
+                <button type="submit" name="format" value="csv" class="btn btn-outline-success btn-sm">
+                  <i class="bi bi-filetype-csv"></i> Export CSV
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+
         <div class="card shadow-sm mb-4">
           <form action="generate_selected_report.php" method="POST" target="_blank">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
               <h5 class="mb-0">Asset List</h5>
-              <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm ">
-                <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
-              </button>
+              
             </div>
             <div class="alert alert-danger" role="alert" id="checkboxAlert">
               Please select at least one item to generate a report.
@@ -180,36 +241,37 @@ if (!empty($_SESSION['is_guest'])) {
               <table id="assetTable" class="table table-striped table-hover align-middle">
                 <thead class="table-light">
                   <tr>
-                    <th><input type="checkbox" id="selectAllAssets" /></th>
-                    <th>Name</th>
-                    <th>Category</th>
+                   
                     <th>Description</th>
+                    <th>Category</th>
+                    <th>Office</th>
                     <th>Qty</th>
                     <th>Unit</th>
                     <th>Status</th>
                     <th>Value</th>
                     <th>Acquired</th>
-                    <th>Updated</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   <?php
-                  $stmt = $conn->query("SELECT a.*, c.category_name FROM assets a JOIN categories c ON a.category = c.id WHERE a.type = 'asset'");
+                  $stmt = $conn->query("SELECT a.*, c.category_name, o.office_name FROM assets a JOIN categories c ON a.category = c.id LEFT JOIN offices o ON o.id = a.office_id WHERE a.type = 'asset'");
                   while ($row = $stmt->fetch_assoc()):
                   ?>
                     <tr>
-                      <td><input type="checkbox" class="asset-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
-                      
-                      <td><?= htmlspecialchars($row['asset_name']) ?></td>
-                      <td><?= htmlspecialchars($row['category_name']) ?></td>
+                     
                       <td><?= htmlspecialchars($row['description']) ?></td>
+                      
+                      <td><?= htmlspecialchars($row['category_name']) ?></td>
+                      <td><?= htmlspecialchars($row['office_name'] ?? '—') ?></td>
                       <td><?= $row['quantity'] ?></td>
                       <td><?= $row['unit'] ?></td>
                       <td>
                         <?php
                         $status_class = match ($row['status']) {
-                          'available' => 'success',
+                          'serviceable' => 'success',
                           'borrowed' => 'warning',
+                          'unserviceable' => 'danger',
                           default => 'secondary',
                         };
                         if ($row['red_tagged']) $status_class = 'danger';
@@ -220,7 +282,11 @@ if (!empty($_SESSION['is_guest'])) {
                       </td>
                       <td>&#8369; <?= number_format($row['value'], 2) ?></td>
                       <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
-                      <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
+                      <td>
+                        <a href="view_asset_details.php?id=<?= (int)$row['id'] ?>" class="btn btn-sm btn-outline-primary">
+                          <i class="bi bi-eye"></i> View
+                        </a>
+                      </td>
                     </tr>
                   <?php endwhile; ?>
                 </tbody>
@@ -303,7 +369,7 @@ if (!empty($_SESSION['is_guest'])) {
                     <th>Unit</th>
                     <th>Status</th>
                     <th>Acquired</th>
-                    <th>Updated</th>
+                    
                   </tr>
                 </thead>
                 <tbody>
@@ -331,7 +397,7 @@ if (!empty($_SESSION['is_guest'])) {
                         </span>
                       </td>
                       <td><?= date('F j, Y', strtotime($row['acquisition_date'])) ?></td>
-                      <td><?= date('F j, Y', strtotime($row['last_updated'])) ?></td>
+                      
                     </tr>
                   <?php endwhile; ?>
                 </tbody>
