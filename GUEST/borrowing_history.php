@@ -1,11 +1,67 @@
 <?php
 session_start();
 require_once "../connect.php";
+require_once "../includes/classes/GuestBorrowing.php";
 
 // Check if user is a guest
 if (!isset($_SESSION['is_guest']) || $_SESSION['is_guest'] !== true) {
     header("Location: ../index.php");
     exit();
+}
+
+// Initialize GuestBorrowing
+$guestBorrowing = new GuestBorrowing($conn);
+
+// Get guest email from session (assuming it's set during guest login)
+$guestEmail = $_SESSION['guest_email'] ?? '';
+
+// Get the guest's borrowing history
+$borrowingHistory = $guestBorrowing->getGuestBorrowingHistory($guestEmail);
+
+// Check for success message from form submission
+$successMessage = '';
+if (isset($_SESSION['borrow_success'])) {
+    $successMessage = $_SESSION['borrow_success']['message'] . ' Request #' . $_SESSION['borrow_success']['request_number'];
+    unset($_SESSION['borrow_success']);
+}
+
+// Get counts for summary
+$statusCounts = [
+    'pending' => 0,
+    'approved' => 0,
+    'rejected' => 0,
+    'active' => 0,
+    'completed' => 0,
+    'overdue' => 0,
+    'total' => 0
+];
+
+if (!empty($borrowingHistory)) {
+    foreach ($borrowingHistory as $request) {
+        $status = strtolower($request['status']);
+        $statusCounts['total']++;
+        
+        if (isset($statusCounts[$status])) {
+            $statusCounts[$status]++;
+        }
+        
+        // Count active requests (approved but not yet returned)
+        if (in_array($status, ['approved', 'in_progress', 'ready_for_pickup', 'in_transit'])) {
+            $statusCounts['active']++;
+        }
+        
+        // Count completed requests
+        if (in_array($status, ['returned', 'completed'])) {
+            $statusCounts['completed']++;
+        }
+        
+        // Count overdue requests
+        if ($status === 'overdue' || 
+            ($status === 'approved' && !empty($request['expected_return_date']) && 
+             strtotime($request['expected_return_date']) < time())) {
+            $statusCounts['overdue']++;
+        }
+    }
 }
 
 // Fetch system settings for branding
@@ -20,44 +76,6 @@ if (isset($conn) && $conn instanceof mysqli) {
         $system = $result->fetch_assoc();
     }
 }
-
-// For demo purposes, we'll show sample borrowing history
-// In a real implementation, you'd track guest borrowing requests in a database
-$borrowing_history = [
-    [
-        'id' => 1,
-        'asset_name' => 'Dell Laptop XPS 13',
-        'asset_tag' => 'COMP-001',
-        'request_date' => '2025-01-03',
-        'status' => 'approved',
-        'borrowed_date' => '2025-01-04',
-        'return_date' => '2025-01-11',
-        'actual_return' => null,
-        'purpose' => 'Training seminar'
-    ],
-    [
-        'id' => 2,
-        'asset_name' => 'Canon DSLR Camera',
-        'asset_tag' => 'CAM-005',
-        'request_date' => '2025-01-02',
-        'status' => 'pending',
-        'borrowed_date' => null,
-        'return_date' => null,
-        'actual_return' => null,
-        'purpose' => 'Event documentation'
-    ],
-    [
-        'id' => 3,
-        'asset_name' => 'HP Projector',
-        'asset_tag' => 'PROJ-003',
-        'request_date' => '2024-12-28',
-        'status' => 'returned',
-        'borrowed_date' => '2024-12-30',
-        'return_date' => '2025-01-02',
-        'actual_return' => '2025-01-02',
-        'purpose' => 'Presentation'
-    ]
-];
 ?>
 
 <!DOCTYPE html>
