@@ -18,8 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $header_image = $_POST['header_image'] ?? '';
     $entity_name = $_POST['entity_name'] ?? '';
     $fund_cluster = $_POST['fund_cluster'] ?? '';
-    // Generate automatic ICS number
-    $ics_no = generateTag('ics_no');
     $received_from_name = $_POST['received_from_name'] ?? '';
     $received_from_position = $_POST['received_from_position'] ?? '';
     $received_by_name = $_POST['received_by_name'] ?? '';
@@ -29,6 +27,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $office_input = $_POST['office_id'] ?? 0;
     $is_outside_lgu = ($office_input === 'outside_lgu');
     $office_id = $is_outside_lgu ? 0 : intval($office_input);
+
+    // Build OFFICE display for tag generation: full office name or entity name for Outside LGU
+    $office_display = 'OFFICE';
+    if ($is_outside_lgu) {
+        $office_display = trim((string)$entity_name) !== '' ? trim((string)$entity_name) : 'Outside LGU';
+    } else if ($office_id > 0) {
+        if ($__stOff = $conn->prepare("SELECT office_name FROM offices WHERE id = ? LIMIT 1")) {
+            $__stOff->bind_param('i', $office_id);
+            if ($__stOff->execute()) {
+                $__rsOff = $__stOff->get_result();
+                if ($__rsOff && ($__rowOff = $__rsOff->fetch_assoc())) {
+                    $office_display = trim((string)($__rowOff['office_name'] ?? 'OFFICE'));
+                }
+            }
+            $__stOff->close();
+        }
+    }
+
+    // Generate ICS number with OFFICE token replaced by the resolved display value
+    $ics_no = generateTag('ics_no', ['OFFICE' => $office_display]);
 
     // Optional header image upload (overrides posted header_image when provided)
     if (isset($_FILES['header_image_file']) && isset($_FILES['header_image_file']['tmp_name']) && $_FILES['header_image_file']['error'] === UPLOAD_ERR_OK) {

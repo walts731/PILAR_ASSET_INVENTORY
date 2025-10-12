@@ -23,8 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fund_cluster = $_POST['fund_cluster'] ?? '';
         $from_accountable_officer = trim($_POST['from_accountable_officer'] ?? '');
         $to_accountable_officer = trim($_POST['to_accountable_officer'] ?? '');
-        // Generate automatic ITR number
-        $itr_no = generateTag('itr_no');
+        // Defer ITR number generation until after resolving office/entity name
         $date = $_POST['date'] ?? '';
         $transfer_type = $_POST['transfer_type'] ?? '';
         $transfer_type_other = $_POST['transfer_type_other'] ?? '';
@@ -40,6 +39,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $received_date = $_POST['received_date'] ?? '';
         $end_user = trim($_POST['end_user'] ?? '');
         $to_office_id = isset($_POST['office_id']) && $_POST['office_id'] !== '' ? (int)$_POST['office_id'] : null;
+
+        // Build OFFICE display for tag generation: prefer typed entity name; fallback to selected office name
+        $office_display = 'OFFICE';
+        if (trim((string)$entity_name) !== '') {
+            $office_display = trim((string)$entity_name);
+        } elseif (!empty($to_office_id)) {
+            if ($__stOff = $conn->prepare("SELECT office_name FROM offices WHERE id = ? LIMIT 1")) {
+                $__stOff->bind_param('i', $to_office_id);
+                if ($__stOff->execute()) {
+                    $__rsOff = $__stOff->get_result();
+                    if ($__rsOff && ($__rowOff = $__rsOff->fetch_assoc())) {
+                        $office_display = trim((string)($__rowOff['office_name'] ?? 'OFFICE'));
+                    }
+                }
+                $__stOff->close();
+            }
+        }
+
+        // Generate automatic ITR number with OFFICE token replaced by resolved display
+        $itr_no = generateTag('itr_no', ['OFFICE' => $office_display]);
 
         // Handle transfer type - if "Others" is selected, use the custom value
         if ($transfer_type === 'Others' && !empty($transfer_type_other)) {

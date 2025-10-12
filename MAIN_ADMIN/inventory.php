@@ -461,6 +461,14 @@ $stmt->bind_param("i", $selected_office);
     $icsDisplay = $row['ics_no'];
     if ($officeName !== '') {
       $icsDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $icsDisplay);
+      // Additionally replace known office acronym with full office name if present
+      $upper = mb_strtoupper($officeName);
+      $parts = preg_split('/\s+/', $upper);
+      $acronym = '';
+      foreach ($parts as $p) { $acronym .= preg_replace('/[^A-Z0-9]/u','', mb_substr($p,0,1)); }
+      if ($acronym !== '') {
+        $icsDisplay = preg_replace('/\b'.preg_quote($acronym,'/').'\b/u', $officeName, $icsDisplay);
+      }
     }
     $nums[] = 'ICS: ' . htmlspecialchars($icsDisplay);
   }
@@ -468,6 +476,14 @@ $stmt->bind_param("i", $selected_office);
     $parDisplay = $row['par_no'];
     if ($officeName !== '') {
       $parDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $parDisplay);
+      // Additionally replace known office acronym with full office name if present
+      $upper = mb_strtoupper($officeName);
+      $parts = preg_split('/\s+/', $upper);
+      $acronym = '';
+      foreach ($parts as $p) { $acronym .= preg_replace('/[^A-Z0-9]/u','', mb_substr($p,0,1)); }
+      if ($acronym !== '') {
+        $parDisplay = preg_replace('/\b'.preg_quote($acronym,'/').'\b/u', $officeName, $parDisplay);
+      }
     }
     $nums[] = 'PAR: ' . htmlspecialchars($parDisplay);
   }
@@ -675,6 +691,14 @@ $stmt->bind_param("i", $selected_office);
     if ($displayRaw !== '') {
       if ($officeName !== '') {
         $displayRaw = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $displayRaw);
+        // Additionally replace known office acronym with full office name if present
+        $upper = mb_strtoupper($officeName);
+        $parts = preg_split('/\s+/', $upper);
+        $acronym = '';
+        foreach ($parts as $p) { $acronym .= preg_replace('/[^A-Z0-9]/u','', mb_substr($p,0,1)); }
+        if ($acronym !== '') {
+          $displayRaw = preg_replace('/\b'.preg_quote($acronym,'/').'\b/u', $officeName, $displayRaw);
+        }
       }
       echo htmlspecialchars($displayRaw);
     } else {
@@ -823,6 +847,14 @@ $stmt->bind_param("i", $selected_office);
   if ($displayRaw !== '') {
     if ($officeName !== '') {
       $displayRaw = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $displayRaw);
+      // Additionally replace known office acronym with full office name if present
+      $upper = mb_strtoupper($officeName);
+      $parts = preg_split('/\s+/', $upper);
+      $acronym = '';
+      foreach ($parts as $p) { $acronym .= preg_replace('/[^A-Z0-9]/u','', mb_substr($p,0,1)); }
+      if ($acronym !== '') {
+        $displayRaw = preg_replace('/\b'.preg_quote($acronym,'/').'\b/u', $officeName, $displayRaw);
+      }
     }
     echo htmlspecialchars($displayRaw);
   } else {
@@ -1140,6 +1172,28 @@ $stmt->bind_param("i", $selected_office);
       return date.toLocaleDateString('en-US', options);
     }
 
+    // Replace {OFFICE}/OFFICE and office acronyms in a string with the full office name
+    function formatWithOffice(officeName, raw) {
+      if (!raw) return '';
+      let out = String(raw);
+      const office = (officeName || '').trim();
+      if (office) {
+        out = out.replace(/\{OFFICE\}|OFFICE/g, office);
+        const upper = office.toUpperCase();
+        const parts = upper.split(/\s+/);
+        let acronym = '';
+        parts.forEach(p => {
+          const ch = (p.replace(/[^A-Z0-9]/g, '') || '').charAt(0);
+          if (ch) acronym += ch;
+        });
+        if (acronym) {
+          const re = new RegExp('\\b' + acronym.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'g');
+          out = out.replace(re, office);
+        }
+      }
+      return out;
+    }
+
     document.querySelectorAll('.viewAssetBtn').forEach(button => {
       button.addEventListener('click', function() {
         const assetId = this.getAttribute('data-id');
@@ -1257,15 +1311,18 @@ $stmt->bind_param("i", $selected_office);
               } else {
                 items.forEach(it => {
                   const tr = document.createElement('tr');
+                  const propDisp = formatWithOffice(data.office_name, it.property_no);
                   // Base action buttons (always visible)
                   const viewBtn = `
                       <a class="btn btn-sm btn-outline-info" href="view_asset_details.php?id=${it.item_id}" target="_blank" title="View Full Details">
                         <i class=\"bi bi-eye\"></i>
                       </a>`;
+
                   const tagBtn = `
                       <a class="btn btn-sm btn-outline-primary" href="create_mr.php?asset_id=${it.item_id}" target="_blank" title="${(it.property_no && it.property_no.trim()) ? 'Edit Property Tag' : 'Create Property Tag'}">
                         <i class=\"bi bi-tag\"></i>
                       </a>`;
+
                   const deleteBtn = canDelete ? `
                       <button type="button" class="btn btn-sm btn-outline-danger deleteIndividualAssetBtn" 
                         data-id="${it.item_id}" 
@@ -1279,7 +1336,7 @@ $stmt->bind_param("i", $selected_office);
                       </button>` : '';
 
                   tr.innerHTML = `
-                    <td>${it.property_no ?? ''}</td>
+                    <td>${propDisp}</td>
                     <td>${it.inventory_tag ?? ''}</td>
                     <td>${it.serial_no ?? ''}</td>
                     <td>${it.status ?? ''}</td>
@@ -1300,145 +1357,6 @@ $stmt->bind_param("i", $selected_office);
           });
       });
     });
-
-    // ================= Unserviceable Tab: DataTable, Filters, and Bulk Select =================
-    (function() {
-      const $table = $('#allUnserviceableRegularTable');
-      if ($table.length === 0) return;
-      // Use DataTables if initialized
-      const dt = window.unservDT;
-
-      // Custom filter for month/year using DataTables (applies only to this table)
-      const typeSel = document.getElementById('unservReportType');
-      const monthSel = document.getElementById('unservMonth');
-      const yearSel = document.getElementById('unservYear');
-
-      $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-        if (!dt || settings.nTable !== $table[0]) return true; // Only apply to Unserviceable table
-
-        const selType = typeSel ? typeSel.value : 'monthly';
-        const selYear = yearSel ? parseInt(yearSel.value, 10) : new Date().getFullYear();
-        const selMonth = monthSel ? parseInt(monthSel.value, 10) : (new Date().getMonth() + 1);
-
-        // Last Updated displayed text is column index 6
-        const lastUpdatedText = data[6] || '';
-        if (!lastUpdatedText || lastUpdatedText === 'N/A') return true;
-        const d = new Date(lastUpdatedText);
-        if (isNaN(d)) return true;
-
-        if (selType === 'yearly') {
-          return d.getFullYear() === selYear;
-        }
-        return d.getFullYear() === selYear && (d.getMonth() + 1) === selMonth;
-      });
-
-      const redraw = () => {
-        if (dt) dt.draw();
-      };
-      if (typeSel) typeSel.addEventListener('change', redraw);
-      if (monthSel) monthSel.addEventListener('change', redraw);
-      if (yearSel) yearSel.addEventListener('change', redraw);
-
-      // Month visibility toggle (reuse if exists)
-      const monthWrap = document.getElementById('unservMonthWrap');
-      const toggleMonth = () => {
-        if (typeSel && monthWrap) monthWrap.style.display = (typeSel.value === 'monthly') ? 'flex' : 'none';
-      };
-      toggleMonth();
-      if (typeSel) typeSel.addEventListener('change', toggleMonth);
-
-      // Persistent selection store
-      const selected = new Set();
-      const $count = $('#unservSelectedCount');
-      const updateCount = () => $count.text(selected.size);
-
-      // Row checkbox handler (pagination-aware)
-      $table.on('change', 'input.unserv-checkbox', function() {
-        if (this.checked) selected.add(this.value);
-        else selected.delete(this.value);
-        updateCount();
-      });
-
-      // Select All for current page rows
-      $('#selectAllUnserv').on('change', function() {
-        const checked = this.checked;
-        if (dt) {
-          dt.rows({
-            page: 'current'
-          }).nodes().to$().find('input.unserv-checkbox').each(function() {
-            this.checked = checked;
-            if (checked) selected.add(this.value);
-            else selected.delete(this.value);
-          });
-        } else {
-          $table.find('tbody tr:visible input.unserv-checkbox').each(function() {
-            this.checked = checked;
-            if (checked) selected.add(this.value);
-            else selected.delete(this.value);
-          });
-        }
-        updateCount();
-      });
-
-      // Print Selected button posts selected ids
-      $('#btnPrintSelectedUnserv').on('click', function() {
-        if (selected.size === 0) {
-          alert('Please select at least one asset.');
-          return;
-        }
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = 'generate_unserviceable_report.php';
-        form.target = '_blank';
-
-        // Append selected ids
-        selected.forEach(id => {
-          const inp = document.createElement('input');
-          inp.type = 'hidden';
-          inp.name = 'selected_assets[]';
-          inp.value = id;
-          form.appendChild(inp);
-        });
-
-        // Include office
-        const office = document.querySelector('input[name="office"][type="hidden"]');
-        if (office) {
-          const inp = document.createElement('input');
-          inp.type = 'hidden';
-          inp.name = 'office';
-          inp.value = office.value;
-          form.appendChild(inp);
-        }
-
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
-      });
-
-      // Bulk Create Red Tag - send selected ids to bulk form page
-      $('#btnBulkRedTagUnserv').on('click', function() {
-        if (selected.size === 0) {
-          alert('Please select at least one asset to red tag.');
-          return;
-        }
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = 'bulk_create_red_tag.php';
-
-        selected.forEach(id => {
-          const inp = document.createElement('input');
-          inp.type = 'hidden';
-          inp.name = 'selected_assets[]';
-          inp.value = id;
-          form.appendChild(inp);
-        });
-
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
-      });
-    })();
-    // ================= End Unserviceable enhancements =================
 
     // Dedicated handler for No Property Tag tab to avoid conflicts with other tabs
     document.querySelectorAll('.viewAssetNoTagBtn').forEach(button => {
@@ -1536,8 +1454,9 @@ $stmt->bind_param("i", $selected_office);
               if (items.length > 0) {
                 items.forEach(it => {
                   const tr = document.createElement('tr');
+                  const propDisp = formatWithOffice(data.office_name, it.property_no);
                   tr.innerHTML = `
-                    <td>${it.property_no ?? ''}</td>
+                    <td>${propDisp}</td>
                     <td>${it.inventory_tag ?? ''}</td>
                     <td>${it.serial_no ?? ''}</td>
                     <td>${it.status ?? ''}</td>
@@ -1554,8 +1473,9 @@ $stmt->bind_param("i", $selected_office);
                 });
               } else {
                 const tr = document.createElement('tr');
+                const propDisp = formatWithOffice(data.office_name, data.property_no);
                 tr.innerHTML = `
-                  <td>${data.property_no ?? ''}</td>
+                  <td>${propDisp}</td>
                   <td>${data.inventory_tag ?? ''}</td>
                   <td>${data.serial_no ?? ''}</td>
                   <td>${data.status ?? ''}</td>
@@ -1671,9 +1591,10 @@ $stmt->bind_param("i", $selected_office);
                 date_acquired: data.acquisition_date
               };
               const tr = document.createElement('tr');
+              const propDisp = formatWithOffice(data.office_name, it.property_no);
               tr.innerHTML = `
                 <td>${it.item_id}</td>
-                <td>${it.property_no ?? ''}</td>
+                <td>${propDisp}</td>
                 <td>${it.inventory_tag ?? ''}</td>
                 <td>${it.serial_no ?? ''}</td>
                 <td>${it.status ?? ''}</td>

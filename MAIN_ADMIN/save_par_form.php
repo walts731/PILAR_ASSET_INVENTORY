@@ -32,8 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $is_outside_lgu = ($office_input === 'outside_lgu');
     $office_id = $is_outside_lgu ? null : intval($office_input);
 
-    // Build office code for tag generation (e.g., MEO, HRMO)
-    $office_code = 'OFFICE';
+    // Build OFFICE display for tag generation: use full Office name (not acronym), or entity name for Outside LGU
+    $office_display = 'OFFICE';
     if (!$is_outside_lgu && !empty($office_id)) {
         $stmt_off = $conn->prepare("SELECT office_name FROM offices WHERE id = ? LIMIT 1");
         if ($stmt_off) {
@@ -42,30 +42,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $res_off = $stmt_off->get_result();
                 $row_off = $res_off ? $res_off->fetch_assoc() : null;
                 if ($row_off && !empty($row_off['office_name'])) {
-                    $name = strtoupper(trim($row_off['office_name']));
-                    // Derive acronym from words (take first letter of each word)
-                    $parts = preg_split('/\s+/', $name);
-                    $acronym = '';
-                    foreach ($parts as $p) {
-                        $first = preg_replace('/[^A-Z0-9]/', '', mb_substr($p, 0, 1));
-                        $acronym .= $first;
-                    }
-                    // Fallback: remove spaces if acronym became empty
-                    if ($acronym === '') {
-                        $acronym = preg_replace('/[^A-Z0-9]/', '', $name);
-                    }
-                    $office_code = $acronym ?: 'OFFICE';
+                    $office_display = trim($row_off['office_name']);
                 }
             }
             $stmt_off->close();
         }
     } else {
-        // Outside LGU or no office selected; keep generic token
-        $office_code = 'OUT';
+        // Outside LGU: prefer the provided entity name
+        $office_display = trim($entity_name) !== '' ? trim($entity_name) : 'Outside LGU';
     }
 
-    // Now generate the PAR number with OFFICE replacement
-    $par_no = generateTag('par_no', ['OFFICE' => $office_code]);
+    // Now generate the PAR number with OFFICE replacement using full office/entity name
+    $par_no = generateTag('par_no', ['OFFICE' => $office_display]);
 
     // --- Insert PAR form ---
     $stmt = $conn->prepare("INSERT INTO par_form 

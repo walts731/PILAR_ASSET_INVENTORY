@@ -168,6 +168,59 @@ if ($asset_id) {
     $result = $stmt->get_result();
     if ($result && $row = $result->fetch_assoc()) {
         $auto_property_no = $row['inventory_tag'] ?? '';
+        // Populate office name for display/replacements
+        if (!empty($row['office_id'])) {
+            if ($stOff = $conn->prepare("SELECT office_name FROM offices WHERE id = ? LIMIT 1")) {
+                $oid = (int)$row['office_id'];
+                $stOff->bind_param('i', $oid);
+                if ($stOff->execute()) {
+                    $rsOff = $stOff->get_result();
+                    if ($rsOff && ($of = $rsOff->fetch_assoc())) {
+                        $office_name = $of['office_name'] ?? '';
+                    }
+                }
+                $stOff->close();
+            }
+        }
+        // Fallback: if office_name is still empty, derive from ICS/PAR form linkage
+        if (trim((string)$office_name) === '') {
+            if ($stIds = $conn->prepare("SELECT ics_id, par_id FROM assets WHERE id = ?")) {
+                $stIds->bind_param('i', $asset_id);
+                if ($stIds->execute()) {
+                    $rsIds = $stIds->get_result();
+                    if ($rsIds && ($ri = $rsIds->fetch_assoc())) {
+                        $ics_id_fk = (int)($ri['ics_id'] ?? 0);
+                        $par_id_fk = (int)($ri['par_id'] ?? 0);
+                        if ($ics_id_fk > 0) {
+                            if ($stI = $conn->prepare("SELECT o.office_name FROM ics_form f LEFT JOIN offices o ON f.office_id = o.id WHERE f.id = ? LIMIT 1")) {
+                                $stI->bind_param('i', $ics_id_fk);
+                                if ($stI->execute()) {
+                                    $rsI = $stI->get_result();
+                                    if ($rsI && ($rI = $rsI->fetch_assoc())) {
+                                        $office_name = $rI['office_name'] ?? $office_name;
+                                    }
+                                }
+                                $stI->close();
+                            }
+                        }
+                        if (trim((string)$office_name) === '' && $par_id_fk > 0) {
+                            if ($stP = $conn->prepare("SELECT o.office_name FROM par_form p LEFT JOIN offices o ON p.office_id = o.id WHERE p.id = ? LIMIT 1")) {
+                                $stP->bind_param('i', $par_id_fk);
+                                if ($stP->execute()) {
+                                    $rsP = $stP->get_result();
+                                    if ($rsP && ($rP = $rsP->fetch_assoc())) {
+                                        $office_name = $rP['office_name'] ?? $office_name;
+                                    }
+                                }
+                                $stP->close();
+                            }
+                        }
+                    }
+                }
+                $stIds->close();
+            }
+        }
+
         if (!isset($asset_details['serial_no']) || $asset_details['serial_no'] === '') {
             $asset_details['serial_no'] = $row['serial_no'] ?? '';
         }
@@ -853,6 +906,33 @@ if ($baseProp !== '') {
     $generated_property_no = $property_no_format; // fetched from tag_formats
 }
 
+// Helper to replace {OFFICE}/OFFICE and office acronym with full office name for display
+function mr_replace_office_tokens($text, $officeFullName) {
+    $out = (string)$text;
+    $office = trim((string)$officeFullName);
+    if ($office !== '') {
+        $out = preg_replace('/\{OFFICE\}|OFFICE/u', $office, $out);
+        // Derive acronym from full office name
+        $upper = mb_strtoupper($office, 'UTF-8');
+        $parts = preg_split('/\s+/', $upper);
+        $acronym = '';
+        foreach ($parts as $p) {
+            $first = preg_replace('/[^A-Z0-9]/u', '', mb_substr($p, 0, 1, 'UTF-8'));
+            $acronym .= $first;
+        }
+        if ($acronym !== '') {
+            $re = '/\b' . preg_quote($acronym, '/') . '\b/u';
+            $out = preg_replace($re, $office, $out);
+        }
+    }
+    return $out;
+}
+
+// Compute display/placeholder with full office name applied
+$__officeDisplay = trim((string)$office_name);
+$display_property_no = mr_replace_office_tokens($generated_property_no, $__officeDisplay);
+$placeholder_property_no = mr_replace_office_tokens(($property_no_format ?: 'YYYY-CODE-0001'), $__officeDisplay);
+
 // Auto-generate serial number using tag format (similar to property number)
 $baseSerial = isset($asset_details['serial_no']) ? trim((string)$asset_details['serial_no']) : '';
 if ($baseSerial !== '') {
@@ -1123,8 +1203,8 @@ if ($baseSerial !== '') {
                                             <i class="bi bi-card-heading me-1 text-success"></i>Property Number
                                         </label>
                                         <input type="text" class="form-control" name="property_no" id="property_no"
-                                            placeholder="<?= htmlspecialchars($property_no_format ?: 'YYYY-CODE-0001') ?>"
-                                            value="<?= htmlspecialchars($generated_property_no) ?>">
+                                            placeholder="<?= htmlspecialchars($placeholder_property_no) ?>"
+                                            value="<?= htmlspecialchars($display_property_no) ?>">
                                         <div class="form-text">Official government property number</div>
                                     </div>
                                 </div>

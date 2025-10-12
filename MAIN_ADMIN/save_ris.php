@@ -6,11 +6,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // HEADER + FOOTER fields
     $division = $_POST['division'] ?? '';
     $responsibility_center = $_POST['responsibility_center'] ?? '';
-    // Generate automatic RIS number and SAI number
-    $ris_no = generateTag('ris_no');
-    $sai_no = generateTag('sai_no');
+    // Generate automatic RIS/SAI numbers AFTER resolving office name
     $date = $_POST['date'] ?? date('Y-m-d');
     $office_id = $_POST['office_id'] ?? '';
+    // Resolve full office name for token replacement
+    $office_display = 'OFFICE';
+    if (!empty($office_id) && ctype_digit((string)$office_id)) {
+        if ($__st = $conn->prepare("SELECT office_name FROM offices WHERE id = ? LIMIT 1")) {
+            $oid = (int)$office_id;
+            $__st->bind_param('i', $oid);
+            if ($__st->execute()) {
+                $__rs = $__st->get_result();
+                if ($__rs && ($__row = $__rs->fetch_assoc())) {
+                    $office_display = trim((string)($__row['office_name'] ?? 'OFFICE')) ?: 'OFFICE';
+                }
+            }
+            $__st->close();
+        }
+    }
+    // Generate numbers with OFFICE token replaced
+    $ris_no = generateTag('ris_no', ['OFFICE' => $office_display]);
+    $sai_no = generateTag('sai_no', ['OFFICE' => $office_display]);
     $responsibility_code = $_POST['responsibility_code'] ?? '';
     $purpose = $_POST['purpose'] ?? '';
 

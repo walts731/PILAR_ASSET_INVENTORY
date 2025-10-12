@@ -515,17 +515,21 @@ if (!empty($_SESSION['flash'])) {
     function computeItrPreview(){
       const field = document.getElementById('itr_no');
       if (!field) return;
-      // Determine office display from dropdown
+      // Determine office display from dropdown or typed entity name
       const sel = document.getElementById('itr_office');
-      let officeName = 'OFFICE';
-      if (sel) {
+      const en = document.getElementById('entity_name');
+      let officeName = (en && en.value.trim()) ? en.value.trim() : 'OFFICE';
+      if ((!officeName || officeName === 'OFFICE') && sel) {
         const opt = sel.options[sel.selectedIndex];
         const txt = opt ? (opt.text || '') : '';
         if (sel.value) officeName = (txt || '').trim() || 'OFFICE';
       }
-      // Preserve digits; only swap OFFICE tokens in current value
-      const current = field.value || '';
-      field.value = current.replace(/\bOFFICE\b|\{OFFICE\}/g, officeName);
+      // Build base from template and selected date, then replace OFFICE tokens
+      const dateInput = document.getElementById('date');
+      const base = formatFromDate(ITR_TEMPLATE || (field.value||''), dateInput ? dateInput.value : '');
+      let updated = String(base).replace(/\bOFFICE\b|\{OFFICE\}/g, officeName);
+      updated = updated.replace(/[{}]/g,'');
+      field.value = updated;
     }
     const dateInput = document.getElementById('date');
     if (dateInput) dateInput.addEventListener('change', computeItrPreview);
@@ -540,6 +544,9 @@ if (!empty($_SESSION['flash'])) {
         if (entityNameInput) entityNameInput.value = txt;
         computeItrPreview();
       });
+    }
+    if (entityNameInput) {
+      entityNameInput.addEventListener('input', computeItrPreview);
     }
     // Toggle other transfer type field (radio-based)
     const ttOthers = document.getElementById('tt_others');
