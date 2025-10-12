@@ -91,12 +91,6 @@ echo "<!-- SIDEBAR DEBUG: user_id={$user_id} | office_id=" . htmlspecialchars($o
 
 <!-- SIDEBAR STYLES -->
 <style>
-    .sidebar { height: 100vh; overflow: hidden; }
-    .sidebar .scrollable-nav { overflow-y: auto; height: calc(100vh - 60px); padding-right: 8px; scrollbar-width: none; }
-    .sidebar .scrollable-nav::-webkit-scrollbar { display: none; }
-    .sidebar a { width: 100%; text-align: left; padding: 10px 15px; border-radius: 10px; margin: 5px 0; transition: all 0.3s ease; display: block; color: #000; text-decoration: none; }
-    .sidebar a:hover, .sidebar a.active { background-color: #e0e0e0; color: #000; }
-
     /* Container */
     .sidebar {
         height: 100vh;
@@ -117,33 +111,28 @@ echo "<!-- SIDEBAR DEBUG: user_id={$user_id} | office_id=" . htmlspecialchars($o
 
     .sidebar .scrollable-nav::-webkit-scrollbar { display: none; }
 
-    /* Header */
     .sidebar .sidebar-brand {
         text-align: center;
         padding: 16px 10px 6px;
     }
 
     .sidebar .brand-logo-wrap {
-        width: 58px;
-        height: 58px;
+        width: 77px;
+        height: 77px;
         border-radius: 50%;
         background: #ffffff;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18), inset 0 0 0 6px rgba(255, 255, 255, 0.4);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2), inset 0 0 0 8px rgba(255, 255, 255, 0.4);
         margin-bottom: 8px;
     }
 
     .sidebar .brand-logo-wrap img {
-        width: 38px; height: 38px; object-fit: contain;
+        width: 75px; height: 75px; object-fit: contain;
         filter: none;
     }
 
-    .sidebar .brand-title {
-        color: #fff;
-        line-height: 1.1;
-    }
     .sidebar .brand-title strong {
         font-weight: 700;
         font-size: 0.98rem;
@@ -214,6 +203,13 @@ echo "<!-- SIDEBAR DEBUG: user_id={$user_id} | office_id=" . htmlspecialchars($o
         color: #e9f2ff;
         margin: 3px 0;
     }
+    /* Specific font styling for Inventory and Forms submenus */
+    #inventorySubMenu .nav-link,
+    #formsSubMenu .nav-link {
+        font-size: 0.92rem;
+        font-weight: 500;
+        letter-spacing: 0.1px;
+    }
     .sidebar .collapse .nav-link:hover { background: rgba(255, 255, 255, 0.12); }
     .sidebar .collapse .nav-link.active { background: rgba(255, 255, 255, 0.22); }
 
@@ -229,6 +225,7 @@ echo "<!-- SIDEBAR DEBUG: user_id={$user_id} | office_id=" . htmlspecialchars($o
     /* Focus visibility */
     .sidebar a:focus { outline: 2px solid rgba(255, 255, 255, 0.35); outline-offset: 2px; }
 </style>
+
 
 <!-- SIDEBAR HTML -->
 <div class="sidebar d-flex flex-column justify-content-between">
@@ -304,6 +301,9 @@ echo "<!-- SIDEBAR DEBUG: user_id={$user_id} | office_id=" . htmlspecialchars($o
                 <i class="bi bi-clock-history"></i> Usage
             </a>
             */ ?>
+            <a href="usage.php" class="<?= ($page == 'usage') ? 'active' : '' ?>">
+                <i class="bi bi-clock-history"></i> Usage
+            </a>
             <a href="reports.php" class="<?= ($page == 'reports') ? 'active' : '' ?>"><i class="bi bi-bar-chart-line"></i> Reports</a>
             <a href="user.php" class="<?= ($page == 'user') ? 'active' : '' ?>"><i class="bi bi-person"></i> Users</a>
             

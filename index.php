@@ -273,7 +273,7 @@ require_once "engine/login_engine.php";
                             <label for="username" class="form-label">Username</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                <input type="text" name="username" id="username" class="form-control" placeholder="Enter your username" autocomplete="username" required aria-required="true" />
+                                <input type="text" name="username" id="username" class="form-control" placeholder="Enter your username" autocomplete="off" required aria-required="true" />
                             </div>
                         </div>
 

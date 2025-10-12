@@ -202,7 +202,7 @@ $stmt->close();
       $stmtAllUnserv->fetch();
       $stmtAllUnserv->close();
       ?>
-      
+
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="unserviceable-tab" data-bs-toggle="tab" data-bs-target="#unserviceable" type="button" role="tab">
           <i class="bi bi-tools me-1"></i> Unserviceable
@@ -443,7 +443,7 @@ LEFT JOIN offices o ON an.office_id = o.id
 WHERE an.office_id = ? AND an.quantity > 0
 ORDER BY an.date_created DESC
 ");
-$stmt->bind_param("i", $selected_office);
+                    $stmt->bind_param("i", $selected_office);
                   }
 
                   $stmt->execute();
@@ -454,42 +454,46 @@ $stmt->bind_param("i", $selected_office);
                     <tr>
                       <td><input type="checkbox" class="asset-checkbox" name="selected_assets_new[]" value="<?= $row['an_id'] ?>"></td>
                       <td>
-  <?php
-  $nums = [];
-  $officeName = trim((string)($row['office_name'] ?? ''));
-  if (!empty($row['ics_no'])) {
-    $icsDisplay = $row['ics_no'];
-    if ($officeName !== '') {
-      $icsDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $icsDisplay);
-      // Additionally replace known office acronym with full office name if present
-      $upper = mb_strtoupper($officeName);
-      $parts = preg_split('/\s+/', $upper);
-      $acronym = '';
-      foreach ($parts as $p) { $acronym .= preg_replace('/[^A-Z0-9]/u','', mb_substr($p,0,1)); }
-      if ($acronym !== '') {
-        $icsDisplay = preg_replace('/\b'.preg_quote($acronym,'/').'\b/u', $officeName, $icsDisplay);
-      }
-    }
-    $nums[] = 'ICS: ' . htmlspecialchars($icsDisplay);
-  }
-  if (!empty($row['par_no'])) {
-    $parDisplay = $row['par_no'];
-    if ($officeName !== '') {
-      $parDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $parDisplay);
-      // Additionally replace known office acronym with full office name if present
-      $upper = mb_strtoupper($officeName);
-      $parts = preg_split('/\s+/', $upper);
-      $acronym = '';
-      foreach ($parts as $p) { $acronym .= preg_replace('/[^A-Z0-9]/u','', mb_substr($p,0,1)); }
-      if ($acronym !== '') {
-        $parDisplay = preg_replace('/\b'.preg_quote($acronym,'/').'\b/u', $officeName, $parDisplay);
-      }
-    }
-    $nums[] = 'PAR: ' . htmlspecialchars($parDisplay);
-  }
-  echo $nums ? implode(' | ', $nums) : 'N/A';
-  ?>
-</td>
+                        <?php
+                        $nums = [];
+                        $officeName = trim((string)($row['office_name'] ?? ''));
+                        if (!empty($row['ics_no'])) {
+                          $icsDisplay = $row['ics_no'];
+                          if ($officeName !== '') {
+                            $icsDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $icsDisplay);
+                            // Additionally replace known office acronym with full office name if present
+                            $upper = mb_strtoupper($officeName);
+                            $parts = preg_split('/\s+/', $upper);
+                            $acronym = '';
+                            foreach ($parts as $p) {
+                              $acronym .= preg_replace('/[^A-Z0-9]/u', '', mb_substr($p, 0, 1));
+                            }
+                            if ($acronym !== '') {
+                              $icsDisplay = preg_replace('/\b' . preg_quote($acronym, '/') . '\b/u', $officeName, $icsDisplay);
+                            }
+                          }
+                          $nums[] = 'ICS: ' . htmlspecialchars($icsDisplay);
+                        }
+                        if (!empty($row['par_no'])) {
+                          $parDisplay = $row['par_no'];
+                          if ($officeName !== '') {
+                            $parDisplay = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $parDisplay);
+                            // Additionally replace known office acronym with full office name if present
+                            $upper = mb_strtoupper($officeName);
+                            $parts = preg_split('/\s+/', $upper);
+                            $acronym = '';
+                            foreach ($parts as $p) {
+                              $acronym .= preg_replace('/[^A-Z0-9]/u', '', mb_substr($p, 0, 1));
+                            }
+                            if ($acronym !== '') {
+                              $parDisplay = preg_replace('/\b' . preg_quote($acronym, '/') . '\b/u', $officeName, $parDisplay);
+                            }
+                          }
+                          $nums[] = 'PAR: ' . htmlspecialchars($parDisplay);
+                        }
+                        echo $nums ? implode(' | ', $nums) : 'N/A';
+                        ?>
+                      </td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td><?= htmlspecialchars($row['category_name']) ?></td>
                       <td><?= (int)$row['quantity'] ?></td>
@@ -632,10 +636,10 @@ $stmt->bind_param("i", $selected_office);
                     <th><input type="checkbox" id="selectAllConsumables" /></th>
                     <th>RIS No</th>
                     <th>Description</th>
-                    <th>On Hand</th>
+                    <th>Qty</th>
                     <th>Unit</th>
                     <th>Status</th>
-                    <th>Last Updated</th>
+
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -666,7 +670,7 @@ WHERE a.type = 'consumable' AND a.quantity > 0
     LEFT JOIN offices o ON a.office_id = o.id
     WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0
   ");
-$stmt->bind_param("i", $selected_office);
+                    $stmt->bind_param("i", $selected_office);
                   }
 
                   $stmt->execute();
@@ -677,35 +681,37 @@ $stmt->bind_param("i", $selected_office);
                     <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
                       <td><input type="checkbox" class="consumable-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
                       <td>
-  <?php
-    $officeName = trim((string)($row['office_name'] ?? ''));
-    $displayRaw = '';
+                        <?php
+                        $officeName = trim((string)($row['office_name'] ?? ''));
+                        $displayRaw = '';
 
-    if (!empty($row['ris_no'])) {
-      $displayRaw = $row['ris_no'];
-    } elseif (!empty($row['property_no'])) {
-      // Fallback to stock no if RIS is not linked
-      $displayRaw = $row['property_no'];
-    }
+                        if (!empty($row['ris_no'])) {
+                          $displayRaw = $row['ris_no'];
+                        } elseif (!empty($row['property_no'])) {
+                          // Fallback to stock no if RIS is not linked
+                          $displayRaw = $row['property_no'];
+                        }
 
-    if ($displayRaw !== '') {
-      if ($officeName !== '') {
-        $displayRaw = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $displayRaw);
-        // Additionally replace known office acronym with full office name if present
-        $upper = mb_strtoupper($officeName);
-        $parts = preg_split('/\s+/', $upper);
-        $acronym = '';
-        foreach ($parts as $p) { $acronym .= preg_replace('/[^A-Z0-9]/u','', mb_substr($p,0,1)); }
-        if ($acronym !== '') {
-          $displayRaw = preg_replace('/\b'.preg_quote($acronym,'/').'\b/u', $officeName, $displayRaw);
-        }
-      }
-      echo htmlspecialchars($displayRaw);
-    } else {
-      echo 'N/A';
-    }
-  ?>
-</td>
+                        if ($displayRaw !== '') {
+                          if ($officeName !== '') {
+                            $displayRaw = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $displayRaw);
+                            // Additionally replace known office acronym with full office name if present
+                            $upper = mb_strtoupper($officeName);
+                            $parts = preg_split('/\s+/', $upper);
+                            $acronym = '';
+                            foreach ($parts as $p) {
+                              $acronym .= preg_replace('/[^A-Z0-9]/u', '', mb_substr($p, 0, 1));
+                            }
+                            if ($acronym !== '') {
+                              $displayRaw = preg_replace('/\b' . preg_quote($acronym, '/') . '\b/u', $officeName, $displayRaw);
+                            }
+                          }
+                          echo htmlspecialchars($displayRaw);
+                        } else {
+                          echo 'N/A';
+                        }
+                        ?>
+                      </td>
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['quantity'] ?></td>
                       <td><?= $row['unit'] ?></td>
@@ -714,32 +720,23 @@ $stmt->bind_param("i", $selected_office);
                           <?= ucfirst($row['status']) ?>
                         </span>
                       </td>
-                      <td><?= date('M d, Y', strtotime($row['last_updated'])) ?></td>
-                      <td>
-                        <!-- View Button -->
-                        <button type="button"
-                          class="btn btn-sm btn-outline-info rounded-pill viewConsumableBtn"
-                          data-id="<?= $row['id'] ?>"
-                          data-bs-toggle="modal"
-                          data-bs-target="#viewConsumableModal">
-                          <i class="bi bi-eye"></i>
-                        </button>
 
+                      <td>
                         <button type="button"
-                          class="btn btn-sm btn-outline-primary updateConsumableBtn rounded-pill"
+                          class="btn btn-sm btn-outline-primary rounded-pill editConsumableBtn me-1"
                           data-id="<?= $row['id'] ?>"
-                          data-category="<?= $row['category'] ?>"
                           data-description="<?= htmlspecialchars($row['description']) ?>"
                           data-unit="<?= htmlspecialchars($row['unit']) ?>"
-                          data-qty="<?= $row['quantity'] ?>"
-                          data-status="<?= $row['status'] ?>"
-                          data-image="<?= $row['image'] ?>"
+                          data-qty="<?= (int)$row['quantity'] ?>"
+                          data-status="<?= htmlspecialchars($row['status']) ?>"
+                          data-image="<?= htmlspecialchars($row['image'] ?? '') ?>"
+                          data-office="<?= htmlspecialchars($_GET['office'] ?? 'all') ?>"
                           data-bs-toggle="modal"
-                          data-bs-target="#updateConsumableModal">
+                          data-bs-target="#updateConsumableModal"
+                          title="Edit Consumable">
                           <i class="bi bi-pencil-square"></i>
+                          Edit
                         </button>
-
-
                         <!-- Enhanced Delete Button (only when no RIS is linked) -->
                         <?php if (empty($row['ris_id'])): ?>
                           <button type="button"
@@ -835,33 +832,35 @@ $stmt->bind_param("i", $selected_office);
                         data-category-id="<?= $row['category'] ?>">
                     </td>
                     <td>
-  <?php
-  $officeName = trim((string)($row['office_name'] ?? ''));
-  $displayRaw = '';
-  if (!empty($row['par_no'])) {
-    $displayRaw = $row['par_no'];
-  } elseif (!empty($row['ics_no'])) {
-    $displayRaw = $row['ics_no'];
-  }
+                      <?php
+                      $officeName = trim((string)($row['office_name'] ?? ''));
+                      $displayRaw = '';
+                      if (!empty($row['par_no'])) {
+                        $displayRaw = $row['par_no'];
+                      } elseif (!empty($row['ics_no'])) {
+                        $displayRaw = $row['ics_no'];
+                      }
 
-  if ($displayRaw !== '') {
-    if ($officeName !== '') {
-      $displayRaw = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $displayRaw);
-      // Additionally replace known office acronym with full office name if present
-      $upper = mb_strtoupper($officeName);
-      $parts = preg_split('/\s+/', $upper);
-      $acronym = '';
-      foreach ($parts as $p) { $acronym .= preg_replace('/[^A-Z0-9]/u','', mb_substr($p,0,1)); }
-      if ($acronym !== '') {
-        $displayRaw = preg_replace('/\b'.preg_quote($acronym,'/').'\b/u', $officeName, $displayRaw);
-      }
-    }
-    echo htmlspecialchars($displayRaw);
-  } else {
-    echo 'N/A';
-  }
-  ?>
-</td>
+                      if ($displayRaw !== '') {
+                        if ($officeName !== '') {
+                          $displayRaw = preg_replace('/\{OFFICE\}|OFFICE/', $officeName, $displayRaw);
+                          // Additionally replace known office acronym with full office name if present
+                          $upper = mb_strtoupper($officeName);
+                          $parts = preg_split('/\s+/', $upper);
+                          $acronym = '';
+                          foreach ($parts as $p) {
+                            $acronym .= preg_replace('/[^A-Z0-9]/u', '', mb_substr($p, 0, 1));
+                          }
+                          if ($acronym !== '') {
+                            $displayRaw = preg_replace('/\b' . preg_quote($acronym, '/') . '\b/u', $officeName, $displayRaw);
+                          }
+                        }
+                        echo htmlspecialchars($displayRaw);
+                      } else {
+                        echo 'N/A';
+                      }
+                      ?>
+                    </td>
                     <td><?= htmlspecialchars($row['description']) ?></td>
                     <td><?= htmlspecialchars($row['category_name']) ?></td>
                     <td><?= $row['quantity'] ?></td>
@@ -869,9 +868,9 @@ $stmt->bind_param("i", $selected_office);
                     <td>&#8369; <?= number_format($row['value'], 2) ?></td>
                     <td class="text-nowrap">
                       <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill viewAssetNoTagBtn" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#viewAssetModal">
+                        <a href="view_asset_details.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-outline-info rounded-pill" title="View Asset Details">
                           <i class="bi bi-eye"></i>
-                        </button>
+                        </a>
                         <?php
                         // Only show delete button if asset has no ICS ID and no PAR ID
                         if (empty($row['ics_id']) && empty($row['par_id'])):
@@ -901,7 +900,7 @@ $stmt->bind_param("i", $selected_office);
         </div>
       </div>
 
-      
+
 
       <!-- Unserviceable Tab -->
       <div class="tab-pane fade" id="unserviceable" role="tabpanel">
@@ -1063,12 +1062,11 @@ $stmt->bind_param("i", $selected_office);
                         <td class="text-nowrap">
                           <div class="d-flex gap-1 flex-wrap">
                             <!-- View Button -->
-                            <button type="button"
+                            <a href="view_asset_details.php?id=<?= $row['id'] ?>"
                               class="btn btn-sm btn-outline-info rounded-pill"
-                              onclick="viewAssetDetails(<?= $row['id'] ?>)"
                               title="View Asset Details">
                               <i class="bi bi-eye"></i> View
-                            </button>
+                            </a>
 
                             <?php if ($row['red_tagged'] == 0): ?>
                               <?php if (!empty($row['iirup_id'])): ?>
@@ -1159,7 +1157,7 @@ $stmt->bind_param("i", $selected_office);
         });
       }
 
-     
+
     });
 
     function formatDateFormal(dateStr) {
@@ -1549,6 +1547,51 @@ $stmt->bind_param("i", $selected_office);
             }
           })
           .catch(err => console.error('Fetch consumable error', err));
+      });
+    });
+
+    // Edit Consumable handler: populate update modal (status + image only)
+    $(document).ready(function() {
+      $(document).on('click', '.editConsumableBtn', function() {
+        const id = $(this).data('id');
+        const status = $(this).data('status') || 'available';
+        const image = ($(this).data('image') || '').toString();
+        const qty = parseInt($(this).data('qty'), 10) || 0;
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentOffice = urlParams.get('office') || $(this).data('office') || 'all';
+
+        $('#consumable_id').val(id);
+        $('#edit_status').val(status);
+        $('#updateConsumableOffice').val(currentOffice);
+        $('#edit_existing_image').val(image);
+
+        // Reset remove checkbox and file input
+        $('#remove_consumable_image').prop('checked', false);
+        $('#edit_consumable_image').val('');
+
+        // Do not preview QR code images; simple heuristics
+        const looksLikeQr = (name) => {
+          const n = (name || '').toLowerCase();
+          return (
+            n.includes('qr') ||
+            /^asset_\d+_item_\d+\.(png|jpg|jpeg|webp|gif)$/.test(n) ||
+            n.startsWith('qr_') ||
+            n.endsWith('_qr.png')
+          );
+        };
+
+        const preview = document.getElementById('edit_consumable_preview');
+        if (preview) {
+          // Hide preview if qty is zero (empty), or image missing, or looks like QR
+          const shouldHide = qty === 0 || !image || looksLikeQr(image);
+          if (shouldHide) {
+            preview.src = '';
+            preview.style.display = 'none';
+          } else {
+            preview.src = `../img/assets/${image}`;
+            preview.style.display = 'block';
+          }
+        }
       });
     });
 

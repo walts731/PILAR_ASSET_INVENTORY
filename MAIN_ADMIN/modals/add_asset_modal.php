@@ -245,7 +245,7 @@ $stock_no = "STOCK-" . str_pad($totalStock, 4, "0", STR_PAD_LEFT);
                 <div class="form-floating">
                   <select name="type" id="type" class="form-select" required>
                     <option value="asset">Asset</option>
-                    <option value="consumable">Consumable</option>
+                   
                   </select>
                   <label for="type">Type <span class="text-danger">*</span></label>
                 </div>

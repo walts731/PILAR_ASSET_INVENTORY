@@ -5,39 +5,28 @@ session_start();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Sanitize input
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-    $description = isset($_POST['description']) ? $conn->real_escape_string(trim($_POST['description'])) : '';
-    $unit = isset($_POST['unit']) ? $conn->real_escape_string(trim($_POST['unit'])) : '';
-    $quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 0;
     $status = isset($_POST['status']) ? $conn->real_escape_string(trim($_POST['status'])) : '';
     $office = isset($_POST['office']) ? $conn->real_escape_string(trim($_POST['office'])) : '';
+    $removeImage = isset($_POST['remove_image']) ? (int)$_POST['remove_image'] : 0;
 
-    // Category removed from the form; do not require it for update
-    if ($id > 0 && $description !== '' && $unit !== '' && $status !== '') {
-
-        // Fetch current asset info to identify related RIS item
-        $property_no = '';
-        $old_desc = '';
-        if ($stmtA = $conn->prepare("SELECT property_no, description FROM assets WHERE id = ? AND type = 'consumable'")) {
-            $stmtA->bind_param("i", $id);
-            $stmtA->execute();
-            $stmtA->bind_result($property_no, $old_desc);
-            $stmtA->fetch();
-            $stmtA->close();
+    if ($id > 0 && $status !== '') {
+        // Image handling: upload or remove
+        $image_query = '';
+        if ($removeImage === 1) {
+            $image_query = ", image = NULL";
         }
 
-        // Image upload handling
-        $image_query = '';
         if (isset($_FILES['image']) && $_FILES['image']['error'] == UPLOAD_ERR_OK) {
             $original_name = basename($_FILES['image']['name']);
             $imageFileType = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
-            $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+            $allowed_types = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
             if (in_array($imageFileType, $allowed_types)) {
                 $new_filename = time() . '_' . preg_replace("/[^a-zA-Z0-9_\.-]/", '', $original_name);
                 $target_path = '../img/assets/' . $new_filename;
 
                 if (move_uploaded_file($_FILES['image']['tmp_name'], $target_path)) {
-                    $image_query = ", image = '$new_filename'";
+                    $image_query = ", image = '$new_filename'"; // overrides removal if both set
                 } else {
                     echo 'Error uploading image.';
                     exit();
@@ -48,14 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Build the update query
+        // Only update status (and image if provided)
         $sql = "
             UPDATE assets
             SET
-                description = '$description',
-                unit = '$unit',
-                quantity = $quantity,
-                added_stock = $quantity,
                 status = '$status',
                 last_updated = NOW()
                 $image_query
@@ -63,55 +48,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ";
 
         if ($conn->query($sql)) {
-            // Try to update the most recent matching RIS item (description, quantity, unit)
-            // Prefer match by stock_no (property_no) and PREVIOUS description; fall back to previous description only.
-            $ris_item_id = null;
-            if (!empty($property_no) && !empty($old_desc)) {
-                if ($stmt = $conn->prepare("SELECT ri.id
-                                             FROM ris_items ri
-                                             INNER JOIN ris_form rf ON rf.id = ri.ris_form_id
-                                             WHERE ri.stock_no = ? AND ri.description = ?
-                                             ORDER BY rf.date DESC, ri.ris_form_id DESC, ri.id DESC
-                                             LIMIT 1")) {
-                    $stmt->bind_param("ss", $property_no, $old_desc);
-                    $stmt->execute();
-                    $res = $stmt->get_result();
-                    if ($row = $res->fetch_assoc()) { $ris_item_id = (int)$row['id']; }
-                    $stmt->close();
-                }
-            }
-
-            if (!$ris_item_id && !empty($old_desc)) {
-                if ($stmt = $conn->prepare("SELECT ri.id
-                                             FROM ris_items ri
-                                             INNER JOIN ris_form rf ON rf.id = ri.ris_form_id
-                                             WHERE ri.description = ?
-                                             ORDER BY rf.date DESC, ri.ris_form_id DESC, ri.id DESC
-                                             LIMIT 1")) {
-                    $stmt->bind_param("s", $old_desc);
-                    $stmt->execute();
-                    $res = $stmt->get_result();
-                    if ($row = $res->fetch_assoc()) { $ris_item_id = (int)$row['id']; }
-                    $stmt->close();
-                }
-            }
-
-            if ($ris_item_id) {
-                if ($u = $conn->prepare("UPDATE ris_items SET description = ?, quantity = ?, unit = ? WHERE id = ?")) {
-                    $u->bind_param("sisi", $description, $quantity, $unit, $ris_item_id);
-                    $u->execute();
-                    $u->close();
-                }
-            }
-
-            // Preserve office filter in redirect and show success toast
+            // Redirect back preserving office filter
             $officeParam = $office !== '' ? urlencode($office) : 'all';
             header('Location: http://localhost/pilar_asset_inventory/MAIN_ADMIN/inventory.php?office=' . $officeParam . '&update=success#consumables');
             exit();
         } else {
             echo 'Failed to update: ' . $conn->error;
         }
-
     } else {
         echo 'Missing required fields.';
     }
