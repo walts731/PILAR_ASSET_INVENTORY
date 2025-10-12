@@ -354,6 +354,7 @@ $is_main_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'MAIN_ADMIN';
         const IS_MAIN_ADMIN = <?= json_encode($is_main_admin) ?>;
         // Dynamic ICS No preview
         const ICS_TEMPLATE = <?= json_encode($ics_template) ?>;
+        const ICS_PREVIEW_NEXT = <?= json_encode(previewTag('ics_no')) ?>;
 
         function deriveOfficeAcronym(name) {
             if (!name) return 'OFFICE';
@@ -404,14 +405,17 @@ $is_main_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'MAIN_ADMIN';
                     officeDisp = 'OFFICE';
                 }
             }
-            // Preserve digits; only update OFFICE tokens in current value
-            const current = field.value || '';
-            const updated = current.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
+            // Build from server-side preview to ensure correct next number
+            let base = String(ICS_PREVIEW_NEXT || '');
+            let updated = base.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
+            // Clean any leftover braces from preview display
+            updated = updated.replace(/[{}]/g, '');
             field.readOnly = true;
             field.required = false;
             field.placeholder = '';
             field.value = updated;
         }
+
         const destSel = document.getElementById('destinationOffice');
         if (destSel) destSel.addEventListener('change', computeIcsPreview);
         computeIcsPreview();
@@ -617,9 +621,7 @@ $is_main_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'MAIN_ADMIN';
                 entityNameInput.focus();
             } else if (val) {
                 // Internal office selected: prefill if empty, but keep editable
-                if (!entityNameInput.value.trim()) {
-                    entityNameInput.value = selectedText;
-                }
+                entityNameInput.value = selectedText;
                 entityNameInput.readOnly = false; // Always editable
                 entityNameInput.required = false;
                 entityNameInput.placeholder = '';
