@@ -249,10 +249,10 @@ if ($role === 'user' && $userId > 0) {
                     </a>
                 <?php endforeach; ?>
 
-                <!-- Static Infrastructure Inventory -->
+                <!-- Static Infrastructure Inventory 
                 <a class="nav-link <?= ($page == 'infrastructure_inventory') ? 'active' : '' ?>" href="infrastructure_inventory.php">
                     Infrastructure
-                </a>
+                </a> -->
             </div>
 
             <div class="nav-section">Forms</div>
