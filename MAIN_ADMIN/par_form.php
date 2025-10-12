@@ -128,11 +128,10 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
                             <div class="col-md-6 text-center">
                                 <label class="form-label fw-semibold mb-0">Office/Location</label>
                                 <select name="office_id" class="form-select text-center shadow" required>
-                                    <option value="">Select Office</option>
+                                    <option value="" disabled selected>Select Office</option>
                                     <option value="outside_lgu">Outside LGU</option>
                                     <?php foreach ($offices as $office): ?>
-                                        <option value="<?= htmlspecialchars($office['id']) ?>"
-                                            <?= ($office['id'] == $par_data['office_id']) ? 'selected' : '' ?>>
+                                        <option value="<?= htmlspecialchars($office['id']) ?>">
                                             <?= htmlspecialchars($office['office_name']) ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -372,16 +371,22 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
         if (sel) {
             const opt = sel.options[sel.selectedIndex];
             const txt = opt ? (opt.text || '') : '';
-            if (sel.value && sel.value !== 'outside_lgu') {
+            const en = document.getElementById('parEntityName');
+            // Always prefer typed entity name when available
+            if (en && en.value.trim()) {
+                officeDisp = en.value.trim();
+            } else if (sel.value && sel.value !== 'outside_lgu') {
+                // Fallback to selected office name for internal office
                 officeDisp = (txt || '').trim() || 'OFFICE';
             } else {
-                const en = document.getElementById('parEntityName');
-                officeDisp = (en && en.value.trim()) ? en.value.trim() : 'OFFICE';
+                officeDisp = 'OFFICE';
             }
         }
-        // Preserve digits; only update OFFICE tokens in current value
-        const current = field.value || '';
-        const updated = current.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
+        // Rebuild preview from template each time so changes always reflect
+        let base = PAR_TEMPLATE || '';
+        base = replaceDatePlaceholdersLocal(base);
+        base = padDigitsForPreview(base);
+        const updated = (base || '').replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
         field.readOnly = true;
         field.required = false;
         field.placeholder = '';
@@ -389,8 +394,28 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
     }
     document.addEventListener('DOMContentLoaded', ()=>{
         const sel = document.querySelector('select[name="office_id"]');
-        if (sel) sel.addEventListener('change', computeParPreview);
         const en = document.getElementById('parEntityName');
+        if (sel) sel.addEventListener('change', function(){
+            // Always sync Entity Name with selected office (editable afterwards)
+            const opt = this.options[this.selectedIndex];
+            const txt = (opt ? (opt.text || '') : '').trim();
+            if (en) {
+                if (this.value && this.value !== 'outside_lgu') {
+                    en.readOnly = false; // keep editable
+                    en.required = false;
+                    en.placeholder = '';
+                    en.value = txt; // always update to selected office
+                } else {
+                    // Outside LGU: clear and require manual entry
+                    en.readOnly = false;
+                    en.required = true;
+                    en.value = '';
+                    en.placeholder = 'Enter external entity name';
+                    en.focus();
+                }
+            }
+            computeParPreview();
+        });
         if (en) en.addEventListener('input', computeParPreview);
         computeParPreview();
     });

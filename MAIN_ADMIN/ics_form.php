@@ -73,7 +73,9 @@ $ics_template = '';
 if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'ics_no' AND is_active = 1 LIMIT 1")) {
     $st_fmt->execute();
     $rs_fmt = $st_fmt->get_result();
-    if ($rs_fmt && ($r = $rs_fmt->fetch_assoc())) { $ics_template = $r['format_template'] ?? ''; }
+    if ($rs_fmt && ($r = $rs_fmt->fetch_assoc())) {
+        $ics_template = $r['format_template'] ?? '';
+    }
     $st_fmt->close();
 }
 
@@ -82,10 +84,13 @@ $ics_max = 50000.00; // default fallback
 $thrRes = $conn->query("SELECT ics_max FROM form_thresholds ORDER BY id ASC LIMIT 1");
 if ($thrRes && $thrRes->num_rows > 0) {
     $thrRow = $thrRes->fetch_assoc();
-    if (isset($thrRow['ics_max'])) { 
-        $ics_max = (float)$thrRow['ics_max']; 
+    if (isset($thrRow['ics_max'])) {
+        $ics_max = (float)$thrRow['ics_max'];
     }
 }
+
+// Determine if current user is MAIN ADMIN (for editable entity name behavior)
+$is_main_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'MAIN_ADMIN';
 
 ?>
 <?php if (!empty($_SESSION['flash'])): ?>
@@ -121,8 +126,8 @@ if ($thrRes && $thrRes->num_rows > 0) {
             <div class="mb-3 text-center">
                 <?php if (!empty($ics_data['header_image'])): ?>
                     <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
-                         class="img-fluid mb-2"
-                         style="max-width: 100%; height: auto; object-fit: contain;">
+                        class="img-fluid mb-2"
+                        style="max-width: 100%; height: auto; object-fit: contain;">
 
                     <!-- Hidden input ensures it gets submitted -->
                     <input type="hidden" name="header_image" value="<?= htmlspecialchars($ics_data['header_image']) ?>">
@@ -137,7 +142,7 @@ if ($thrRes && $thrRes->num_rows > 0) {
                 <!-- ENTITY NAME -->
                 <div class="col-6">
                     <label class="form-label fw-semibold">ENTITY NAME</label>
-                    <input type="text" class="form-control shadow" name="entity_name" id="entityName">
+                    <input type="text" class="form-control shadow" name="entity_name" id="entityName" value="<?= htmlspecialchars($ics_data['entity_name'] ?? '') ?>" placeholder="Enter entity name">
                 </div>
 
                 <!-- OFFICE -->
@@ -282,8 +287,8 @@ if ($thrRes && $thrRes->num_rows > 0) {
             <!-- Footer Section -->
             <table class="table table-borderless mt-5" style="width:100%; text-align:center; border-collapse: collapse;">
                 <tr>
-                    <td style="width:50%; text-align:left; font-weight:bold;">Received from:</td>
-                    <td style="width:50%; text-align:left; font-weight:bold;">Received by:</td>
+                    <td style="width:50%; text-align:left; font-weight:bold;">Received from: <span style="color: red;">*</span></td>
+                    <td style="width:50%; text-align:left; font-weight:bold;">Received by: <span style="color: red;">*</span></td>
                 </tr>
                 <tr>
                     <td style="text-align:center;">
@@ -291,14 +296,14 @@ if ($thrRes && $thrRes->num_rows > 0) {
                             class="form-control text-center fw-bold shadow"
                             value="<?= htmlspecialchars($ics_data['received_from_name']) ?>"
                             placeholder="Enter name"
-                            style="text-decoration:underline;">
+                            style="text-decoration:underline;" required>
                     </td>
                     <td style="text-align:center;">
                         <input type="text" name="received_by_name"
                             class="form-control text-center fw-bold shadow"
                             value=""
                             placeholder="Enter name"
-                            style="text-decoration:underline;">
+                            style="text-decoration:underline;" required>
                     </td>
                 </tr>
                 <tr>
@@ -332,8 +337,12 @@ if ($thrRes && $thrRes->num_rows > 0) {
                     </td>
                 </tr>
             </table>
+            <span style="color: red;">*</span> Required fields
+            <div>
+                <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-send-check-fill"></i>Save</button>
+            </div>
 
-            <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-send-check-fill"></i>Save</button>
+
         </form>
 
     </div>
@@ -341,34 +350,41 @@ if ($thrRes && $thrRes->num_rows > 0) {
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Expose role flag to JS
+        const IS_MAIN_ADMIN = <?= json_encode($is_main_admin) ?>;
         // Dynamic ICS No preview
         const ICS_TEMPLATE = <?= json_encode($ics_template) ?>;
+
         function deriveOfficeAcronym(name) {
             if (!name) return 'OFFICE';
             const parts = String(name).trim().toUpperCase().split(/\s+/);
-            let ac = parts.map(p => (p[0] || '').replace(/[^A-Z0-9]/g,'')).join('');
-            if (!ac) ac = String(name).replace(/[^A-Z0-9]/g,'').toUpperCase();
+            let ac = parts.map(p => (p[0] || '').replace(/[^A-Z0-9]/g, '')).join('');
+            if (!ac) ac = String(name).replace(/[^A-Z0-9]/g, '').toUpperCase();
             return ac || 'OFFICE';
         }
-        function replaceDatePlaceholdersLocal(tpl){
+
+        function replaceDatePlaceholdersLocal(tpl) {
             const now = new Date();
             const Y = now.getFullYear().toString();
-            const M = String(now.getMonth()+1).padStart(2,'0');
-            const D = String(now.getDate()).padStart(2,'0');
+            const M = String(now.getMonth() + 1).padStart(2, '0');
+            const D = String(now.getDate()).padStart(2, '0');
             return tpl
                 .replace(/\{YYYY\}|YYYY/g, Y)
                 .replace(/\{YY\}|YY/g, Y.slice(-2))
                 .replace(/\{MM\}|MM/g, M)
                 .replace(/\{DD\}|DD/g, D)
-                .replace(/\{YYYYMM\}|YYYYMM/g, Y+M)
-                .replace(/\{YYYYMMDD\}|YYYYMMDD/g, Y+M+D);
+                .replace(/\{YYYYMM\}|YYYYMM/g, Y + M)
+                .replace(/\{YYYYMMDD\}|YYYYMMDD/g, Y + M + D);
         }
-        function padDigitsForPreview(tpl){
-            return tpl.replace(/\{(#+)\}/g, (m, hashes)=>{
-                const w = hashes.length; return '0'.repeat(Math.max(0,w-1)) + '1';
+
+        function padDigitsForPreview(tpl) {
+            return tpl.replace(/\{(#+)\}/g, (m, hashes) => {
+                const w = hashes.length;
+                return '0'.repeat(Math.max(0, w - 1)) + '1';
             });
         }
-        function computeIcsPreview(){
+
+        function computeIcsPreview() {
             const field = document.getElementById('icsNoField');
             if (!field) return;
             // Determine OFFICE display
@@ -377,11 +393,15 @@ if ($thrRes && $thrRes->num_rows > 0) {
             if (sel) {
                 const opt = sel.options[sel.selectedIndex];
                 const txt = opt ? (opt.text || '') : '';
-                if (sel.value && sel.value !== 'outside_lgu') {
+                const en = document.getElementById('entityName');
+                // Always prefer typed entity name when available, regardless of role
+                if (en && en.value.trim()) {
+                    officeDisp = en.value.trim();
+                } else if (sel.value && sel.value !== 'outside_lgu') {
+                    // Fallback to selected office name when internal office is chosen
                     officeDisp = (txt || '').trim() || 'OFFICE';
                 } else {
-                    const en = document.getElementById('entityName');
-                    officeDisp = (en && en.value.trim()) ? en.value.trim() : 'OFFICE';
+                    officeDisp = 'OFFICE';
                 }
             }
             // Preserve digits; only update OFFICE tokens in current value
@@ -424,7 +444,10 @@ if ($thrRes && $thrRes->num_rows > 0) {
                 const val = parseFloat(target.value) || 0;
                 if (val > ICS_MAX) {
                     target.value = ICS_MAX;
-                    const cap = ICS_MAX.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    const cap = ICS_MAX.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
                     target.setCustomValidity("Unit cost cannot exceed ₱" + cap + ".");
                     target.reportValidity();
                 } else {
@@ -583,25 +606,36 @@ if ($thrRes && $thrRes->num_rows > 0) {
             const selectedText = destinationOffice.options[destinationOffice.selectedIndex]?.text?.trim() || '';
 
             if (val === 'outside_lgu') {
-                entityNameInput.value = '';
-                entityNameInput.readOnly = false;
+                // Outside LGU: must type an entity name
+                entityNameInput.readOnly = false; // Always editable
                 entityNameInput.required = true;
-                entityNameInput.placeholder = 'Enter external entity name';
+                if (!entityNameInput.value.trim()) {
+                    entityNameInput.placeholder = 'Enter external entity name';
+                } else {
+                    entityNameInput.placeholder = '';
+                }
                 entityNameInput.focus();
             } else if (val) {
-                entityNameInput.value = selectedText;
-                entityNameInput.readOnly = true;
+                // Internal office selected: prefill if empty, but keep editable
+                if (!entityNameInput.value.trim()) {
+                    entityNameInput.value = selectedText;
+                }
+                entityNameInput.readOnly = false; // Always editable
                 entityNameInput.required = false;
                 entityNameInput.placeholder = '';
             } else {
-                entityNameInput.readOnly = false;
+                // No selection
+                entityNameInput.readOnly = false; // Always editable
                 entityNameInput.required = false;
                 entityNameInput.placeholder = '';
             }
         }
 
         if (destinationOffice) {
-            destinationOffice.addEventListener('change', handleDestinationChange);
+            destinationOffice.addEventListener('change', () => {
+                handleDestinationChange();
+                computeIcsPreview();
+            });
             handleDestinationChange(); // initialize on load for prefilled states
         }
         // Recompute ICS preview when entity name changes (for Outside LGU)
