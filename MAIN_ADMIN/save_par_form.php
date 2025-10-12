@@ -132,7 +132,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt_assets_new->execute();
         $asset_new_id = $conn->insert_id;
 
-        // --- Create item-level assets (quantity=1 each), linked to assets_new ---
+        // --- Auto-generate Property Numbers for each item to be created ---
+        $generated_property_nos = [];
+        $qty_int = (int)$quantity;
+        for ($g = 0; $g < max(1, $qty_int); $g++) {
+            $gen = generateTag('property_no');
+            if (!$gen) { // fallback to year-sequence if tag format missing
+                $year = date('Y');
+                // emulate fallback like generatePropertyNumber: next seq per call not tracked here; use time-based unique suffix as last resort
+                $gen = $year . '-' . str_pad((string)($g+1), 4, '0', STR_PAD_LEFT);
+            }
+            $generated_property_nos[] = $gen;
+        }
+
+        // --- Create item-level assets (quantity=1 each), linked to assets_new, with per-item Property No ---
         $first_item_id = createItemAssetsDirect(
             $conn,
             $description,
@@ -140,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             (float)$unit_price,
             (int)$quantity,
             $is_outside_lgu ? null : ($office_id > 0 ? (int)$office_id : null),
-            $property_no,
+            $generated_property_nos,
             $date_acquired ?: date('Y-m-d'),
             null, // keep assets.ics_id = NULL for PAR-created rows to satisfy FK to ics_form(id)
             (int)$asset_new_id,
@@ -149,17 +162,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $latest_asset_id = $first_item_id;
 
         // --- Insert into PAR items ---
+        // bind_param requires variables (by reference), not expressions
+        $par_id_var = (int)$par_id;
+        $latest_asset_id_var = (int)$latest_asset_id;
+        $quantity_var = (float)$quantity;
+        $unit_var = (string)$unit;
+        $description_var = (string)$description;
+        $first_property_no_var = isset($generated_property_nos[0]) ? (string)$generated_property_nos[0] : '';
+        $date_acquired_var = (string)$date_acquired;
+        $unit_price_var = (float)$unit_price;
+        $amount_var = (float)$amount;
+
         $stmt_items->bind_param(
             "iidssssdd",
-            $par_id,
-            $latest_asset_id,
-            $quantity,
-            $unit,
-            $description,
-            $property_no,
-            $date_acquired,
-            $unit_price,
-            $amount
+            $par_id_var,
+            $latest_asset_id_var,
+            $quantity_var,
+            $unit_var,
+            $description_var,
+            $first_property_no_var,
+            $date_acquired_var,
+            $unit_price_var,
+            $amount_var
         );
         if (!$stmt_items->execute()) {
             die("PAR item insert error: " . $stmt_items->error);
@@ -189,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Create item-level assets directly (quantity=1) and link to assets_new
-function createItemAssetsDirect($conn, $description, $unit, $unit_cost, $count, $office_id, $item_no, $date_acquired, $ics_id, $asset_new_id, $par_id) {
+function createItemAssetsDirect($conn, $description, $unit, $unit_cost, $count, $office_id, $property_nos, $date_acquired, $ics_id, $asset_new_id, $par_id) {
     if ($count <= 0) return null;
 
     $qrDir = realpath(__DIR__ . '/../img');
@@ -197,7 +221,7 @@ function createItemAssetsDirect($conn, $description, $unit, $unit_cost, $count, 
 
     $stmtIns = $conn->prepare("INSERT INTO assets 
         (asset_name, description, quantity, unit, status, acquisition_date, office_id, employee_id, red_tagged, last_updated, value, qr_code, type, image, serial_no, code, property_no, model, brand, ics_id, asset_new_id, par_id)
-        VALUES (?, ?, 1, ?, 'pending', ?, ?, ?, ?, NOW(), ?, '', ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)");
+        VALUES (?, ?, 1, ?, 'pending', ?, ?, ?, ?, NOW(), ?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
     $first_inserted_id = null;
     for ($i = 1; $i <= $count; $i++) {
@@ -218,9 +242,16 @@ function createItemAssetsDirect($conn, $description, $unit, $unit_cost, $count, 
         $p_ics = isset($ics_id) ? (int)$ics_id : null;
         $p_asset_new = (int)$asset_new_id;
         $p_par = isset($par_id) ? (int)$par_id : null;
+        // Determine property number for this specific item index
+        $p_prop = '';
+        if (is_array($property_nos)) {
+            $p_prop = (string)($property_nos[$i-1] ?? '');
+        } else if (is_string($property_nos)) {
+            $p_prop = (string)$property_nos;
+        }
 
         $stmtIns->bind_param(
-            'ssssiiidssssssiii',
+            'ssssiiidsssssssiii',
             $p_asset_name,
             $p_description,
             $p_unit,
@@ -233,6 +264,7 @@ function createItemAssetsDirect($conn, $description, $unit, $unit_cost, $count, 
             $p_image,
             $p_serial,
             $p_code,
+            $p_prop,
             $p_model,
             $p_brand,
             $p_ics,

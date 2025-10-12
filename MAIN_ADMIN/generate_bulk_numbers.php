@@ -36,12 +36,16 @@ try {
     for ($i = 0; $i < $assetCount; $i++) {
         $numbers = [];
         
-        // Generate Property Number (simple incremental)
-        $propertyNumber = generatePropertyNumber($conn, $i);
+        // Generate Property Number using TagFormatHelper (configurable via tag_formats), with fallback
+        $propertyNumber = $tagHelper->generateNextTag('property_no');
+        if ($propertyNumber === false || $propertyNumber === null || $propertyNumber === '') {
+            // Fallback to legacy simple incremental when no active format is set
+            $propertyNumber = generatePropertyNumber($conn, $i);
+        }
         $numbers['property_no'] = $propertyNumber;
         
-        // Generate Inventory Tag using TagFormatHelper
-        $inventoryTag = $tagHelper->generateNextTag('inventory_tag');
+        // Generate Inventory Tag using TagFormatHelper with PROPERTY_NO replacement support
+        $inventoryTag = $tagHelper->generateNextTag('inventory_tag', [ 'PROPERTY_NO' => $propertyNumber ]);
         $numbers['inventory_tag'] = $inventoryTag ?: generateFallbackInventoryTag($conn, $i);
         
         // Generate Asset Code using TagFormatHelper with category code
