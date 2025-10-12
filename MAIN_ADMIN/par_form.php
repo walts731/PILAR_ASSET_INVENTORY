@@ -347,6 +347,8 @@ if ($st_prop = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag
     // Dynamic PAR preview using selected office and date
     const PAR_TEMPLATE = <?= json_encode($par_template) ?>;
     const PROPERTY_TEMPLATE = <?= json_encode($property_template) ?>;
+    // Preview of the next property number from server counter (does not increment counter)
+    const PROPERTY_PREVIEW_NEXT = <?= json_encode(previewTag('property_no')) ?>;
     function deriveOfficeAcronym(name) {
         if (!name) return 'OFFICE';
         const parts = String(name).trim().toUpperCase().split(/\s+/);
@@ -366,6 +368,20 @@ if ($st_prop = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag
             .replace(/\{DD\}|DD/g, D)
             .replace(/\{YYYYMM\}|YYYYMM/g, Y+M)
             .replace(/\{YYYYMMDD\}|YYYYMMDD/g, Y+M+D);
+    }
+    // Braced-only date replacement to avoid touching non-braced tokens when computing property previews
+    function replaceDatePlaceholdersBraced(tpl){
+        const now = new Date();
+        const Y = now.getFullYear().toString();
+        const M = String(now.getMonth()+1).padStart(2,'0');
+        const D = String(now.getDate()).padStart(2,'0');
+        return tpl
+            .replace(/\{YYYY\}/g, Y)
+            .replace(/\{YY\}/g, Y.slice(-2))
+            .replace(/\{MM\}/g, M)
+            .replace(/\{DD\}/g, D)
+            .replace(/\{YYYYMM\}/g, Y+M)
+            .replace(/\{YYYYMMDD\}/g, Y+M+D);
     }
     function padDigitsForPreview(tpl){
         // For preview only, show next as 1 padded to digit count
@@ -436,16 +452,58 @@ if ($st_prop = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag
         if (!inputs || inputs.length === 0) return;
         const baseTpl = PROPERTY_TEMPLATE || '';
         if (!baseTpl) return; // no template configured; keep placeholders
+
         const officeDisp = buildOfficeDisplay();
+
+        // Build a processed template with date and OFFICE replaced, but keep the {###} placeholder to locate sequence
+        let processedTpl = replaceDatePlaceholdersBraced(baseTpl);
+        processedTpl = processedTpl.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
+
+        const seqMatch = processedTpl.match(/\{(#+)\}/);
+        if (!seqMatch) {
+            // No increment placeholder in template; just render same for all rows
+            const rendered = processedTpl.replace(/[{}]/g, '');
+            inputs.forEach(inp => { inp.value = rendered; });
+            return;
+        }
+
+        const seqWidth = seqMatch[1].length;
+        const seqStartIdx = seqMatch.index;
+        const seqTokenLen = seqMatch[0].length; // includes braces
+
+        const prefixRaw = processedTpl.substring(0, seqStartIdx);
+        const suffixRaw = processedTpl.substring(seqStartIdx + seqTokenLen);
+
+        // Clean braces from prefix/suffix to align with preview rendering
+        const clean = (s) => (s || '').replace(/[{}]/g, '');
+        const prefixClean = clean(prefixRaw);
+        const suffixClean = clean(suffixRaw);
+
+        // Derive starting number from the server-provided next preview
+        const preview = String(PROPERTY_PREVIEW_NEXT || '').trim();
+        let startNum = 1;
+        if (preview) {
+            // Prefer the last numeric run with length >= seqWidth (to avoid picking year YYYY)
+            const runs = Array.from(preview.matchAll(/\d+/g));
+            let pick = null;
+            for (let i = runs.length - 1; i >= 0; i--) {
+                if (runs[i][0].length >= seqWidth) { pick = runs[i]; break; }
+            }
+            if (!pick && runs.length) pick = runs[runs.length - 1];
+            if (pick) {
+                startNum = parseInt(pick[0], 10) || 1;
+            }
+        }
+
+        function pad(n, w){
+            const s = String(n);
+            return s.length >= w ? s : '0'.repeat(w - s.length) + s;
+        }
+
         inputs.forEach((inp, idx) => {
-            let tpl = replaceDatePlaceholdersLocal(baseTpl);
-            tpl = tpl.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
-            // Sequence starts at 1 for first visible row
-            const seq = idx + 1;
-            tpl = applyDigitSequence(tpl, seq);
-            // Remove any remaining curly braces from preview
-            tpl = tpl.replace(/[{}]/g, '');
-            inp.value = tpl;
+            const curNum = startNum + idx;
+            const seqStr = pad(curNum, seqWidth);
+            inp.value = prefixClean + seqStr + suffixClean;
         });
     }
     document.addEventListener('DOMContentLoaded', ()=>{
@@ -628,6 +686,8 @@ if ($st_prop = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag
         if (row) {
             row.remove();
             updateTotalAmount();
+            // Recompute property number previews to keep sequence contiguous
+            computePropertyPreviews();
         }
     }
 
