@@ -270,6 +270,7 @@ echo "<!-- SIDEBAR DEBUG: user_id={$user_id} | office_id=" . htmlspecialchars($o
                 <?php endforeach; ?>
             </div>
 
+            <?php /* Commenting out the borrowing section
             <!-- Borrowing Menu -->
             <a class="<?= (in_array($page, ['borrow', 'inter_department_borrow', 'view_inter_dept_cart', 'inter_dept_borrow_requests'])) ? 'active' : '' ?>"
                data-bs-toggle="collapse" href="#borrowSubMenu" role="button"
@@ -302,6 +303,7 @@ echo "<!-- SIDEBAR DEBUG: user_id={$user_id} | office_id=" . htmlspecialchars($o
             <a href="usage.php" class="<?= ($page == 'usage') ? 'active' : '' ?>">
                 <i class="bi bi-clock-history"></i> Usage
             </a>
+            */ ?>
             <a href="reports.php" class="<?= ($page == 'reports') ? 'active' : '' ?>"><i class="bi bi-bar-chart-line"></i> Reports</a>
             <a href="user.php" class="<?= ($page == 'user') ? 'active' : '' ?>"><i class="bi bi-person"></i> Users</a>
             
