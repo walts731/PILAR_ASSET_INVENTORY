@@ -49,7 +49,7 @@ $stmt->close();
 // Fetch aggregates from assets_new that have at least one linked asset in this category
 $an_rows = [];
 if ($category && isset($category['category_name'])) {
-  $stmt = $conn->prepare("\n    SELECT \n      an.id AS an_id,\n      an.description,\n      an.quantity,\n      an.unit,\n      an.unit_cost,\n      an.date_created,\n      COALESCE((\n        SELECT c.category_name\n        FROM assets a\n        LEFT JOIN categories c ON a.category = c.id\n        WHERE a.asset_new_id = an.id\n        ORDER BY a.id ASC\n        LIMIT 1\n      ), 'Uncategorized') AS category_name,\n      REPLACE(REPLACE(f.ics_no, '{OFFICE}', o.office_name), 'OFFICE', o.office_name) AS ics_no,\n      o.office_name AS office_name\n    FROM assets_new an\n    LEFT JOIN ics_form f ON f.id = an.ics_id\n    LEFT JOIN offices o ON an.office_id = o.id\n    WHERE EXISTS (\n      SELECT 1 FROM assets ax WHERE ax.asset_new_id = an.id AND ax.category = ?\n    )\n    ORDER BY an.date_created DESC\n  ");
+  $stmt = $conn->prepare("\n    SELECT \n      an.id AS an_id,\n      an.description,\n      an.quantity,\n      an.unit,\n      an.unit_cost,\n      an.date_created,\n      COALESCE((\n        SELECT c.category_name\n        FROM assets a\n        LEFT JOIN categories c ON a.category = c.id\n        WHERE a.asset_new_id = an.id\n        ORDER BY a.id ASC\n        LIMIT 1\n      ), 'Uncategorized') AS category_name,\n      /* Compute unified ICS/PAR No with OFFICE placeholder resolution */\n      CASE \n        WHEN pf.id IS NOT NULL THEN REPLACE(REPLACE(pf.par_no, '{OFFICE}', COALESCE(o.office_name, pf.entity_name)), 'OFFICE', COALESCE(o.office_name, pf.entity_name))\n        WHEN f.id IS NOT NULL THEN REPLACE(REPLACE(f.ics_no, '{OFFICE}', o.office_name), 'OFFICE', o.office_name)\n        ELSE ''\n      END AS ics_par_no,\n      o.office_name AS office_name\n    FROM assets_new an\n    LEFT JOIN ics_form f ON f.id = an.ics_id\n    LEFT JOIN par_form pf ON pf.id = an.par_id\n    LEFT JOIN offices o ON an.office_id = o.id\n    WHERE EXISTS (\n      SELECT 1 FROM assets ax WHERE ax.asset_new_id = an.id AND ax.category = ?\n    )\n    ORDER BY an.date_created DESC\n  ");
   $stmt->bind_param("i", $category_id);
   $stmt->execute();
   $res = $stmt->get_result();
@@ -192,7 +192,7 @@ $systemLogo = !empty($system['logo']) ? '../img/' . $system['logo'] : '';
                       <?php foreach ($an_rows as $row): ?>
                         <tr>
                           <td><input type="checkbox" class="asset-checkbox-cat" name="selected_assets_new[]" value="<?= (int)$row['an_id'] ?>" /></td>
-                          <td><?= htmlspecialchars($row['ics_no'] ?? '') ?></td>
+                          <td><?= htmlspecialchars($row['ics_par_no'] ?? '') ?></td>
                           <td><?= htmlspecialchars($row['description']) ?></td>
                           <td><?= htmlspecialchars($row['category_name']) ?></td>
                           <td><?= (int)$row['quantity'] ?></td>
