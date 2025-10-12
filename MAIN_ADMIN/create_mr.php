@@ -361,8 +361,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $acquisition_cost = $_POST['acquisition_cost'];
     $supplier = trim($_POST['supplier'] ?? '');
 
-    // Use the auto-generated inventory_tag for saving
-    $inventory_tag_gen = $inventory_tag;
+    // Use existing tag if present; otherwise generate with PROPERTY_NO replacement support
+    if (!empty($existing_inventory_tag)) {
+        $inventory_tag_gen = $existing_inventory_tag;
+    } else {
+        // Prefer a format that can embed the Property No if the format template uses {PROPERTY_NO}
+        $inventory_tag_gen = generateTag('inventory_tag', ['PROPERTY_NO' => (string)$property_no]);
+        // Fallback to precomputed value if generation fails
+        if (empty($inventory_tag_gen)) {
+            $inventory_tag_gen = $inventory_tag;
+        }
+    }
 
     $person_accountable_name = $_POST['person_accountable_name'];
     $employee_id = $_POST['employee_id'];

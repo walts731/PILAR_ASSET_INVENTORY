@@ -108,8 +108,8 @@ $stmt->close();
     // Get list of offices for dropdown
     $offices = $conn->query("SELECT id, office_name FROM offices");
 
-    // Get selected office from GET or default to user's office
-    $selected_office = $_GET['office'] ?? $_SESSION['office_id'];
+    // Get selected office from GET; default to 'all'
+    $selected_office = (isset($_GET['office']) && $_GET['office'] !== '') ? $_GET['office'] : 'all';
     ?>
     <div class="card card-filter shadow-sm mb-3">
       <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">

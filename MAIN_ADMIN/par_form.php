@@ -70,13 +70,20 @@ while ($row = $unit_query->fetch_assoc()) {
     $units[] = $row;
 }
 
-// Fetch active format template for par_no
+// Fetch active format templates for par_no and property_no
 $par_template = '';
 if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'par_no' AND is_active = 1 LIMIT 1")) {
     $st_fmt->execute();
     $rs_fmt = $st_fmt->get_result();
     if ($rs_fmt && ($r = $rs_fmt->fetch_assoc())) { $par_template = $r['format_template'] ?? ''; }
     $st_fmt->close();
+}
+$property_template = '';
+if ($st_prop = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_type = 'property_no' AND is_active = 1 LIMIT 1")) {
+    $st_prop->execute();
+    $rs_prop = $st_prop->get_result();
+    if ($rs_prop && ($rp = $rs_prop->fetch_assoc())) { $property_template = $rp['format_template'] ?? ''; }
+    $st_prop->close();
 }
 ?>
 
@@ -180,7 +187,7 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
                     <th>QUANTITY</th>
                     <th>UNIT</th>
                     <th style="width: 30%;">DESCRIPTION</th>
-                    <th>PROPERTY NO</th>
+                    <th style="width: 200px;">PROPERTY NO</th>
                     <th>DATE ACQUIRED</th>
                     <th>UNIT PRICE</th>
                     <th>AMOUNT</th>
@@ -210,7 +217,10 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
                                 </button>
                             </div>
                         </td>
-                        <td><input type="text" name="items[<?= $i ?>][property_no]" class="form-control shadow" required></td>
+                        <td style="width: 280px;">
+                            <input type="text" name="items[<?= $i ?>][property_no]" id="propNo<?= $i ?>" class="form-control shadow propNoInput" value="" placeholder="Auto-generated on Save" readonly style="min-width: 200px; font-family: monospace;">
+                            
+                        </td>
                         <td><input type="date" name="items[<?= $i ?>][date_acquired]" class="form-control shadow" id="acqDate<?= $i ?>" required></td>
                         <td style="position: relative;">
                             <span style="
@@ -336,6 +346,7 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
 <script>
     // Dynamic PAR preview using selected office and date
     const PAR_TEMPLATE = <?= json_encode($par_template) ?>;
+    const PROPERTY_TEMPLATE = <?= json_encode($property_template) ?>;
     function deriveOfficeAcronym(name) {
         if (!name) return 'OFFICE';
         const parts = String(name).trim().toUpperCase().split(/\s+/);
@@ -386,11 +397,56 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
         let base = PAR_TEMPLATE || '';
         base = replaceDatePlaceholdersLocal(base);
         base = padDigitsForPreview(base);
-        const updated = (base || '').replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
+        let updated = (base || '').replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
+        // Remove any remaining curly braces from preview
+        updated = updated.replace(/[{}]/g, '');
         field.readOnly = true;
         field.required = false;
         field.placeholder = '';
         field.value = updated;
+    }
+    function buildOfficeDisplay(){
+        const sel = document.querySelector('select[name="office_id"]');
+        let officeDisp = 'OFFICE';
+        if (sel) {
+            const opt = sel.options[sel.selectedIndex];
+            const txt = opt ? (opt.text || '') : '';
+            const en = document.getElementById('parEntityName');
+            if (en && en.value.trim()) {
+                officeDisp = en.value.trim();
+            } else if (sel.value && sel.value !== 'outside_lgu') {
+                officeDisp = (txt || '').trim() || 'OFFICE';
+            } else {
+                officeDisp = 'OFFICE';
+            }
+        }
+        return officeDisp;
+    }
+    // Replace any contiguous # run with zero-padded sequence number of same width
+    function applyDigitSequence(tpl, seq){
+        return (tpl || '').replace(/(#+)/g, (m) => {
+            const width = m.length;
+            const s = String(seq);
+            if (s.length >= width) return s; // overflow: no pad
+            return '0'.repeat(width - s.length) + s;
+        });
+    }
+    function computePropertyPreviews(){
+        const inputs = document.querySelectorAll('.propNoInput');
+        if (!inputs || inputs.length === 0) return;
+        const baseTpl = PROPERTY_TEMPLATE || '';
+        if (!baseTpl) return; // no template configured; keep placeholders
+        const officeDisp = buildOfficeDisplay();
+        inputs.forEach((inp, idx) => {
+            let tpl = replaceDatePlaceholdersLocal(baseTpl);
+            tpl = tpl.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
+            // Sequence starts at 1 for first visible row
+            const seq = idx + 1;
+            tpl = applyDigitSequence(tpl, seq);
+            // Remove any remaining curly braces from preview
+            tpl = tpl.replace(/[{}]/g, '');
+            inp.value = tpl;
+        });
     }
     document.addEventListener('DOMContentLoaded', ()=>{
         const sel = document.querySelector('select[name="office_id"]');
@@ -415,9 +471,14 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
                 }
             }
             computeParPreview();
+            computePropertyPreviews();
         });
-        if (en) en.addEventListener('input', computeParPreview);
+        if (en) en.addEventListener('input', function(){
+            computeParPreview();
+            computePropertyPreviews();
+        });
         computeParPreview();
+        computePropertyPreviews();
     });
 
     let rowIndex = 1; // Start after the initial 1 row
@@ -448,7 +509,10 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
                 </button>
             </div>
         </td>
-        <td><input type="text" name="items[${rowIndex}][property_no]" class="form-control shadow" required></td>
+        <td style="width: 280px;">
+            <input type="text" name="items[${rowIndex}][property_no]" id="propNo${rowIndex}" class="form-control shadow propNoInput" value="" placeholder="Auto-generated on Save" readonly style="min-width: 260px; font-family: monospace;">
+            
+        </td>
         <td><input type="date" name="items[${rowIndex}][date_acquired]" class="form-control shadow" id="acqDate${rowIndex}" required></td>
         <td style="position: relative; width: 150px;">
             <span style="
@@ -494,6 +558,8 @@ if ($st_fmt = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_
 
         attachRowEvents(rowIndex);
         updateTotalAmount();
+        // refresh property preview for new row as well
+        computePropertyPreviews();
         rowIndex++;
     }
 

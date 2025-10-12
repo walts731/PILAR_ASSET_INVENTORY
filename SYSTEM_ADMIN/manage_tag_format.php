@@ -11,6 +11,22 @@ if (!isset($_SESSION['user_id'])) {
 $tagHelper = new TagFormatHelper($conn);
 $tagFormats = $tagHelper->getAllTagFormats();
 
+// Auto-seed a default Property No format if missing so it can be managed like other tag types
+try {
+    $hasPropertyNo = false;
+    foreach ($tagFormats as $tf) {
+        if (isset($tf['tag_type']) && $tf['tag_type'] === 'property_no') { $hasPropertyNo = true; break; }
+    }
+    if (!$hasPropertyNo) {
+        if ($st = $conn->prepare("INSERT INTO tag_formats (tag_type, format_template, prefix, suffix, increment_digits, date_format, is_active, created_at, updated_at) VALUES ('property_no', '{YYYY}-{####}', 'PROP', '', 4, '', 1, NOW(), NOW())")) {
+            $st->execute();
+            $st->close();
+            // Reload formats to include the newly seeded row
+            $tagFormats = $tagHelper->getAllTagFormats();
+        }
+    }
+} catch (Throwable $e) { /* non-fatal */ }
+
 // Fetch categories for asset code functionality
 $categories = [];
 $res_cats = $conn->query("SELECT id, category_name, category_code FROM categories ORDER BY category_name");
@@ -402,6 +418,7 @@ if (isset($_SESSION['flash'])) {
                         <li><code>{######}</code> - 6-digit increment (000001, 000002...)</li>
                         <li><em>And so on... Use any number of # symbols for custom digit lengths!</em></li>
                         <li><code>{OFFICE}</code> - Selected office code/acronym (e.g., MEO, HRMO). Used in PAR/other forms that supply an office.</li>
+                        <li><code>{PROPERTY_NO}</code> - The item's Property Number when available (e.g., Create MR, Bulk Create MR). Useful for embedding the property number into formats like <em>inventory_tag</em>.</li>
                     </ul>
                     
                     <h6 class="mt-3">Date Placeholders:</h6>

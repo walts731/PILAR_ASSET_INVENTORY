@@ -37,6 +37,27 @@ $stmt->bind_result($fullname);
 $stmt->fetch();
 $stmt->close();
 
+// Resolve current office name for templating in recent audit details
+$current_office_name = null;
+try {
+  if (!empty($_SESSION['office_id'])) {
+    $oid = (int)$_SESSION['office_id'];
+    $stmtOff = $conn->prepare("SELECT office_name FROM offices WHERE id = ? LIMIT 1");
+    if ($stmtOff) {
+      $stmtOff->bind_param('i', $oid);
+      if ($stmtOff->execute()) {
+        $resOff = $stmtOff->get_result();
+        if ($resOff && ($rowOff = $resOff->fetch_assoc())) {
+          $current_office_name = $rowOff['office_name'] ?? null;
+        }
+      }
+      $stmtOff->close();
+    }
+  }
+} catch (Exception $e) {
+  // ignore
+}
+
 // Include audit helper for availability checks (and potential future logging)
 require_once __DIR__ . '/../includes/audit_helper.php';
 
