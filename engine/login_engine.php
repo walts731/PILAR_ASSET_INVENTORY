@@ -145,18 +145,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Log failed login attempt (wrong password)
                 logAuthActivity('LOGIN_FAILED', "Failed login attempt for username '{$username}' - incorrect password", null, $username);
                 
-                $login_error = '<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>';
+                $login_error = '<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">'
+                    . '<i class="bi bi-x-circle me-2"></i>Invalid credentials. Please try again.'
+                    . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+                    . '</div>';
             }
         } else {
             // Log failed login attempt (user not found)
             logAuthActivity('LOGIN_FAILED', "Failed login attempt for username '{$username}' - user not found", null, $username);
             
-            $login_error = '<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
-                Invalid Credentials.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>';
+            $login_error = '<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">'
+                . '<i class="bi bi-x-circle me-2"></i>Invalid credentials. Please try again.'
+                . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+            . '</div>';
         }
 
         $stmt->close();
