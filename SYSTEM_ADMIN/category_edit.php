@@ -11,10 +11,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = intval($_POST['id']);
     $name = trim($_POST['category_name'] ?? '');
     $code = trim($_POST['category_code'] ?? '');
+    $status = isset($_POST['status']) ? (int)$_POST['status'] : 1;
+    $status = ($status === 1) ? 1 : 0;
 
     if (!empty($id) && !empty($name) && !empty($code)) {
-        $stmt = $conn->prepare("UPDATE categories SET category_name=?, category_code=? WHERE id=?");
-        $stmt->bind_param("ssi", $name, $code, $id);
+        $stmt = $conn->prepare("UPDATE categories SET category_name=?, category_code=?, status=? WHERE id=?");
+        $stmt->bind_param("ssii", $name, $code, $status, $id);
 
         if ($stmt->execute()) {
             $_SESSION['message'] = "Category updated successfully!";

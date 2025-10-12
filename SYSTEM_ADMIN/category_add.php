@@ -10,10 +10,12 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'super_admin')
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['category_name'] ?? '');
     $code = trim($_POST['category_code'] ?? '');
+    $status = isset($_POST['status']) ? (int)$_POST['status'] : 1;
+    $status = ($status === 1) ? 1 : 0;
 
     if (!empty($name) && !empty($code)) {
-        $stmt = $conn->prepare("INSERT INTO categories (category_name, category_code, status) VALUES (?, ?, 1)");
-        $stmt->bind_param("ss", $name, $code);
+        $stmt = $conn->prepare("INSERT INTO categories (category_name, category_code, status) VALUES (?, ?, ?)");
+        $stmt->bind_param("ssi", $name, $code, $status);
 
         if ($stmt->execute()) {
             $_SESSION['message'] = "Category added successfully!";

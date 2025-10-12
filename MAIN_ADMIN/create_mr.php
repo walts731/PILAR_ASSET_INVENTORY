@@ -137,18 +137,18 @@ $asset_data = [];
 $office_name = '';
 $asset_details = [];
 
-// Fetch categories for dropdown (include category_code)
+// Fetch categories for dropdown (include category_code) - only active
 $categories = [];
-$res_cats = $conn->query("SELECT id, category_name, category_code FROM categories ORDER BY category_name");
+$res_cats = $conn->query("SELECT id, category_name, category_code FROM categories WHERE status = 1 ORDER BY category_name");
 if ($res_cats && $res_cats->num_rows > 0) {
     while ($cr = $res_cats->fetch_assoc()) {
         $categories[] = $cr;
     }
 }
 
-// Dedicated query: fetch ALL categories independently for the Category dropdown (include category_code)
+// Dedicated query: fetch ALL categories independently for the Category dropdown (include category_code) - only active
 $all_categories = [];
-$res_all_categories = $conn->query("SELECT id, category_name, category_code FROM categories ORDER BY category_name");
+$res_all_categories = $conn->query("SELECT id, category_name, category_code FROM categories WHERE status = 1 ORDER BY category_name");
 if ($res_all_categories && $res_all_categories->num_rows > 0) {
     while ($rowc = $res_all_categories->fetch_assoc()) {
         $all_categories[] = $rowc;

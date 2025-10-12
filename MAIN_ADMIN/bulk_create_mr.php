@@ -233,8 +233,8 @@ $employeesResult = $conn->query($employeesQuery);
 $officesQuery = "SELECT id, office_name FROM offices ORDER BY office_name ASC";
 $officesResult = $conn->query($officesQuery);
 
-// Fetch categories for dropdown
-$categoriesQuery = "SELECT id, category_name, category_code FROM categories ORDER BY category_name ASC";
+// Fetch categories for dropdown (only active)
+$categoriesQuery = "SELECT id, category_name, category_code FROM categories WHERE status = 1 ORDER BY category_name ASC";
 $categoriesResult = $conn->query($categoriesQuery);
 
 // Fetch tag formats for property number generation

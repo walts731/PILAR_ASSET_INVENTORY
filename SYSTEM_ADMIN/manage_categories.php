@@ -115,33 +115,14 @@ if ($result && $result->num_rows > 0) {
                                         <button class="btn btn-sm btn-outline-primary editBtn"
                                             data-id="<?= $category['id'] ?>"
                                             data-name="<?= htmlspecialchars($category['category_name']) ?>"
-                                            data-code="<?= htmlspecialchars($category['category_code'] ?? '') ?>">
+                                            data-code="<?= htmlspecialchars($category['category_code'] ?? '') ?>"
+                                            data-status="<?= (int)$category['status'] ?>">
                                             <i class="bi bi-pencil"></i> Edit
                                         </button>
 
-                                        <!-- Activate/Deactivate Button -->
-                                        <form method="POST" action="category_status.php" class="d-inline">
-                                            <input type="hidden" name="id" value="<?= $category['id'] ?>">
-                                            <input type="hidden" name="status" value="<?= intval($category['status']) === 1 ? 0 : 1 ?>">
-                                            <?php if (intval($category['status']) === 1): ?>
-                                                <button type="submit" class="btn btn-sm btn-outline-warning">
-                                                    <i class="bi bi-slash-circle"></i> Deactivate
-                                                </button>
-                                            <?php else: ?>
-                                                <button type="submit" class="btn btn-sm btn-outline-success">
-                                                    <i class="bi bi-check-circle"></i> Activate
-                                                </button>
-                                            <?php endif; ?>
-                                        </form>
+                                        
 
-                                        <!-- Delete Button -->
-                                        <button class="btn btn-outline-danger btn-sm"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#deleteModal"
-                                            data-id="<?= $category['id'] ?>"
-                                            data-name="<?= htmlspecialchars($category['category_name']) ?>">
-                                            <i class="bi bi-trash"></i> Delete
-                                        </button>
+                                        
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -193,6 +174,13 @@ if ($result && $result->num_rows > 0) {
                             <label class="form-label">Category Code</label>
                             <input type="text" class="form-control" name="category_code" placeholder="e.g., ICT" required>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status" required>
+                                <option value="1" selected>Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -222,6 +210,13 @@ if ($result && $result->num_rows > 0) {
                             <label class="form-label">Category Code</label>
                             <input type="text" class="form-control" name="category_code" id="editCategoryCode" required>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status" id="editCategoryStatus" required>
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -249,6 +244,8 @@ if ($result && $result->num_rows > 0) {
                 $('#editCategoryId').val($(this).data('id'));
                 $('#editCategoryName').val($(this).data('name'));
                 $('#editCategoryCode').val($(this).data('code'));
+                const statusVal = String($(this).data('status'));
+                $('#editCategoryStatus').val(statusVal === '1' ? '1' : '0');
                 $('#editModal').modal('show');
             });
 
