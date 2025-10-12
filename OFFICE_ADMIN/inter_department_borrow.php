@@ -50,7 +50,7 @@ $types = "i";
 
 // Add search filter
 if (!empty($search_query)) {
-    $query .= " AND (a.asset_name LIKE ? OR a.description LIKE ? OR a.serial_number LIKE ?)";
+    $query .= " AND (a.asset_name LIKE ? OR a.description LIKE ? OR a.serial_no LIKE ?)";
     $search_param = "%$search_query%";
     $params[] = $search_param;
     $params[] = $search_param;
