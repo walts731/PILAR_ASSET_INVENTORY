@@ -98,6 +98,93 @@
         const messagesDiv = document.getElementById('messages');
         const wsUrlInput = document.getElementById('wsUrl');
         
+        // WebSocket frame encoding/decoding functions
+        const WebSocketUtils = {
+            encodeMessage: function(message) {
+                // Convert message to string if it's an object
+                if (typeof message !== 'string') {
+                    message = JSON.stringify(message);
+                }
+                
+                let frame = [];
+                let length = message.length;
+                
+                // First byte: FIN (1), RSV1-3 (0), opcode (1 = text)
+                frame.push(0x81);
+                
+                // Second byte: Mask (0), payload length
+                if (length <= 125) {
+                    frame.push(length);
+                } else if (length <= 65535) {
+                    frame.push(126);
+                    frame.push((length >> 8) & 0xFF);
+                    frame.push(length & 0xFF);
+                } else {
+                    frame.push(127);
+                    // 64-bit length (we'll use 32-bit for simplicity)
+                    for (let i = 0; i < 8; i++) {
+                        frame.push((length >> (8 * (7 - i))) & 0xFF);
+                    }
+                }
+                
+                // Add payload
+                for (let i = 0; i < length; i++) {
+                    frame.push(message.charCodeAt(i));
+                }
+                
+                return new Uint8Array(frame);
+            },
+            
+            decodeMessage: function(buffer) {
+                let data = new Uint8Array(buffer);
+                let dataView = new DataView(buffer);
+                
+                // Check if this is the final frame
+                let isFinal = (data[0] & 0x80) === 0x80;
+                let opcode = data[0] & 0x0F;
+                
+                // Check if the message is masked
+                let isMasked = (data[1] & 0x80) === 0x80;
+                
+                // Get payload length
+                let payloadLength = data[1] & 0x7F;
+                let maskStart = 2;
+                
+                if (payloadLength === 126) {
+                    payloadLength = dataView.getUint16(2);
+                    maskStart = 4;
+                } else if (payloadLength === 127) {
+                    // For simplicity, we'll handle only up to 32-bit lengths
+                    payloadLength = dataView.getUint32(2) * Math.pow(2, 32) + dataView.getUint32(6);
+                    maskStart = 10;
+                }
+                
+                // Get mask if present
+                let mask = [];
+                if (isMasked) {
+                    mask = [
+                        data[maskStart],
+                        data[maskStart + 1],
+                        data[maskStart + 2],
+                        data[maskStart + 3]
+                    ];
+                    maskStart += 4;
+                }
+                
+                // Decode payload
+                let payload = '';
+                for (let i = 0; i < payloadLength; i++) {
+                    let byte = data[maskStart + i];
+                    if (isMasked) {
+                        byte ^= mask[i % 4];
+                    }
+                    payload += String.fromCharCode(byte);
+                }
+                
+                return payload;
+            }
+        };
+        
         function addMessage(message, type = 'system') {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
@@ -118,39 +205,74 @@
             const wsUrl = wsUrlInput.value.trim();
             
             try {
-                socket = new WebSocket(wsUrl);
+                // Replace ws:// with http:// for the fetch API
+                const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://');
                 
-                socket.onopen = () => {
-                    addMessage('Connected to WebSocket server');
-                    updateUI(true);
-                    
-                    // Send authentication message (if needed)
-                    socket.send(JSON.stringify({
-                        type: 'auth',
-                        userId: 'test_user_' + Math.floor(Math.random() * 1000)
-                    }));
-                };
-                
-                socket.onmessage = (event) => {
-                    let message;
-                    try {
-                        const data = JSON.parse(event.data);
-                        message = `Received: ${JSON.stringify(data, null, 2)}`;
-                    } catch (e) {
-                        message = `Received: ${event.data}`;
-                    }
-                    addMessage(message, 'received');
-                };
-                
-                socket.onclose = () => {
-                    addMessage('Disconnected from WebSocket server');
-                    updateUI(false);
-                };
-                
-                socket.onerror = (error) => {
-                    addMessage(`Error: ${error.message || 'Unknown error occurred'}`, 'error');
-                    updateUI(false);
-                };
+                // First, try to connect to the HTTP endpoint to ensure the server is running
+                fetch(httpUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.text();
+                    })
+                    .then(() => {
+                        // Now try WebSocket connection
+                        socket = new WebSocket(wsUrl);
+                        
+                        socket.binaryType = 'arraybuffer';
+                        
+                        socket.onopen = () => {
+                            addMessage('Connected to WebSocket server');
+                            updateUI(true);
+                            
+                            // Send a test message
+                            const message = {
+                                type: 'test',
+                                message: 'Hello from client',
+                                timestamp: new Date().toISOString()
+                            };
+                            
+                            const encoded = WebSocketUtils.encodeMessage(JSON.stringify(message));
+                            socket.send(encoded);
+                            addMessage(`Sent: ${JSON.stringify(message)}`, 'sent');
+                        };
+                        
+                        socket.onmessage = (event) => {
+                            let message;
+                            try {
+                                // Try to decode the message
+                                const decoded = WebSocketUtils.decodeMessage(event.data);
+                                try {
+                                    // Try to parse as JSON
+                                    const data = JSON.parse(decoded);
+                                    message = `Received: ${JSON.stringify(data, null, 2)}`;
+                                } catch (e) {
+                                    // Not JSON, use as plain text
+                                    message = `Received: ${decoded}`;
+                                }
+                            } catch (e) {
+                                // If decoding fails, show raw data
+                                message = `Received raw data (${event.data.byteLength} bytes)`;
+                                console.log('Raw data:', event.data);
+                            }
+                            addMessage(message, 'received');
+                        };
+                        
+                        socket.onclose = (event) => {
+                            addMessage(`Disconnected from WebSocket server. Code: ${event.code}, Reason: ${event.reason || 'No reason provided'}`);
+                            updateUI(false);
+                        };
+                        
+                        socket.onerror = (error) => {
+                            addMessage(`Error: ${error.message || 'Unknown error occurred'}`, 'error');
+                            updateUI(false);
+                        };
+                    })
+                    .catch(error => {
+                        addMessage(`Failed to connect to server: ${error.message}`, 'error');
+                        updateUI(false);
+                    });
                 
             } catch (error) {
                 addMessage(`Failed to connect: ${error.message}`, 'error');
@@ -171,10 +293,12 @@
                 const message = {
                     type: 'test',
                     timestamp: new Date().toISOString(),
-                    message: 'This is a test message from the client'
+                    message: 'This is a test message from the client',
+                    random: Math.random().toString(36).substr(2, 9)
                 };
                 
-                socket.send(JSON.stringify(message));
+                const encoded = WebSocketUtils.encodeMessage(JSON.stringify(message));
+                socket.send(encoded);
                 addMessage(`Sent: ${JSON.stringify(message, null, 2)}`, 'sent');
             } else {
                 addMessage('Cannot send message: Not connected to WebSocket server', 'error');
