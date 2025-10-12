@@ -52,39 +52,7 @@ function saveEmailNotification(mysqli $conn, array $data) {
     $stmt->close();
 }
 
-// Prefill vehicle details if available (must run after $asset_id is set)
-$vehicle_existing = null;
-if (!empty($asset_id)) {
-    if ($sv = $conn->prepare("SELECT color, `type` AS vehicle_type, plate_number, chassis_number, or_cr_number, engine_number FROM vehicle_details WHERE asset_id = ? LIMIT 1")) {
-        $sv->bind_param('i', $asset_id);
-        if ($sv->execute()) {
-            $rv = $sv->get_result();
-            if ($rv && ($rowv = $rv->fetch_assoc())) { $vehicle_existing = $rowv; }
-        }
-        $sv->close();
-    }
-    if (empty($vehicle_existing)) {
-        if ($sv2 = $conn->prepare("SELECT * FROM vehicle_details WHERE asset_id = ? LIMIT 1")) {
-            $sv2->bind_param('i', $asset_id);
-            if ($sv2->execute()) {
-                $rv2 = $sv2->get_result();
-                if ($rv2 && ($r2 = $rv2->fetch_assoc())) {
-                    $vehicle_existing = [
-                        'color' => $r2['color'] ?? '',
-                        'vehicle_type' => $r2['vehicle_type'] ?? ($r2['type'] ?? ''),
-                        'plate_number' => $r2['plate_number'] ?? '',
-                        'chassis_number' => $r2['chassis_number'] ?? '',
-                        'or_cr_number' => $r2['or_cr_number'] ?? '',
-                        'engine_number' => $r2['engine_number'] ?? '',
-                    ];
-                }
-            }
-            $sv2->close();
-        }
-    }
-}
-
-// (moved below after $asset_id is set)
+// (vehicle prefill moved below after $asset_id is set)
 
 // Helper: send MR email and log regardless of delivery success
 function sendMrEmailAndLog(mysqli $conn, $employeeId, $personName, $assetId, $mrId, $officeLocation, $inventoryTag, $description, $propertyNo, $serialNo) {
@@ -171,6 +139,38 @@ $asset_id = isset($_GET['asset_id']) ? (int)$_GET['asset_id'] : null; // item-le
 $asset_data = [];
 $office_name = '';
 $asset_details = [];
+
+// Prefill vehicle details if available (must run after $asset_id is set)
+$vehicle_existing = null;
+if (!empty($asset_id)) {
+    if ($sv = $conn->prepare("SELECT color, `type` AS vehicle_type, plate_number, chassis_number, or_cr_number, engine_number FROM vehicle_details WHERE asset_id = ? LIMIT 1")) {
+        $sv->bind_param('i', $asset_id);
+        if ($sv->execute()) {
+            $rv = $sv->get_result();
+            if ($rv && ($rowv = $rv->fetch_assoc())) { $vehicle_existing = $rowv; }
+        }
+        $sv->close();
+    }
+    if (empty($vehicle_existing)) {
+        if ($sv2 = $conn->prepare("SELECT * FROM vehicle_details WHERE asset_id = ? LIMIT 1")) {
+            $sv2->bind_param('i', $asset_id);
+            if ($sv2->execute()) {
+                $rv2 = $sv2->get_result();
+                if ($rv2 && ($r2 = $rv2->fetch_assoc())) {
+                    $vehicle_existing = [
+                        'color' => $r2['color'] ?? '',
+                        'vehicle_type' => $r2['vehicle_type'] ?? ($r2['type'] ?? ''),
+                        'plate_number' => $r2['plate_number'] ?? '',
+                        'chassis_number' => $r2['chassis_number'] ?? '',
+                        'or_cr_number' => $r2['or_cr_number'] ?? '',
+                        'engine_number' => $r2['engine_number'] ?? '',
+                    ];
+                }
+            }
+            $sv2->close();
+        }
+    }
+}
 
 // Fetch categories for dropdown (include category_code) - only active
 $categories = [];
