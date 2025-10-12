@@ -10,23 +10,57 @@ if (!isset($_SESSION['user_id'])) {
 // Page meta
 $page = 'borrow';
 
-// Fetch active borrowed records (borrow_requests)
-$stmt = $conn->prepare("SELECT 
-                          br.id AS borrow_id,
-                          br.quantity,
-                          br.approved_at,
-                          NULL AS due_date,
-                          a.id AS asset_id,
-                          a.description AS asset_description,
-                          a.unit,
-                          o.office_name,
-                          u.fullname AS borrower_name
-                        FROM borrow_requests br
-                        JOIN assets a ON a.id = br.asset_id
-                        JOIN offices o ON o.id = br.office_id
-                        JOIN users u ON u.id = br.user_id
-                        WHERE br.status = 'borrowed'
-                        ORDER BY br.approved_at DESC");
+// Status filter (default to 'borrowed')
+$statusOptions = ['pending', 'approved', 'borrowed', 'returned', 'declined', 'cancelled', 'all'];
+$status = isset($_GET['status']) ? strtolower(trim($_GET['status'])) : 'borrowed';
+if (!in_array($status, $statusOptions, true)) {
+  $status = 'borrowed';
+}
+
+// Determine ordering column based on status
+switch ($status) {
+  case 'pending':
+    $orderField = 'br.created_at';
+    break;
+  case 'approved':
+  case 'borrowed':
+    $orderField = 'br.approved_at';
+    break;
+  case 'returned':
+    $orderField = 'br.returned_at';
+    break;
+  default:
+    $orderField = 'br.created_at';
+}
+
+// Build base SQL
+$baseSql = "SELECT 
+              br.id AS borrow_id,
+              br.quantity,
+              br.approved_at,
+              br.due_date,
+              br.returned_at,
+              br.created_at,
+              br.status,
+              a.id AS asset_id,
+              a.description AS asset_description,
+              a.unit,
+              o.office_name,
+              u.fullname AS borrower_name
+            FROM borrow_requests br
+            JOIN assets a ON a.id = br.asset_id
+            JOIN offices o ON o.id = br.office_id
+            JOIN users u ON u.id = br.user_id";
+
+if ($status !== 'all') {
+  $sql = $baseSql . " WHERE br.status = ? ORDER BY " . $orderField . " DESC";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param('s', $status);
+} else {
+  $sql = $baseSql . " ORDER BY " . $orderField . " DESC";
+  $stmt = $conn->prepare($sql);
+}
+
 $stmt->execute();
 $result = $stmt->get_result();
 $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
@@ -42,6 +76,9 @@ if (empty($rows)) {
       'quantity' => 1,
       'approved_at' => $now,
       'due_date' => null,
+      'returned_at' => null,
+      'created_at' => $now,
+      'status' => 'borrowed',
       'asset_id' => 0,
       'asset_description' => 'Sample Laptop Dell XPS 15',
       'unit' => 'unit',
@@ -53,6 +90,9 @@ if (empty($rows)) {
       'quantity' => 3,
       'approved_at' => date('Y-m-d H:i:s', strtotime('-2 days')),
       'due_date' => null,
+      'returned_at' => null,
+      'created_at' => date('Y-m-d H:i:s', strtotime('-2 days -3 hours')),
+      'status' => 'borrowed',
       'asset_id' => 0,
       'asset_description' => 'Sample Projector Epson EB-S41',
       'unit' => 'pcs',
@@ -64,6 +104,9 @@ if (empty($rows)) {
       'quantity' => 5,
       'approved_at' => date('Y-m-d H:i:s', strtotime('-5 days 3 hours')),
       'due_date' => null,
+      'returned_at' => null,
+      'created_at' => date('Y-m-d H:i:s', strtotime('-5 days')),
+      'status' => 'borrowed',
       'asset_id' => 0,
       'asset_description' => 'Sample Tablet Samsung Galaxy Tab',
       'unit' => 'pcs',
@@ -93,7 +136,17 @@ if (empty($rows)) {
     <div class="container py-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="mb-0"><i class="bi bi-box-arrow-in-right me-2"></i>Borrowing Log</h4>
-        <span class="badge bg-primary"><?= (int)$count ?> items</span>
+        <div class="d-flex align-items-center gap-2">
+          <form method="get" class="d-flex align-items-center">
+            <label for="status" class="me-2 fw-semibold">Status:</label>
+            <select name="status" id="status" class="form-select form-select-sm" onchange="this.form.submit()">
+              <?php foreach ($statusOptions as $opt): ?>
+                <option value="<?= htmlspecialchars($opt) ?>" <?= $status === $opt ? 'selected' : '' ?>><?= ucfirst($opt) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </form>
+          <span class="badge bg-primary"><?= (int)$count ?> <?= $status === 'all' ? 'items' : htmlspecialchars($status) . ' items' ?></span>
+        </div>
       </div>
 
       <div class="card shadow-sm">
@@ -103,7 +156,7 @@ if (empty($rows)) {
               <thead class="table-light">
                 <tr>
                   <th>Date & Time</th>
-                  <th>Borrow Item</th>
+                  <th>Item</th>
                   <th>Quantity & Unit</th>
                   <th>Office</th>
                   <th>Borrower</th>
@@ -114,7 +167,21 @@ if (empty($rows)) {
                 <?php if (!empty($rows)): ?>
                   <?php foreach ($rows as $r): ?>
                     <tr>
-                      <td><small class="text-muted"><?= $r['approved_at'] ? date('M j, Y g:i A', strtotime($r['approved_at'])) : '—' ?></small></td>
+                      <?php
+                        // Determine primary event date based on status
+                        $rowStatus = strtolower($r['status'] ?? '');
+                        $primaryDate = null;
+                        if ($rowStatus === 'pending') {
+                          $primaryDate = $r['created_at'] ?? null;
+                        } elseif ($rowStatus === 'approved' || $rowStatus === 'borrowed') {
+                          $primaryDate = $r['approved_at'] ?? null;
+                        } elseif ($rowStatus === 'returned') {
+                          $primaryDate = $r['returned_at'] ?? null;
+                        } else {
+                          $primaryDate = $r['created_at'] ?? null;
+                        }
+                      ?>
+                      <td><small class="text-muted"><?= $primaryDate ? date('M j, Y g:i A', strtotime($primaryDate)) : '—' ?></small></td>
                       <td><?= htmlspecialchars($r['asset_description']) ?></td>
                       <td><span class="badge bg-light text-dark"><?= (int)$r['quantity'] ?> <?= htmlspecialchars($r['unit'] ?? '') ?></span></td>
                       <td>
@@ -127,7 +194,14 @@ if (empty($rows)) {
                           <?= htmlspecialchars($r['borrower_name'] ?? '—') ?>
                         </div>
                       </td>
-                      <td><small class="text-muted"><?= $r['due_date'] ? date('M j, Y g:i A', strtotime($r['due_date'])) : '—' ?></small></td>
+                      <?php
+                        // Show returned_at if available, otherwise due_date, otherwise em dash
+                        $returnOrDue = $r['returned_at'] ?? null;
+                        if (!$returnOrDue) {
+                          $returnOrDue = $r['due_date'] ?? null;
+                        }
+                      ?>
+                      <td><small class="text-muted"><?= $returnOrDue ? date('M j, Y g:i A', strtotime($returnOrDue)) : '—' ?></small></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php endif; ?>
