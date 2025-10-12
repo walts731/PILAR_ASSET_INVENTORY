@@ -364,7 +364,7 @@ $cat_stmt->close();
                     <th>On Hand</th>
                     <th>Unit</th>
                     <th>Status</th>
-                  <th>Last Updated</th>
+           
                   <th>Actions</th>
                   </tr>
                 </thead>
@@ -384,10 +384,10 @@ $cat_stmt->close();
                       <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['quantity'] ?></td>
                       <td><?= $row['unit'] ?></td>
                       <td><span class="badge bg-<?= $row['status'] === 'available' ? 'success' : 'secondary' ?>"><?= ucfirst($row['status']) ?></span></td>
-                      <td><?= date('M d, Y', strtotime($row['last_updated'])) ?></td>
+                     
                       <td>
                         
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill updateConsumableBtn" data-id="<?= $row['id'] ?>" data-status="<?= htmlspecialchars($row['status']) ?>" data-bs-toggle="modal" data-bs-target="#updateConsumableModal"><i class="bi bi-pencil-square"></i></button>
+                       
                         
                         <button type="button" class="btn btn-sm btn-outline-success rounded-pill dispenseBtn"
                           data-id="<?= $row['id'] ?>"

@@ -631,23 +631,11 @@ ORDER BY an.date_created DESC
 
             <div class="card-body table-responsive">
               <table id="consumablesTable" class="table table-striped table-hover align-middle">
-                <thead class="table-light">
-                  <tr>
-                    <th><input type="checkbox" id="selectAllConsumables" /></th>
-                    <th>RIS No</th>
-                    <th>Description</th>
-                    <th>Qty</th>
-                    <th>Unit</th>
-                    <th>Status</th>
-
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <?php
-                  $threshold = 5; // adjust threshold if needed
-                  if ($selected_office === "all") {
-                    $stmt = $conn->prepare("
+                <?php
+                // Execute consumables query and prepare rows/flags BEFORE rendering header
+                $threshold = 5; // adjust threshold if needed
+                if ($selected_office === "all") {
+                  $stmt = $conn->prepare("
     SELECT a.*, 
        COALESCE(c.category_name, 'Uncategorized') AS category_name,
        rf.ris_no,
@@ -658,8 +646,8 @@ LEFT JOIN ris_form rf ON a.ris_id = rf.id
 LEFT JOIN offices o ON a.office_id = o.id
 WHERE a.type = 'consumable' AND a.quantity > 0
   ");
-                  } else {
-                    $stmt = $conn->prepare("
+                } else {
+                  $stmt = $conn->prepare("
     SELECT a.*, 
            COALESCE(c.category_name, 'Uncategorized') AS category_name,
            rf.ris_no,
@@ -670,12 +658,34 @@ WHERE a.type = 'consumable' AND a.quantity > 0
     LEFT JOIN offices o ON a.office_id = o.id
     WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0
   ");
-                    $stmt->bind_param("i", $selected_office);
-                  }
+                  $stmt->bind_param("i", $selected_office);
+                }
 
-                  $stmt->execute();
-                  $result = $stmt->get_result();
-                  while ($row = $result->fetch_assoc()):
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $consumableRows = $result->fetch_all(MYSQLI_ASSOC);
+                $hasDeletableConsumable = false;
+                foreach ($consumableRows as $r) {
+                  if (empty($r['ris_id'])) { $hasDeletableConsumable = true; break; }
+                }
+                ?>
+                <thead class="table-light">
+                  <tr>
+                    <th><input type="checkbox" id="selectAllConsumables" /></th>
+                    <th>RIS No</th>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>Unit</th>
+                    <th>Unit Price</th>
+                    <th>Status</th>
+                    <?php // Actions column only if there is at least one deletable consumable (no RIS linked) ?>
+                    <?php if ($hasDeletableConsumable): ?>
+                      <th>Actions</th>
+                    <?php endif; ?>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($consumableRows as $row):
                     $is_low = $row['quantity'] <= $threshold;
                   ?>
                     <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
@@ -715,49 +725,36 @@ WHERE a.type = 'consumable' AND a.quantity > 0
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['quantity'] ?></td>
                       <td><?= $row['unit'] ?></td>
+                      <td><?= number_format((float)$row['value'], 2) ?></td>
                       <td>
                         <span class="badge bg-<?= $row['status'] === 'available' ? 'success' : 'secondary' ?>">
                           <?= ucfirst($row['status']) ?>
                         </span>
                       </td>
-
-                      <td>
-                        <button type="button"
-                          class="btn btn-sm btn-outline-primary rounded-pill editConsumableBtn me-1"
-                          data-id="<?= $row['id'] ?>"
-                          data-description="<?= htmlspecialchars($row['description']) ?>"
-                          data-unit="<?= htmlspecialchars($row['unit']) ?>"
-                          data-qty="<?= (int)$row['quantity'] ?>"
-                          data-status="<?= htmlspecialchars($row['status']) ?>"
-                          data-image="<?= htmlspecialchars($row['image'] ?? '') ?>"
-                          data-office="<?= htmlspecialchars($_GET['office'] ?? 'all') ?>"
-                          data-bs-toggle="modal"
-                          data-bs-target="#updateConsumableModal"
-                          title="Edit Consumable">
-                          <i class="bi bi-pencil-square"></i>
-                          Edit
-                        </button>
-                        <!-- Enhanced Delete Button (only when no RIS is linked) -->
-                        <?php if (empty($row['ris_id'])): ?>
-                          <button type="button"
-                            class="btn btn-sm btn-outline-danger rounded-pill deleteConsumableEnhancedBtn"
-                            data-id="<?= $row['id'] ?>"
-                            data-stock-no="<?= htmlspecialchars($row['property_no']) ?>"
-                            data-description="<?= htmlspecialchars($row['description']) ?>"
-                            data-category="<?= htmlspecialchars($row['category_name']) ?>"
-                            data-quantity="<?= $row['quantity'] ?>"
-                            data-unit="<?= htmlspecialchars($row['unit']) ?>"
-                            data-value="<?= $row['value'] ?>"
-                            data-status="<?= $row['status'] ?>"
-                            data-office="<?= htmlspecialchars($row['office_name'] ?? 'No Office') ?>"
-                            data-last-updated="<?= date('M d, Y', strtotime($row['last_updated'])) ?>"
-                            title="Delete Consumable">
-                            <i class="bi bi-trash"></i>
-                          </button>
-                        <?php endif; ?>
-                      </td>
+                      <?php if ($hasDeletableConsumable): ?>
+                        <td>
+                          <!-- Enhanced Delete Button (only when no RIS is linked) -->
+                          <?php if (empty($row['ris_id'])): ?>
+                            <button type="button"
+                              class="btn btn-sm btn-outline-danger rounded-pill deleteConsumableEnhancedBtn"
+                              data-id="<?= $row['id'] ?>"
+                              data-stock-no="<?= htmlspecialchars($row['property_no']) ?>"
+                              data-description="<?= htmlspecialchars($row['description']) ?>"
+                              data-category="<?= htmlspecialchars($row['category_name']) ?>"
+                              data-quantity="<?= $row['quantity'] ?>"
+                              data-unit="<?= htmlspecialchars($row['unit']) ?>"
+                              data-value="<?= $row['value'] ?>"
+                              data-status="<?= $row['status'] ?>"
+                              data-office="<?= htmlspecialchars($row['office_name'] ?? 'No Office') ?>"
+                              data-last-updated="<?= date('M d, Y', strtotime($row['last_updated'])) ?>"
+                              title="Delete Consumable">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          <?php endif; ?>
+                        </td>
+                      <?php endif; ?>
                     </tr>
-                  <?php endwhile; ?>
+                  <?php endforeach; ?>
                 </tbody>
               </table>
             </div>
