@@ -373,6 +373,7 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
               </div>
               <div class="d-flex gap-2">
                 <button class="btn btn-sm btn-outline-secondary" id="rep_export_csv"><i class="bi bi-filetype-csv"></i> Export</button>
+                <button class="btn btn-sm btn-outline-danger" id="rep_export_pdf"><i class="bi bi-filetype-pdf"></i> PDF</button>
               </div>
             </div>
             <div class="card-body">
@@ -1425,6 +1426,7 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
     const repSearch = document.getElementById('rep_search');
     const repRefreshBtn = document.getElementById('rep_refresh');
     const repExportBtn = document.getElementById('rep_export_csv');
+    const repExportPdfBtn = document.getElementById('rep_export_pdf');
     const repTbody = document.querySelector('#fuelReportTable tbody');
 
     let repData = [];
@@ -1629,6 +1631,18 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
         a.download = 'fuel_consumption_report.csv';
         a.click();
         URL.revokeObjectURL(url);
+      });
+    }
+
+    // Export current report (server-generated PDF)
+    if (repExportPdfBtn) {
+      repExportPdfBtn.addEventListener('click', () => {
+        const params = new URLSearchParams();
+        if (repFrom?.value) params.append('from', repFrom.value);
+        if (repTo?.value) params.append('to', repTo.value);
+        if (repGroupBy?.value) params.append('group_by', repGroupBy.value);
+        const url = 'export_fuel_consumption_pdf.php' + (params.toString() ? ('?' + params.toString()) : '');
+        window.open(url, '_blank');
       });
     }
   </script>
