@@ -178,6 +178,65 @@ if (isset($_GET['asset_id']) && !empty($_GET['asset_id'])) {
             box-shadow: none;
         }
 
+        /* Modal styles */
+        .modal-content {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            border: none;
+        }
+
+        .modal-title {
+            font-weight: 600;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        }
+
+        .btn-submit {
+            background: linear-gradient(45deg, var(--success-color), #146c43);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(25, 135, 84, 0.3);
+        }
+
+        .is-invalid {
+            border-color: #dc3545 !important;
+        }
+
+        .invalid-feedback {
+            display: none;
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875em;
+            color: #dc3545;
+        }
+
         .scanner-controls {
             display: flex;
             gap: 1rem;
@@ -359,6 +418,91 @@ if (isset($_GET['asset_id']) && !empty($_GET['asset_id'])) {
         </div>
     </div>
 
+    <!-- Borrow Modal -->
+    <div class="modal fade" id="borrowModal" tabindex="-1" aria-labelledby="borrowModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="borrowModalLabel">Borrow Asset Request</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="borrowForm" action="request_borrow.php" method="POST">
+                    <div class="modal-body">
+                        <input type="hidden" name="asset_id" id="modal-asset-id">
+                        <div class="mb-3">
+                            <label for="guest_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="guest_name" name="guest_name" required>
+                            <div class="invalid-feedback">Please enter your full name</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="guest_email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="guest_email" name="guest_email" required>
+                            <div class="invalid-feedback">Please enter a valid email address</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="guest_contact" class="form-label">Contact Number</label>
+                            <input type="tel" class="form-control" id="guest_contact" name="guest_contact">
+                        </div>
+                        <div class="mb-3">
+                            <label for="guest_organization" class="form-label">Organization</label>
+                            <input type="text" class="form-control" id="guest_organization" name="guest_organization">
+                        </div>
+                        <div class="mb-3">
+                            <label for="purpose" class="form-label">Purpose of Borrowing <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="purpose" name="purpose" rows="2" required></textarea>
+                            <div class="invalid-feedback">Please enter the purpose of borrowing</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="expected_return_date" class="form-label">Expected Return Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="expected_return_date" name="expected_return_date" min="" required>
+                            <div class="invalid-feedback">Please select a valid return date</div>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="terms_agreed" name="terms_agreed" required>
+                            <label class="form-check-label" for="terms_agreed">
+                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">terms and conditions</a> <span class="text-danger">*</span>
+                            </label>
+                            <div class="invalid-feedback">You must agree to the terms and conditions</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-submit">Submit Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms and Conditions Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Terms and Conditions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Borrowing Policy</h6>
+                    <p>By borrowing assets, you agree to the following terms and conditions:</p>
+                    <ul>
+                        <li>You are responsible for the care and safekeeping of the borrowed item(s).</li>
+                        <li>You must return the item(s) by the agreed return date in the same condition as when borrowed.</li>
+                        <li>Any damage or loss of the item(s) may result in replacement or repair costs.</li>
+                        <li>Late returns may be subject to penalties or restrictions on future borrowing privileges.</li>
+                    </ul>
+                    <h6>2. Liability</h6>
+                    <p>The organization is not responsible for any damages, injuries, or losses resulting from the use of borrowed items.</p>
+                    <h6>3. Privacy</h6>
+                    <p>Your personal information will be used solely for the purpose of processing your borrowing request and will be handled in accordance with our privacy policy.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -371,124 +515,117 @@ if (isset($_GET['asset_id']) && !empty($_GET['asset_id'])) {
         let context = canvas.getContext('2d');
         let scanning = false;
         let stream = null;
-        let cameras = [];
-        let currentCameraIndex = 0;
+        let currentAssetId = null;
+        let borrowModal = null;
 
-        const startBtn = document.getElementById('start-scan');
-        const stopBtn = document.getElementById('stop-scan');
-        const switchBtn = document.getElementById('switch-camera');
-        const statusDiv = document.getElementById('scanner-status');
-
-        // Initialize camera list
-        async function getCameras() {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                cameras = devices.filter(device => device.kind === 'videoinput');
-                
-                if (cameras.length > 1) {
-                    switchBtn.style.display = 'inline-block';
-                }
-            } catch (error) {
-                console.error('Error getting cameras:', error);
+        // Initialize modal when document is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set minimum date for return date picker to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('expected_return_date').min = tomorrow.toISOString().split('T')[0];
+            
+            // Initialize the modal
+            borrowModal = new bootstrap.Modal(document.getElementById('borrowModal'));
+            
+            // Start scanner on page load if there's no asset ID in the URL
+            if (!window.location.search.includes('asset_id=')) {
+                startScanner();
             }
+        });
+
+        // Set canvas dimensions to match video
+        function setCanvasDimensions() {
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
         }
 
-        // Start camera
-        async function startCamera() {
+        // Start the QR code scanner
+        async function startScanner() {
             try {
-                const constraints = {
-                    video: {
-                        facingMode: cameras.length > 0 ? undefined : 'environment',
-                        deviceId: cameras.length > 0 ? cameras[currentCameraIndex].deviceId : undefined,
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    }
-                };
-
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
                 video.srcObject = stream;
+                video.setAttribute('playsinline', true);
                 
                 video.onloadedmetadata = () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
+                    video.play();
+                    setCanvasDimensions();
+                    scanning = true;
+                    document.getElementById('scanner-status').textContent = 'Scanning...';
+                    document.getElementById('scanner-status').className = 'text-primary';
+                    document.getElementById('start-scan').classList.add('d-none');
+                    document.getElementById('stop-scan').classList.remove('d-none');
+                    scanQRCode();
                 };
-
-                return true;
-            } catch (error) {
-                console.error('Error starting camera:', error);
-                statusDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-1 text-danger"></i>Camera access denied or not available';
-                return false;
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                document.getElementById('scanner-status').textContent = 'Error accessing camera. Please check permissions.';
+                document.getElementById('scanner-status').className = 'text-danger';
+                document.getElementById('start-scan').classList.remove('d-none');
+                document.getElementById('stop-scan').classList.add('d-none');
             }
         }
 
-        // Stop camera
-        function stopCamera() {
+        // Stop the QR code scanner
+        function stopScanner() {
+            scanning = false;
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
             }
-            video.srcObject = null;
+            document.getElementById('scanner-status').textContent = 'Scanner stopped';
+            document.getElementById('scanner-status').className = 'text-muted';
+            document.getElementById('start-scan').classList.remove('d-none');
+            document.getElementById('stop-scan').classList.add('d-none');
         }
 
-        // Start scanning
-        async function startScanning() {
-            await getCameras();
+        // Toggle the scanner
+        function toggleScanner() {
+            if (scanning) {
+                stopScanner();
+            } else {
+                startScanner();
+            }
+        }
+
+        // Process the QR code
+        function processQRCode(assetId) {
+            // Store the asset ID for the form
+            currentAssetId = assetId;
             
-            if (await startCamera()) {
-                scanning = true;
-                startBtn.style.display = 'none';
-                stopBtn.style.display = 'inline-block';
-                statusDiv.innerHTML = '<i class="bi bi-camera-video me-1 text-success"></i>Scanner active - Position QR code in frame';
-                
-                scanQRCode();
-            }
+            // Set the asset ID in the form
+            document.getElementById('modal-asset-id').value = assetId;
+            
+            // Show the borrow modal
+            borrowModal.show();
+            
+            // Stop the scanner
+            stopScanner();
         }
 
-        // Stop scanning
-        function stopScanning() {
-            scanning = false;
-            stopCamera();
-            startBtn.style.display = 'inline-block';
-            stopBtn.style.display = 'none';
-            switchBtn.style.display = 'none';
-            statusDiv.innerHTML = '<i class="bi bi-camera-video-off me-1"></i>Scanner stopped';
-        }
-
-        // Switch camera
-        async function switchCamera() {
-            if (cameras.length > 1) {
-                currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
-                stopCamera();
-                await startCamera();
-                statusDiv.innerHTML = '<i class="bi bi-camera-reels me-1 text-info"></i>Switched camera';
-            }
-        }
-
-        // Scan QR code
+        // Scan for QR codes in the video stream
         function scanQRCode() {
             if (!scanning) return;
 
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'dontInvert',
+                });
 
                 if (code) {
-                    statusDiv.innerHTML = '<i class="bi bi-check-circle me-1 text-success"></i>QR Code detected! Processing...';
-                    
-                    // Extract asset ID from QR code
-                    const qrData = code.data;
-                    const assetIdMatch = qrData.match(/asset_id[=:](\d+)/i) || qrData.match(/(\d+)/);
-                    
-                    if (assetIdMatch) {
-                        const assetId = assetIdMatch[1];
-                        window.location.href = `scan_qr.php?asset_id=${assetId}`;
+                    // Check if the QR code contains a valid asset ID
+                    const assetIdMatch = code.data.match(/asset_id=(\d+)/);
+                    if (assetIdMatch && assetIdMatch[1]) {
+                        processQRCode(assetIdMatch[1]);
                         return;
-                    } else {
-                        statusDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-1 text-warning"></i>Invalid QR code format';
-                        setTimeout(() => {
-                            statusDiv.innerHTML = '<i class="bi bi-camera-video me-1 text-success"></i>Scanner active - Position QR code in frame';
-                        }, 2000);
                     }
                 }
             }
@@ -498,31 +635,86 @@ if (isset($_GET['asset_id']) && !empty($_GET['asset_id'])) {
 
         // Request borrowing
         function requestBorrowing(assetId) {
-            if (confirm('Do you want to request borrowing for this asset?')) {
-                // Here you would typically send an AJAX request to handle the borrowing request
-                alert('Borrowing request submitted! You will be contacted for approval and pickup details.');
-                
-                // For now, just redirect back to dashboard
-                setTimeout(() => {
-                    window.location.href = 'guest_dashboard.php';
-                }, 2000);
-            }
+            // Set the asset ID in the form
+            document.getElementById('modal-asset-id').value = assetId;
+            
+            // Show the borrow modal
+            borrowModal.show();
         }
 
         // Event listeners
-        startBtn.addEventListener('click', startScanning);
-        stopBtn.addEventListener('click', stopScanning);
-        switchBtn.addEventListener('click', switchCamera);
+        document.getElementById('start-scan').addEventListener('click', startScanner);
+        document.getElementById('stop-scan').addEventListener('click', stopScanner);
+
+        // Form validation
+        document.getElementById('borrowForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Reset validation
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.querySelectorAll('.invalid-feedback').forEach(el => el.style.display = 'none');
+            
+            let isValid = true;
+            const formData = new FormData(this);
+            
+            // Validate required fields
+            const requiredFields = ['guest_name', 'guest_email', 'purpose', 'expected_return_date', 'terms_agreed'];
+            requiredFields.forEach(field => {
+                const input = this.querySelector(`[name="${field}"]`);
+                if (!formData.get(field)) {
+                    input.classList.add('is-invalid');
+                    const feedback = input.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.style.display = 'block';
+                    }
+                    isValid = false;
+                }
+            });
+            
+            // Validate email format
+            const email = formData.get('guest_email');
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                const emailInput = this.querySelector('[name="guest_email"]');
+                emailInput.classList.add('is-invalid');
+                const feedback = emailInput.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.textContent = 'Please enter a valid email address';
+                    feedback.style.display = 'block';
+                }
+                isValid = false;
+            }
+            
+            // Validate return date (must be in the future)
+            const returnDate = new Date(formData.get('expected_return_date'));
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (returnDate && returnDate <= today) {
+                const dateInput = this.querySelector('[name="expected_return_date"]');
+                dateInput.classList.add('is-invalid');
+                const feedback = dateInput.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.textContent = 'Return date must be in the future';
+                    feedback.style.display = 'block';
+                }
+                isValid = false;
+            }
+            
+            if (isValid) {
+                // Submit the form
+                this.submit();
+            }
+        });
 
         // Auto-start scanner if no asset is being displayed
         <?php if (!$asset_data && !$error_message): ?>
         window.addEventListener('load', () => {
-            setTimeout(startScanning, 1000);
+            setTimeout(startScanner, 1000);
         });
         <?php endif; ?>
 
         // Cleanup on page unload
-        window.addEventListener('beforeunload', stopScanning);
+        window.addEventListener('beforeunload', stopScanner);
     </script>
 </body>
 </html>
