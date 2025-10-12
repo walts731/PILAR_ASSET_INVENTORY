@@ -50,6 +50,60 @@ $stmt->close();
 
 // Don't close connection here - topbar.php needs it
 ?>
+<?php
+$vehicle = null;
+if (!empty($asset['category_name'])) {
+    $catName = strtolower(trim((string)$asset['category_name']));
+    if ($catName === 'vehicles' || $catName === 'vehicle') {
+        $wanted = ['color', 'type', 'plate_number', 'chassis_number', 'or_cr_number', 'engine_number'];
+        $present = [];
+        if ($ci = $conn->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'vehicle_details' AND COLUMN_NAME IN ('color','type','plate_number','chassis_number','or_cr_number','engine_number')")) {
+            if ($ci->execute()) {
+                $rs = $ci->get_result();
+                while ($rs && ($r = $rs->fetch_assoc())) { $present[$r['COLUMN_NAME']] = true; }
+            }
+            $ci->close();
+        }
+        $selectParts = [];
+        $selectParts[] = isset($present['color']) ? 'color' : "NULL AS color";
+        $selectParts[] = isset($present['type']) ? '`type` AS vehicle_type' : "NULL AS vehicle_type";
+        $selectParts[] = isset($present['plate_number']) ? 'plate_number' : "NULL AS plate_number";
+        $selectParts[] = isset($present['chassis_number']) ? 'chassis_number' : "NULL AS chassis_number";
+        $selectParts[] = isset($present['or_cr_number']) ? 'or_cr_number' : "NULL AS or_cr_number";
+        $selectParts[] = isset($present['engine_number']) ? 'engine_number' : "NULL AS engine_number";
+
+        $sqlVeh = "SELECT " . implode(', ', $selectParts) . " FROM vehicle_details WHERE asset_id = ? LIMIT 1";
+        if ($sv = $conn->prepare($sqlVeh)) {
+            $sv->bind_param('i', $asset_id);
+            if ($sv->execute()) {
+                $rv = $sv->get_result();
+                if ($rv && ($rowv = $rv->fetch_assoc())) { $vehicle = $rowv; }
+            }
+            $sv->close();
+        }
+        // Fallback: if no row fetched (or unexpected columns), try SELECT * and map
+        if (empty($vehicle)) {
+            if ($sv2 = $conn->prepare("SELECT * FROM vehicle_details WHERE asset_id = ? LIMIT 1")) {
+                $sv2->bind_param('i', $asset_id);
+                if ($sv2->execute()) {
+                    $rv2 = $sv2->get_result();
+                    if ($rv2 && ($r2 = $rv2->fetch_assoc())) {
+                        $vehicle = [
+                            'color' => $r2['color'] ?? null,
+                            'vehicle_type' => $r2['vehicle_type'] ?? ($r2['type'] ?? null),
+                            'plate_number' => $r2['plate_number'] ?? null,
+                            'chassis_number' => $r2['chassis_number'] ?? null,
+                            'or_cr_number' => $r2['or_cr_number'] ?? null,
+                            'engine_number' => $r2['engine_number'] ?? null,
+                        ];
+                    }
+                }
+                $sv2->close();
+            }
+        }
+    }
+}
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -295,9 +349,7 @@ $stmt->close();
                                     <div class="col-md-6">
                                         <strong>Category:</strong> <?= htmlspecialchars($asset['category_name'] ?? 'N/A') ?>
                                     </div>
-                                    <div class="col-md-6">
-                                        <strong>Type:</strong> <?= ucfirst($asset['type']) ?>
-                                    </div>
+                                    
                                     <div class="col-md-6">
                                         <strong>Office:</strong> <?= htmlspecialchars($asset['office_name'] ?? 'N/A') ?>
                                     </div>
@@ -322,6 +374,24 @@ $stmt->close();
                                 </div>
                             </div>
                         </div>
+
+                        <?php $___cat = strtolower(trim((string)($asset['category_name'] ?? ''))); if ($___cat === 'vehicles' || $___cat === 'vehicle'): ?>
+                        <div class="card info-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0"><i class="bi bi-truck me-2"></i>Vehicle Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6"><strong>Color:</strong> <?= htmlspecialchars($vehicle['color'] ?? 'N/A') ?></div>
+                                    <div class="col-md-6"><strong>Type:</strong> <?= htmlspecialchars($vehicle['vehicle_type'] ?? 'N/A') ?></div>
+                                    <div class="col-md-6"><strong>Plate Number:</strong> <?= htmlspecialchars($vehicle['plate_number'] ?? 'N/A') ?></div>
+                                    <div class="col-md-6"><strong>Chassis Number:</strong> <?= htmlspecialchars($vehicle['chassis_number'] ?? 'N/A') ?></div>
+                                    <div class="col-md-6"><strong>OR/CR Number:</strong> <?= htmlspecialchars($vehicle['or_cr_number'] ?? 'N/A') ?></div>
+                                    <div class="col-md-6"><strong>Engine Number:</strong> <?= htmlspecialchars($vehicle['engine_number'] ?? 'N/A') ?></div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
 
                         <!-- Financial Information -->
                         <div class="card info-card">
