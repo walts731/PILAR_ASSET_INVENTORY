@@ -1,17 +1,30 @@
 import WebSocketClient from './WebSocketClient.js';
 
+// Store WebSocket client instance
+let wsClient = null;
+
 class NotificationManager {
-    constructor() {
+    constructor(options = {}) {
+        this.apiUrl = options.apiUrl || 'get_notifications.php';
+        this.actionUrl = options.actionUrl || 'notification_action.php';
+        this.enableDesktopNotifications = options.enableDesktopNotifications || true;
+        this.pollInterval = options.pollInterval || 30000;
+        this.userId = options.userId || null;
+        
         this.notificationDropdown = document.getElementById('notificationDropdown');
         this.notificationBadge = document.querySelector('.notification-badge');
         this.notificationList = document.querySelector('.notification-list');
         this.markAllAsReadBtn = document.getElementById('markAllAsRead');
         this.viewAllLink = document.getElementById('viewAllNotifications');
         this.isOpen = false;
-        this.userId = document.body.dataset.userId; // Make sure to add data-user-id to your body tag
+        this.pollingInterval = null;
         
         // Initialize WebSocket client
-        this.wsClient = WebSocketClient;
+        if (!wsClient && this.userId) {
+            wsClient = new WebSocketClient();
+            wsClient.connect(this.userId);
+            this.setupWebSocketHandlers();
+        }
         
         this.initialize();
     }
@@ -230,15 +243,17 @@ class NotificationManager {
     }
     
     startPolling() {
-        // Initial load
-        this.checkForNewNotifications();
+        // Clear any existing interval
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval);
+        }
         
-        // Set up polling
-        setInterval(() => {
-            if (!this.isOpen) {
-                this.checkForNewNotifications();
+        // Set up new polling interval
+        this.pollingInterval = setInterval(() => {
+            if (this.isOpen) {
+                this.loadNotifications();
             }
-        }, this.pollingInterval);
+        }, this.pollInterval);
     }
     
     async checkForNewNotifications() {
@@ -340,11 +355,26 @@ class NotificationManager {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
     }
+
+    static init(options) {
+        return new NotificationManager(options);
+    }
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('notificationDropdown')) {
-        window.notificationManager = new NotificationManager();
-    }
-});
+// Export the NotificationManager class
+export default NotificationManager;
+
+// Initialize when imported as a module
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('notificationDropdown')) {
+            window.notificationManager = new NotificationManager({
+                apiUrl: 'get_notifications.php',
+                actionUrl: 'notification_action.php',
+                enableDesktopNotifications: true,
+                pollInterval: 30000,
+                userId: document.body.dataset.userId || null
+            });
+        }
+    });
+}

@@ -330,6 +330,9 @@ $rolePermissions = $selectedRoleId ? getRolePermissions($conn, $selectedRoleId) 
         <div class="container-fluid py-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0 text-gray-800">User Roles & Permissions</h1>
+                <a href="user_management.php" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>User Management
+                </a>
             </div>
 
             <?php if (isset($_SESSION['message'])): ?>

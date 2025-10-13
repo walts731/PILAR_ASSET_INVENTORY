@@ -147,7 +147,5 @@ class WebSocketClient {
     }
 }
 
-// Create a singleton instance
-const webSocketClient = new WebSocketClient();
-
-export default webSocketClient;
+// Export the WebSocketClient class
+export default WebSocketClient;
