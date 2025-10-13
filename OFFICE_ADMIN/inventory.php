@@ -283,17 +283,19 @@ $cat_stmt->close();
       <!-- Consumables Tab -->
       <div class="tab-pane fade" id="consumables" role="tabpanel">
         <?php
-        $ctotal = $cactive = $clow_stock = $cunavailable = 0;
+        $ctotal = $cavailable = $cout_of_stock = 0;
         $threshold = 5;
-        $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable' AND office_id = ? AND quantity > 0");
+        $cres = $conn->prepare("SELECT quantity FROM assets WHERE type = 'consumable' AND office_id = ? AND quantity > 0");
         $cres->bind_param("i", $office_id);
         $cres->execute();
         $cresResult = $cres->get_result();
         while ($r = $cresResult->fetch_assoc()) {
           $ctotal++;
-          if ($r['status'] === 'available') $cactive++;
-          if ($r['status'] === 'unavailable') $cunavailable++;
-          if ((int)$r['quantity'] <= $threshold) $clow_stock++;
+          if ((int)$r['quantity'] <= $threshold) {
+            $cout_of_stock++;
+          } else {
+            $cavailable++;
+          }
         }
         ?>
 
@@ -301,12 +303,11 @@ $cat_stmt->close();
           <?php
           $cards = [
             ['Total', $ctotal, 'box-seam', 'primary'],
-            ['Available', $cactive, 'check-circle', 'info'],
-            ['Unavailable', $cunavailable, 'slash-circle', 'primary'],
-            ['Low Stock', $clow_stock, 'exclamation-triangle', 'info']
+            ['Available', $cavailable, 'check-circle', 'success'],
+            ['Out of Stock', $cout_of_stock, 'slash-circle', 'danger']
           ];
           foreach ($cards as [$title, $value, $icon, $color]): ?>
-            <div class="col-12 col-sm-6 col-md-3 mb-3">
+            <div class="col-12 col-sm-4 col-md-4 mb-3">
               <div class="card shadow-sm h-100">
                 <div class="card-body d-flex justify-content-between align-items-center">
                   <div>
@@ -383,7 +384,7 @@ $cat_stmt->close();
                       <td><?= htmlspecialchars($row['description']) ?></td>
                       <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['quantity'] ?></td>
                       <td><?= $row['unit'] ?></td>
-                      <td><span class="badge bg-<?= $row['status'] === 'available' ? 'success' : 'secondary' ?>"><?= ucfirst($row['status']) ?></span></td>
+                      <td><span class="badge bg-<?= $is_low ? 'danger' : 'success' ?>"><?= $is_low ? 'Out of Stock' : 'Available' ?></span></td>
                      
                       <td>
                         
