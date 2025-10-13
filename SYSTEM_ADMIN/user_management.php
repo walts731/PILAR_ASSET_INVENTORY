@@ -482,7 +482,6 @@ $stmt->close();
             <table id="userTable" class="table table-hover align-middle mb-0">
               <thead class="bg-light">
                 <tr>
-                  <th>ID</th>
                   <th>Username</th>
                   <th>Full Name</th>
                   <th>Email</th>
@@ -499,12 +498,18 @@ $stmt->close();
                 while ($user = $userResult->fetch_assoc()): 
                 ?>
                   <tr>
-                    <td><?= htmlspecialchars($user['id']) ?></td>
-                    <td><?= htmlspecialchars($user['username']) ?></td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="ms-2">
+                          <div class="fw-semibold"><?= htmlspecialchars($user['username']) ?></div>
+                          <div class="text-muted small">ID: <?= htmlspecialchars($user['id']) ?></div>
+                        </div>
+                      </div>
+                    </td>
                     <td><?= htmlspecialchars($user['fullname']) ?></td>
                     <td><?= htmlspecialchars($user['email']) ?></td>
                     <td>
-                      <span class="badge bg-<?= $user['role'] === 'admin' ? 'primary' : 'success' ?>">
+                      <span class="badge bg-<?= in_array(strtolower($user['role']), ['admin', 'system_admin']) ? 'primary' : 'success' ?>">
                         <?= ucfirst(htmlspecialchars($user['role'])) ?>
                       </span>
                     </td>
