@@ -7,9 +7,9 @@ if (!isset($_SESSION['user_id'])) {
   exit();
 }
 
-// Ensure only SYSTEM_ADMIN can access this page
-$currentRole = $_SESSION['role'] ?? '';
-if ($currentRole !== 'SYSTEM_ADMIN') {
+// Ensure only super_admin or SYSTEM_ADMIN can access this page
+$currentRole = strtolower($_SESSION['role'] ?? '');
+if (!in_array($currentRole, ['super_admin', 'system_admin'])) {
   header("Location: system_admin_dashboard.php");
   exit();
 }
@@ -121,157 +121,583 @@ $stmt->fetch();
 $stmt->close();
 ?>
 
-<div class="d-flex">
-    <?php include 'includes/sidebar.php'; ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Management | Inventory System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    /* Sidebar and Main Content Layout */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 250px;
+      z-index: 1000;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s;
+      overflow-y: auto;
+    }
+
+    .main {
+      margin-left: 250px;
+      min-height: 100vh;
+      background-color: #f8f9fc;
+      transition: all 0.3s;
+      padding: 1.5rem;
+      width: calc(100% - 250px);
+      position: relative;
+      overflow-x: auto;
+    }
+
+    @media (max-width: 991.98px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.show {
+        transform: translateX(0);
+        width: 250px;
+      }
+      .main {
+        margin-left: 0;
+        width: 100%;
+        padding: 1rem;
+      }
+      .main.expand {
+        margin-left: 250px;
+        width: calc(100% - 250px);
+      }
+    }
+
+    /* Card Styling */
+    .card {
+      border: none;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+      margin-bottom: 1.5rem;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    /* Card Styling */
+    .card {
+      border: none;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+      margin-bottom: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
     
-    <div class="main flex-grow-1">
-        <?php include 'includes/topbar.php' ?>
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+    }
 
-        <div class="container-fluid py-4">
-        <!-- Page Header -->
-        <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">User Management</h1>
-            <div class="d-flex gap-2">
-                <a href="user_roles.php" class="btn btn-outline-secondary">
-                    <i class="fas fa-user-shield me-2"></i>Manage Roles
-                </a>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                    <i class="fas fa-plus me-2"></i>Add New User
+    .card-header {
+      background-color: #f8f9fc;
+      border-bottom: 1px solid #e3e6f0;
+      padding: 1rem 1.25rem;
+    }
+
+    .card-body {
+      padding: 1.25rem;
+    }
+
+    /* Table Container */
+    .table-container {
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      width: 100%;
+    }
+
+    /* Table Styling */
+    .table {
+      margin-bottom: 0;
+      min-width: 100%;
+      table-layout: fixed;
+    }
+
+    .table thead th {
+      background-color: #f8f9fc;
+      border-bottom: 2px solid #e3e6f0;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.5px;
+      padding: 0.85rem 1rem;
+      color: #4e73df;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .table td {
+      vertical-align: middle;
+      padding: 0.85rem 1rem;
+      border-color: #eaecf4;
+      color: #5a5c69;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .table tbody tr {
+      transition: all 0.15s ease;
+    }
+
+    .table tbody tr:hover {
+      background-color: #f8f9fc;
+    }
+
+    .table > :not(:last-child) > :last-child > * {
+      border-bottom-color: #eaecf4;
+    }
+
+    /* Action buttons */
+    .btn-action {
+      padding: 0.35rem 0.5rem;
+      font-size: 0.8rem;
+      line-height: 1;
+      border-radius: 0.25rem;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-radius: 0.35rem;
+      transition: all 0.2s;
+    }
+
+    .btn i {
+      margin-right: 0.25rem;
+    }
+
+    /* Page Header */
+    .page-header {
+      padding: 1.5rem 0;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid #e3e6f0;
+    }
+
+    .page-header h1 {
+      font-weight: 600;
+      color: #4e73df;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-header .breadcrumb {
+      margin-bottom: 0;
+      background: transparent;
+      padding: 0.5rem 0;
+    }
+
+    /* Form Controls */
+    .form-control, .form-select {
+      border-radius: 0.35rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d1d3e2;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: #bac8f3;
+      box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+
+    /* Badges */
+    .badge {
+      font-weight: 500;
+      padding: 0.35em 0.65em;
+      border-radius: 0.25rem;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .card-body {
+        padding: 1rem;
+      }
+      
+      .table-responsive {
+        border: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <?php include 'includes/sidebar.php' ?>
+  
+  <div class="main">
+    <?php include 'includes/topbar.php' ?>
+
+    <div class="container-fluid py-4">
+      <!-- Success/Error Messages -->
+      <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+          <i class="bi bi-check-circle me-2"></i> <?= htmlspecialchars($_SESSION['success']) ?>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['success']); ?>
+      <?php endif; ?>
+
+      <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+          <i class="bi bi-exclamation-triangle me-2"></i> <?= htmlspecialchars($_SESSION['error']) ?>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['error']); ?>
+      <?php endif; ?>
+
+      <?php if (isset($_GET['default_pwd_saved'])): ?>
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+          <i class="bi bi-check-circle me-2"></i> Default password has been updated.
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      <?php endif; ?>
+
+      <!-- Page Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">User Management</h1>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="system_admin_dashboard.php">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">User Management</li>
+          </ol>
+        </nav>
+      </div>
+
+      <!-- Default Password Settings -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+          <h6 class="mb-0">
+            <i class="bi bi-shield-lock me-2"></i>Default User Password Settings
+          </h6>
+        </div>
+        <div class="card-body">
+          <form method="POST" class="row g-3 align-items-center">
+            <div class="col-md-6">
+              <label for="default_user_password" class="form-label">Default Password for New Users</label>
+              <div class="input-group">
+                <input type="password" class="form-control" id="default_user_password" name="default_user_password" 
+                      value="<?= htmlspecialchars($default_user_password) ?>" required>
+                <button class="btn btn-outline-secondary toggle-password" type="button" 
+                        onclick="togglePassword('default_user_password', this)">
+                  <i class="bi bi-eye-slash"></i>
                 </button>
+              </div>
+              <div class="form-text">This will be the default password for all new users.</div>
             </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <button type="submit" name="set_default_password" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i> Save Changes
+              </button>
+            </div>
+          </form>
         </div>
+      </div>
 
-        <!-- Success/Error Messages -->
-        <?php if (isset($_SESSION['success'])): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <?= htmlspecialchars($_SESSION['success']) ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            <?php unset($_SESSION['success']); ?>
-        <?php endif; ?>
-
-        <?php if (isset($_SESSION['error'])): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <?= htmlspecialchars($_SESSION['error']) ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            <?php unset($_SESSION['error']); ?>
-        <?php endif; ?>
-
-        <!-- Users Table -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">All Users</h6>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover" id="usersTable">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Last Login</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($users as $user): ?>
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="avatar me-3" style="width: 40px; height: 40px; border-radius: 50%; background-color: #<?= !empty($user['profile_picture']) ? 'fff' : 'e9ecef'; ?>; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                                <?php if (!empty($user['profile_picture'])): ?>
-                                                    <img src="../uploads/profiles/<?= htmlspecialchars($user['profile_picture']) ?>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
-                                                <?php else: ?>
-                                                    <i class="fas fa-user" style="font-size: 1.2rem; color: #6c757d;"></i>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div>
-                                                <div class="fw-bold"><?= htmlspecialchars($user['fullname']) ?></div>
-                                                <small class="text-muted">@<?= htmlspecialchars($user['username']) ?></small>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td><?= htmlspecialchars($user['email']) ?></td>
-                                    <td>
-                                        <?php if (!empty($user['role_name'])): ?>
-                                            <span class="badge" style="background-color: <?= $user['role_color'] ?? '#6c757d' ?>; color: #fff;">
-                                                <?= htmlspecialchars($user['role_name']) ?>
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="badge bg-secondary">No Role</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-<?= $user['status'] === 'active' ? 'success' : 'secondary' ?>">
-                                            <?= ucfirst($user['status'] ?? 'inactive') ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <?= !empty($user['last_login']) ? date('M j, Y g:i A', strtotime($user['last_login'])) : 'Never' ?>
-                                    </td>
-                                    <td class="text-nowrap">
-                                        <div class="d-flex gap-2">
-                                            <!-- Edit Button -->
-                                            <button class="btn btn-sm btn-icon btn-outline-primary edit-user" 
-                                                    data-id="<?= $user['id'] ?>"
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-placement="top"
-                                                    title="Edit User"
-                                                    aria-label="Edit user">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            
-                                            <?php if ($user['id'] != $_SESSION['user_id']): ?>
-                                                <!-- Toggle Status Button -->
-                                                <?php if ($user['status'] === 'active'): ?>
-                                                    <button class="btn btn-sm btn-icon btn-outline-danger deactivate-user" 
-                                                            data-id="<?= $user['id'] ?>"
-                                                            data-name="<?= htmlspecialchars($user['fullname']) ?>"
-                                                            data-bs-toggle="tooltip" 
-                                                            data-bs-placement="top"
-                                                            title="Deactivate User"
-                                                            aria-label="Deactivate user">
-                                                        <i class="fas fa-user-slash"></i>
-                                                    </button>
-                                                <?php else: ?>
-                                                    <button class="btn btn-sm btn-icon btn-outline-success activate-user" 
-                                                            data-id="<?= $user['id'] ?>"
-                                                            data-name="<?= htmlspecialchars($user['fullname']) ?>"
-                                                            data-bs-toggle="tooltip" 
-                                                            data-bs-placement="top"
-                                                            title="Activate User"
-                                                            aria-label="Activate user">
-                                                        <i class="fas fa-user-check"></i>
-                                                    </button>
-                                                <?php endif; ?>
-                                                
-                                                <!-- Reset Password Button -->
-                                                <button class="btn btn-sm btn-icon btn-outline-warning reset-password" 
-                                                        data-id="<?= $user['id'] ?>"
-                                                        data-name="<?= htmlspecialchars($user['fullname']) ?>"
-                                                        data-bs-toggle="tooltip" 
-                                                        data-bs-placement="top"
-                                                        title="Reset Password"
-                                                        aria-label="Reset password">
-                                                    <i class="fas fa-key"></i>
-                                                </button>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+      <!-- User Management Card -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-person-lines-fill text-primary"></i>
+            <h6 class="mb-0">User Listing</h6>
+            <span class="badge bg-primary rounded-pill"><?= $user_total ?> users</span>
+          </div>
+          <div class="d-flex gap-2">
+            <form method="GET" class="d-flex gap-2">
+              <select name="office" class="form-select form-select-sm" style="min-width: 180px;" onchange="this.form.submit()">
+                <option value="all" <?= $selected_office === 'all' ? 'selected' : '' ?>>All Offices</option>
+                <?php 
+                $officeQuery->data_seek(0); // Reset pointer
+                while ($office = $officeQuery->fetch_assoc()): 
+                ?>
+                  <option value="<?= $office['id'] ?>" <?= $selected_office == $office['id'] ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($office['office_name']) ?>
+                  </option>
+                <?php endwhile; ?>
+              </select>
+            </form>
+            <a href="user_roles.php" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">
+              <i class="bi bi-person-gear"></i> Manage Roles
+            </a>
+            <button class="btn btn-sm btn-primary d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addUserModal">
+              <i class="bi bi-plus-lg"></i> Add User
+            </button>
+          </div>
         </div>
-            </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="bg-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Office</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php 
+                // Reset user result pointer
+                $userResult->data_seek(0);
+                while ($user = $userResult->fetch_assoc()): 
+                ?>
+                  <tr>
+                    <td><?= htmlspecialchars($user['id']) ?></td>
+                    <td><?= htmlspecialchars($user['username']) ?></td>
+                    <td><?= htmlspecialchars($user['fullname']) ?></td>
+                    <td><?= htmlspecialchars($user['email']) ?></td>
+                    <td>
+                      <span class="badge bg-<?= $user['role'] === 'admin' ? 'primary' : 'success' ?>">
+                        <?= ucfirst(htmlspecialchars($user['role'])) ?>
+                      </span>
+                    </td>
+                    <td><?= htmlspecialchars($user['office_name']) ?></td>
+                    <td>
+                      <span class="badge bg-<?= $user['status'] === 'active' ? 'success' : 'secondary' ?>">
+                        <?= ucfirst(htmlspecialchars($user['status'])) ?>
+                      </span>
+                    </td>
+                    <td>
+                      <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary edit-user" data-id="<?= $user['id'] ?>">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                        <?php if ($user['status'] === 'active'): ?>
+                          <?php if ($user['role'] !== 'admin'): ?>
+                            <button type="button" class="btn btn-outline-danger deactivate-user" 
+                                    data-id="<?= $user['id'] ?>" 
+                                    data-name="<?= htmlspecialchars($user['fullname']) ?>">
+                              <i class="bi bi-person-dash"></i>
+                            </button>
+                          <?php else: ?>
+                            <button type="button" class="btn btn-outline-secondary" disabled>
+                              <i class="bi bi-shield-lock"></i>
+                            </button>
+                          <?php endif; ?>
+                        <?php else: ?>
+                          <button type="button" class="btn btn-outline-success activate-user" 
+                                  data-id="<?= $user['id'] ?>" 
+                                  data-name="<?= htmlspecialchars($user['fullname']) ?>">
+                            <i class="bi bi-person-check"></i>
+                          </button>
+                        <?php endif; ?>
+                      </div>
+                    </td>
+                  </tr>
+                <?php endwhile; ?>
+              </tbody>
+            </table>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
+
+  <!-- Add User Modal -->
+  <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="addUserForm" action="process_user.php" method="POST">
+          <input type="hidden" name="action" value="add_user">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="fullname" class="form-label">Full Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="fullname" name="fullname" required>
+            </div>
+            <div class="mb-3">
+              <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+              <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+              <select class="form-select" id="role" name="role" required>
+                <option value="">Select Role</option>
+                <option value="admin">Administrator</option>
+                <option value="user" selected>Standard User</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="office" class="form-label">Office <span class="text-danger">*</span></label>
+              <select class="form-select" id="office" name="office_id" required>
+                <option value="">Select Office</option>
+                <?php 
+                $officeQuery->data_seek(0); // Reset pointer
+                while ($office = $officeQuery->fetch_assoc()): ?>
+                  <option value="<?= $office['id'] ?>"><?= htmlspecialchars($office['office_name']) ?></option>
+                <?php endwhile; ?>
+              </select>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="sendWelcomeEmail" name="send_welcome_email" checked>
+              <label class="form-check-label" for="sendWelcomeEmail">
+                Send welcome email with login instructions
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add User</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="editUserForm" action="process_user.php" method="POST">
+          <input type="hidden" name="action" value="update_user">
+          <input type="hidden" name="user_id" id="editUserId">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit User</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="editFullname" class="form-label">Full Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="editFullname" name="fullname" required>
+            </div>
+            <div class="mb-3">
+              <label for="editUsername" class="form-label">Username <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="editUsername" name="username" required>
+            </div>
+            <div class="mb-3">
+              <label for="editEmail" class="form-label">Email <span class="text-danger">*</span></label>
+              <input type="email" class="form-control" id="editEmail" name="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="editRole" class="form-label">Role <span class="text-danger">*</span></label>
+              <select class="form-select" id="editRole" name="role" required>
+                <option value="admin">Administrator</option>
+                <option value="user">Standard User</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Status</label>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="status" id="statusActive" value="active" checked>
+                <label class="form-check-label" for="statusActive">Active</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="status" id="statusInactive" value="inactive">
+                <label class="form-check-label" for="statusInactive">Inactive</label>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Initialize DataTable
+      $('#userTable').DataTable({
+        pageLength: 25,
+        order: [[0, 'asc']],
+        responsive: true,
+        language: {
+          search: "_INPUT_",
+          searchPlaceholder: "Search users...",
+          lengthMenu: "Show _MENU_ users per page",
+          info: "Showing _START_ to _END_ of _TOTAL_ users",
+          infoEmpty: "No users found",
+          infoFiltered: "(filtered from _MAX_ total users)"
+        },
+        columnDefs: [
+          { orderable: false, targets: -1 } // Disable sorting on actions column
+        ]
+      });
+
+      // Handle edit user button click
+      $('.editUserBtn').on('click', function() {
+        const btn = $(this);
+        $('#editUserId').val(btn.data('id'));
+        $('#editFullname').val(btn.data('fullname'));
+        $('#editUsername').val(btn.data('username'));
+        $('#editEmail').val(btn.data('email'));
+        $('#editRole').val(btn.data('role'));
+        $(`#status${btn.data('status').charAt(0).toUpperCase() + btn.data('status').slice(1)}`).prop('checked', true);
+      });
+
+      // Toggle password visibility
+      $('.toggle-password').on('click', function() {
+        const input = $($(this).data('target'));
+        const icon = $(this).find('i');
+        const type = input.attr('type') === 'password' ? 'text' : 'password';
+        input.attr('type', type);
+        icon.toggleClass('bi-eye bi-eye-slash');
+      });
+
+      // Initialize tooltips
+      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+    });
+  </script>
 </div>
+
+<script>
+  function togglePassword(inputId, button) {
+    const input = document.getElementById(inputId);
+    const icon = button.querySelector('i');
+    
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.remove('bi-eye-slash');
+      icon.classList.add('bi-eye');
+    } else {
+      input.type = 'password';
+      icon.classList.remove('bi-eye');
+      icon.classList.add('bi-eye-slash');
+    }
+  }
+</script>
+</body>
+</html>
 
 <!-- Add User Modal -->
 <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
