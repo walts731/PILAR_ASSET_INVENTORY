@@ -22,6 +22,11 @@
             <label for="remarks" class="form-label">Remarks (Optional)</label>
             <textarea class="form-control" name="remarks" id="remarks" rows="2"></textarea>
           </div>
+
+          <div class="mb-3">
+            <label for="consumption_date" class="form-label">Consumption Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" name="consumption_date" id="consumption_date" required>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -47,6 +52,10 @@ document.addEventListener('DOMContentLoaded', function() {
     modal.querySelector('#dispenseItemName').textContent = assetName;
     modal.querySelector('#dispenseCurrentStock').textContent = currentStock;
     modal.querySelector('#quantity_consumed').max = currentStock;
+    
+    // Set default consumption date to today
+    const today = new Date().toISOString().split('T')[0];
+    modal.querySelector('#consumption_date').value = today;
   });
 });
 </script>
