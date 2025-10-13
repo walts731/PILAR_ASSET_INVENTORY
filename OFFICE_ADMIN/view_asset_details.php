@@ -375,7 +375,7 @@ $stmt->close();
 
                     <!-- Right Column -->
                     <div class="col-lg-4">
-                        <!-- Quick Actions -->
+                        <!-- Quick Actions 
                         <div class="card info-card">
                             <div class="card-header">
                                 <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
@@ -388,6 +388,8 @@ $stmt->close();
                                 </div>
                             </div>
                         </div>
+
+                        -->
 
                         <!-- Asset Image -->
                         <?php if ($asset['image']): ?>

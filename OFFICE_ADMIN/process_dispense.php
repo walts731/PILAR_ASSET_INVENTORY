@@ -11,8 +11,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quantity_consumed = (int) $_POST['quantity_consumed'];
     $recipient_user_id = (int) $_POST['recipient_user_id'];
     $remarks = $_POST['remarks'] ?? '';
+    $consumption_date = $_POST['consumption_date'] ?? '';
     $dispensed_by_user_id = $_SESSION['user_id'];
     $office_id = (int) $_SESSION['office_id']; // ✅ include office_id
+
+    // Validate consumption date
+    if (empty($consumption_date)) {
+        $_SESSION['error_message'] = "Consumption date is required.";
+        header("Location: inventory.php#consumables");
+        exit();
+    }
+
+    // Validate date format
+    $date_obj = DateTime::createFromFormat('Y-m-d', $consumption_date);
+    if (!$date_obj || $date_obj->format('Y-m-d') !== $consumption_date) {
+        $_SESSION['error_message'] = "Invalid consumption date format.";
+        header("Location: inventory.php#consumables");
+        exit();
+    }
 
     // Start transaction
     $conn->begin_transaction();
@@ -36,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Insert log with office_id
         $log_sql = "INSERT INTO consumption_log 
                     (asset_id, office_id, quantity_consumed, recipient_user_id, dispensed_by_user_id, remarks, consumption_date) 
-                    VALUES ($asset_id, $office_id, $quantity_consumed, $recipient_user_id, $dispensed_by_user_id, '$remarks', NOW())";
+                    VALUES ($asset_id, $office_id, $quantity_consumed, $recipient_user_id, $dispensed_by_user_id, '$remarks', '$consumption_date')";
         $conn->query($log_sql);
 
         $conn->commit();
