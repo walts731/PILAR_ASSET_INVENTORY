@@ -525,11 +525,11 @@ ORDER BY an.date_created DESC
         $threshold = 5;
 
         if ($selected_office === "all") {
-          // Fetch all consumables across offices but only with quantity > 0
-          $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable' AND quantity > 0");
+          // Fetch all consumables with quantity >= 0
+          $cres = $conn->prepare("SELECT quantity FROM assets WHERE type = 'consumable' AND quantity >= 0");
         } else {
-          // Fetch consumables for a specific office but only with quantity > 0
-          $cres = $conn->prepare("SELECT status, quantity FROM assets WHERE type = 'consumable' AND office_id = ? AND quantity > 0");
+          // Fetch consumables for a specific office with quantity >= 0
+          $cres = $conn->prepare("SELECT quantity FROM assets WHERE type = 'consumable' AND office_id = ? AND quantity >= 0");
           $cres->bind_param("i", $selected_office);
         }
 
@@ -538,9 +538,14 @@ ORDER BY an.date_created DESC
 
         while ($r = $cresResult->fetch_assoc()) {
           $ctotal++;
-          if ($r['status'] === 'available') $cactive++;
-          if ($r['status'] === 'unavailable') $cunavailable++;
-          if ((int)$r['quantity'] <= $threshold) $clow_stock++;
+          $quantity = (int)$r['quantity'];
+          if ($quantity > $threshold) {
+            $cactive++;
+          } elseif ($quantity > 0) {
+            $clow_stock++;
+          } else {
+            $cunavailable++;
+          }
         }
         ?>
 
@@ -598,7 +603,17 @@ ORDER BY an.date_created DESC
           <form action="generate_selected_report.php" method="POST">
             <input type="hidden" name="office" value="<?= $selected_office ?>">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <h5 class="mb-0">Consumable List</h5>
+              <div class="d-flex align-items-center gap-2">
+                <h5 class="mb-0">Consumable List</h5>
+                <button type="button" class="btn btn-sm btn-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#addConsumableModal">
+                  <i class="bi bi-plus-circle me-1"></i> Add Consumable
+                </button>
+              </div>
+              <div class="btn-group ms-2" role="group">
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importConsumableModal">
+                  <i class="bi bi-upload me-1"></i> Import
+                </button>
+              </div>
               <div class="d-flex flex-wrap gap-2 align-items-center">
                 <select id="stockFilter" class="form-select form-select-sm d-inline-block w-auto">
                   <option value="">All Items</option>
@@ -629,6 +644,39 @@ ORDER BY an.date_created DESC
               <div class="alert alert-success">Consumable updated successfully!</div>
             <?php endif; ?>
 
+            <?php
+
+            // Success message for adding consumable
+            if (isset($_GET['success'])): ?>
+              <div class="alert alert-success alert-dismissible fade show" role="alert">
+                Consumable added successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            <?php endif; ?>
+
+            <!-- Import success/error messages -->
+<?php if (isset($_GET['import'])): ?>
+    <div class="alert alert-<?= $_GET['import'] === 'success' ? 'success' : 'danger' ?> alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars(urldecode($_GET['message'] ?? '')) ?>
+        <?php if (isset($_GET['imported']) && $_GET['imported'] > 0): ?>
+            <div class="mt-2">
+                <a href="inventory.php" class="btn btn-sm btn-<?= $_GET['import'] === 'success' ? 'success' : 'warning' ?>">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh Page
+                </a>
+            </div>
+        <?php endif; ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
+
+            <!-- Error message for adding consumable -->
+            <?php if (isset($_GET['error'])): ?>
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                Error adding consumable. Please try again.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            <?php endif; ?>
+
             <div class="card-body table-responsive">
               <table id="consumablesTable" class="table table-striped table-hover align-middle">
                 <?php
@@ -640,11 +688,11 @@ ORDER BY an.date_created DESC
        COALESCE(c.category_name, 'Uncategorized') AS category_name,
        rf.ris_no,
        o.office_name AS office_name
-FROM assets a 
-LEFT JOIN categories c ON a.category = c.id 
-LEFT JOIN ris_form rf ON a.ris_id = rf.id
-LEFT JOIN offices o ON a.office_id = o.id
-WHERE a.type = 'consumable' AND a.quantity > 0
+    FROM assets a 
+    LEFT JOIN categories c ON a.category = c.id 
+    LEFT JOIN ris_form rf ON a.ris_id = rf.id
+    LEFT JOIN offices o ON a.office_id = o.id
+    WHERE a.type = 'consumable' AND a.quantity >= 0
   ");
                 } else {
                   $stmt = $conn->prepare("
@@ -656,7 +704,7 @@ WHERE a.type = 'consumable' AND a.quantity > 0
     LEFT JOIN categories c ON a.category = c.id 
     LEFT JOIN ris_form rf ON a.ris_id = rf.id
     LEFT JOIN offices o ON a.office_id = o.id
-    WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0
+    WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity >= 0
   ");
                   $stmt->bind_param("i", $selected_office);
                 }
@@ -666,9 +714,13 @@ WHERE a.type = 'consumable' AND a.quantity > 0
                 $consumableRows = $result->fetch_all(MYSQLI_ASSOC);
                 $hasDeletableConsumable = false;
                 foreach ($consumableRows as $r) {
-                  if (empty($r['ris_id'])) { $hasDeletableConsumable = true; break; }
+                  if (empty($r['ris_id'])) {
+                    $hasDeletableConsumable = true;
+                    break;
+                  }
                 }
                 ?>
+
                 <thead class="table-light">
                   <tr>
                     <th><input type="checkbox" id="selectAllConsumables" /></th>
@@ -678,7 +730,8 @@ WHERE a.type = 'consumable' AND a.quantity > 0
                     <th>Unit</th>
                     <th>Unit Price</th>
                     <th>Status</th>
-                    <?php // Actions column only if there is at least one deletable consumable (no RIS linked) ?>
+                    <?php // Actions column only if there is at least one deletable consumable (no RIS linked) 
+                    ?>
                     <?php if ($hasDeletableConsumable): ?>
                       <th>Actions</th>
                     <?php endif; ?>
@@ -727,9 +780,25 @@ WHERE a.type = 'consumable' AND a.quantity > 0
                       <td><?= $row['unit'] ?></td>
                       <td><?= number_format((float)$row['value'], 2) ?></td>
                       <td>
-                        <span class="badge bg-<?= $row['status'] === 'available' ? 'success' : 'secondary' ?>">
-                          <?= ucfirst($row['status']) ?>
+                        <?php
+                        $quantity = (int)$row['quantity'];
+                        if ($quantity <= 0) {
+                          $statusText = 'Out of Stock';
+                          $statusClass = 'danger';
+                        } elseif ($quantity <= $threshold) {
+                          $statusText = 'Low Stock';
+                          $statusClass = 'warning';
+                        } else {
+                          $statusText = 'Available';
+                          $statusClass = 'success';
+                        }
+                        ?>
+                        <span class="badge bg-<?= $statusClass ?>">
+                          <?= $statusText ?>
                         </span>
+                        <?php if ($quantity <= $threshold): ?>
+                          <div class="small text-muted">(<?= $quantity ?> remaining)</div>
+                        <?php endif; ?>
                       </td>
                       <?php if ($hasDeletableConsumable): ?>
                         <td>
@@ -1122,6 +1191,146 @@ WHERE a.type = 'consumable' AND a.quantity > 0
   <?php include 'modals/import_csv_modal.php'; ?>
   <?php include 'modals/delete_consumable_enhanced_modal.php'; ?>
   <?php include 'modals/view_lifecycle_modal.php'; ?>
+  <!-- Add Consumable Modal -->
+  <div class="modal fade" id="addConsumableModal" tabindex="-1" aria-labelledby="addConsumableModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addConsumableModalLabel">Add New Consumable</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="addConsumableForm" action="add_consumable.php" method="POST">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="description" name="description" required>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="quantity" class="form-label">Quantity <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="unit" class="form-label">Unit <span class="text-danger">*</span></label>
+                <select class="form-select" id="unit" name="unit" required>
+                  <option value="">Select Unit</option>
+                  <?php
+                  $units = $conn->query("SELECT * FROM unit ORDER BY unit_name");
+                  while ($unit = $units->fetch_assoc()):
+                  ?>
+                    <option value="<?= htmlspecialchars($unit['unit_name']) ?>"><?= htmlspecialchars($unit['unit_name']) ?></option>
+                  <?php endwhile; ?>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="value" class="form-label">Unit Price <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">₱</span>
+                <input type="number" class="form-control" id="value" name="value" step="0.01" min="0" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="office_id" class="form-label">Office</label>
+              <select class="form-select" id="office_id" name="office_id">
+                <option value="">Select Office</option>
+                <?php
+                $offices = $conn->query("SELECT * FROM offices ORDER BY office_name");
+                while ($office = $offices->fetch_assoc()):
+                ?>
+                  <option value="<?= $office['id'] ?>"><?= htmlspecialchars($office['office_name']) ?></option>
+                <?php endwhile; ?>
+              </select>
+            </div>
+            <input type="hidden" name="type" value="consumable">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Consumable</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Import Consumable Modal -->
+<div class="modal fade" id="importConsumableModal" tabindex="-1" aria-labelledby="importConsumableModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form action="import_consumables.php" method="POST" enctype="multipart/form-data" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importConsumableModalLabel">Import Consumables via CSV</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+                <div class="mb-3">
+                    <label for="consumableCsvFile" class="form-label">Choose CSV File</label>
+                    <input type="file" class="form-control" id="consumableCsvFile" name="csv_file" accept=".csv,.xlsx" required>
+                </div>
+
+                <div class="mb-3">
+                    <strong>CSV Format Instructions:</strong>
+                    <p class="mb-1">Your file must include the headers below (case-insensitive). Each row represents one consumable item.</p>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm text-nowrap small align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>description</th>
+                                    <th>quantity</th>
+                                    <th>unit</th>
+                                    <th>unit_price</th>
+                                    <th>office_name</th>
+                                    <th>acquisition_date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Printer Paper A4</td>
+                                    <td>10</td>
+                                    <td>ream</td>
+                                    <td>250.00</td>
+                                    <td>IT Department</td>
+                                    <td>2025-01-15</td>
+                                </tr>
+                                <tr>
+                                    <td>Ballpen Black</td>
+                                    <td>50</td>
+                                    <td>piece</td>
+                                    <td>15.00</td>
+                                    <td>HR Department</td>
+                                    <td>2025-01-15</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <em class="text-muted">
+                        <strong>Validation Rules:</strong><br>
+                        1) <code>office_name</code> must match an existing office name in the system exactly, or import will fail for that row.<br>
+                        2) <code>description</code>, <code>quantity</code>, <code>unit</code>, and <code>unit_price</code> are required fields.<br>
+                        3) <code>quantity</code> must be a positive number.<br>
+                        4) <code>unit_price</code> must be a positive number.<br>
+                        5) <code>acquisition_date</code> is optional (defaults to today if not provided).<br>
+                        6) Column headers must be present in the first row of your file.<br><br>
+
+                        <strong>Data Types:</strong><br>
+                        • <code>quantity</code>: Integer (whole number)<br>
+                        • <code>unit_price</code>: Decimal (e.g., 250.00)<br>
+                        • <code>acquisition_date</code>: Date in YYYY-MM-DD format<br>
+                    </em>
+                </div>
+            <div class="modal-footer">
+                <a href="sample_import_consumables.php" class="btn btn-sm btn-outline-secondary me-auto" download>
+                    <i class="bi bi-download me-1"></i> Download Sample CSV
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-upload me-1"></i> Import Consumables
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
