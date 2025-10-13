@@ -681,9 +681,25 @@ $stmt->close();
                             <div class="form-group">
                                 <label for="editRole" class="form-label">Role <span class="text-danger">*</span></label>
                                 <select class="form-select" id="editRole" name="role" required>
-                                    <?php foreach ($roles as $role): ?>
-                                        <option value="<?= htmlspecialchars($role['name']) ?>"><?= htmlspecialchars($role['name']) ?></option>
-                                    <?php endforeach; ?>
+                                    <?php 
+                                    $allowed_roles = ['OFFICE_ADMIN', 'MAIN_ADMIN', 'MAIN_USER', 'USER'];
+                                    $display_names = [
+                                        'OFFICE_ADMIN' => 'OFFICE ADMIN',
+                                        'MAIN_ADMIN' => 'MAIN ADMIN',
+                                        'MAIN_USER' => 'MAIN USER',
+                                        'USER' => 'USER'
+                                    ];
+                                    
+                                    foreach ($roles as $role): 
+                                        if (in_array($role['name'], $allowed_roles)): 
+                                    ?>
+                                        <option value="<?= htmlspecialchars($role['name']) ?>">
+                                            <?= htmlspecialchars($display_names[$role['name']]) ?>
+                                        </option>
+                                    <?php 
+                                        endif;
+                                    endforeach; 
+                                    ?>
                                 </select>
                             </div>
                         </div>
