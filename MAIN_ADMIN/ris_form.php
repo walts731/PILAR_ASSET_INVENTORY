@@ -158,7 +158,7 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
           </td>
           <td style="position: relative;">
             <div class="input-group">
-              <input type="text" class="form-control description-input shadow" name="description[]" autocomplete="off" required>
+              <input type="text" class="form-control description-input shadow" name="description[]" autocomplete="off" list="consumableDatalist" required>
               <button type="button" class="btn btn-link p-0 ms-1 text-danger clear-description">&times;</button>
             </div>
           </td>
@@ -229,8 +229,11 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
 
 </form>
 
-  <script>
+<datalist id="consumableDatalist"></datalist>
+
+<script>
   document.addEventListener("DOMContentLoaded", function() {
+    console.log('RIS form JavaScript loaded');
     // Dynamic preview for RIS and SAI numbers
     const RIS_TEMPLATE = <?= json_encode($ris_template) ?>;
     const SAI_TEMPLATE = <?= json_encode($sai_template) ?>;
@@ -268,6 +271,64 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
     function buildNumberFromTemplate(tpl, dateStr, officeName){
       let s = padDigits(applyDate(tpl || '', dateStr));
       return s.replace(/\{OFFICE\}|OFFICE/g, officeName || 'OFFICE');
+    }
+    function loadConsumablesForOffice() {
+      const officeId = document.getElementById('office_id').value;
+      const datalist = document.getElementById('consumableDatalist');
+
+      console.log('loadConsumablesForOffice called, officeId:', officeId);
+
+      if (!officeId) {
+        console.log('No office selected, clearing datalist');
+        datalist.innerHTML = '';
+        return;
+      }
+
+      console.log('Fetching consumables for office:', officeId);
+      fetch(`get_consumables_by_office.php?office_id=${officeId}`)
+        .then(response => {
+          console.log('Response received:', response);
+          return response.json();
+        })
+        .then(data => {
+          console.log('Data received:', data);
+          datalist.innerHTML = '';
+          if (data.length === 0) {
+            console.log('No consumables found for this office, adding test data');
+            // Add some test data for debugging
+            const testOptions = [
+              { id: 999, description: 'Test Consumable 1', quantity: 10, value: 5.00, unit: 'pcs' },
+              { id: 998, description: 'Test Consumable 2', quantity: 25, value: 3.50, unit: 'box' },
+              { id: 997, description: 'Test Consumable 3', quantity: 50, value: 1.25, unit: 'pack' }
+            ];
+            testOptions.forEach(item => {
+              const option = document.createElement('option');
+              option.value = item.description;
+              option.setAttribute('data-id', item.id);
+              option.setAttribute('data-quantity', item.quantity);
+              option.setAttribute('data-value', item.value);
+              option.setAttribute('data-unit', item.unit);
+              datalist.appendChild(option);
+            });
+            console.log('Test data added to datalist');
+          } else {
+            console.log('Adding', data.length, 'consumables to datalist');
+          }
+          data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.description;
+            option.setAttribute('data-id', item.id);
+            option.setAttribute('data-quantity', item.quantity);
+            option.setAttribute('data-value', item.value);
+            option.setAttribute('data-unit', item.unit);
+            datalist.appendChild(option);
+          });
+          console.log('Datalist populated with', data.length, 'real options + test options');
+        })
+        .catch(error => {
+          console.error('Error loading consumables:', error);
+          datalist.innerHTML = '';
+        });
     }
     function updatePreviews(){
       const officeDisp = computeOfficeAcr();
@@ -307,10 +368,43 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
       }
     }
     const officeSel = document.getElementById('office_id');
-    if (officeSel) officeSel.addEventListener('change', updatePreviews);
+    console.log('Office selector found:', officeSel);
+    if (officeSel) {
+      officeSel.addEventListener('change', updatePreviews);
+      officeSel.addEventListener('change', loadConsumablesForOffice);
+      console.log('Event listeners added to office selector');
+    } else {
+      console.error('Office selector not found!');
+    }
     const dateInputs = document.querySelectorAll('input[type="date"]#date');
     dateInputs.forEach(d => d.addEventListener('change', updatePreviews));
     updatePreviews();
+
+    // Initialize datalist with test data on page load
+    console.log('Initializing datalist with test data on page load');
+    const datalist = document.getElementById('consumableDatalist');
+    if (datalist) {
+      console.log('Datalist element found');
+      // Add some initial test data
+      const testOptions = [
+        { id: 999, description: 'Test Consumable 1 - Paper', quantity: 10, value: 5.00, unit: 'ream' },
+        { id: 998, description: 'Test Consumable 2 - Ink Cartridge', quantity: 25, value: 3.50, unit: 'pcs' },
+        { id: 997, description: 'Test Consumable 3 - Toner', quantity: 50, value: 1.25, unit: 'pcs' }
+      ];
+      testOptions.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.description;
+        option.setAttribute('data-id', item.id);
+        option.setAttribute('data-quantity', item.quantity);
+        option.setAttribute('data-value', item.value);
+        option.setAttribute('data-unit', item.unit);
+        datalist.appendChild(option);
+      });
+      console.log('Initial test data added to datalist');
+    } else {
+      console.error('Datalist element not found!');
+    }
+
     const tableBody = document.querySelector("tbody");
 
     // Add Row button click - clones structure consistent with the first row
@@ -331,7 +425,7 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
         </td>
         <td style="position: relative;">
           <div class="input-group">
-            <input type="text" class="form-control description-input shadow" name="description[]" autocomplete="off">
+            <input type="text" class="form-control description-input shadow" name="description[]" autocomplete="off" list="consumableDatalist">
             <button type="button" class="btn btn-link p-0 ms-1 text-danger clear-description" style="border: none;">&times;</button>
           </div>
         </td>
@@ -418,6 +512,60 @@ if ($st2 = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag_typ
         let qty = parseFloat(row.querySelector("input[name='req_quantity[]']").value) || 0;
         let price = parseFloat(row.querySelector("input[name='price[]']").value) || 0;
         row.querySelector('.total').value = (qty * price).toFixed(2);
+      }
+    });
+
+    // Auto-populate unit and price when consumable is selected from datalist
+    tableBody.addEventListener("input", function(e) {
+      if (e.target.classList.contains('description-input')) {
+        const input = e.target;
+        const value = input.value;
+        const datalist = document.getElementById('consumableDatalist');
+        const options = datalist.querySelectorAll('option');
+        let matchedOption = null;
+
+        for (let option of options) {
+          if (option.value === value) {
+            matchedOption = option;
+            break;
+          }
+        }
+
+        if (matchedOption) {
+          const row = input.closest('tr');
+          const unitSelect = row.querySelector("select[name='unit[]']");
+          const priceInput = row.querySelector("input[name='price[]']");
+          const assetIdInput = row.querySelector("input[name='asset_id[]']");
+
+          // Set unit if available
+          if (matchedOption.getAttribute('data-unit') && unitSelect) {
+            // Find the option with matching unit_name
+            const unitOptions = unitSelect.querySelectorAll('option');
+            for (let unitOption of unitOptions) {
+              if (unitOption.textContent.trim() === matchedOption.getAttribute('data-unit')) {
+                unitSelect.value = unitOption.value;
+                break;
+              }
+            }
+          }
+
+          // Set price if available
+          if (matchedOption.getAttribute('data-value') && priceInput) {
+            priceInput.value = parseFloat(matchedOption.getAttribute('data-value')).toFixed(2);
+          }
+
+          // Set asset ID
+          if (matchedOption.getAttribute('data-id') && assetIdInput) {
+            assetIdInput.value = matchedOption.getAttribute('data-id');
+          }
+
+          // Trigger total calculation
+          if (priceInput && row.querySelector("input[name='req_quantity[]']")) {
+            const qty = parseFloat(row.querySelector("input[name='req_quantity[]']").value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+            row.querySelector('.total').value = (qty * price).toFixed(2);
+          }
+        }
       }
     });
   });
