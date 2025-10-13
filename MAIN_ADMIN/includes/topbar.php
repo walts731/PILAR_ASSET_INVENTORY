@@ -347,6 +347,7 @@ $low_stock_count = count($low_stock_items);
           <hr class="dropdown-divider">
         </li>
         <li><a class="dropdown-item d-flex align-items-center" href="profile.php"><i class="bi bi-person me-2"></i> Profile</a></li>
+        <li><a class="dropdown-item d-flex align-items-center" href="notification_preferences.php"><i class="bi bi-bell me-2"></i> Notification Preferences</a></li>
         <li>
           <button class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#managePasswordModal">
             <i class="bi bi-key me-2"></i> Manage Password

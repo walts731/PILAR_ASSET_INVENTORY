@@ -19,6 +19,25 @@ class Notification {
     ];
 
     /**
+     * Default notification preferences
+     */
+    private $defaultPreferences = [
+        'email_notifications' => 1,
+        'desktop_notifications' => 1,
+        'sound_alert' => 1,
+        'low_stock_notification' => 1,
+        'borrow_request_notification' => 1,
+        'borrow_approved_notification' => 1,
+        'borrow_rejected_notification' => 1,
+        'due_date_reminder_notification' => 1,
+        'overdue_notice_notification' => 1,
+        'maintenance_reminder_notification' => 1,
+        'system_alert_notification' => 1,
+        'new_asset_assigned_notification' => 1,
+        'asset_returned_notification' => 1
+    ];
+
+    /**
      * Constructor
      * @param mysqli $conn Database connection
      */
@@ -319,6 +338,154 @@ class Notification {
         }
         
         return $userIds;
+    }
+
+    /**
+     * Get user notification preferences
+     * 
+     * @param int $userId User ID
+     * @return array User preferences
+     */
+    public function getUserPreferences($userId) {
+        $userId = (int)$userId;
+        $query = "SELECT * FROM user_notification_preferences WHERE user_id = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result && $result->num_rows > 0) {
+            $prefs = $result->fetch_assoc();
+            
+            // Convert database values to boolean for the application
+            foreach ($prefs as $key => $value) {
+                if (is_numeric($value)) {
+                    $prefs[$key] = (bool)$value;
+                }
+            }
+            
+            return array_merge($this->defaultPreferences, $prefs);
+        }
+        
+        // If no preferences found, return defaults
+        return $this->defaultPreferences;
+    }
+    
+    /**
+     * Save user notification preferences
+     * 
+     * @param int $userId User ID
+     * @param array $preferences User preferences to save
+     * @return bool True on success, false on failure
+     */
+    public function saveUserPreferences($userId, $preferences) {
+        $userId = (int)$userId;
+        
+        // Ensure we have all required fields with proper values
+        $preferences = array_merge($this->defaultPreferences, $preferences);
+        
+        // Convert boolean values to integers for database
+        foreach ($preferences as $key => $value) {
+            if (is_bool($value)) {
+                $preferences[$key] = $value ? 1 : 0;
+            }
+        }
+        
+        // Build the query
+        $query = "INSERT INTO user_notification_preferences (
+                    user_id, email_notifications, desktop_notifications, sound_alert,
+                    low_stock_notification, borrow_request_notification, borrow_approved_notification,
+                    borrow_rejected_notification, due_date_reminder_notification, overdue_notice_notification,
+                    maintenance_reminder_notification, system_alert_notification, 
+                    new_asset_assigned_notification, asset_returned_notification, updated_at
+                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                  ON DUPLICATE KEY UPDATE 
+                    email_notifications = VALUES(email_notifications),
+                    desktop_notifications = VALUES(desktop_notifications),
+                    sound_alert = VALUES(sound_alert),
+                    low_stock_notification = VALUES(low_stock_notification),
+                    borrow_request_notification = VALUES(borrow_request_notification),
+                    borrow_approved_notification = VALUES(borrow_approved_notification),
+                    borrow_rejected_notification = VALUES(borrow_rejected_notification),
+                    due_date_reminder_notification = VALUES(due_date_reminder_notification),
+                    overdue_notice_notification = VALUES(overdue_notice_notification),
+                    maintenance_reminder_notification = VALUES(maintenance_reminder_notification),
+                    system_alert_notification = VALUES(system_alert_notification),
+                    new_asset_assigned_notification = VALUES(new_asset_assigned_notification),
+                    asset_returned_notification = VALUES(asset_returned_notification),
+                    updated_at = NOW()";
+        
+        $stmt = $this->conn->prepare($query);
+        
+        // Bind parameters
+        $stmt->bind_param(
+            "iiiiiiiiiiiiii",
+            $userId,
+            $preferences['email_notifications'],
+            $preferences['desktop_notifications'],
+            $preferences['sound_alert'],
+            $preferences['low_stock_notification'],
+            $preferences['borrow_request_notification'],
+            $preferences['borrow_approved_notification'],
+            $preferences['borrow_rejected_notification'],
+            $preferences['due_date_reminder_notification'],
+            $preferences['overdue_notice_notification'],
+            $preferences['maintenance_reminder_notification'],
+            $preferences['system_alert_notification'],
+            $preferences['new_asset_assigned_notification'],
+            $preferences['asset_returned_notification']
+        );
+        
+        return $stmt->execute();
+    }
+    
+    /**
+     * Check if a user should receive a specific type of notification
+     * 
+     * @param int $userId User ID
+     * @param string $notificationType Type of notification
+     * @return bool True if user should receive the notification, false otherwise
+     */
+    public function shouldReceiveNotification($userId, $notificationType) {
+        $prefs = $this->getUserPreferences($userId);
+        
+        // Map notification types to their corresponding preference keys
+        $typeMap = [
+            'low_stock' => 'low_stock_notification',
+            'borrow_request' => 'borrow_request_notification',
+            'borrow_approved' => 'borrow_approved_notification',
+            'borrow_rejected' => 'borrow_rejected_notification',
+            'due_date_reminder' => 'due_date_reminder_notification',
+            'overdue_notice' => 'overdue_notice_notification',
+            'maintenance_reminder' => 'maintenance_reminder_notification',
+            'system_alert' => 'system_alert_notification',
+            'new_asset_assigned' => 'new_asset_assigned_notification',
+            'asset_returned' => 'asset_returned_notification'
+        ];
+        
+        // Check if notifications are enabled and this type is enabled
+        return $prefs['desktop_notifications'] && 
+               isset($typeMap[$notificationType]) && 
+               $prefs[$typeMap[$notificationType]];
+    }
+
+    /**
+     * Get notification type display name
+     * 
+     * @param string $type Notification type key
+     * @return string Display name or the type if not found
+     */
+    public function getNotificationTypeName($type) {
+        return $this->notificationTypes[$type] ?? $type;
+    }
+    
+    /**
+     * Get all notification types with their display names
+     * 
+     * @return array Array of notification types with their display names
+     */
+    public function getAllNotificationTypes() {
+        return $this->notificationTypes;
     }
 }
 
