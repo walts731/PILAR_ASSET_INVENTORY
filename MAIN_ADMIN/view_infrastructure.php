@@ -3,7 +3,7 @@ require_once '../connect.php';
 
 if (isset($_GET['id'])) {
     $id = intval($_GET['id']);
-    $stmt = $conn->prepare("SELECT inventory_id, classification_type, item_description, nature_occupancy, location, date_constructed_acquired_manufactured, property_no_or_reference, acquisition_cost, market_appraisal_insurable_interest, date_of_appraisal, remarks, image_1, image_2, image_3, image_4 FROM infrastructure_inventory WHERE inventory_id = ?");
+    $stmt = $conn->prepare("SELECT inventory_id, classification_type, item_description, nature_occupancy, location, date_constructed_acquired_manufactured, property_no_or_reference, acquisition_cost, market_appraisal_insurable_interest, date_of_appraisal, remarks, additional_image FROM infrastructure_inventory WHERE inventory_id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -79,16 +79,35 @@ if (isset($_GET['id'])) {
         echo "        <h6 class='mb-0'><i class='bi bi-images me-1 text-secondary'></i> Images</h6>";
         echo "      </div>";
         echo "      <div class='row g-3'>";
-        for ($i = 1; $i <= 4; $i++) {
-            if (!empty($row["image_$i"])) {
-                $src = htmlspecialchars($row["image_$i"]);
-                echo "        <div class='col-6'>";
-                echo "          <a href='" . $src . "' target='_blank' class='d-block' title='Open image $i in new tab'>";
-                echo "            <img src='" . $src . "' class='img-fluid rounded border' alt='Image $i' style='object-fit:cover;width:100%;height:150px;'>";
-                echo "          </a>";
-                echo "        </div>";
+
+        // Decode JSON array of images
+        $images = [];
+        if (!empty($row['additional_image'])) {
+            $images = json_decode($row['additional_image'], true);
+            if (!is_array($images)) {
+                $images = [];
             }
         }
+
+        // Display images if available
+        if (!empty($images)) {
+            foreach ($images as $index => $imagePath) {
+                if (!empty($imagePath)) {
+                    $src = htmlspecialchars($imagePath);
+                    echo "        <div class='col-6'>";
+                    echo "          <a href='" . $src . "' target='_blank' class='d-block' title='Open image " . ($index + 1) . " in new tab'>";
+                    echo "            <img src='" . $src . "' class='img-fluid rounded border' alt='Image " . ($index + 1) . "' style='object-fit:cover;width:100%;height:150px;'>";
+                    echo "          </a>";
+                    echo "        </div>";
+                }
+            }
+        } else {
+            echo "        <div class='col-12 text-center text-muted'>";
+            echo "          <i class='bi bi-image fs-1 mb-2'></i>";
+            echo "          <div>No images available</div>";
+            echo "        </div>";
+        }
+
         echo "      </div>";
         echo "    </div>";
         echo "  </div>";

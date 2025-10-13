@@ -249,10 +249,10 @@ if ($role === 'user' && $userId > 0) {
                     </a>
                 <?php endforeach; ?>
 
-                <!-- Static Infrastructure Inventory 
+                <!-- Static Infrastructure Inventory -->
                 <a class="nav-link <?= ($page == 'infrastructure_inventory') ? 'active' : '' ?>" href="infrastructure_inventory.php">
                     Infrastructure
-                </a> -->
+                </a> 
             </div>
 
             <div class="nav-section">Forms</div>
@@ -301,10 +301,10 @@ if ($role === 'user' && $userId > 0) {
             <a href="employees.php" class="<?= ($page == 'employees') ? 'active' : '' ?>">
                 <i class="bi bi-people-fill"></i> Employees
             </a>
-
+<!--
             <a href="user.php" class="<?= ($page == 'user') ? 'active' : '' ?>">
                 <i class="bi bi-person"></i> Users
-            </a>
+            </a> -->
             <a href="asset_archive.php" class="<?= ($page == 'asset_archive') ? 'active' : '' ?>">
                 <i class="bi bi-archive"></i> Archive
             </a>

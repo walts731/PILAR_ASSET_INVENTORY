@@ -84,6 +84,17 @@ $infrastructure_total = count($inventory);
                     <button class="btn btn-outline-info btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#addInventoryModal" title="Add new infrastructure record">
                         <i class="bi bi-plus-circle me-1"></i> Add New
                     </button>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-secondary" id="infrastructureExportCsvBtn" title="Export CSV">
+                            <i class="bi bi-filetype-csv"></i> CSV
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" id="infrastructureExportPdfBtn" title="Export PDF">
+                            <i class="bi bi-filetype-pdf"></i> PDF
+                        </button>
+                    </div>
+                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#importInfrastructureCSVModal" title="Import CSV">
+                        <i class="bi bi-upload me-1"></i> Import CSV
+                    </button>
                 </div>
             </div>
 
@@ -124,11 +135,24 @@ $infrastructure_total = count($inventory);
                                         <td><?= date("M-Y", strtotime($item['date_constructed_acquired_manufactured'])) ?></td>
                                         <td><?= htmlspecialchars($item['property_no_or_reference']) ?></td>
                                         <td class="text-center text-nowrap">
-                                            <button class="btn btn-sm btn-outline-primary rounded-pill view-btn" title="View details"
+                                            <button class="btn btn-sm btn-outline-primary rounded-pill view-btn me-1" title="View details"
                                                 data-id="<?= $item['inventory_id'] ?>"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#viewInventoryModal">
                                                 <i class="bi bi-eye me-1"></i> View
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning rounded-pill edit-btn" title="Edit record"
+                                                data-id="<?= $item['inventory_id'] ?>"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editInventoryModal">
+                                                <i class="bi bi-pencil me-1"></i> Edit
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger rounded-pill delete-btn ms-1" title="Delete record"
+                                                data-id="<?= $item['inventory_id'] ?>"
+                                                data-name="<?= htmlspecialchars($item['item_description']) ?>"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteInfrastructureModal">
+                                                <i class="bi bi-trash me-1"></i> Delete
                                             </button>
                                         </td>
                                     </tr>
@@ -166,22 +190,292 @@ $infrastructure_total = count($inventory);
                 $('#inventoryTable').toggleClass('table-sm');
             });
 
-            // Handle view button click
-            $('.view-btn').on('click', function() {
+            // Handle edit button click
+            $('.edit-btn').on('click', function() {
                 let inventoryId = $(this).data('id');
-                $('#inventoryDetails').html('<div class="text-center text-muted">Loading...</div>');
+
+                // Fetch current data and populate edit modal
                 $.ajax({
-                    url: 'view_infrastructure.php',
+                    url: 'edit_infrastructure.php',
                     type: 'GET',
                     data: { id: inventoryId },
                     success: function(response) {
-                        $('#inventoryDetails').html(response);
+                        try {
+                            const data = JSON.parse(response);
+
+                            // Populate form fields
+                            $('#edit_inventory_id').val(data.inventory_id);
+                            $('#edit_classification_type').val(data.classification_type);
+                            $('#edit_item_description').val(data.item_description);
+                            $('#edit_nature_occupancy').val(data.nature_occupancy);
+                            $('#edit_location').val(data.location);
+                            $('#edit_date_constructed_acquired_manufactured').val(data.date_constructed_acquired_manufactured);
+                            $('#edit_property_no_or_reference').val(data.property_no_or_reference);
+                            $('#edit_acquisition_cost').val(data.acquisition_cost);
+                            $('#edit_market_appraisal_insurable_interest').val(data.market_appraisal_insurable_interest);
+                            $('#edit_date_of_appraisal').val(data.date_of_appraisal);
+                            $('#edit_remarks').val(data.remarks);
+
+                            // Display current images
+                            displayCurrentImages(data.additional_image);
+
+                        } catch (e) {
+                            console.error('Error parsing response:', e);
+                            alert('Error loading edit data.');
+                        }
                     },
                     error: function() {
-                        $('#inventoryDetails').html('<div class="text-danger">Error loading details.</div>');
+                        alert('Error loading edit data.');
                     }
                 });
             });
+
+            // Handle view button click
+            $('.view-btn').on('click', function() {
+                let inventoryId = $(this).data('id');
+
+                // Clear previous content and show loading
+                $('#inventoryDetails').html('<div class="text-center text-muted">Loading...</div>');
+
+                // Fetch infrastructure details
+                $.ajax({
+                    url: 'get_infrastructure_details.php',
+                    type: 'GET',
+                    data: { id: inventoryId },
+                    success: function(response) {
+                        try {
+                            const data = JSON.parse(response);
+
+                            if (data.error) {
+                                $('#inventoryDetails').html('<div class="alert alert-danger">' + data.error + '</div>');
+                                return;
+                            }
+
+                            // Build the details HTML
+                            let html = `
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="card h-100">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Basic Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Classification/Type</label>
+                                                    <p class="mb-0">${data.classification_type || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Item Description</label>
+                                                    <p class="mb-0">${data.item_description || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Nature of Occupancy</label>
+                                                    <p class="mb-0">${data.nature_occupancy || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Location</label>
+                                                    <p class="mb-0">${data.location || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Property No./Reference</label>
+                                                    <p class="mb-0">${data.property_no_or_reference || 'N/A'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card h-100">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="bi bi-cash-coin me-2"></i>Financial Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Acquisition Cost</label>
+                                                    <p class="mb-0">${data.acquisition_cost_formatted || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Market Appraisal</label>
+                                                    <p class="mb-0">${data.market_appraisal_insurable_interest_formatted || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Date Constructed/Acquired</label>
+                                                    <p class="mb-0">${data.date_constructed_acquired_manufactured_formatted || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Date of Appraisal</label>
+                                                    <p class="mb-0">${data.date_of_appraisal_formatted || 'N/A'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="bi bi-chat-text me-2"></i>Additional Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Remarks</label>
+                                                    <p class="mb-0">${data.remarks || 'No remarks'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>`;
+
+                            // Add images section if there are images
+                            if (data.additional_image) {
+                                try {
+                                    const images = JSON.parse(data.additional_image);
+                                    if (images && images.length > 0) {
+                                        html += `
+                                            <div class="col-12">
+                                                <div class="card">
+                                                    <div class="card-header bg-light">
+                                                        <h6 class="mb-0"><i class="bi bi-images me-2"></i>Images</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row g-3">`;
+
+                                        images.forEach((imagePath, index) => {
+                                            html += `
+                                                <div class="col-md-3 col-sm-6">
+                                                    <img src="${imagePath}" alt="Infrastructure image ${index + 1}"
+                                                         class="img-fluid rounded" style="width: 100%; height: 150px; object-fit: cover;">
+                                                </div>`;
+                                        });
+
+                                        html += `
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>`;
+                                    }
+                                } catch (e) {
+                                    console.error('Error parsing images:', e);
+                                }
+                            }
+
+                            html += `</div>`;
+
+                            $('#inventoryDetails').html(html);
+
+                        } catch (e) {
+                            console.error('Error parsing response:', e);
+                            $('#inventoryDetails').html('<div class="alert alert-danger">Error loading infrastructure details.</div>');
+                        }
+                    },
+                    error: function() {
+                        $('#inventoryDetails').html('<div class="alert alert-danger">Error loading infrastructure details.</div>');
+                    }
+                });
+            }); // Handle delete button click
+            $('.delete-btn').on('click', function() {
+                let inventoryId = $(this).data('id');
+                let itemName = $(this).data('name');
+
+                // Populate delete modal
+                $('#delete_infrastructure_id').val(inventoryId);
+                $('#delete_infrastructure_name').text(itemName);
+            });
+
+            // Function to display current images in edit modal
+            function displayCurrentImages(imagesJson) {
+                const container = $('#currentImagesContainer');
+                container.empty();
+
+                if (!imagesJson) {
+                    container.append('<div class="col-12"><small class="text-muted">No existing images</small></div>');
+                    return;
+                }
+
+                try {
+                    const images = JSON.parse(imagesJson);
+                    if (images && images.length > 0) {
+                        images.forEach((imagePath, index) => {
+                            const col = $('<div class="col-md-3 col-sm-6"></div>');
+                            const imageItem = $(`
+                                <div class="image-preview-item current-image-item">
+                                    <img src="${imagePath}" alt="Current image ${index + 1}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px;">
+                                    <div class="image-file-name">${imagePath.split('/').pop()}</div>
+                                </div>
+                            `);
+                            col.append(imageItem);
+                            container.append(col);
+                        });
+                    } else {
+                        container.append('<div class="col-12"><small class="text-muted">No existing images</small></div>');
+                    }
+                } catch (e) {
+                    console.error('Error parsing images:', e);
+                    container.append('<div class="col-12"><small class="text-muted">Error loading images</small></div>');
+                }
+            }
+
+            // Export CSV for Infrastructure
+            const infrastructureExportCsvBtn = document.getElementById('infrastructureExportCsvBtn');
+            if (infrastructureExportCsvBtn) {
+                infrastructureExportCsvBtn.addEventListener('click', () => {
+                    const exportUrl = 'export_infrastructure_csv.php';
+                    // Direct download of CSV (server will stream the file)
+                    window.location.href = exportUrl;
+                });
+            }
+
+            // Export PDF for Infrastructure
+            const infrastructureExportPdfBtn = document.getElementById('infrastructureExportPdfBtn');
+            if (infrastructureExportPdfBtn) {
+                infrastructureExportPdfBtn.addEventListener('click', () => {
+                    const exportUrl = 'export_infrastructure_pdf.php';
+                    // Open PDF in new tab for viewing/downloading
+                    window.open(exportUrl, '_blank');
+                });
+            }
+
+        });
+
+        // Handle import success/error messages
+        $(document).ready(function() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            if (urlParams.has('import')) {
+                const importStatus = urlParams.get('import');
+                const successCount = urlParams.get('ok') || 0;
+                const failCount = urlParams.get('fail') || 0;
+                const errorMessage = urlParams.get('errors') || '';
+                const customMessage = urlParams.get('message') || '';
+
+                let alertClass = 'alert-danger';
+                let alertIcon = 'bi-exclamation-triangle';
+                let alertTitle = 'Import Failed';
+                let alertMessage = customMessage || 'An error occurred during import.';
+
+                if (importStatus === 'success') {
+                    alertClass = 'alert-success';
+                    alertIcon = 'bi-check-circle';
+                    alertTitle = 'Import Successful';
+                    alertMessage = `Successfully imported ${successCount} infrastructure record(s).`;
+                } else if (importStatus === 'partial') {
+                    alertClass = 'alert-warning';
+                    alertIcon = 'bi-exclamation-circle';
+                    alertTitle = 'Partial Import';
+                    alertMessage = `Imported ${successCount} record(s), failed ${failCount}. ${errorMessage}`;
+                }
+
+                // Create and show alert
+                const alertHtml = `
+                    <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                        <i class="bi ${alertIcon} me-2"></i>
+                        <strong>${alertTitle}</strong> ${alertMessage}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>`;
+
+                // Insert alert at the top of the container
+                $('.container-fluid').prepend(alertHtml);
+
+                // Clean up URL
+                const cleanUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
         });
     </script>
 
@@ -189,5 +483,11 @@ $infrastructure_total = count($inventory);
     <?php include 'view_infrastructure_modal.php'; ?>
     <!-- Add Inventory Modal -->
     <?php include 'modals/add_infrastructure_modal.php'; ?>
+    <!-- Edit Inventory Modal -->
+    <?php include 'modals/edit_infrastructure_modal.php'; ?>
+    <!-- Delete Infrastructure Modal -->
+    <?php include 'modals/delete_infrastructure_modal.php'; ?>
+    <!-- Import Infrastructure CSV Modal -->
+    <?php include 'modals/import_infrastructure_csv_modal.php'; ?>
 </body>
 </html>

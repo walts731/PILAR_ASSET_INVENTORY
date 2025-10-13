@@ -18,32 +18,39 @@ if (isset($_POST['save_inventory'])) {
     $uploadDir = "uploads/";
     if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
-    // Handle 4 image inputs
-    $images = [null, null, null, null];
-    for ($i = 1; $i <= 4; $i++) {
-        if (!empty($_FILES["image_$i"]["name"])) {
-            $fileTmp = $_FILES["image_$i"]["tmp_name"];
-            $fileName = time() . "_$i_" . basename($_FILES["image_$i"]["name"]);
-            $targetPath = $uploadDir . $fileName;
+    // Handle multiple image uploads (limited to 4)
+    $images = [];
+    if (!empty($_FILES["additional_images"]["name"][0])) {
+        $fileCount = count($_FILES["additional_images"]["name"]);
+        $maxImages = min($fileCount, 4); // Limit to 4 images
+        
+        for ($i = 0; $i < $maxImages; $i++) {
+            if (!empty($_FILES["additional_images"]["name"][$i])) {
+                $fileTmp = $_FILES["additional_images"]["tmp_name"][$i];
+                $fileName = time() . "_" . ($i + 1) . "_" . basename($_FILES["additional_images"]["name"][$i]);
+                $targetPath = $uploadDir . $fileName;
 
-            if (move_uploaded_file($fileTmp, $targetPath)) {
-                $images[$i - 1] = $targetPath;
+                if (move_uploaded_file($fileTmp, $targetPath)) {
+                    $images[] = $targetPath;
+                }
             }
         }
     }
+
+    // Convert images array to JSON
+    $imagesJson = !empty($images) ? json_encode($images) : null;
 
     $stmt = $conn->prepare("INSERT INTO infrastructure_inventory 
         (classification_type, item_description, nature_occupancy, location, 
         date_constructed_acquired_manufactured, property_no_or_reference, 
         acquisition_cost, market_appraisal_insurable_interest, date_of_appraisal, 
-        remarks, image_1, image_2, image_3, image_4) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        remarks, additional_image) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    $stmt->bind_param("ssssssdsssssss",
+    $stmt->bind_param("ssssssdssss",
         $classification_type, $item_description, $nature_occupancy, $location,
         $date_constructed, $property_no, $acquisition_cost, $market_appraisal,
-        $date_of_appraisal, $remarks,
-        $images[0], $images[1], $images[2], $images[3]
+        $date_of_appraisal, $remarks, $imagesJson
     );
 
     if ($stmt->execute()) {
