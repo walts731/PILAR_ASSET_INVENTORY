@@ -31,27 +31,13 @@ $stmt->bind_result($fullname);
 $stmt->fetch();
 $stmt->close();
 
-// Fetch current office name for placeholder replacement in activity details
-$current_office_name = '';
-if (!empty($office_id)) {
-    $oid = (int)$office_id;
-    if ($stmt = $conn->prepare("SELECT office_name FROM offices WHERE id = ? LIMIT 1")) {
-        $stmt->bind_param("i", $oid);
-        $stmt->execute();
-        $stmt->bind_result($oname);
-        if ($stmt->fetch()) { $current_office_name = $oname ?? ''; }
-        $stmt->close();
-    }
-}
-
 // ✅ Fetch Most Consumed Items (office-based)
 $consumedData = ["labels" => [], "data" => []];
 $stmt = $conn->prepare("
-    SELECT ri.description, SUM(ri.quantity) AS total_consumed
-    FROM ris_items ri
-    INNER JOIN ris_form rf ON rf.id = ri.ris_form_id
-    WHERE rf.office_id = ?
-    GROUP BY ri.description
+    SELECT description, SUM(quantity) AS total_consumed
+    FROM ris_items
+    WHERE id = ?
+    GROUP BY description
     ORDER BY total_consumed DESC
     LIMIT 10
 ");
@@ -95,95 +81,6 @@ $borrowedData['datasets'][] = [
     "fill" => true,
     "tension" => 0.3
 ];
-
-// ✅ Fetch Assets by Category (office-based)
-$assetsByCategoryData = ["labels" => [], "data" => []];
-$stmt = $conn->prepare("
-    SELECT c.category_name, COUNT(a.id) AS asset_count
-    FROM assets a
-    LEFT JOIN categories c ON a.category = c.id
-    WHERE a.type = 'asset' AND a.quantity > 0 AND a.office_id = ?
-    GROUP BY a.category, c.category_name
-    ORDER BY asset_count DESC
-    LIMIT 8
-");
-$stmt->bind_param("i", $office_id);
-$stmt->execute();
-$result = $stmt->get_result();
-while ($row = $result->fetch_assoc()) {
-    $assetsByCategoryData['labels'][] = $row['category_name'] ?? 'Uncategorized';
-    $assetsByCategoryData['data'][] = (int)$row['asset_count'];
-}
-$stmt->close();
-
-// ✅ Fetch 5 Most Recent Activities for this office (by users in this office)
-$auditRows = [];
-$activityError = '';
-try {
-    $auditSql = "
-      SELECT al.id, al.action, al.module, al.details, al.created_at, u.fullname
-      FROM audit_logs al
-      LEFT JOIN users u ON u.id = al.user_id
-      WHERE u.office_id = ?
-      ORDER BY al.created_at DESC
-      LIMIT 5
-    ";
-    if ($st = $conn->prepare($auditSql)) {
-        $st->bind_param('i', $office_id);
-        $st->execute();
-        $res = $st->get_result();
-        while ($a = $res->fetch_assoc()) { $auditRows[] = $a; }
-        $st->close();
-    } else {
-        $activityError = 'Recent activity is unavailable.';
-    }
-} catch (Throwable $e) {
-    $activityError = 'Recent activity is unavailable.';
-}
-
-// ✅ Build Recent Activities Chart Data (last 14 days, office-scoped)
-$activityChartData = ["labels" => [], "data" => []];
-try {
-    $days = 14;
-    // Initialize date buckets
-    $dateBuckets = [];
-    for ($i = $days - 1; $i >= 0; $i--) {
-        $d = date('Y-m-d', strtotime("-$i days"));
-        $dateBuckets[$d] = 0;
-    }
-
-    $sql = "
-      SELECT DATE(al.created_at) as d, COUNT(*) as cnt
-      FROM audit_logs al
-      LEFT JOIN users u ON u.id = al.user_id
-      WHERE u.office_id = ? AND al.created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
-      GROUP BY DATE(al.created_at)
-      ORDER BY d ASC
-    ";
-    if ($st = $conn->prepare($sql)) {
-        // Use (days-1) to include today and previous days; since we initialized 14 buckets
-        $delta = $days - 1;
-        $st->bind_param('ii', $office_id, $delta);
-        $st->execute();
-        $res = $st->get_result();
-        while ($r = $res->fetch_assoc()) {
-            $d = $r['d'];
-            $cnt = (int)$r['cnt'];
-            if (isset($dateBuckets[$d])) {
-                $dateBuckets[$d] = $cnt;
-            }
-        }
-        $st->close();
-    }
-
-    // Build labels (e.g., Oct 01) and data series
-    foreach ($dateBuckets as $d => $cnt) {
-        $activityChartData['labels'][] = date('M d', strtotime($d));
-        $activityChartData['data'][] = $cnt;
-    }
-} catch (Throwable $e) {
-    // Fallback to empty dataset
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -325,36 +222,22 @@ try {
   </div>
 </div>
 
-<!-- Assets by Category Section -->
+<!-- Charts Section -->
 <div class="container-fluid mt-1">
   <div class="row">
+    <!-- Most Consumed Items Chart -->
     <div class="col-md-6 mb-4">
       <div class="card shadow-sm">
         <div class="card-header">
-          <h5 class="mb-0"><i class="bi bi-tags me-2"></i>Assets by Category</h5>
+          <h5 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>Most Consumed Items</h5>
         </div>
         <div class="card-body">
-          <canvas id="assetsByCategoryChart" height="200"></canvas>
+          <canvas id="consumedChart" height="200"></canvas>
         </div>
       </div>
     </div>
-    <div class="col-md-6 mb-4">
-      <div class="card shadow-sm">
-        <div class="card-header d-flex align-items-center justify-content-between">
-          <div>
-            <h5 class="mb-1"><i class="bi bi-graph-up-arrow me-2"></i>Recent Activities (Last 14 Days)</h5>
-            <small class="text-muted">Counts of actions by users in this office</small>
-          </div>
-        </div>
-        <div class="card-body">
-          <canvas id="activityChart" height="200"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Recent Activity Section -->
-  <div class="row">
+
+    <!-- Most Borrowed Items Chart -->
     <div class="col-md-6 mb-1">
       <div class="card shadow-sm">
         <div class="card-header">
@@ -408,56 +291,6 @@ try {
       responsive: true,
       plugins: { legend: { position: 'top' } },
       scales: { y: { beginAtZero: true } }
-    }
-  });
-
-  // Assets by Category Chart
-  const assetsByCategoryData = <?= json_encode($assetsByCategoryData, JSON_NUMERIC_CHECK); ?>;
-  const abcCtx = document.getElementById('assetsByCategoryChart').getContext('2d');
-  new Chart(abcCtx, {
-    type: 'bar',
-    data: {
-      labels: assetsByCategoryData.labels,
-      datasets: [{
-        label: 'Assets Count',
-        data: assetsByCategoryData.data,
-        backgroundColor: 'rgba(13, 110, 253, 0.6)',
-        borderColor: 'rgba(13, 110, 253, 1)',
-        borderWidth: 1,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-
-  // Recent Activities Chart (Last 14 Days)
-  const activityChartData = <?= json_encode($activityChartData, JSON_NUMERIC_CHECK); ?>;
-  const actCtx = document.getElementById('activityChart').getContext('2d');
-  new Chart(actCtx, {
-    type: 'line',
-    data: {
-      labels: activityChartData.labels,
-      datasets: [{
-        label: 'Activity Count',
-        data: activityChartData.data,
-        borderColor: 'rgba(25, 135, 84, 1)',
-        backgroundColor: 'rgba(25, 135, 84, 0.2)',
-        fill: true,
-        tension: 0.35,
-        pointRadius: 3,
-        pointBackgroundColor: '#fff',
-        pointBorderColor: 'rgba(25, 135, 84, 1)'
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { beginAtZero: true }
-      }
     }
   });
 </script>
