@@ -8,6 +8,19 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Fetch system settings for branding
+$system = [
+    'logo' => 'default-logo.png',
+    'system_title' => 'Inventory System'
+];
+
+if (isset($conn) && $conn instanceof mysqli) {
+    $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
+    if ($result && $result->num_rows > 0) {
+        $system = $result->fetch_assoc();
+    }
+}
+
 // Get asset ID from URL parameter
 $asset_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
@@ -58,6 +71,153 @@ $stmt->close();
     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css" />
     <style>
+        :root {
+            --primary-color: #0b5ed7;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #0dcaf0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color) !important;
+        }
+
+        .guest-badge {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .main-container {
+            padding: 2rem 0;
+        }
+
+        .welcome-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .stats-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .action-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .action-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem;
+        }
+
+        .scan-icon {
+            background: linear-gradient(45deg, var(--primary-color), #0056b3);
+            color: white;
+        }
+
+        .browse-icon {
+            background: linear-gradient(45deg, var(--success-color), #146c43);
+            color: white;
+        }
+
+        .history-icon {
+            background: linear-gradient(45deg, var(--info-color), #0a58ca);
+            color: white;
+        }
+
+        .help-icon {
+            background: linear-gradient(45deg, var(--warning-color), #e0a800);
+            color: white;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .btn-logout {
+            background: linear-gradient(45deg, var(--danger-color), #b02a37);
+            border: none;
+            color: white;
+            border-radius: 25px;
+            padding: 8px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+            color: white;
+        }
+
+        .feature-highlight {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem 0;
+            }
+            
+            .action-card {
+                margin-bottom: 1rem;
+            }
+        }
         .asset-header {
             background: linear-gradient(135deg, rgb(45, 64, 149) 0%, rgb(64, 74, 188) 100%);
             color: white;
@@ -245,9 +405,27 @@ $stmt->close();
 </head>
 
 <body>
-    <?php include 'includes/sidebar.php' ?>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="../img/<?= htmlspecialchars($system['logo']) ?>" alt="Logo" width="32" height="32" class="me-2">
+                <?= htmlspecialchars($system['system_title']) ?>
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <span class="guest-badge me-3">
+                    <i class="bi bi-person-circle me-1"></i>Guest User
+                </span>
+                <a href="../logout.php" class="btn btn-logout">
+                    <i class="bi bi-box-arrow-right me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+    
     <div class="main">
-        <?php include 'includes/topbar.php' ?>
+       
 
         <div class="container-fluid mt-4">
             
@@ -375,7 +553,22 @@ $stmt->close();
 
                     <!-- Right Column -->
                     <div class="col-lg-4">
-                        
+                        Quick Actions 
+                        <div class="card info-card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <a href="borrow.php?asset_id=<?= (int)$asset['id'] ?>" class="btn btn-outline-primary">
+                                        <i class="bi bi-box-arrow-in-right me-2"></i>Borrow Asset
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                       
+
                         <!-- Asset Image -->
                         <?php if ($asset['image']): ?>
                             <div class="card info-card">

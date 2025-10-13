@@ -354,7 +354,7 @@ if (!empty($asset['category_name'])) {
                                         <strong>Office:</strong> <?= htmlspecialchars($asset['office_name'] ?? 'N/A') ?>
                                     </div>
                                     <div class="col-md-6">
-                                        <strong>Employee:</strong> <?= htmlspecialchars($asset['employee_name'] ?? 'Unassigned') ?>
+                                        <strong>Person Accountable:</strong> <?= htmlspecialchars($asset['employee_name'] ?? 'Unassigned') ?>
                                     </div>
                                     
                                     <div class="col-md-6">
