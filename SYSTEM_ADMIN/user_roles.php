@@ -77,13 +77,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get all roles
+// First, check if OFFICE_ADMIN exists
+$officeAdminCheck = $conn->query("SELECT * FROM roles WHERE name = 'OFFICE_ADMIN'");
+if ($officeAdminCheck->num_rows === 0) {
+    // OFFICE_ADMIN doesn't exist, let's add it
+    $conn->query("INSERT INTO roles (name, description) VALUES ('OFFICE_ADMIN', 'Office Administrator with office-specific access')");
+    error_log("Added OFFICE_ADMIN role to the database");
+}
+
+// Get all roles except MAIN_EMPLOYEE and MAIN_USER, but include OFFICE_ADMIN
 $roles = [];
-$result = $conn->query("SELECT * FROM roles ORDER BY name");
+$query = "SELECT * FROM roles WHERE name NOT IN ('MAIN_EMPLOYEE', 'MAIN_USER') OR name = 'OFFICE_ADMIN' ORDER BY name";
+$result = $conn->query($query);
+
+// Debug: Log the query and results
+error_log("Roles Query: " . $query);
 if ($result) {
+    $all_roles = [];
     while ($row = $result->fetch_assoc()) {
+        $all_roles[] = $row['name'];
         $roles[] = $row;
     }
+    error_log("Fetched roles: " . implode(", ", $all_roles));
+} else {
+    error_log("Error in roles query: " . $conn->error);
 }
 
 // Get all permissions grouped by category
@@ -125,8 +142,6 @@ function getPermissionsByCategory($conn) {
         'Permission Management' => ['view_permissions', 'view_permissions_'],
         'Asset Management' => ['view_assets', 'view_assets_'],
         'Category Management' => ['view_categories', 'view_categories_'],
-        'Location Management' => ['view_locations', 'view_locations_'],
-        'Supplier Management' => ['view_suppliers', 'view_suppliers_'],
         'Status Management' => ['view_status', 'view_status_'],
         'Type Management' => ['view_types', 'view_types_']
     ];
