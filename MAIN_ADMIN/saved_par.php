@@ -129,7 +129,7 @@ if ($result && $result->num_rows > 0) {
   <script>
     $(document).ready(function () {
       $('#parTable').DataTable({
-        order: [[2, 'asc']]
+        order: [[2, 'desc']]
       });
     });
   </script>
