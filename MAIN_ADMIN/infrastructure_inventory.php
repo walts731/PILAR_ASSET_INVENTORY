@@ -136,6 +136,13 @@ $infrastructure_total = count($inventory);
                                                 data-bs-target="#editInventoryModal">
                                                 <i class="bi bi-pencil me-1"></i> Edit
                                             </button>
+                                            <button class="btn btn-sm btn-outline-danger rounded-pill delete-btn ms-1" title="Delete record"
+                                                data-id="<?= $item['inventory_id'] ?>"
+                                                data-name="<?= htmlspecialchars($item['item_description']) ?>"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteInfrastructureModal">
+                                                <i class="bi bi-trash me-1"></i> Delete
+                                            </button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -350,6 +357,14 @@ $infrastructure_total = count($inventory);
                         $('#inventoryDetails').html('<div class="alert alert-danger">Error loading infrastructure details.</div>');
                     }
                 });
+            }); // Handle delete button click
+            $('.delete-btn').on('click', function() {
+                let inventoryId = $(this).data('id');
+                let itemName = $(this).data('name');
+
+                // Populate delete modal
+                $('#delete_infrastructure_id').val(inventoryId);
+                $('#delete_infrastructure_name').text(itemName);
             });
 
             // Function to display current images in edit modal
@@ -393,5 +408,7 @@ $infrastructure_total = count($inventory);
     <?php include 'modals/add_infrastructure_modal.php'; ?>
     <!-- Edit Inventory Modal -->
     <?php include 'modals/edit_infrastructure_modal.php'; ?>
+    <!-- Delete Infrastructure Modal -->
+    <?php include 'modals/delete_infrastructure_modal.php'; ?>
 </body>
 </html>
