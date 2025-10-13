@@ -212,6 +212,146 @@ $infrastructure_total = count($inventory);
                 });
             });
 
+            // Handle view button click
+            $('.view-btn').on('click', function() {
+                let inventoryId = $(this).data('id');
+
+                // Clear previous content and show loading
+                $('#inventoryDetails').html('<div class="text-center text-muted">Loading...</div>');
+
+                // Fetch infrastructure details
+                $.ajax({
+                    url: 'get_infrastructure_details.php',
+                    type: 'GET',
+                    data: { id: inventoryId },
+                    success: function(response) {
+                        try {
+                            const data = JSON.parse(response);
+
+                            if (data.error) {
+                                $('#inventoryDetails').html('<div class="alert alert-danger">' + data.error + '</div>');
+                                return;
+                            }
+
+                            // Build the details HTML
+                            let html = `
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="card h-100">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Basic Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Classification/Type</label>
+                                                    <p class="mb-0">${data.classification_type || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Item Description</label>
+                                                    <p class="mb-0">${data.item_description || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Nature of Occupancy</label>
+                                                    <p class="mb-0">${data.nature_occupancy || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Location</label>
+                                                    <p class="mb-0">${data.location || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Property No./Reference</label>
+                                                    <p class="mb-0">${data.property_no_or_reference || 'N/A'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card h-100">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="bi bi-cash-coin me-2"></i>Financial Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Acquisition Cost</label>
+                                                    <p class="mb-0">${data.acquisition_cost_formatted || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Market Appraisal</label>
+                                                    <p class="mb-0">${data.market_appraisal_insurable_interest_formatted || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Date Constructed/Acquired</label>
+                                                    <p class="mb-0">${data.date_constructed_acquired_manufactured_formatted || 'N/A'}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Date of Appraisal</label>
+                                                    <p class="mb-0">${data.date_of_appraisal_formatted || 'N/A'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="bi bi-chat-text me-2"></i>Additional Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Remarks</label>
+                                                    <p class="mb-0">${data.remarks || 'No remarks'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>`;
+
+                            // Add images section if there are images
+                            if (data.additional_image) {
+                                try {
+                                    const images = JSON.parse(data.additional_image);
+                                    if (images && images.length > 0) {
+                                        html += `
+                                            <div class="col-12">
+                                                <div class="card">
+                                                    <div class="card-header bg-light">
+                                                        <h6 class="mb-0"><i class="bi bi-images me-2"></i>Images</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row g-3">`;
+
+                                        images.forEach((imagePath, index) => {
+                                            html += `
+                                                <div class="col-md-3 col-sm-6">
+                                                    <img src="${imagePath}" alt="Infrastructure image ${index + 1}"
+                                                         class="img-fluid rounded" style="width: 100%; height: 150px; object-fit: cover;">
+                                                </div>`;
+                                        });
+
+                                        html += `
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>`;
+                                    }
+                                } catch (e) {
+                                    console.error('Error parsing images:', e);
+                                }
+                            }
+
+                            html += `</div>`;
+
+                            $('#inventoryDetails').html(html);
+
+                        } catch (e) {
+                            console.error('Error parsing response:', e);
+                            $('#inventoryDetails').html('<div class="alert alert-danger">Error loading infrastructure details.</div>');
+                        }
+                    },
+                    error: function() {
+                        $('#inventoryDetails').html('<div class="alert alert-danger">Error loading infrastructure details.</div>');
+                    }
+                });
+            });
+
             // Function to display current images in edit modal
             function displayCurrentImages(imagesJson) {
                 const container = $('#currentImagesContainer');
