@@ -231,7 +231,7 @@ $stmt = $conn->prepare("
                         }
                     }
                 } else {
-                    // Case 2: No source asset provided -> merge with existing or insert minimal consumable asset in target office
+                    // Case 2: No source asset provided -> check if asset with same description and office exists, add quantity if found
                     if ($qty > 0) {
                         // Resolve unit name if unit contains an ID
                         $unit_value = $unit;
@@ -245,32 +245,22 @@ $stmt = $conn->prepare("
                             $unit_stmt->close();
                         }
 
-                        // Try to find an existing consumable asset in this office that matches by property_no OR by description+unit
+                        // Check if an asset with the same description and office already exists
                         $existing_id = null;
                         $existing_qty = 0;
 
-                        // Prefer exact property_no match when provided
-                        if (!empty($stock)) {
-                            $chk1 = $conn->prepare("SELECT id, quantity FROM assets WHERE office_id = ? AND type = 'consumable' AND property_no = ? LIMIT 1");
-                            $chk1->bind_param("is", $office_id, $stock);
-                            $chk1->execute();
-                            $r1 = $chk1->get_result();
-                            if ($row1 = $r1->fetch_assoc()) { $existing_id = (int)$row1['id']; $existing_qty = (int)$row1['quantity']; }
-                            $chk1->close();
+                        $check_stmt = $conn->prepare("SELECT id, quantity FROM assets WHERE office_id = ? AND description = ? LIMIT 1");
+                        $check_stmt->bind_param("is", $office_id, $desc);
+                        $check_stmt->execute();
+                        $check_result = $check_stmt->get_result();
+                        if ($existing_asset = $check_result->fetch_assoc()) {
+                            $existing_id = (int)$existing_asset['id'];
+                            $existing_qty = (int)$existing_asset['quantity'];
                         }
-
-                        // If no property_no match, try description + unit match
-                        if ($existing_id === null) {
-                            $chk2 = $conn->prepare("SELECT id, quantity FROM assets WHERE office_id = ? AND type = 'consumable' AND description = ? AND unit = ? LIMIT 1");
-                            $chk2->bind_param("iss", $office_id, $desc, $unit_value);
-                            $chk2->execute();
-                            $r2 = $chk2->get_result();
-                            if ($row2 = $r2->fetch_assoc()) { $existing_id = (int)$row2['id']; $existing_qty = (int)$row2['quantity']; }
-                            $chk2->close();
-                        }
+                        $check_stmt->close();
 
                         if ($existing_id !== null) {
-                            // Merge quantities into existing asset
+                            // Add quantity to existing asset
                             $new_qty = $existing_qty + $qty;
                             $upd = $conn->prepare("UPDATE assets SET quantity = ?, added_stock = COALESCE(added_stock,0) + ?, last_updated = NOW(), ris_id = ? WHERE id = ?");
                             $upd->bind_param("iiii", $new_qty, $qty, $ris_form_id, $existing_id);
