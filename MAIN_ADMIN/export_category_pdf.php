@@ -50,7 +50,7 @@ if (!$category) {
 }
 
 // Get system information and logo
-$logoPath = '../img/PILAR LOGO TRANSPARENT.png';
+$logoPath = '../img/new_logo.png';
 $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
 
 $system_info = [

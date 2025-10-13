@@ -148,7 +148,7 @@ if ($result && $result->num_rows > 0) {
   <script>
     $(document).ready(function () {
       $('#itrTable').DataTable({
-        order: [[0, 'asc']], // Order by ITR ID (descending - latest first)
+        order: [[0, 'desc']], // Order by ITR ID (descending - latest first)
         columnDefs: [
           { orderable: false, targets: -1 } // Disable sorting on the last column (Action)
         ],

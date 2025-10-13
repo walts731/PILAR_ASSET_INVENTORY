@@ -366,7 +366,7 @@ $cat_stmt->close();
                   <tr>
                     <th><input type="checkbox" id="selectAllConsumables" /></th>
                     <th>Description</th>
-                    <th>On Hand</th>
+                    <th>Quantity</th>
                     <th>Unit</th>
                     <th>Status</th>
            

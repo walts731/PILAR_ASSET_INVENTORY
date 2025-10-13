@@ -22,7 +22,7 @@ $category_filter = $_GET['category'] ?? 'all';
 $status_filter = $_GET['status'] ?? 'all';
 
 // Get system information and logo (prefer logo from system table if present)
-$defaultLogoPath = '../img/PILAR LOGO TRANSPARENT.png';
+$defaultLogoPath = '../img/new_logo.png';
 $system_info = [
   'system_title' => 'PILAR Asset Inventory System',
   'logo' => (file_exists($defaultLogoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($defaultLogoPath)) : '')

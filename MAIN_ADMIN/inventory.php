@@ -323,16 +323,11 @@ $stmt->close();
                       <i class="bi bi-filetype-pdf"></i> PDF
                     </button>
                   </div>
-                  <!-- Existing Generate Report Button -->
-                  <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm">
-                    <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
-                  </button>
+                 
                 </div>
               </div>
             </div>
-            <div class="alert alert-danger" role="alert" id="checkboxAlert">
-              Please select at least one item to generate a report.
-            </div>
+          
 
             <?php
             // Warn about assets without property numbers
@@ -373,7 +368,7 @@ $stmt->close();
               <table id="assetTable" class="table table-striped table-hover align-middle">
                 <thead class="table-light">
                   <tr>
-                    <th><input type="checkbox" id="selectAllAssets" /></th>
+                   
                     <th>ICS/PAR No</th>
                     <th>Description</th>
                     <th>Category</th>
@@ -452,7 +447,7 @@ ORDER BY an.date_created DESC
 
                   ?>
                     <tr>
-                      <td><input type="checkbox" class="asset-checkbox" name="selected_assets_new[]" value="<?= $row['an_id'] ?>"></td>
+                      
                       <td>
                         <?php
                         $nums = [];
@@ -608,12 +603,11 @@ ORDER BY an.date_created DESC
                 <button type="button" class="btn btn-sm btn-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#addConsumableModal">
                   <i class="bi bi-plus-circle me-1"></i> Add Consumable
                 </button>
-              </div>
-              <div class="btn-group ms-2" role="group">
                 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importConsumableModal">
                   <i class="bi bi-upload me-1"></i> Import
                 </button>
               </div>
+             
               <div class="d-flex flex-wrap gap-2 align-items-center">
                 <select id="stockFilter" class="form-select form-select-sm d-inline-block w-auto">
                   <option value="">All Items</option>
@@ -630,15 +624,11 @@ ORDER BY an.date_created DESC
                   </button>
                 </div>
 
-                <button type="submit" class="btn btn-outline-primary rounded-pill btn-sm">
-                  <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
-                </button>
+                
               </div>
             </div>
 
-            <div class="alert alert-danger" role="alert" id="checkboxAlert">
-              Please select at least one item to generate a report.
-            </div>
+          
 
             <?php if (isset($_GET['update']) && $_GET['update'] === 'success'): ?>
               <div class="alert alert-success">Consumable updated successfully!</div>
@@ -723,7 +713,7 @@ ORDER BY an.date_created DESC
 
                 <thead class="table-light">
                   <tr>
-                    <th><input type="checkbox" id="selectAllConsumables" /></th>
+                    
                     <th>RIS No</th>
                     <th>Description</th>
                     <th>Qty</th>
@@ -742,7 +732,7 @@ ORDER BY an.date_created DESC
                     $is_low = $row['quantity'] <= $threshold;
                   ?>
                     <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
-                      <td><input type="checkbox" class="consumable-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
+                      
                       <td>
                         <?php
                         $officeName = trim((string)($row['office_name'] ?? ''));
@@ -1044,11 +1034,9 @@ ORDER BY an.date_created DESC
               </div>
 
               <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill">
-                <i class="bi bi-file-earmark-arrow-down"></i> Generate Report
+                <i class="bi bi-file-earmark-arrow-down"></i> Generate Selected
               </button>
-              <button type="button" id="btnPrintSelectedUnserv" class="btn btn-primary btn-sm rounded-pill">
-                <i class="bi bi-printer"></i> Print Selected (<span id="unservSelectedCount">0</span>)
-              </button>
+              
             </form>
           </div>
           <div class="card-body">
