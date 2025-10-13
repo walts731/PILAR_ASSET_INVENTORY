@@ -283,16 +283,19 @@ $cat_stmt->close();
       <!-- Consumables Tab -->
       <div class="tab-pane fade" id="consumables" role="tabpanel">
         <?php
-        $ctotal = $cavailable = $cout_of_stock = 0;
+        $ctotal = $cavailable = $clow_stock = $cout_of_stock = 0;
         $threshold = 5;
-        $cres = $conn->prepare("SELECT quantity FROM assets WHERE type = 'consumable' AND office_id = ? AND quantity > 0");
+        $cres = $conn->prepare("SELECT quantity FROM assets WHERE type = 'consumable' AND office_id = ?");
         $cres->bind_param("i", $office_id);
         $cres->execute();
         $cresResult = $cres->get_result();
         while ($r = $cresResult->fetch_assoc()) {
           $ctotal++;
-          if ((int)$r['quantity'] <= $threshold) {
+          $qty = (int)$r['quantity'];
+          if ($qty == 0) {
             $cout_of_stock++;
+          } elseif ($qty <= $threshold) {
+            $clow_stock++;
           } else {
             $cavailable++;
           }
@@ -304,10 +307,11 @@ $cat_stmt->close();
           $cards = [
             ['Total', $ctotal, 'box-seam', 'primary'],
             ['Available', $cavailable, 'check-circle', 'success'],
+            ['Low Stock', $clow_stock, 'exclamation-triangle', 'warning'],
             ['Out of Stock', $cout_of_stock, 'slash-circle', 'danger']
           ];
           foreach ($cards as [$title, $value, $icon, $color]): ?>
-            <div class="col-12 col-sm-4 col-md-4 mb-3">
+            <div class="col-12 col-sm-6 col-md-3 mb-3">
               <div class="card shadow-sm h-100">
                 <div class="card-body d-flex justify-content-between align-items-center">
                   <div>
@@ -371,20 +375,21 @@ $cat_stmt->close();
                 </thead>
                 <tbody>
                   <?php
-                  $stmt = $conn->prepare("\n                      SELECT a.*, c.category_name \n                      FROM assets a \n                      LEFT JOIN categories c ON a.category = c.id \n                      WHERE a.type = 'consumable' AND a.office_id = ? AND a.quantity > 0\n                  ");
+                  $stmt = $conn->prepare("\n                      SELECT a.*, c.category_name \n                      FROM assets a \n                      LEFT JOIN categories c ON a.category = c.id \n                      WHERE a.type = 'consumable' AND a.office_id = ?\n                  ");
                   $stmt->bind_param("i", $office_id);
                   $stmt->execute();
                   $result = $stmt->get_result();
                   while ($row = $result->fetch_assoc()):
                     $is_low = $row['quantity'] <= $threshold;
+                    $is_zero = $row['quantity'] == 0;
                   ?>
-                    <tr data-stock="<?= $is_low ? 'low' : 'normal' ?>">
+                    <tr data-stock="<?= $is_zero ? 'zero' : ($is_low ? 'low' : 'normal') ?>">
                       <td><input type="checkbox" class="consumable-checkbox" name="selected_assets[]" value="<?= $row['id'] ?>"></td>
                       
                       <td><?= htmlspecialchars($row['description']) ?></td>
-                      <td class="<?= $is_low ? 'text-danger fw-bold' : '' ?>"><?= $row['quantity'] ?></td>
+                      <td class="<?= $is_zero ? 'text-muted fw-bold' : ($is_low ? 'text-danger fw-bold' : '') ?>"><?= $row['quantity'] ?></td>
                       <td><?= $row['unit'] ?></td>
-                      <td><span class="badge bg-<?= $is_low ? 'danger' : 'success' ?>"><?= $is_low ? 'Out of Stock' : 'Available' ?></span></td>
+                      <td><span class="badge bg-<?= $is_zero ? 'secondary' : ($is_low ? 'warning' : 'success') ?>"><?= $is_zero ? 'Out of Stock' : ($is_low ? 'Low Stock' : 'Available') ?></span></td>
                      
                       <td>
                         
