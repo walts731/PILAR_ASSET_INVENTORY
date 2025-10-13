@@ -467,10 +467,13 @@ $stmt->close();
           <div class="p-3 border-bottom">
             <div class="row g-2">
               <div class="col-md-4">
-                <div class="input-group input-group-sm">
+                <div class="input-group input-group-sm" style="max-width: 350px;">
                   <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-                  <input type="text" id="searchUser" class="form-control border-start-0" placeholder="Search by name..."
+                  <input type="text" id="searchUser" class="form-control border-start-0" placeholder="Search by name, email, or role..."
                          autocomplete="off">
+                  <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                    <i class="bi bi-search"></i> Search
+                  </button>
                 </div>
               </div>
             </div>
@@ -479,7 +482,6 @@ $stmt->close();
             <table id="userTable" class="table table-hover align-middle mb-0">
               <thead class="bg-light">
                 <tr>
-                  <th>ID</th>
                   <th>Username</th>
                   <th>Full Name</th>
                   <th>Email</th>
@@ -496,12 +498,18 @@ $stmt->close();
                 while ($user = $userResult->fetch_assoc()): 
                 ?>
                   <tr>
-                    <td><?= htmlspecialchars($user['id']) ?></td>
-                    <td><?= htmlspecialchars($user['username']) ?></td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="ms-2">
+                          <div class="fw-semibold"><?= htmlspecialchars($user['username']) ?></div>
+                          <div class="text-muted small">ID: <?= htmlspecialchars($user['id']) ?></div>
+                        </div>
+                      </div>
+                    </td>
                     <td><?= htmlspecialchars($user['fullname']) ?></td>
                     <td><?= htmlspecialchars($user['email']) ?></td>
                     <td>
-                      <span class="badge bg-<?= $user['role'] === 'admin' ? 'primary' : 'success' ?>">
+                      <span class="badge bg-<?= in_array(strtolower($user['role']), ['admin', 'system_admin']) ? 'primary' : 'success' ?>">
                         <?= ucfirst(htmlspecialchars($user['role'])) ?>
                       </span>
                     </td>
@@ -1070,31 +1078,64 @@ $(document).ready(function() {
     }
 });
 
-// Search functionality
+// Initialize DataTable with search functionality
 $(document).ready(function() {
-    // Initialize DataTable if not already initialized
+    // Initialize DataTable
     var userTable = $('#userTable').DataTable({
         paging: true,
-        searching: false, // Disable default search box
+        searching: true,
         info: true,
         responsive: true,
         order: [[0, 'asc']],
         language: {
-            search: "_INPUT_",
+            search: "",
             searchPlaceholder: "Search users...",
             lengthMenu: "Show _MENU_ users per page",
             info: "Showing _START_ to _END_ of _TOTAL_ users",
             infoEmpty: "No users found",
             infoFiltered: "(filtered from _MAX_ total users)"
-        }
+        },
+        // Disable the default search box
+        dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+             "<'row'<'col-sm-12'tr>>" +
+             "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
     });
 
-    // Custom search functionality
-    $('#searchUser').on('keyup', function() {
-        var searchTerm = $(this).val().toLowerCase();
-        
-        // Search in the full name column (index 2)
-        userTable.column(2).search(searchTerm, false, true).draw();
+    // Get search elements
+    var searchInput = $('#searchUser');
+    var searchButton = $('#searchButton');
+    
+    // Function to perform search
+    function performSearch() {
+        userTable.search(searchInput.val()).draw();
+    }
+    
+    // Handle search when typing (with a small delay)
+    var searchTimeout;
+    searchInput.on('keyup', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() {
+            performSearch();
+        }, 300);
     });
+    
+    // Handle search button click
+    searchButton.on('click', function() {
+        performSearch();
+    });
+    
+    // Handle Enter key in search input
+    searchInput.on('keypress', function(e) {
+        if (e.which === 13) { // 13 is Enter key
+            e.preventDefault();
+            performSearch();
+        }
+    });
+    
+    // Clear the default search box
+    $('.dataTables_filter').remove();
+    
+    // Focus the search input when the page loads
+    searchInput.focus();
 });
 </script>
