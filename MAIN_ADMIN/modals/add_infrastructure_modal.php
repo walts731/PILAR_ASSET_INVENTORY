@@ -27,7 +27,7 @@
                             <input type="text" name="location" class="form-control">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Date Constructed/Acquired/Manufactured</label>
+                            <label class="form-label">Date Constructed</label>
                             <input type="date" name="date_constructed_acquired_manufactured" class="form-control">
                         </div>
                         <div class="col-md-4">
@@ -53,22 +53,11 @@
                             <input type="text" name="remarks" class="form-control">
                         </div>
 
-                        <!-- Separate image inputs -->
+                        <!-- Multiple image input limited to 4 images -->
                         <div class="col-md-4">
-                            <label class="form-label">Image 1</label>
-                            <input type="file" name="image_1" class="form-control" accept="image/*">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Image 2</label>
-                            <input type="file" name="image_2" class="form-control" accept="image/*">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Image 3</label>
-                            <input type="file" name="image_3" class="form-control" accept="image/*">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Image 4</label>
-                            <input type="file" name="image_4" class="form-control" accept="image/*">
+                            <label class="form-label">Additional Images (max 4)</label>
+                            <input type="file" name="additional_images[]" class="form-control" accept="image/*" multiple>
+                            <small class="text-muted">Select up to 4 images</small>
                         </div>
                     </div>
                 </div>
