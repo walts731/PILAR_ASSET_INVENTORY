@@ -82,7 +82,7 @@ if ($result && $result->num_rows > 0) {
                     <td><?= htmlspecialchars($mr['person_accountable']) ?></td>
                     <td><?= date('F d, Y', strtotime($mr['created_at'])) ?></td>
                     <td class="text-center">
-                      <a href="view_mr.php?id=<?= urlencode($mr['mr_id']) ?>" class="btn btn-sm btn-outline-primary">
+                      <a href="bulk_print_mr.php?ids=<?= urlencode($mr['mr_id']) ?>" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-eye"></i> View
                       </a>
                     </td>

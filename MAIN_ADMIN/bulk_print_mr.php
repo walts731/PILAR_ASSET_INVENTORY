@@ -39,21 +39,15 @@ if (empty($mr_records)) {
 $mr_count = count($mr_records);
 logBulkActivity('PRINT', $mr_count, 'MR Records');
 
-// Fetch system logo
-$stmt_logo = $conn->prepare("SELECT logo FROM system WHERE id = 1");
-$stmt_logo->execute();
-$result_logo = $stmt_logo->get_result();
-$system_logo = $result_logo->fetch_assoc();
-$stmt_logo->close();
+$system = [
+    'logo' => '../img/default-logo.png',
+    'system_title' => 'Inventory System'
+];
 
-$logoData = "";
-if ($system_logo && !empty($system_logo['logo'])) {
-    $logoPath = $system_logo['logo'];
-    $imagePath = realpath(__DIR__ . '/../img/' . $logoPath);
-    if ($imagePath && file_exists($imagePath)) {
-        $imageData = base64_encode(file_get_contents($imagePath));
-        $logoData = 'data:image/png;base64,' . $imageData;
-    }
+// Fetch system settings
+$result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
+if ($result && $result->num_rows > 0) {
+    $system = $result->fetch_assoc();
 }
 
 // Function to get QR code data for an asset
@@ -274,9 +268,7 @@ if (!function_exists('formatDateSafe')) {
             ?>
             <div class="mr-record">
                 <div class="mr-header">
-                    <?php if ($logoData): ?>
-                        <img src="<?= $logoData ?>" alt="Municipal Logo" class="mr-logo">
-                    <?php endif; ?>
+                    <img src="../img/<?= htmlspecialchars($system['logo']) ?>" alt="Municipal Logo" class="mr-logo">
                     
                     <div class="mr-title">
                         <h3>GOVERNMENT PROPERTY</h3>

@@ -252,6 +252,13 @@ $page = basename($_SERVER['PHP_SELF'], ".php");
             <a href="../SYSTEM_ADMIN/user_roles.php" class="<?= ($page == 'user_roles') ? 'active' : '' ?>">
                 <i class="bi bi-people"></i> User Roles
             </a>
+
+            <!-- Logout -->
+    <div class="p-3 border-top">
+        <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#logoutModal">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+    </div>
     </div>
 </div>
 
