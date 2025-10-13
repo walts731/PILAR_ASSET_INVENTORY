@@ -28,6 +28,23 @@ if ($colRes && $colRes->num_rows === 0) {
   $conn->query("ALTER TABLE system ADD COLUMN default_user_password VARCHAR(255) NULL AFTER system_title");
 }
 
+// Fetch all roles from the database
+$roles = [];
+$rolesQuery = $conn->query("SELECT * FROM roles ORDER BY name ASC");
+if ($rolesQuery) {
+    while ($role = $rolesQuery->fetch_assoc()) {
+        $roles[] = $role;
+    }
+}
+
+// If no roles found, set default roles
+if (empty($roles)) {
+    $defaultRoles = ['SYSTEM_ADMIN', 'MAIN_ADMIN', 'MAIN_EMPLOYEE', 'MAIN_USER'];
+    foreach ($defaultRoles as $roleName) {
+        $roles[] = ['name' => $roleName, 'description' => $roleName . ' Role'];
+    }
+}
+
 // Handle default password update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_default_password'])) {
   $newDefault = isset($_POST['default_user_password']) ? trim($_POST['default_user_password']) : '';
@@ -131,7 +148,8 @@ $stmt->close();
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/templates.css" />
   <style>
     /* Sidebar and Main Content Layout */
     .sidebar {
@@ -397,7 +415,8 @@ $stmt->close();
               <label for="default_user_password" class="form-label">Default Password for New Users</label>
               <div class="input-group">
                 <input type="password" class="form-control" id="default_user_password" name="default_user_password" 
-                      value="<?= htmlspecialchars($default_user_password) ?>" required>
+                      value="<?= htmlspecialchars($default_user_password) ?>" required
+                      autocomplete="new-password">
                 <button class="btn btn-outline-secondary toggle-password" type="button" 
                         onclick="togglePassword('default_user_password', this)">
                   <i class="bi bi-eye-slash"></i>
@@ -445,8 +464,19 @@ $stmt->close();
           </div>
         </div>
         <div class="card-body p-0">
+          <div class="p-3 border-bottom">
+            <div class="row g-2">
+              <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                  <input type="text" id="searchUser" class="form-control border-start-0" placeholder="Search by name..."
+                         autocomplete="off">
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table id="userTable" class="table table-hover align-middle mb-0">
               <thead class="bg-light">
                 <tr>
                   <th>ID</th>
@@ -482,30 +512,9 @@ $stmt->close();
                       </span>
                     </td>
                     <td>
-                      <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary edit-user" data-id="<?= $user['id'] ?>">
-                          <i class="bi bi-pencil"></i>
-                        </button>
-                        <?php if ($user['status'] === 'active'): ?>
-                          <?php if ($user['role'] !== 'admin'): ?>
-                            <button type="button" class="btn btn-outline-danger deactivate-user" 
-                                    data-id="<?= $user['id'] ?>" 
-                                    data-name="<?= htmlspecialchars($user['fullname']) ?>">
-                              <i class="bi bi-person-dash"></i>
-                            </button>
-                          <?php else: ?>
-                            <button type="button" class="btn btn-outline-secondary" disabled>
-                              <i class="bi bi-shield-lock"></i>
-                            </button>
-                          <?php endif; ?>
-                        <?php else: ?>
-                          <button type="button" class="btn btn-outline-success activate-user" 
-                                  data-id="<?= $user['id'] ?>" 
-                                  data-name="<?= htmlspecialchars($user['fullname']) ?>">
-                            <i class="bi bi-person-check"></i>
-                          </button>
-                        <?php endif; ?>
-                      </div>
+                      <button type="button" class="btn btn-outline-primary btn-sm edit-user" data-id="<?= $user['id'] ?>">
+                        <i class="bi bi-pencil"></i>
+                      </button>
                     </td>
                   </tr>
                 <?php endwhile; ?>
@@ -519,7 +528,7 @@ $stmt->close();
 
   <!-- Add User Modal -->
   <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <form id="addUserForm" action="process_user.php" method="POST">
           <input type="hidden" name="action" value="add_user">
@@ -528,42 +537,62 @@ $stmt->close();
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <div class="mb-3">
-              <label for="fullname" class="form-label">Full Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="fullname" name="fullname" required>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="fullname" class="form-label">Full Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="fullname" name="fullname" required
+                         autocomplete="name">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="username" name="username" required
+                         autocomplete="username">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                  <input type="email" class="form-control" id="email" name="email" required
+                         autocomplete="email">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+                  <select class="form-select" id="role" name="role" required>
+                    <option value="">Select Role</option>
+                    <?php 
+                    $roleQuery = $conn->query("SELECT * FROM roles");
+                    while ($role = $roleQuery->fetch_assoc()): ?>
+                      <option value="<?= htmlspecialchars($role['name']) ?>"><?= htmlspecialchars($role['name']) ?></option>
+                    <?php endwhile; ?>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="office" class="form-label">Office <span class="text-danger">*</span></label>
+                  <select class="form-select" id="office" name="office_id" required>
+                    <option value="">Select Office</option>
+                    <?php 
+                    $officeQuery->data_seek(0); // Reset pointer
+                    while ($office = $officeQuery->fetch_assoc()): ?>
+                      <option value="<?= $office['id'] ?>"><?= htmlspecialchars($office['office_name']) ?></option>
+                    <?php endwhile; ?>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div class="mb-3">
-              <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="username" name="username" required>
-            </div>
-            <div class="mb-3">
-              <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-              <input type="email" class="form-control" id="email" name="email" required>
-            </div>
-            <div class="mb-3">
-              <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
-              <select class="form-select" id="role" name="role" required>
-                <option value="">Select Role</option>
-                <option value="admin">Administrator</option>
-                <option value="user" selected>Standard User</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="office" class="form-label">Office <span class="text-danger">*</span></label>
-              <select class="form-select" id="office" name="office_id" required>
-                <option value="">Select Office</option>
-                <?php 
-                $officeQuery->data_seek(0); // Reset pointer
-                while ($office = $officeQuery->fetch_assoc()): ?>
-                  <option value="<?= $office['id'] ?>"><?= htmlspecialchars($office['office_name']) ?></option>
-                <?php endwhile; ?>
-              </select>
-            </div>
-            <div class="form-check mb-3">
-              <input class="form-check-input" type="checkbox" id="sendWelcomeEmail" name="send_welcome_email" checked>
-              <label class="form-check-label" for="sendWelcomeEmail">
-                Send welcome email with login instructions
-              </label>
+            <div class="mt-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="sendWelcomeEmail" name="send_welcome_email" checked>
+                <label class="form-check-label" for="sendWelcomeEmail">
+                  Send welcome email with login instructions
+                </label>
+              </div>
             </div>
           </div>
           <div class="modal-footer">
@@ -575,107 +604,16 @@ $stmt->close();
     </div>
   </div>
 
-  <!-- Edit User Modal -->
-  <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <form id="editUserForm" action="process_user.php" method="POST">
-          <input type="hidden" name="action" value="update_user">
-          <input type="hidden" name="user_id" id="editUserId">
-          <div class="modal-header">
-            <h5 class="modal-title">Edit User</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label for="editFullname" class="form-label">Full Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="editFullname" name="fullname" required>
-            </div>
-            <div class="mb-3">
-              <label for="editUsername" class="form-label">Username <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="editUsername" name="username" required>
-            </div>
-            <div class="mb-3">
-              <label for="editEmail" class="form-label">Email <span class="text-danger">*</span></label>
-              <input type="email" class="form-control" id="editEmail" name="email" required>
-            </div>
-            <div class="mb-3">
-              <label for="editRole" class="form-label">Role <span class="text-danger">*</span></label>
-              <select class="form-select" id="editRole" name="role" required>
-                <option value="admin">Administrator</option>
-                <option value="user">Standard User</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Status</label>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="status" id="statusActive" value="active" checked>
-                <label class="form-check-label" for="statusActive">Active</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="status" id="statusInactive" value="inactive">
-                <label class="form-check-label" for="statusInactive">Inactive</label>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <script>
-    $(document).ready(function() {
-      // Initialize DataTable
-      $('#userTable').DataTable({
-        pageLength: 25,
-        order: [[0, 'asc']],
-        responsive: true,
-        language: {
-          search: "_INPUT_",
-          searchPlaceholder: "Search users...",
-          lengthMenu: "Show _MENU_ users per page",
-          info: "Showing _START_ to _END_ of _TOTAL_ users",
-          infoEmpty: "No users found",
-          infoFiltered: "(filtered from _MAX_ total users)"
-        },
-        columnDefs: [
-          { orderable: false, targets: -1 } // Disable sorting on actions column
-        ]
-      });
-
-      // Handle edit user button click
-      $('.editUserBtn').on('click', function() {
-        const btn = $(this);
-        $('#editUserId').val(btn.data('id'));
-        $('#editFullname').val(btn.data('fullname'));
-        $('#editUsername').val(btn.data('username'));
-        $('#editEmail').val(btn.data('email'));
-        $('#editRole').val(btn.data('role'));
-        $(`#status${btn.data('status').charAt(0).toUpperCase() + btn.data('status').slice(1)}`).prop('checked', true);
-      });
-
-      // Toggle password visibility
-      $('.toggle-password').on('click', function() {
-        const input = $($(this).data('target'));
-        const icon = $(this).find('i');
-        const type = input.attr('type') === 'password' ? 'text' : 'password';
-        input.attr('type', type);
-        icon.toggleClass('bi-eye bi-eye-slash');
-      });
-
-      // Initialize tooltips
-      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-      tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-      });
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
     });
   </script>
 </div>
@@ -696,68 +634,6 @@ $stmt->close();
     }
   }
 </script>
-</body>
-</html>
-
-<!-- Add User Modal -->
-<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form id="addUserForm" action="process_user.php" method="POST">
-                <input type="hidden" name="action" value="add_user">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="fullname" class="form-label">Full Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="fullname" name="fullname" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="username" name="username" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" id="email" name="email" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
-                                <select class="form-select" id="role" name="role" required>
-                                    <option value="">Select Role</option>
-                                    <?php foreach ($roles as $role): ?>
-                                        <option value="<?= htmlspecialchars($role['name']) ?>"><?= htmlspecialchars($role['name']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="sendWelcomeEmail" name="send_welcome_email" checked>
-                                <label class="form-check-label" for="sendWelcomeEmail">
-                                    Send welcome email with login instructions
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add User</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <!-- Edit User Modal -->
 <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
@@ -775,19 +651,22 @@ $stmt->close();
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="editFullname" class="form-label">Full Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="editFullname" name="fullname" required>
+                                <input type="text" class="form-control" id="editFullname" name="fullname" required
+                                       autocomplete="name">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="editUsername" class="form-label">Username <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="editUsername" name="username" required>
+                                <input type="text" class="form-control" id="editUsername" name="username" required
+                                       autocomplete="username">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="editEmail" class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" id="editEmail" name="email" required>
+                                <input type="email" class="form-control" id="editEmail" name="email" required
+                                       autocomplete="email">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -848,6 +727,7 @@ $stmt->close();
                                    class="form-control" 
                                    id="resetPwNewPassword" 
                                    name="new_password" 
+                                   autocomplete="new-password"
                                    placeholder="Leave blank to generate random password"
                                    autocomplete="new-password">
                             <button class="btn btn-outline-secondary" 
@@ -897,43 +777,6 @@ if (typeof NotificationManager === 'undefined') {
 }
 
 $(document).ready(function() {
-    // Initialize DataTable
-    var usersTable = $('#usersTable').DataTable({
-        responsive: true,
-        order: [[0, 'asc']],
-        pageLength: 25,
-        dom: '<"d-flex justify-content-between align-items-center mb-3"f<"d-flex align-items-center">>rt<"d-flex justify-content-between align-items-center"ip>',
-        language: {
-            search: "",
-            searchPlaceholder: "Search users...",
-            lengthMenu: "Show _MENU_ entries",
-            info: "Showing _START_ to _END_ of _TOTAL_ users",
-            infoEmpty: "No users found",
-            infoFiltered: "(filtered from _MAX_ total users)",
-            paginate: {
-                first: "First",
-                last: "Last",
-                next: "Next",
-                previous: "Previous"
-            }
-        },
-        initComplete: function() {
-            // Move the search box to the custom container
-            $('div.dt-buttons').appendTo('.dataTables_filter');
-            $('.dataTables_filter').addClass('d-flex align-items-center');
-        }
-    });
-
-    // Custom search box
-    $('#userSearch').on('keyup', function() {
-        usersTable.search(this.value).draw();
-    });
-
-    // Search button click handler
-    $('#searchButton').on('click', function() {
-        usersTable.search($('#userSearch').val()).draw();
-    });
-
     // Initialize tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -1225,5 +1068,33 @@ $(document).ready(function() {
             $('.alert').alert('close');
         }, 5000);
     }
+});
+
+// Search functionality
+$(document).ready(function() {
+    // Initialize DataTable if not already initialized
+    var userTable = $('#userTable').DataTable({
+        paging: true,
+        searching: false, // Disable default search box
+        info: true,
+        responsive: true,
+        order: [[0, 'asc']],
+        language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search users...",
+            lengthMenu: "Show _MENU_ users per page",
+            info: "Showing _START_ to _END_ of _TOTAL_ users",
+            infoEmpty: "No users found",
+            infoFiltered: "(filtered from _MAX_ total users)"
+        }
+    });
+
+    // Custom search functionality
+    $('#searchUser').on('keyup', function() {
+        var searchTerm = $(this).val().toLowerCase();
+        
+        // Search in the full name column (index 2)
+        userTable.column(2).search(searchTerm, false, true).draw();
+    });
 });
 </script>
