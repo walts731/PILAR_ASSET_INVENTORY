@@ -608,12 +608,11 @@ ORDER BY an.date_created DESC
                 <button type="button" class="btn btn-sm btn-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#addConsumableModal">
                   <i class="bi bi-plus-circle me-1"></i> Add Consumable
                 </button>
-              </div>
-              <div class="btn-group ms-2" role="group">
                 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importConsumableModal">
                   <i class="bi bi-upload me-1"></i> Import
                 </button>
               </div>
+             
               <div class="d-flex flex-wrap gap-2 align-items-center">
                 <select id="stockFilter" class="form-select form-select-sm d-inline-block w-auto">
                   <option value="">All Items</option>

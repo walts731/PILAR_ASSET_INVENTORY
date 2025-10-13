@@ -48,7 +48,7 @@ $from = isset($_GET['from']) && $_GET['from'] !== '' ? $_GET['from'] : null; // 
 $to   = isset($_GET['to']) && $_GET['to'] !== '' ? $_GET['to']   : null;     // YYYY-MM-DD
 
 // System info and logo
-$logoPath = '../img/PILAR LOGO TRANSPARENT.png';
+$logoPath = '../img/new_logo.png';
 $logoBase64 = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : '';
 $system_info = [
   'system_title' => 'PILAR Asset Inventory System',
