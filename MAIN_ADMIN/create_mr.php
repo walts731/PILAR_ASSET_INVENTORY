@@ -52,6 +52,8 @@ function saveEmailNotification(mysqli $conn, array $data) {
     $stmt->close();
 }
 
+// (vehicle prefill moved below after $asset_id is set)
+
 // Helper: send MR email and log regardless of delivery success
 function sendMrEmailAndLog(mysqli $conn, $employeeId, $personName, $assetId, $mrId, $officeLocation, $inventoryTag, $description, $propertyNo, $serialNo) {
     ensureEmailNotificationsTable($conn);
@@ -69,6 +71,7 @@ function sendMrEmailAndLog(mysqli $conn, $employeeId, $personName, $assetId, $mr
             $st->close();
         }
     }
+
 
     // Build subject/body
     $subject = 'New Material Receipt (MR) Assignment Notification';
@@ -136,6 +139,38 @@ $asset_id = isset($_GET['asset_id']) ? (int)$_GET['asset_id'] : null; // item-le
 $asset_data = [];
 $office_name = '';
 $asset_details = [];
+
+// Prefill vehicle details if available (must run after $asset_id is set)
+$vehicle_existing = null;
+if (!empty($asset_id)) {
+    if ($sv = $conn->prepare("SELECT color, `type` AS vehicle_type, plate_number, chassis_number, or_cr_number, engine_number FROM vehicle_details WHERE asset_id = ? LIMIT 1")) {
+        $sv->bind_param('i', $asset_id);
+        if ($sv->execute()) {
+            $rv = $sv->get_result();
+            if ($rv && ($rowv = $rv->fetch_assoc())) { $vehicle_existing = $rowv; }
+        }
+        $sv->close();
+    }
+    if (empty($vehicle_existing)) {
+        if ($sv2 = $conn->prepare("SELECT * FROM vehicle_details WHERE asset_id = ? LIMIT 1")) {
+            $sv2->bind_param('i', $asset_id);
+            if ($sv2->execute()) {
+                $rv2 = $sv2->get_result();
+                if ($rv2 && ($r2 = $rv2->fetch_assoc())) {
+                    $vehicle_existing = [
+                        'color' => $r2['color'] ?? '',
+                        'vehicle_type' => $r2['vehicle_type'] ?? ($r2['type'] ?? ''),
+                        'plate_number' => $r2['plate_number'] ?? '',
+                        'chassis_number' => $r2['chassis_number'] ?? '',
+                        'or_cr_number' => $r2['or_cr_number'] ?? '',
+                        'engine_number' => $r2['engine_number'] ?? '',
+                    ];
+                }
+            }
+            $sv2->close();
+        }
+    }
+}
 
 // Fetch categories for dropdown (include category_code) - only active
 $categories = [];
@@ -623,6 +658,81 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 if ($chk) { $chk->close(); }
             } catch (Throwable $e) { /* ignore */ }
         }
+
+        try {
+            $is_vehicle_category = false;
+            if (!empty($category_id)) {
+                if ($stCat = $conn->prepare("SELECT category_name FROM categories WHERE id = ? LIMIT 1")) {
+                    $stCat->bind_param('i', $category_id);
+                    if ($stCat->execute()) {
+                        $rsCat = $stCat->get_result();
+                        if ($rsCat && ($rc = $rsCat->fetch_assoc())) {
+                            $catName = strtolower(trim((string)$rc['category_name']));
+                            $is_vehicle_category = ($catName === 'vehicles' || $catName === 'vehicle');
+                        }
+                    }
+                    $stCat->close();
+                }
+            }
+
+            $conn->query("CREATE TABLE IF NOT EXISTS vehicle_details (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                asset_id INT NOT NULL,
+                color VARCHAR(100) NULL,
+                type VARCHAR(100) NULL,
+                plate_number VARCHAR(100) NULL,
+                chassis_number VARCHAR(150) NULL,
+                or_cr_number VARCHAR(150) NULL,
+                engine_number VARCHAR(150) NULL,
+                created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uniq_asset (asset_id),
+                CONSTRAINT fk_vehicle_asset FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            if ($is_vehicle_category) {
+                // Ensure required columns exist (idempotent)
+                $columnsNeeded = ['color' => "VARCHAR(100)", 'type' => "VARCHAR(100)", 'plate_number' => "VARCHAR(100)", 'chassis_number' => "VARCHAR(150)", 'or_cr_number' => "VARCHAR(150)", 'engine_number' => "VARCHAR(150)"];
+                if ($ci = $conn->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'vehicle_details'")) {
+                    if ($ci->execute()) {
+                        $rs = $ci->get_result();
+                        $present = [];
+                        while ($rs && ($r = $rs->fetch_assoc())) { $present[$r['COLUMN_NAME']] = true; }
+                        foreach ($columnsNeeded as $col => $def) {
+                            if (empty($present[$col])) {
+                                // Try add column if missing
+                                @$conn->query("ALTER TABLE vehicle_details ADD COLUMN `{$col}` {$def} NULL");
+                            }
+                        }
+                    }
+                    $ci->close();
+                }
+
+                $vehicle_color   = trim($_POST['vehicle_color'] ?? '');
+                $vehicle_type    = trim($_POST['vehicle_type'] ?? '');
+                $plate_number    = trim($_POST['plate_number'] ?? '');
+                $chassis_number  = trim($_POST['chassis_number'] ?? '');
+                $or_cr_number    = trim($_POST['or_cr_number'] ?? '');
+                $engine_number   = trim($_POST['engine_number'] ?? '');
+
+                if ($stVeh = $conn->prepare("INSERT INTO vehicle_details (asset_id, color, type, plate_number, chassis_number, or_cr_number, engine_number)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE color = VALUES(color), type = VALUES(type), plate_number = VALUES(plate_number), chassis_number = VALUES(chassis_number), or_cr_number = VALUES(or_cr_number), engine_number = VALUES(engine_number)")) {
+                    $stVeh->bind_param(
+                        'issssss',
+                        $asset_id_form,
+                        $vehicle_color,
+                        $vehicle_type,
+                        $plate_number,
+                        $chassis_number,
+                        $or_cr_number,
+                        $engine_number
+                    );
+                    $stVeh->execute();
+                    $stVeh->close();
+                }
+            }
+        } catch (Throwable $e) { /* non-fatal vehicle details handling */ }
     }
 
     // Ensure we have a source item mapping for this asset when available
@@ -1172,9 +1282,10 @@ if ($baseSerial !== '') {
                                         <label for="serial_no" class="form-label fw-semibold">
                                             <i class="bi bi-hash me-1 text-success"></i>Serial Number
                                         </label>
+                                        <span class="text-danger">*</span>
                                         <input type="text" class="form-control" name="serial_no"
                                             value="<?= htmlspecialchars($display_serial_no) ?>"
-                                            placeholder="Auto-generated from tag format" <?= !empty($existing_serial_no) ? 'readonly' : '' ?> id="serial_no">
+                                            placeholder="Auto-generated from tag format" <?= !empty($existing_serial_no) ? 'readonly' : '' ?> id="serial_no" required>
                                         <div class="form-text">
                                             <i class="bi bi-info-circle me-1"></i>
                                             Auto-generated unique serial number - Format managed in 
@@ -1189,9 +1300,10 @@ if ($baseSerial !== '') {
                                         <label for="code" class="form-label fw-semibold">
                                             <i class="bi bi-upc me-1 text-success"></i>Asset Code
                                         </label>
+                                        <span class="text-danger">*</span>
                                         <input type="text" class="form-control" name="code" id="code"
                                             value="<?= htmlspecialchars($display_asset_code) ?>"
-                                            placeholder="Auto-generated based on category" <?= !empty($existing_asset_code) ? 'readonly' : '' ?>>
+                                            placeholder="Auto-generated based on category" <?= !empty($existing_asset_code) ? 'readonly' : '' ?> required>
                                         <div class="form-text">
                                             <i class="bi bi-info-circle me-1"></i>
                                             Internal asset classification code - Format managed in 
@@ -1202,10 +1314,43 @@ if ($baseSerial !== '') {
                                         <label for="property_no" class="form-label fw-semibold">
                                             <i class="bi bi-card-heading me-1 text-success"></i>Property Number
                                         </label>
+                                        <span class="text-danger">*</span>
                                         <input type="text" class="form-control" name="property_no" id="property_no"
                                             placeholder="<?= htmlspecialchars($placeholder_property_no) ?>"
-                                            value="<?= htmlspecialchars($display_property_no) ?>">
+                                            value="<?= htmlspecialchars($display_property_no) ?>" required>
                                         <div class="form-text">Official government property number</div>
+                                    </div>
+                                </div>
+
+                                <div id="vehicleDetailsCard" class="card border-0 bg-light mb-3" style="display: none;">
+                                    <div class="card-body">
+                                        <h6 class="fw-semibold text-secondary mb-2"><i class="bi bi-truck me-1"></i>Vehicle Details</h6>
+                                        <div id="vehicleFields" class="row g-2">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Color</label>
+                                                <input type="text" class="form-control" name="vehicle_color" placeholder="e.g., White" value="<?= isset($vehicle_existing['color']) ? htmlspecialchars($vehicle_existing['color']) : '' ?>">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Type</label>
+                                                <input type="text" class="form-control" name="vehicle_type" placeholder="e.g., SUV" value="<?= isset($vehicle_existing['vehicle_type']) ? htmlspecialchars($vehicle_existing['vehicle_type']) : '' ?>">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Plate Number</label>
+                                                <input type="text" class="form-control" name="plate_number" placeholder="e.g., ABC-1234" value="<?= isset($vehicle_existing['plate_number']) ? htmlspecialchars($vehicle_existing['plate_number']) : '' ?>">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Chassis Number</label>
+                                                <input type="text" class="form-control" name="chassis_number" placeholder="Enter chassis number" value="<?= isset($vehicle_existing['chassis_number']) ? htmlspecialchars($vehicle_existing['chassis_number']) : '' ?>">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">OR/CR Number</label>
+                                                <input type="text" class="form-control" name="or_cr_number" placeholder="Official Receipt / Certificate of Registration" value="<?= isset($vehicle_existing['or_cr_number']) ? htmlspecialchars($vehicle_existing['or_cr_number']) : '' ?>">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Engine Number</label>
+                                                <input type="text" class="form-control" name="engine_number" placeholder="Enter engine number" value="<?= isset($vehicle_existing['engine_number']) ? htmlspecialchars($vehicle_existing['engine_number']) : '' ?>">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1968,6 +2113,31 @@ if ($baseSerial !== '') {
                     zoomIcon.className = 'bi bi-zoom-out';
                 }
             }
+        </script>
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const categorySelect = document.getElementById('category_id');
+            const vehicleCard = document.getElementById('vehicleDetailsCard');
+            const hasVehicleExisting = <?= !empty($vehicle_existing) ? 'true' : 'false' ?>;
+            const toggleVehicleFields = () => {
+                if (!vehicleCard) return;
+                let show = false;
+                if (categorySelect) {
+                    const txt = (categorySelect.options[categorySelect.selectedIndex]?.text || '').trim().toLowerCase();
+                    show = txt.includes('vehicle');
+                }
+                if (hasVehicleExisting) show = true;
+                if (show) {
+                    vehicleCard.style.display = '';
+                } else {
+                    vehicleCard.style.display = 'none';
+                }
+            };
+            if (categorySelect) {
+                categorySelect.addEventListener('change', toggleVehicleFields);
+            }
+            toggleVehicleFields();
+        });
         </script>
     </body>
 </html>

@@ -346,6 +346,7 @@ if ($st_prop = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag
 <script>
     // Dynamic PAR preview using selected office and date
     const PAR_TEMPLATE = <?= json_encode($par_template) ?>;
+    const SERVER_PAR_PREVIEW = <?= json_encode(previewTag('par_no')) ?>;
     const PROPERTY_TEMPLATE = <?= json_encode($property_template) ?>;
     // Preview of the next property number from server counter (does not increment counter)
     const PROPERTY_PREVIEW_NEXT = <?= json_encode(previewTag('property_no')) ?>;
@@ -383,12 +384,6 @@ if ($st_prop = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag
             .replace(/\{YYYYMM\}/g, Y+M)
             .replace(/\{YYYYMMDD\}/g, Y+M+D);
     }
-    function padDigitsForPreview(tpl){
-        // For preview only, show next as 1 padded to digit count
-        return tpl.replace(/\{(#+)\}/g, (m, hashes)=>{
-            const w = hashes.length; return '0'.repeat(Math.max(0,w-1)) + '1';
-        });
-    }
     function computeParPreview(){
         const field = document.getElementById('parNoField');
         if (!field) return;
@@ -399,22 +394,17 @@ if ($st_prop = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag
             const opt = sel.options[sel.selectedIndex];
             const txt = opt ? (opt.text || '') : '';
             const en = document.getElementById('parEntityName');
-            // Always prefer typed entity name when available
             if (en && en.value.trim()) {
                 officeDisp = en.value.trim();
             } else if (sel.value && sel.value !== 'outside_lgu') {
-                // Fallback to selected office name for internal office
                 officeDisp = (txt || '').trim() || 'OFFICE';
             } else {
                 officeDisp = 'OFFICE';
             }
         }
-        // Rebuild preview from template each time so changes always reflect
-        let base = PAR_TEMPLATE || '';
-        base = replaceDatePlaceholdersLocal(base);
-        base = padDigitsForPreview(base);
+        // Use server-provided next preview to keep correct increment, only swap OFFICE and strip braces
+        let base = SERVER_PAR_PREVIEW || '';
         let updated = (base || '').replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
-        // Remove any remaining curly braces from preview
         updated = updated.replace(/[{}]/g, '');
         field.readOnly = true;
         field.required = false;
