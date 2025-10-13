@@ -1,66 +1,124 @@
 <?php
-session_start();
 require_once '../connect.php';
+session_start();
 
-// Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../index.php');
-    exit();
+  header("Location: ../index.php");
+  exit();
 }
 
-// Check if user has permission to manage users
-$has_permission = false;
-$user_id = $_SESSION['user_id'];
-$permission_check = $conn->prepare("
-    SELECT 1 FROM users u
-    LEFT JOIN user_permissions up ON u.id = up.user_id
-    WHERE u.id = ? AND (u.role = 'super_admin' OR up.permission = 'manage_users')
-    LIMIT 1
-");
-
-if ($permission_check) {
-    $permission_check->bind_param('i', $user_id);
-    $permission_check->execute();
-    $permission_check->store_result();
-    $has_permission = $permission_check->num_rows > 0;
-    $permission_check->close();
+// Ensure only SYSTEM_ADMIN can access this page
+$currentRole = $_SESSION['role'] ?? '';
+if ($currentRole !== 'SYSTEM_ADMIN') {
+  header("Location: system_admin_dashboard.php");
+  exit();
 }
 
-if (!$has_permission) {
-    $_SESSION['error'] = 'You do not have permission to manage users.';
-    header('Location: system_admin_dashboard.php');
-    exit();
+// Ensure system table has default_user_password column (idempotent)
+$conn->query("CREATE TABLE IF NOT EXISTS system (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  logo VARCHAR(255) DEFAULT '../img/default-logo.png',
+  system_title VARCHAR(255) DEFAULT 'Inventory System',
+  default_user_password VARCHAR(255) NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+// Add column only if missing
+$colRes = $conn->query("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'system' AND COLUMN_NAME = 'default_user_password'");
+if ($colRes && $colRes->num_rows === 0) {
+  $conn->query("ALTER TABLE system ADD COLUMN default_user_password VARCHAR(255) NULL AFTER system_title");
 }
 
-// Set page title
-$pageTitle = 'User Management';
+// Handle default password update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_default_password'])) {
+  $newDefault = isset($_POST['default_user_password']) ? trim($_POST['default_user_password']) : '';
+  // Upsert system row (assumes single-row table)
+  $res = $conn->query("SELECT 1 FROM system LIMIT 1");
+  if ($res && $res->num_rows > 0) {
+    $stmt = $conn->prepare("UPDATE system SET default_user_password = ? LIMIT 1");
+    $stmt->bind_param('s', $newDefault);
+    $stmt->execute();
+    $stmt->close();
+  } else {
+    $stmt = $conn->prepare("INSERT INTO system (logo, system_title, default_user_password) VALUES ('../img/default-logo.png','Inventory System',?)");
+    $stmt->bind_param('s', $newDefault);
+    $stmt->execute();
+    $stmt->close();
+  }
+  header('Location: user_management.php?default_pwd_saved=1');
+  exit();
+}
 
-// Include header
-include '../includes/header.php';
+// Load current default password for display in forms
+$default_user_password = '';
+$sys = $conn->query("SELECT default_user_password FROM system LIMIT 1");
+if ($sys && $sys->num_rows > 0) {
+  $rowSys = $sys->fetch_assoc();
+  $default_user_password = $rowSys['default_user_password'] ?? '';
+}
 
-// Fetch all users with their roles
-$users = [];
-$query = "
-    SELECT u.*, r.name as role_name, r.color as role_color
+// Soft-delete handler: mark user as deleted instead of removing
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user_id'])) {
+  $deleteUserId = (int)$_POST['delete_user_id'];
+  if ($deleteUserId > 0) {
+    $upd = $conn->prepare("UPDATE users SET status = 'deleted' WHERE id = ?");
+    $upd->bind_param('i', $deleteUserId);
+    $upd->execute();
+    $upd->close();
+    $_SESSION['success'] = 'User has been deactivated successfully.';
+  }
+  header('Location: user_management.php');
+  exit();
+}
+
+// Fetch list of offices for dropdown
+$officeQuery = $conn->query("SELECT id, office_name FROM offices");
+
+// Set selected office from GET or use session default; allow 'all'
+$selected_office = $_GET['office'] ?? 'all';
+
+// Fetch users based on selected office (support 'all')
+if ($selected_office === 'all') {
+  $userStmt = $conn->prepare("
+    SELECT u.id, u.username, u.fullname, u.email, u.role, u.status, u.created_at, o.office_name
     FROM users u
-    LEFT JOIN roles r ON u.role = r.name
-    ORDER BY u.fullname ASC
-";
-$result = $conn->query($query);
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $users[] = $row;
-    }
+    JOIN offices o ON u.office_id = o.id
+    WHERE u.status <> 'deleted'
+  ");
+} else {
+  $officeId = (int)$selected_office;
+  $userStmt = $conn->prepare("
+    SELECT u.id, u.username, u.fullname, u.email, u.role, u.status, u.created_at, o.office_name
+    FROM users u
+    JOIN offices o ON u.office_id = o.id
+    WHERE u.office_id = ? AND u.status <> 'deleted'
+  ");
+  $userStmt->bind_param("i", $officeId);
 }
 
-// Fetch all available roles
-$roles = [];
-$roles_result = $conn->query("SELECT * FROM roles ORDER BY position DESC, name ASC");
-if ($roles_result) {
-    while ($role = $roles_result->fetch_assoc()) {
-        $roles[] = $role;
-    }
+$userStmt->execute();
+$userResult = $userStmt->get_result();
+$user_total = $userResult->num_rows;
+
+// Fetch current user's office if not set
+if (!isset($_SESSION['office_id'])) {
+  $stmt = $conn->prepare("SELECT office_id FROM users WHERE id = ?");
+  $stmt->bind_param("i", $_SESSION['user_id']);
+  $stmt->execute();
+  $stmt->bind_result($office_id);
+  if ($stmt->fetch()) {
+    $_SESSION['office_id'] = $office_id;
+  }
+  $stmt->close();
 }
+
+// Fetch user's full name for display
+$user_name = '';
+$stmt = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
+$stmt->bind_param("i", $_SESSION['user_id']);
+$stmt->execute();
+$stmt->bind_result($fullname);
+$stmt->fetch();
+$stmt->close();
 ?>
 
 <div class="d-flex">
