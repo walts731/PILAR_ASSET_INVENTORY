@@ -301,10 +301,10 @@ if ($role === 'user' && $userId > 0) {
             <a href="employees.php" class="<?= ($page == 'employees') ? 'active' : '' ?>">
                 <i class="bi bi-people-fill"></i> Employees
             </a>
-
+<!--
             <a href="user.php" class="<?= ($page == 'user') ? 'active' : '' ?>">
                 <i class="bi bi-person"></i> Users
-            </a>
+            </a> -->
             <a href="asset_archive.php" class="<?= ($page == 'asset_archive') ? 'active' : '' ?>">
                 <i class="bi bi-archive"></i> Archive
             </a>
