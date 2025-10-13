@@ -152,35 +152,50 @@ if ($roles_result) {
                                     <td>
                                         <?= !empty($user['last_login']) ? date('M j, Y g:i A', strtotime($user['last_login'])) : 'Never' ?>
                                     </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <button class="btn btn-sm btn-outline-primary edit-user" 
+                                    <td class="text-nowrap">
+                                        <div class="d-flex gap-2">
+                                            <!-- Edit Button -->
+                                            <button class="btn btn-sm btn-icon btn-outline-primary edit-user" 
                                                     data-id="<?= $user['id'] ?>"
                                                     data-bs-toggle="tooltip" 
-                                                    title="Edit User">
+                                                    data-bs-placement="top"
+                                                    title="Edit User"
+                                                    aria-label="Edit user">
                                                 <i class="fas fa-edit"></i>
                                             </button>
+                                            
                                             <?php if ($user['id'] != $_SESSION['user_id']): ?>
+                                                <!-- Toggle Status Button -->
                                                 <?php if ($user['status'] === 'active'): ?>
-                                                    <button class="btn btn-sm btn-outline-danger deactivate-user" 
+                                                    <button class="btn btn-sm btn-icon btn-outline-danger deactivate-user" 
                                                             data-id="<?= $user['id'] ?>"
+                                                            data-name="<?= htmlspecialchars($user['fullname']) ?>"
                                                             data-bs-toggle="tooltip" 
-                                                            title="Deactivate User">
+                                                            data-bs-placement="top"
+                                                            title="Deactivate User"
+                                                            aria-label="Deactivate user">
                                                         <i class="fas fa-user-slash"></i>
                                                     </button>
                                                 <?php else: ?>
-                                                    <button class="btn btn-sm btn-outline-success activate-user" 
+                                                    <button class="btn btn-sm btn-icon btn-outline-success activate-user" 
                                                             data-id="<?= $user['id'] ?>"
+                                                            data-name="<?= htmlspecialchars($user['fullname']) ?>"
                                                             data-bs-toggle="tooltip" 
-                                                            title="Activate User">
+                                                            data-bs-placement="top"
+                                                            title="Activate User"
+                                                            aria-label="Activate user">
                                                         <i class="fas fa-user-check"></i>
                                                     </button>
                                                 <?php endif; ?>
-                                                <button class="btn btn-sm btn-outline-secondary reset-password" 
+                                                
+                                                <!-- Reset Password Button -->
+                                                <button class="btn btn-sm btn-icon btn-outline-warning reset-password" 
                                                         data-id="<?= $user['id'] ?>"
                                                         data-name="<?= htmlspecialchars($user['fullname']) ?>"
                                                         data-bs-toggle="tooltip" 
-                                                        title="Reset Password">
+                                                        data-bs-placement="top"
+                                                        title="Reset Password"
+                                                        aria-label="Reset password">
                                                     <i class="fas fa-key"></i>
                                                 </button>
                                             <?php endif; ?>
@@ -597,5 +612,105 @@ $(document).ready(function() {
             });
         }
     });
+    // Handle deactivate user
+    $(document).on('click', '.deactivate-user', function() {
+        const $button = $(this);
+        const userId = $button.data('id');
+        const userName = $button.data('name');
+        
+        if (confirm(`Are you sure you want to deactivate ${userName}?`)) {
+            $button.addClass('btn-loading');
+            // Add your deactivation AJAX call here
+            // Example:
+            $.post('process_user.php', {
+                action: 'update_user_status',
+                user_id: userId,
+                status: 'inactive'
+            }, function(response) {
+                if (response.success) {
+                    showAlert('success', `Successfully deactivated ${userName}.`);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', response.message || 'Failed to deactivate user.');
+                    $button.removeClass('btn-loading');
+                }
+            }, 'json').fail(function() {
+                showAlert('danger', 'An error occurred. Please try again.');
+                $button.removeClass('btn-loading');
+            });
+        }
+    });
+
+    // Handle activate user
+    $(document).on('click', '.activate-user', function() {
+        const $button = $(this);
+        const userId = $button.data('id');
+        const userName = $button.data('name');
+        
+        if (confirm(`Are you sure you want to activate ${userName}?`)) {
+            $button.addClass('btn-loading');
+            
+            $.post('process_user.php', {
+                action: 'update_user_status',
+                user_id: userId,
+                status: 'active'
+            }, function(response) {
+                if (response.success) {
+                    showAlert('success', `Successfully activated ${userName}.`);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', response.message || 'Failed to activate user.');
+                    $button.removeClass('btn-loading');
+                }
+            }, 'json').fail(function() {
+                showAlert('danger', 'An error occurred. Please try again.');
+                $button.removeClass('btn-loading');
+            });
+        }
+    });
+
+    // Handle reset password
+    $(document).on('click', '.reset-password', function() {
+        const $button = $(this);
+        const userId = $button.data('id');
+        const userName = $button.data('name');
+        
+        if (confirm(`Reset password for ${userName}? A temporary password will be sent to their email.`)) {
+            $button.addClass('btn-loading');
+            
+            $.post('process_user.php', {
+                action: 'reset_password',
+                user_id: userId
+            }, function(response) {
+                $button.removeClass('btn-loading');
+                if (response.success) {
+                    showAlert('success', `Password reset email sent to ${userName}.`);
+                } else {
+                    showAlert('danger', response.message || 'Failed to reset password.');
+                }
+            }, 'json').fail(function() {
+                showAlert('danger', 'An error occurred. Please try again.');
+                $button.removeClass('btn-loading');
+            });
+        }
+    });
+
+    // Helper function to show alerts
+    function showAlert(type, message) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        
+        // Append alert to the top of the content area
+        $('.container-fluid:first').prepend(alertHtml);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            $('.alert').alert('close');
+        }, 5000);
+    }
 });
 </script>
