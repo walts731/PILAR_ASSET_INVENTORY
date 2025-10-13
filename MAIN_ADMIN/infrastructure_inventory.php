@@ -84,6 +84,14 @@ $infrastructure_total = count($inventory);
                     <button class="btn btn-outline-info btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#addInventoryModal" title="Add new infrastructure record">
                         <i class="bi bi-plus-circle me-1"></i> Add New
                     </button>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-secondary" id="infrastructureExportCsvBtn" title="Export CSV">
+                            <i class="bi bi-filetype-csv"></i> CSV
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" id="infrastructureExportPdfBtn" title="Export PDF">
+                            <i class="bi bi-filetype-pdf"></i> PDF
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -399,6 +407,27 @@ $infrastructure_total = count($inventory);
                     container.append('<div class="col-12"><small class="text-muted">Error loading images</small></div>');
                 }
             }
+
+            // Export CSV for Infrastructure
+            const infrastructureExportCsvBtn = document.getElementById('infrastructureExportCsvBtn');
+            if (infrastructureExportCsvBtn) {
+                infrastructureExportCsvBtn.addEventListener('click', () => {
+                    const exportUrl = 'export_infrastructure_csv.php';
+                    // Direct download of CSV (server will stream the file)
+                    window.location.href = exportUrl;
+                });
+            }
+
+            // Export PDF for Infrastructure
+            const infrastructureExportPdfBtn = document.getElementById('infrastructureExportPdfBtn');
+            if (infrastructureExportPdfBtn) {
+                infrastructureExportPdfBtn.addEventListener('click', () => {
+                    const exportUrl = 'export_infrastructure_pdf.php';
+                    // Open PDF in new tab for viewing/downloading
+                    window.open(exportUrl, '_blank');
+                });
+            }
+
         });
     </script>
 
