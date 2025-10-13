@@ -33,6 +33,14 @@ $darkModeClass = isDarkMode() ? 'dark-mode' : '';
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- DataTables CSS & JS -->
+<link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    
     <style>
         /* Additional global dark mode styles */
         body.dark-mode {
@@ -64,16 +72,18 @@ $darkModeClass = isDarkMode() ? 'dark-mode' : '';
         document.body.classList.toggle('dark-mode', <?php echo isDarkMode() ? 'true' : 'false'; ?>);
     });
     </script>
-    <script src="../assets/js/notifications.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const notificationManager = new NotificationManager({
-            apiUrl: 'get_notifications.php',
-            actionUrl: 'notification_action.php',
-            enableDesktopNotifications: true,
-            pollInterval: 30000, // 30 seconds
-            userId: <?php echo $_SESSION['user_id'] ?? 0; ?>
+    <script type="module">
+        import NotificationManager from '../assets/js/notifications.js';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('notificationDropdown')) {
+                window.notificationManager = new NotificationManager({
+                    apiUrl: 'get_notifications.php',
+                    actionUrl: 'notification_action.php',
+                    enableDesktopNotifications: true,
+                    pollInterval: 30000,
+                    userId: <?php echo $_SESSION['user_id'] ?? 0; ?>
+                });
+            }
         });
-        notificationManager.startPolling();
-    });
     </script>

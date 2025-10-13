@@ -63,16 +63,24 @@ if ($roles_result) {
 }
 ?>
 
-<div class="main">
-    <?php include 'includes/topbar.php' ?>
+<div class="d-flex">
+    <?php include 'includes/sidebar.php'; ?>
+    
+    <div class="main flex-grow-1">
+        <?php include 'includes/topbar.php' ?>
 
-    <div class="container-fluid py-4">
+        <div class="container-fluid py-4">
         <!-- Page Header -->
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0 text-gray-800">User Management</h1>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                <i class="fas fa-plus me-2"></i>Add New User
-            </button>
+            <div class="d-flex gap-2">
+                <a href="user_roles.php" class="btn btn-outline-secondary">
+                    <i class="fas fa-user-shield me-2"></i>Manage Roles
+                </a>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="fas fa-plus me-2"></i>Add New User
+                </button>
+            </div>
         </div>
 
         <!-- Success/Error Messages -->
@@ -94,14 +102,8 @@ if ($roles_result) {
 
         <!-- Users Table -->
         <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">All Users</h6>
-                <div class="input-group" style="max-width: 300px;">
-                    <input type="text" id="userSearch" class="form-control" placeholder="Search users...">
-                    <button class="btn btn-outline-secondary" type="button" id="searchButton">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -206,6 +208,8 @@ if ($roles_result) {
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
             </div>
         </div>
     </div>
@@ -354,15 +358,22 @@ if ($roles_result) {
                 <div class="modal-body">
                     <p>Are you sure you want to reset the password for <strong id="resetUserName"></strong>?</p>
                     <div class="form-group mt-3">
-                        <label for="newPassword" class="form-label">New Password (leave blank to generate random password)</label>
+                        <label for="resetPwNewPassword" class="form-label">New Password (leave blank to generate random password)</label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="newPassword" name="new_password" placeholder="Leave blank to generate random password">
-                            <button class="btn btn-outline-secondary" type="button" id="generatePassword">
-                                <i class="fas fa-sync-alt"></i> Generate
-                            </button>
-                        </div>
-                        <small class="form-text text-muted">Password must be at least 8 characters long.</small>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="resetPwNewPassword" 
+                                   name="new_password" 
+                                   placeholder="Leave blank to generate random password"
+                                   autocomplete="new-password">
+                            <button class="btn btn-outline-secondary" 
+                                    type="button" 
+                                    id="resetPwGeneratePassword"
+                                    aria-label="Generate random password">
+                            <i class="fas fa-sync-alt"></i> Generate
+                        </button>
                     </div>
+                    <small class="form-text text-muted">Password must be at least 8 characters long.</small>
                     <div class="form-check mt-3">
                         <input class="form-check-input" type="checkbox" id="forcePasswordChange" name="force_password_change" checked>
                         <label class="form-check-label" for="forcePasswordChange">
@@ -384,6 +395,23 @@ if ($roles_result) {
 
 <!-- Custom JavaScript -->
 <script>
+// Safe notification handling
+if (typeof NotificationManager === 'undefined') {
+    window.NotificationManager = {
+        show: function(type, message) {
+            const alertType = type === 'error' ? 'danger' : type;
+            const alertHtml = `
+                <div class="alert alert-${alertType} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            $('.container-fluid:first').prepend(alertHtml);
+            setTimeout(() => $('.alert').alert('close'), 5000);
+        }
+    };
+}
+
 $(document).ready(function() {
     // Initialize DataTable
     var usersTable = $('#usersTable').DataTable({
@@ -481,33 +509,34 @@ $(document).ready(function() {
     });
 
     // Generate random password
-    $('#generatePassword').on('click', function() {
-        var length = 12;
-        var charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{\[\]\\:;\'<>,.?/=';
-        var password = '';
+    $('#resetPwGeneratePassword').on('click', function() {
+        const password = generatePassword(12);
+        $('#resetPwNewPassword').val(password);
+    });
+
+    function generatePassword(length = 12) {
+        const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const numbers = '0123456789';
+        const symbols = '!@#$%^&*()_+~`|}{[]\\:;\'"<>,.?/=';
+        const allChars = lowercase + uppercase + numbers + symbols;
         
-        // Ensure at least one of each character type
-        var lowercase = 'abcdefghijklmnopqrstuvwxyz';
-        var uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        var numbers = '0123456789';
-        var symbols = '!@#$%^&*()_+~`|}{\[\]\\:;\'<>,.?/=';
-        
-        // Add one of each character type
-        password += lowercase.charAt(Math.floor(Math.random() * lowercase.length));
-        password += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
-        password += numbers.charAt(Math.floor(Math.random() * numbers.length));
-        password += symbols.charAt(Math.floor(Math.random() * symbols.length));
+        // Ensure at least one character from each set
+        let password = [
+            lowercase[Math.floor(Math.random() * lowercase.length)],
+            uppercase[Math.floor(Math.random() * uppercase.length)],
+            numbers[Math.floor(Math.random() * numbers.length)],
+            symbols[Math.floor(Math.random() * symbols.length)]
+        ];
         
         // Fill the rest of the password with random characters
-        for (var i = 4; i < length; i++) {
-            password += charset.charAt(Math.floor(Math.random() * charset.length));
+        for (let i = 4; i < length; i++) {
+            password.push(allChars[Math.floor(Math.random() * allChars.length)]);
         }
         
-        // Shuffle the password to make it more random
-        password = password.split('').sort(function() { return 0.5 - Math.random() }).join('');
-        
-        $('#newPassword').val(password);
-    });
+        // Shuffle the password array and join into a string
+        return password.sort(() => Math.random() - 0.5).join('');
+    }
 
     // Form submission handling
     $('#addUserForm, #editUserForm, #resetPasswordForm').on('submit', function(e) {
