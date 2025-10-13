@@ -31,7 +31,7 @@ $category_filter = isset($_GET['category']) ? intval($_GET['category']) : 0;
 $status_filter = isset($_GET['status']) ? $_GET['status'] : 'available';
 
 // Build query
-$where_conditions = ["a.type = 'asset'"];
+$where_conditions = ["a.type = 'asset'", "a.status IN ('serviceable', 'borrowed')"];
 $params = [];
 $types = "";
 
@@ -307,9 +307,9 @@ if ($cat_result) {
                         <label for="status" class="form-label">Status</label>
                         <select class="form-select" id="status" name="status">
                             <option value="">All Status</option>
-                            <option value="available" <?= $status_filter === 'available' ? 'selected' : '' ?>>Available</option>
+                            <option value="serviceable" <?= $status_filter === 'serviceable' ? 'selected' : '' ?>>Serviceable</option>
                             <option value="borrowed" <?= $status_filter === 'borrowed' ? 'selected' : '' ?>>Borrowed</option>
-                            <option value="maintenance" <?= $status_filter === 'maintenance' ? 'selected' : '' ?>>Maintenance</option>
+                           
                         </select>
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
@@ -384,12 +384,12 @@ if ($cat_result) {
                                     <?php if (!empty($asset['brand']) || !empty($asset['model'])): ?>
                                         <div><strong>Brand/Model:</strong> <?= htmlspecialchars(trim($asset['brand'] . ' ' . $asset['model'])) ?></div>
                                     <?php endif; ?>
-                                    <div><strong>Value:</strong> ₱<?= number_format($asset['value'] ?? 0, 2) ?></div>
+                                    
                                 </div>
 
                                 <!-- Action Buttons -->
                                 <div class="d-grid gap-2">
-                                    <?php if ($asset['status'] === 'available'): ?>
+                                    <?php if ($asset['status'] === 'serviceable'): ?>
                                         <button class="btn btn-borrow" onclick="requestBorrowing(<?= $asset['id'] ?>, '<?= htmlspecialchars($asset['description']) ?>')">
                                             <i class="bi bi-box-arrow-right me-1"></i>Request Borrowing
                                         </button>
@@ -466,7 +466,7 @@ if ($cat_result) {
 
         // View details function
         function viewDetails(assetId) {
-            window.location.href = `scan_qr.php?asset_id=${assetId}`;
+            window.location.href = `view_asset_details.php?id=${assetId}`;
         }
 
         // Auto-submit form on filter change
