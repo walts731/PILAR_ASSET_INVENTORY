@@ -36,7 +36,7 @@ if (!$has_permission) {
 $pageTitle = 'User Management';
 
 // Include header
-include 'includes/header.php';
+include '../includes/header.php';
 
 // Fetch all users with their roles
 $users = [];
@@ -365,7 +365,7 @@ if ($roles_result) {
 </div>
 
 <!-- Include footer -->
-<?php include 'includes/footer.php'; ?>
+<?php include '../includes/footer.php'; ?>
 
 <!-- Custom JavaScript -->
 <script>
