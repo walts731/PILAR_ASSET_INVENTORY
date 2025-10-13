@@ -92,6 +92,9 @@ $infrastructure_total = count($inventory);
                             <i class="bi bi-filetype-pdf"></i> PDF
                         </button>
                     </div>
+                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#importInfrastructureCSVModal" title="Import CSV">
+                        <i class="bi bi-upload me-1"></i> Import CSV
+                    </button>
                 </div>
             </div>
 
@@ -429,6 +432,51 @@ $infrastructure_total = count($inventory);
             }
 
         });
+
+        // Handle import success/error messages
+        $(document).ready(function() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            if (urlParams.has('import')) {
+                const importStatus = urlParams.get('import');
+                const successCount = urlParams.get('ok') || 0;
+                const failCount = urlParams.get('fail') || 0;
+                const errorMessage = urlParams.get('errors') || '';
+                const customMessage = urlParams.get('message') || '';
+
+                let alertClass = 'alert-danger';
+                let alertIcon = 'bi-exclamation-triangle';
+                let alertTitle = 'Import Failed';
+                let alertMessage = customMessage || 'An error occurred during import.';
+
+                if (importStatus === 'success') {
+                    alertClass = 'alert-success';
+                    alertIcon = 'bi-check-circle';
+                    alertTitle = 'Import Successful';
+                    alertMessage = `Successfully imported ${successCount} infrastructure record(s).`;
+                } else if (importStatus === 'partial') {
+                    alertClass = 'alert-warning';
+                    alertIcon = 'bi-exclamation-circle';
+                    alertTitle = 'Partial Import';
+                    alertMessage = `Imported ${successCount} record(s), failed ${failCount}. ${errorMessage}`;
+                }
+
+                // Create and show alert
+                const alertHtml = `
+                    <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                        <i class="bi ${alertIcon} me-2"></i>
+                        <strong>${alertTitle}</strong> ${alertMessage}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>`;
+
+                // Insert alert at the top of the container
+                $('.container-fluid').prepend(alertHtml);
+
+                // Clean up URL
+                const cleanUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
+        });
     </script>
 
     <!-- View Inventory Modal -->
@@ -439,5 +487,7 @@ $infrastructure_total = count($inventory);
     <?php include 'modals/edit_infrastructure_modal.php'; ?>
     <!-- Delete Infrastructure Modal -->
     <?php include 'modals/delete_infrastructure_modal.php'; ?>
+    <!-- Import Infrastructure CSV Modal -->
+    <?php include 'modals/import_infrastructure_csv_modal.php'; ?>
 </body>
 </html>
