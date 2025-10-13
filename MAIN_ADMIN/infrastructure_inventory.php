@@ -124,11 +124,17 @@ $infrastructure_total = count($inventory);
                                         <td><?= date("M-Y", strtotime($item['date_constructed_acquired_manufactured'])) ?></td>
                                         <td><?= htmlspecialchars($item['property_no_or_reference']) ?></td>
                                         <td class="text-center text-nowrap">
-                                            <button class="btn btn-sm btn-outline-primary rounded-pill view-btn" title="View details"
+                                            <button class="btn btn-sm btn-outline-primary rounded-pill view-btn me-1" title="View details"
                                                 data-id="<?= $item['inventory_id'] ?>"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#viewInventoryModal">
                                                 <i class="bi bi-eye me-1"></i> View
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning rounded-pill edit-btn" title="Edit record"
+                                                data-id="<?= $item['inventory_id'] ?>"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editInventoryModal">
+                                                <i class="bi bi-pencil me-1"></i> Edit
                                             </button>
                                         </td>
                                     </tr>
@@ -166,22 +172,78 @@ $infrastructure_total = count($inventory);
                 $('#inventoryTable').toggleClass('table-sm');
             });
 
-            // Handle view button click
-            $('.view-btn').on('click', function() {
+            // Handle edit button click
+            $('.edit-btn').on('click', function() {
                 let inventoryId = $(this).data('id');
-                $('#inventoryDetails').html('<div class="text-center text-muted">Loading...</div>');
+
+                // Fetch current data and populate edit modal
                 $.ajax({
-                    url: 'view_infrastructure.php',
+                    url: 'edit_infrastructure.php',
                     type: 'GET',
                     data: { id: inventoryId },
                     success: function(response) {
-                        $('#inventoryDetails').html(response);
+                        try {
+                            const data = JSON.parse(response);
+
+                            // Populate form fields
+                            $('#edit_inventory_id').val(data.inventory_id);
+                            $('#edit_classification_type').val(data.classification_type);
+                            $('#edit_item_description').val(data.item_description);
+                            $('#edit_nature_occupancy').val(data.nature_occupancy);
+                            $('#edit_location').val(data.location);
+                            $('#edit_date_constructed_acquired_manufactured').val(data.date_constructed_acquired_manufactured);
+                            $('#edit_property_no_or_reference').val(data.property_no_or_reference);
+                            $('#edit_acquisition_cost').val(data.acquisition_cost);
+                            $('#edit_market_appraisal_insurable_interest').val(data.market_appraisal_insurable_interest);
+                            $('#edit_date_of_appraisal').val(data.date_of_appraisal);
+                            $('#edit_remarks').val(data.remarks);
+
+                            // Display current images
+                            displayCurrentImages(data.additional_image);
+
+                        } catch (e) {
+                            console.error('Error parsing response:', e);
+                            alert('Error loading edit data.');
+                        }
                     },
                     error: function() {
-                        $('#inventoryDetails').html('<div class="text-danger">Error loading details.</div>');
+                        alert('Error loading edit data.');
                     }
                 });
             });
+
+            // Function to display current images in edit modal
+            function displayCurrentImages(imagesJson) {
+                const container = $('#currentImagesContainer');
+                container.empty();
+
+                if (!imagesJson) {
+                    container.append('<div class="col-12"><small class="text-muted">No existing images</small></div>');
+                    return;
+                }
+
+                try {
+                    const images = JSON.parse(imagesJson);
+                    if (images && images.length > 0) {
+                        images.forEach((imagePath, index) => {
+                            const col = $('<div class="col-md-3 col-sm-6"></div>');
+                            const imageItem = $(`
+                                <div class="image-preview-item current-image-item">
+                                    <img src="${imagePath}" alt="Current image ${index + 1}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px;">
+                                    <div class="image-file-name">${imagePath.split('/').pop()}</div>
+                                </div>
+                            `);
+                            col.append(imageItem);
+                            container.append(col);
+                        });
+                    } else {
+                        container.append('<div class="col-12"><small class="text-muted">No existing images</small></div>');
+                    }
+                } catch (e) {
+                    console.error('Error parsing images:', e);
+                    container.append('<div class="col-12"><small class="text-muted">Error loading images</small></div>');
+                }
+            }
         });
     </script>
 
@@ -189,5 +251,7 @@ $infrastructure_total = count($inventory);
     <?php include 'view_infrastructure_modal.php'; ?>
     <!-- Add Inventory Modal -->
     <?php include 'modals/add_infrastructure_modal.php'; ?>
+    <!-- Edit Inventory Modal -->
+    <?php include 'modals/edit_infrastructure_modal.php'; ?>
 </body>
 </html>
