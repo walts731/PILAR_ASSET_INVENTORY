@@ -60,6 +60,9 @@ if (isset($conn) && $conn instanceof mysqli) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     
+    <!-- Intro.js CSS -->
+    <link href="https://unpkg.com/intro.js@7.2.0/minified/introjs.min.css" rel="stylesheet">
+    
     <style>
         :root {
             --primary-color: #0b5ed7;
@@ -223,7 +226,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <span class="guest-badge me-3">
                     <i class="bi bi-person-circle me-1"></i>Guest User
                 </span>
-                <a href="#" class="btn btn-logout" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                <a href="#" class="btn btn-logout" data-bs-toggle="modal" data-bs-target="#logoutModal" data-intro="Click here to safely log out of the system." data-step="10">
                     <i class="bi bi-box-arrow-right me-1"></i>Logout
                 </a>
             </div>
@@ -233,7 +236,7 @@ if (isset($conn) && $conn instanceof mysqli) {
     <!-- Main Content -->
     <div class="container main-container">
         <!-- Welcome Section -->
-        <div class="row mb-4">
+        <div class="row mb-4" data-intro="Welcome to your guest dashboard! This is your starting point for all asset borrowing activities." data-step="1">
             <div class="col-12">
                 <div class="card welcome-card">
                     <div class="card-body p-4">
@@ -248,7 +251,10 @@ if (isset($conn) && $conn instanceof mysqli) {
                                 </p>
                                 <div class="feature-highlight">
                                     <h6><i class="bi bi-qr-code-scan me-2"></i>Quick Start:</h6>
-                                    <p class="mb-0 small">Scan any asset QR code to view details and request borrowing, or browse our available assets catalog.</p>
+                                    <p class="mb-2 small">Scan any asset QR code to view details and request borrowing, or browse our available assets catalog.</p>
+                                    <button onclick="startTutorial()" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-play-circle me-1"></i>Take a Tour
+                                    </button>
                                 </div>
                             </div>
                             <div class="col-md-4 text-center">
@@ -261,7 +267,7 @@ if (isset($conn) && $conn instanceof mysqli) {
         </div>
 
         <!-- Statistics -->
-        <div class="row mb-4">
+        <div class="row mb-4" data-intro="Here you can see an overview of asset availability in the system." data-step="2">
             <div class="col-md-4 mb-3">
                 <div class="card stats-card">
                     <div class="card-body text-center p-4">
@@ -298,9 +304,9 @@ if (isset($conn) && $conn instanceof mysqli) {
         </div>
 
         <!-- Action Cards -->
-        <div class="row">
+        <div class="row" data-intro="These are the main actions you can perform in the system." data-step="3">
             <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card action-card h-100" onclick="location.href='scan_qr.php'">
+                <div class="card action-card h-100" onclick="location.href='scan_qr.php'" data-intro="Use the QR scanner to quickly find and borrow assets by scanning QR codes." data-step="4">
                     <div class="card-body text-center p-4">
                         <div class="action-icon scan-icon">
                             <i class="bi bi-qr-code-scan"></i>
@@ -317,7 +323,7 @@ if (isset($conn) && $conn instanceof mysqli) {
             </div>
             
             <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card action-card h-100" onclick="location.href='browse_assets.php'">
+                <div class="card action-card h-100" onclick="location.href='browse_assets.php'" data-intro="Browse through all available assets with search and filter options." data-step="5">
                     <div class="card-body text-center p-4">
                         <div class="action-icon browse-icon">
                             <i class="bi bi-grid-3x3-gap"></i>
@@ -334,7 +340,7 @@ if (isset($conn) && $conn instanceof mysqli) {
             </div>
             
             <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card action-card h-100" onclick="location.href='borrowing_history.php'">
+                <div class="card action-card h-100" onclick="location.href='borrowing_history.php'" data-intro="Track your borrowing requests and return history." data-step="6">
                     <div class="card-body text-center p-4">
                         <div class="action-icon history-icon">
                             <i class="bi bi-clock-history"></i>
@@ -351,7 +357,7 @@ if (isset($conn) && $conn instanceof mysqli) {
             </div>
             
             <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card action-card h-100" onclick="location.href='help.php'">
+                <div class="card action-card h-100" onclick="location.href='help.php'" data-intro="Get help with borrowing procedures, policies, and contact information." data-step="7">
                     <div class="card-body text-center p-4">
                         <div class="action-icon help-icon">
                             <i class="bi bi-question-circle"></i>
@@ -369,7 +375,7 @@ if (isset($conn) && $conn instanceof mysqli) {
         </div>
 
         <!-- Quick Actions Footer -->
-        <div class="row mt-4">
+        <div class="row mt-4" data-intro="Quick tips and easy access to start scanning assets." data-step="8">
             <div class="col-12">
                 <div class="card" style="background: rgba(255, 255, 255, 0.9); border: none; border-radius: 15px;">
                     <div class="card-body">
@@ -383,7 +389,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                                 </ul>
                             </div>
                             <div class="col-md-4 text-end">
-                                <a href="scan_qr.php" class="btn btn-primary">
+                                <a href="scan_qr.php" class="btn btn-primary" data-intro="Click here to start scanning QR codes and borrow assets quickly!" data-step="9">
                                     <i class="bi bi-qr-code-scan me-2"></i>Start Scanning
                                 </a>
                             </div>
@@ -397,7 +403,70 @@ if (isset($conn) && $conn instanceof mysqli) {
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Intro.js JS -->
+    <script src="https://unpkg.com/intro.js@7.2.0/minified/intro.min.js"></script>
+    
     <script>
+        // Walkthrough Tutorial Function
+        function startTutorial() {
+            const intro = introJs();
+            
+            intro.setOptions({
+                steps: [
+                    {
+                        element: document.querySelector('[data-step="1"]'),
+                        intro: "Welcome to your guest dashboard! This is your starting point for all asset borrowing activities."
+                    },
+                    {
+                        element: document.querySelector('[data-step="2"]'),
+                        intro: "Here you can see an overview of asset availability in the system - how many assets are available, currently borrowed, or need attention."
+                    },
+                    {
+                        element: document.querySelector('[data-step="3"]'),
+                        intro: "These are the main actions you can perform in the system. Each card represents a different way to interact with assets."
+                    },
+                    {
+                        element: document.querySelector('[data-step="4"]'),
+                        intro: "Use the QR scanner to quickly find and borrow assets by scanning QR codes. This is the fastest way to locate and request assets!"
+                    },
+                    {
+                        element: document.querySelector('[data-step="5"]'),
+                        intro: "Browse through all available assets with search and filter options. Perfect for exploring what's available without knowing specific asset details."
+                    },
+                    {
+                        element: document.querySelector('[data-step="6"]'),
+                        intro: "Track your borrowing requests and return history. Here you can see the status of your current requests and past borrowing activity."
+                    },
+                    {
+                        element: document.querySelector('[data-step="7"]'),
+                        intro: "Get help with borrowing procedures, policies, and contact information. If you need assistance, this is your go-to resource."
+                    },
+                    {
+                        element: document.querySelector('[data-step="8"]'),
+                        intro: "Quick tips and easy access to start scanning assets. Remember these helpful reminders for the best borrowing experience."
+                    },
+                    {
+                        element: document.querySelector('[data-step="9"]'),
+                        intro: "Click here to start scanning QR codes and borrow assets quickly! This is the recommended way to begin borrowing."
+                    },
+                    {
+                        element: document.querySelector('[data-step="10"]'),
+                        intro: "Click here to safely log out of the system when you're done. Always log out to protect your session."
+                    }
+                ],
+                showProgress: true,
+                showBullets: true,
+                exitOnOverlayClick: true,
+                exitOnEsc: true,
+                nextLabel: 'Next',
+                prevLabel: 'Previous',
+                skipLabel: 'Skip Tour',
+                doneLabel: 'Finish Tour'
+            });
+
+            intro.start();
+        }
+
         // Add click animations
         document.querySelectorAll('.action-card').forEach(card => {
             card.addEventListener('click', function() {
