@@ -14,7 +14,7 @@ if (!$guest_id) {
 }
 
 // Check if guest exists in database, if not create them
-$stmt = $conn->prepare("SELECT id, email, first_login FROM guests WHERE guest_id = ?");
+$stmt = $conn->prepare("SELECT id, email, name, contact, barangay, first_login FROM guests WHERE guest_id = ?");
 $stmt->bind_param("s", $guest_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -35,8 +35,16 @@ if ($result->num_rows === 0) {
     $guest_record = $result->fetch_assoc();
 
     // Check if guest needs to complete profile
-    // Either first_login is null (never completed setup) OR email is still default
-    if ($guest_record['first_login'] === null || $guest_record['email'] === 'guest@pilar.gov.ph') {
+    // Either first_login is null (never completed setup) OR any required fields are empty
+    $has_empty_required_fields = (
+        empty($guest_record['email']) ||
+        empty($guest_record['name']) ||
+        empty($guest_record['contact']) ||
+        empty($guest_record['barangay']) ||
+        $guest_record['email'] === 'guest@pilar.gov.ph'
+    );
+
+    if ($guest_record['first_login'] === null || $has_empty_required_fields) {
         $needs_profile_setup = true;
     }
 }
