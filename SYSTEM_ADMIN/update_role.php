@@ -155,8 +155,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 // Delete role permissions first
-                $delete_perms = $conn->prepare("DELETE FROM role_permissions WHERE role = ?");
-                $delete_perms->bind_param('s', $role_name);
+                $delete_perms = $conn->prepare("DELETE FROM role_permissions WHERE role_id = ?");
+                $delete_perms->bind_param('i', $role_id);
                 $delete_perms->execute();
                 $delete_perms->close();
                 
@@ -181,6 +181,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         default:
             $response['message'] = 'Invalid action.';
+            break;
+    }
 } else {
     $response['message'] = 'Invalid request method.';
 }

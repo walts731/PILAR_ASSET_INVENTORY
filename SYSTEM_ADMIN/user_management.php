@@ -1,6 +1,19 @@
 <?php
 require_once '../connect.php';
 session_start();
+require_once __DIR__ . '/includes/auth/PermissionManager.php';
+
+// Initialize PermissionManager
+$permissionManager = new PermissionManager($conn);
+
+// Set JSON header
+header('Content-Type: application/json');
+
+// Check permission
+if (!$permissionManager->hasPermission('view_users')) {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access.']);
+    exit();
+}
 
 if (!isset($_SESSION['user_id'])) {
   header("Location: ../index.php");
