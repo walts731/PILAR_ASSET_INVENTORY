@@ -199,14 +199,26 @@ $stmt->close();
           data: { id: submissionId },
           dataType: 'json',
           success: function(response) {
-            if (response.success) {
-              $('#formDetailsContent').html(response.content);
-              const modal = new bootstrap.Modal(document.getElementById('viewFormModal'));
-              modal.show();
-            } else {
-              alert('Error: ' + response.message);
-            }
-          },
+  if (response.success) {
+    $('#formDetailsContent').html(response.content);
+
+    // Check the status inside the content
+    let statusText = $('#formDetailsContent').find('.badge').text().trim().toLowerCase();
+
+    // Show Print button only if status is "approved"
+    if (statusText === 'approved') {
+      $('#printFormBtn').show();
+    } else {
+      $('#printFormBtn').hide();
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('viewFormModal'));
+    modal.show();
+  } else {
+    alert('Error: ' + response.message);
+  }
+},
+
           error: function() {
             alert('An error occurred while loading form details. Please try again.');
           },
