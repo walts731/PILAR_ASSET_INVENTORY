@@ -85,9 +85,9 @@ if ($officeAdminCheck->num_rows === 0) {
     error_log("Added OFFICE_ADMIN role to the database");
 }
 
-// Get all roles except MAIN_EMPLOYEE and MAIN_USER, but include OFFICE_ADMIN
+// Get all roles except MAIN_EMPLOYEE, MAIN_USER, and USER, but include OFFICE_ADMIN
 $roles = [];
-$query = "SELECT * FROM roles WHERE name NOT IN ('MAIN_EMPLOYEE', 'MAIN_USER') OR name = 'OFFICE_ADMIN' ORDER BY name";
+$query = "SELECT * FROM roles WHERE name NOT IN ('MAIN_EMPLOYEE', 'MAIN_USER', 'USER') OR name = 'OFFICE_ADMIN' ORDER BY name";
 $result = $conn->query($query);
 
 // Debug: Log the query and results
