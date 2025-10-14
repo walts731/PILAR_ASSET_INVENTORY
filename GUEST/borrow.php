@@ -28,7 +28,7 @@ $defaults = [
     'barangay' => $_SESSION['guest_barangay'] ?? '',
     'releasing_officer' => 'IVAN CHRISTOPHER R. MILLABAS',
     'releasing_officer_title' => 'PARK MAINTENANCE FOREMAN',
-    'approved_by' => 'CAROLYN C. S. - RONEL',
+    'approved_by' => 'CAROLYN C. SY-REYES',
     'approved_by_title' => 'MUN. ADMIN'
 ];
 

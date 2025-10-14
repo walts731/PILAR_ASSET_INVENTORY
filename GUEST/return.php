@@ -5,6 +5,7 @@
 session_start();
 require_once '../connect.php';
 require_once '../includes/lifecycle_helper.php';
+require_once '../includes/classes/Notification.php';
 
 // Check if user is a guest
 if (!isset($_SESSION['is_guest']) || $_SESSION['is_guest'] !== true) {
@@ -175,6 +176,20 @@ function processReturnSubmission($conn) {
                     "Asset returned by {$borrower_name} (Submission #{$submission_id})"
                 );
             }
+
+            // Send notification to MAIN_ADMIN users
+            $notification = new Notification($conn);
+            $title = "Asset Return Notification";
+            $message = "Guest {$borrower_name} has returned assets. Submission #{$submission['submission_number']}";
+            $notification->create(
+                'asset_returned',
+                $title,
+                $message,
+                'borrow_form_submissions',
+                $submission_id,
+                null, // Send to all admins
+                7 // Expires in 7 days
+            );
         }
     }
 

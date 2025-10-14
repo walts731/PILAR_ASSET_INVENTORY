@@ -70,7 +70,7 @@ $stmt->close();
             <table id="borrowedAssetsTable" class="table table-striped table-hover align-middle">
               <thead class="table-light">
                 <tr>
-                  <th>Submission #</th>
+                  
                   <th>Guest Name</th>
                   <th>Date Borrowed</th>
                   <th>Return Date</th>
@@ -86,7 +86,7 @@ $stmt->close();
                 <?php if (!empty($rows)): ?>
                   <?php foreach ($rows as $r): ?>
                     <tr>
-                      <td><strong><?= htmlspecialchars($r['submission_number']) ?></strong></td>
+                     
                       <td><?= htmlspecialchars($r['guest_name']) ?></td>
                       <td><?= date('M j, Y', strtotime($r['date_borrowed'])) ?></td>
                       <td><?= date('M j, Y', strtotime($r['schedule_return'])) ?></td>

@@ -201,61 +201,158 @@ Please do not reply to this email.
 }
 
 /**
- * Send password reset email
- * @param string $email User's email address
- * @param string $username User's username
- * @param string $token Reset token
+ * Send borrow request approval email
+ * @param string $email Guest's email address
+ * @param string $guestName Guest's full name
+ * @param string $submissionNumber Submission number
+ * @param array $items Array of borrowed items
  * @return array Result array with success status and message
  */
-function sendPasswordResetEmail($email, $username, $token) {
+function sendBorrowApprovalEmail($email, $guestName, $submissionNumber, $items) {
     try {
         $mail = configurePHPMailer();
-        
+
         // Email recipient
-        $mail->addAddress($email);
-        
+        $mail->addAddress($email, $guestName);
+
         // Email subject
-        $mail->Subject = 'Password Reset Request - PILAR Asset Inventory';
-        
-        // Generate reset URL
-        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
-        $host = $_SERVER['HTTP_HOST'];
-        
-        // Get the base directory (remove /includes from path if present)
-        $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
-        if (basename($scriptDir) === 'includes') {
-            $scriptDir = dirname($scriptDir);
+        $mail->Subject = 'Borrow Request Approved - PILAR Asset Inventory';
+
+        // Generate login URL
+        $baseURL = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") .
+                   "://" . $_SERVER['HTTP_HOST'] .
+                   str_replace('/MAIN_ADMIN', '', dirname($_SERVER['PHP_SELF']));
+        $dashboardURL = $baseURL . '/GUEST/guest_dashboard.php';
+
+        // Build items list
+        $itemsList = '';
+        if ($items && is_array($items)) {
+            $itemsList = '<ul>';
+            foreach ($items as $item) {
+                $thing = htmlspecialchars($item['thing'] ?? '');
+                $qty = htmlspecialchars($item['qty'] ?? '');
+                $itemsList .= "<li>{$thing} (Quantity: {$qty})</li>";
+            }
+            $itemsList .= '</ul>';
         }
-        
-        $baseURL = $protocol . "://" . $host . $scriptDir;
-        $resetURL = $baseURL . '/reset_password.php?token=' . $token;
-        
-        // Email content
+
+        // Email content (HTML)
         $mail->isHTML(true);
         $mail->Body = "
-        <h2>Password Reset Request</h2>
-        <p>Hello {$username},</p>
-        <p>You have requested to reset your password for PILAR Asset Inventory System.</p>
-        <p><a href='{$resetURL}' style='background: #0b5ed7; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Reset Password</a></p>
-        <p>If the button doesn't work, copy and paste this URL: {$resetURL}</p>
-        <p>This link will expire in 1 hour.</p>
-        <p>If you didn't request this reset, please ignore this email.</p>
-        ";
-        
-        $mail->AltBody = "Password reset link: {$resetURL}";
-        
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }
+                .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+                .items-list { background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #28a745; margin: 20px 0; }
+                .button { display: inline-block; background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+                .footer { text-align: center; margin-top: 30px; color: #6c757d; font-size: 14px; }
+                .alert { background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h1>🎉 Borrow Request Approved!</h1>
+                </div>
+                <div class='content'>
+                    <h2>Hello {$guestName}!</h2>
+
+                    <div class='alert'>
+                        <strong>✅ Great news!</strong> Your borrow request has been approved and you can now pick up your items.
+                    </div>
+
+                    <p><strong>Submission Number:</strong> {$submissionNumber}</p>
+
+                    <div class='items-list'>
+                        <h3>Approved Items:</h3>
+                        {$itemsList}
+                    </div>
+
+                    <h3>Next Steps:</h3>
+                    <ol>
+                        <li>Visit the PILAR Asset Inventory office to pick up your items</li>
+                        <li>Bring a valid ID for verification</li>
+                        <li>Return items by the scheduled return date</li>
+                        <li>Ensure items are returned in good condition</li>
+                    </ol>
+
+                    <h3>Important Reminders:</h3>
+                    <ul>
+                        <li>Late returns may result in penalties</li>
+                        <li>Damaged items may require repair or replacement costs</li>
+                        <li>Contact the office if you need to extend the borrowing period</li>
+                    </ul>
+
+                    <p>Click the button below to view your borrowing history:</p>
+                    <a href='{$dashboardURL}' class='button'>View My Dashboard</a>
+
+                    <p>If the button doesn't work, copy and paste this URL into your browser:</p>
+                    <p><a href='{$dashboardURL}'>{$dashboardURL}</a></p>
+                </div>
+                <div class='footer'>
+                    <p>This is an automated message from PILAR Asset Inventory System.<br>
+                    Please do not reply to this email.</p>
+                    <p>&copy; " . date('Y') . " PILAR Asset Inventory System. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>";
+
+        // Alternative plain text content
+        $mail->AltBody = "
+BORROW REQUEST APPROVED - PILAR ASSET INVENTORY
+
+Hello {$guestName}!
+
+Great news! Your borrow request has been approved and you can now pick up your items.
+
+Submission Number: {$submissionNumber}
+
+Approved Items:" .
+        ($items && is_array($items) ? "\n" . implode("\n", array_map(function($item) {
+            $thing = $item['thing'] ?? '';
+            $qty = $item['qty'] ?? '';
+            return "- {$thing} (Quantity: {$qty})";
+        }, $items)) : "") . "
+
+NEXT STEPS:
+1. Visit the PILAR Asset Inventory office to pick up your items
+2. Bring a valid ID for verification
+3. Return items by the scheduled return date
+4. Ensure items are returned in good condition
+
+IMPORTANT REMINDERS:
+- Late returns may result in penalties
+- Damaged items may require repair or replacement costs
+- Contact the office if you need to extend the borrowing period
+
+View your dashboard: {$dashboardURL}
+
+---
+This is an automated message from PILAR Asset Inventory System.
+Please do not reply to this email.
+
+© " . date('Y') . " PILAR Asset Inventory System. All rights reserved.
+";
+
         $mail->send();
-        
+
         return [
             'success' => true,
-            'message' => 'Password reset email sent successfully'
+            'message' => 'Approval email sent successfully to ' . $email
         ];
-        
+
     } catch (Exception $e) {
-        error_log("Password reset email failed: " . $e->getMessage());
+        error_log("Borrow approval email failed: " . $e->getMessage());
         return [
             'success' => false,
-            'message' => 'Failed to send password reset email: ' . $e->getMessage()
+            'message' => 'Failed to send approval email: ' . $e->getMessage()
         ];
     }
 }

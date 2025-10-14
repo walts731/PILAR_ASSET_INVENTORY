@@ -1,6 +1,7 @@
 <?php
 require_once '../connect.php';
 require_once '../includes/lifecycle_helper.php';
+require_once '../includes/email_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -90,6 +91,22 @@ if ($success && $action === 'accept') {
                         null, // to_office_id
                         "Asset borrowed by {$borrower_name} (Submission #{$submission_id})"
                     );
+                }
+
+                // Send approval email to guest
+                $guest_email = $submission_data['guest_email'] ?? null;
+                if (!empty($guest_email)) {
+                    $email_result = sendBorrowApprovalEmail(
+                        $guest_email,
+                        $borrower_name,
+                        $submission_data['submission_number'] ?? 'N/A',
+                        $items
+                    );
+
+                    if (!$email_result['success']) {
+                        // Log email failure but don't fail the approval process
+                        error_log("Failed to send approval email to {$guest_email}: " . $email_result['message']);
+                    }
                 }
 
                 // Automatically reject other pending borrow requests for the same assets
