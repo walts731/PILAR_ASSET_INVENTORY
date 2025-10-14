@@ -173,7 +173,7 @@ if ($success && $action === 'accept') {
     $fetch_stmt->close();
 } elseif ($action === 'decline') {
     // Handle rejection
-    $fetch_sql = "SELECT guest_id FROM borrow_form_submissions WHERE id = ?";
+    $fetch_sql = "SELECT b.*, g.email as guest_email, g.name as guest_name FROM borrow_form_submissions b LEFT JOIN guests g ON b.guest_id = g.guest_id WHERE b.id = ?";
     $fetch_stmt = $conn->prepare($fetch_sql);
     $fetch_stmt->bind_param('i', $submission_id);
     $fetch_stmt->execute();
@@ -181,7 +181,28 @@ if ($success && $action === 'accept') {
 
     if ($result->num_rows > 0) {
         $submission_data = $result->fetch_assoc();
-        
+
+        // Decode items for email
+        $items = json_decode($submission_data['items'], true);
+
+        // Send email notification to guest about rejection
+        $guest_email = $submission_data['guest_email'] ?? null;
+        $borrower_name = $submission_data['guest_name'] ?? 'Guest';
+
+        if ($guest_email) {
+            $email_result = sendBorrowRejectionEmail(
+                $guest_email,
+                $borrower_name,
+                $submission_data['submission_number'] ?? 'N/A',
+                $items
+            );
+
+            if (!$email_result['success']) {
+                // Log email failure but don't fail the rejection process
+                error_log("Failed to send rejection email to {$guest_email}: " . $email_result['message']);
+            }
+        }
+
         // Send in-app notification to guest about rejection
         $guest_id = $submission_data['guest_id'] ?? null;
         if ($guest_id) {

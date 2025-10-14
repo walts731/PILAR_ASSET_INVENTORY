@@ -356,4 +356,168 @@ Please do not reply to this email.
         ];
     }
 }
+
+/**
+ * Send borrow request rejection email
+ * @param string $email Guest's email address
+ * @param string $guestName Guest's full name
+ * @param string $submissionNumber Submission number
+ * @param array $items Array of requested items
+ * @param string $reason Reason for rejection (optional)
+ * @return array Result array with success status and message
+ */
+function sendBorrowRejectionEmail($email, $guestName, $submissionNumber, $items, $reason = '') {
+    try {
+        $mail = configurePHPMailer();
+
+        // Email recipient
+        $mail->addAddress($email, $guestName);
+
+        // Email subject
+        $mail->Subject = 'Borrow Request Not Approved - PILAR Asset Inventory';
+
+        // Generate login URL
+        $baseURL = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") .
+                   "://" . $_SERVER['HTTP_HOST'] .
+                   str_replace('/MAIN_ADMIN', '', dirname($_SERVER['PHP_SELF']));
+        $dashboardURL = $baseURL . '/GUEST/guest_dashboard.php';
+
+        // Build items list
+        $itemsList = '';
+        if ($items && is_array($items)) {
+            $itemsList = '<ul>';
+            foreach ($items as $item) {
+                $thing = htmlspecialchars($item['thing'] ?? '');
+                $qty = htmlspecialchars($item['qty'] ?? '');
+                $itemsList .= "<li>{$thing} (Quantity: {$qty})</li>";
+            }
+            $itemsList .= '</ul>';
+        }
+
+        // Email content (HTML)
+        $mail->isHTML(true);
+        $mail->Body = "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }
+                .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+                .items-list { background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #dc3545; margin: 20px 0; }
+                .button { display: inline-block; background: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+                .footer { text-align: center; margin-top: 30px; color: #6c757d; font-size: 14px; }
+                .alert { background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                .retry-info { background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h1>⚠️ Borrow Request Not Approved</h1>
+                </div>
+                <div class='content'>
+                    <h2>Hello {$guestName},</h2>
+
+                    <div class='alert'>
+                        <strong>❌ Request Status:</strong> Your borrow request has not been approved at this time.
+                    </div>
+
+                    <p><strong>Submission Number:</strong> {$submissionNumber}</p>
+                    " . ($reason ? "<p><strong>Reason:</strong> {$reason}</p>" : "") . "
+
+                    <div class='items-list'>
+                        <h3>Requested Items:</h3>
+                        {$itemsList}
+                    </div>
+
+                    <div class='retry-info'>
+                        <h3>What You Can Do:</h3>
+                        <ul>
+                            <li>Review the reason for rejection above (if provided)</li>
+                            <li>Contact the PILAR Asset Inventory office for more information</li>
+                            <li>Submit a new request with different items or dates if appropriate</li>
+                            <li>Check asset availability before submitting future requests</li>
+                        </ul>
+                    </div>
+
+                    <h3>Alternative Actions:</h3>
+                    <ul>
+                        <li><strong>Check Availability:</strong> Some items may be temporarily unavailable</li>
+                        <li><strong>Different Dates:</strong> Try requesting for different borrow/return dates</li>
+                        <li><strong>Fewer Items:</strong> Consider borrowing fewer items at once</li>
+                        <li><strong>Contact Office:</strong> Reach out to discuss your specific needs</li>
+                    </ul>
+
+                    <p>You can submit a new borrow request anytime:</p>
+                    <a href='{$dashboardURL}' class='button'>Submit New Request</a>
+
+                    <p>If the button doesn't work, copy and paste this URL into your browser:</p>
+                    <p><a href='{$dashboardURL}'>{$dashboardURL}</a></p>
+                </div>
+                <div class='footer'>
+                    <p>This is an automated message from PILAR Asset Inventory System.<br>
+                    Please do not reply to this email.</p>
+                    <p>&copy; " . date('Y') . " PILAR Asset Inventory System. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>";
+
+        // Alternative plain text content
+        $mail->AltBody = "
+BORROW REQUEST NOT APPROVED - PILAR ASSET INVENTORY
+
+Hello {$guestName},
+
+Your borrow request has not been approved at this time.
+
+Submission Number: {$submissionNumber}
+" . ($reason ? "Reason: {$reason}\n" : "") . "
+Requested Items:" .
+        ($items && is_array($items) ? "\n" . implode("\n", array_map(function($item) {
+            $thing = $item['thing'] ?? '';
+            $qty = $item['qty'] ?? '';
+            return "- {$thing} (Quantity: {$qty})";
+        }, $items)) : "") . "
+
+WHAT YOU CAN DO:
+- Review the reason for rejection (if provided)
+- Contact the PILAR Asset Inventory office for more information
+- Submit a new request with different items or dates if appropriate
+- Check asset availability before submitting future requests
+
+ALTERNATIVE ACTIONS:
+- Check Availability: Some items may be temporarily unavailable
+- Different Dates: Try requesting for different borrow/return dates
+- Fewer Items: Consider borrowing fewer items at once
+- Contact Office: Reach out to discuss your specific needs
+
+Submit a new request: {$dashboardURL}
+
+---
+This is an automated message from PILAR Asset Inventory System.
+Please do not reply to this email.
+
+© " . date('Y') . " PILAR Asset Inventory System. All rights reserved.
+";
+
+        $mail->send();
+
+        return [
+            'success' => true,
+            'message' => 'Rejection email sent successfully to ' . $email
+        ];
+
+    } catch (Exception $e) {
+        error_log("Borrow rejection email failed: " . $e->getMessage());
+        return [
+            'success' => false,
+            'message' => 'Failed to send rejection email: ' . $e->getMessage()
+        ];
+    }
+}
 ?>
