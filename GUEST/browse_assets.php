@@ -118,6 +118,8 @@ if ($cat_result) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    
     <style>
         :root {
             --primary-color: #0b5ed7;
@@ -258,8 +260,13 @@ if ($cat_result) {
                 <a href="scan_qr.php" class="btn btn-outline-success me-2">
                     <i class="bi bi-qr-code-scan me-1"></i>QR Scanner
                 </a>
-                <a href="guest_dashboard.php" class="btn btn-outline-primary me-2">
-                    <i class="bi bi-house me-1"></i>Dashboard
+                <a href="borrow.php" class="btn btn-outline-info me-2 position-relative">
+                    <i class="bi bi-cart me-1"></i>Borrow Cart
+                    <?php if (isset($_SESSION['borrow_cart']) && count($_SESSION['borrow_cart']) > 0): ?>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            <?= count($_SESSION['borrow_cart']) ?>
+                        </span>
+                    <?php endif; ?>
                 </a>
                 <a href="../logout.php" class="btn btn-outline-danger">
                     <i class="bi bi-box-arrow-right me-1"></i>Logout
@@ -453,15 +460,61 @@ if ($cat_result) {
     <script>
         // Request borrowing function
         function requestBorrowing(assetId, assetName) {
-            if (confirm(`Do you want to request borrowing for "${assetName}"?`)) {
-                // Here you would typically send an AJAX request to handle the borrowing request
-                alert('Borrowing request submitted! You will be contacted for approval and pickup details.');
-                
-                // For now, just show success message
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
+            // Show loading state
+            const button = document.querySelector(`button[onclick*="${assetId}"]`);
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Adding...';
             }
+
+            // Send AJAX request to add asset to borrow cart
+            fetch('borrow_cart_manager.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'action=add&asset_id=' + assetId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success state briefly
+                    if (button) {
+                        button.classList.remove('btn-borrow');
+                        button.classList.add('btn-success');
+                        button.innerHTML = '<i class="bi bi-check-circle me-1"></i>Added to Cart!';
+                    }
+
+                    // Update cart count in navigation
+                    const cartBadge = document.querySelector('.navbar .badge');
+                    if (cartBadge) {
+                        cartBadge.textContent = data.count;
+                        // Make sure the badge is visible if it wasn't before
+                        cartBadge.style.display = 'inline-block';
+                    }
+
+                    // Redirect to borrow form after short delay
+                    setTimeout(function() {
+                        window.location.href = 'borrow.php';
+                    }, 1000);
+                } else {
+                    alert(data.message || 'Failed to add asset to borrow cart');
+                    // Reset button
+                    if (button) {
+                        button.disabled = false;
+                        button.innerHTML = '<i class="bi bi-box-arrow-right me-1"></i>Request Borrowing';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while adding asset to borrow cart');
+                // Reset button
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = '<i class="bi bi-box-arrow-right me-1"></i>Request Borrowing';
+                }
+            });
         }
 
         // View details function

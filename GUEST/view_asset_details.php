@@ -568,9 +568,15 @@ $stmt->close();
                             </div>
                             <div class="card-body">
                                 <div class="d-grid gap-2">
-                                    <button type="button" class="btn btn-outline-primary borrow-asset-btn" data-asset-id="<?= (int)$asset['id'] ?>">
-                                        <i class="bi bi-box-arrow-in-right me-2"></i>Borrow Asset
-                                    </button>
+                                    <?php if ($asset['status'] === 'serviceable'): ?>
+                                        <button type="button" class="btn btn-outline-primary borrow-asset-btn" data-asset-id="<?= (int)$asset['id'] ?>">
+                                            <i class="bi bi-box-arrow-in-right me-2"></i>Borrow Asset
+                                        </button>
+                                    <?php else: ?>
+                                        <button type="button" class="btn btn-outline-secondary" disabled>
+                                            <i class="bi bi-x-circle me-2"></i>Not Available (<?= ucfirst($asset['status']) ?>)
+                                        </button>
+                                    <?php endif; ?>
                                     <a href="borrow.php" class="btn btn-outline-secondary">
                                         <i class="bi bi-cart me-2"></i>View Borrow Cart
                                     </a>
