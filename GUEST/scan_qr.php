@@ -378,6 +378,7 @@ $stmt->close();
                             <?php endif; ?>
                         </a>
                     </li>
+                    <?php include 'notification_bell.php'; ?>
                     <li class="nav-item">
                         <a class="nav-link text-danger" href="../logout.php">
                             <i class="bi bi-box-arrow-right me-1"></i> Logout

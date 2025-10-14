@@ -438,18 +438,17 @@ $stmt->close();
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link position-relative" href="borrow.php">
-                            <i class="bi bi-cart me-1"></i> Borrow Cart
+                        <a href="borrow.php" class="btn btn-outline-info me-2 position-relative">
+                            <i class="bi bi-cart me-1"></i>Borrow Cart
                             <?php if (isset($_SESSION['borrow_cart']) && count($_SESSION['borrow_cart']) > 0): ?>
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                     <?= count($_SESSION['borrow_cart']) ?>
                                 </span>
                             <?php endif; ?>
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-danger" href="../logout.php">
-                            <i class="bi bi-box-arrow-right me-1"></i> Logout
+                        <?php include 'notification_bell.php'; ?>
+                        <a href="../logout.php" class="btn btn-logout">
+                            <i class="bi bi-box-arrow-right me-1"></i>Logout
                         </a>
                     </li>
                 </ul>

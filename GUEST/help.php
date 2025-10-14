@@ -183,6 +183,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                             <?php endif; ?>
                         </a>
                     </li>
+                    <?php include 'notification_bell.php'; ?>
                     <li class="nav-item">
                         <a class="nav-link text-danger" href="../logout.php">
                             <i class="bi bi-box-arrow-right me-1"></i> Logout
@@ -397,17 +398,15 @@ if (isset($conn) && $conn instanceof mysqli) {
                         </h5>
                         
                         <div class="d-grid gap-2">
-                            <a href="scan_qr.php" class="btn btn-outline-primary">
-                                <i class="bi bi-qr-code-scan me-2"></i>QR Scanner
+                            <a href="borrowing_history.php" class="btn btn-outline-info me-2">
+                                <i class="bi bi-clock-history me-1"></i>Browse
                             </a>
-                            <a href="browse_assets.php" class="btn btn-outline-success">
-                                <i class="bi bi-grid-3x3-gap me-2"></i>Browse Assets
+                            <a href="guest_dashboard.php" class="btn btn-outline-primary me-2">
+                                <i class="bi bi-house me-1"></i>Dashboard
                             </a>
-                            <a href="borrowing_history.php" class="btn btn-outline-info">
-                                <i class="bi bi-clock-history me-2"></i>My History
-                            </a>
-                            <a href="guest_dashboard.php" class="btn btn-outline-secondary">
-                                <i class="bi bi-house me-2"></i>Dashboard
+                            <?php include 'notification_bell.php'; ?>
+                            <a href="../logout.php" class="btn btn-outline-danger">
+                                <i class="bi bi-box-arrow-right me-1"></i>Logout
                             </a>
                         </div>
                     </div>

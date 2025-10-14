@@ -467,7 +467,7 @@ function generateSubmissionNumber($conn) {
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link position-relative" href="borrow.php">
+                        <a class="nav-link position-relative active" href="borrow.php">
                             <i class="bi bi-cart me-1"></i> Borrow Cart
                             <?php if (isset($_SESSION['borrow_cart']) && count($_SESSION['borrow_cart']) > 0): ?>
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -476,7 +476,7 @@ function generateSubmissionNumber($conn) {
                             <?php endif; ?>
                         </a>
                     </li>
-                   
+                    <?php include 'notification_bell.php'; ?>
                     <li class="nav-item">
                         <a class="nav-link text-danger" href="../logout.php">
                             <i class="bi bi-box-arrow-right me-1"></i> Logout

@@ -2,6 +2,7 @@
 require_once '../connect.php';
 require_once '../includes/lifecycle_helper.php';
 require_once '../includes/email_helper.php';
+require_once '../includes/classes/GuestNotification.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -109,6 +110,24 @@ if ($success && $action === 'accept') {
                     }
                 }
 
+                // Send in-app notification to guest
+                $guest_id = $submission_data['guest_id'] ?? null;
+                if ($guest_id) {
+                    $notification = new GuestNotification($conn);
+                    $admin_name = $_SESSION['username'] ?? 'System Admin';
+
+                    $notification_result = $notification->sendBorrowRequestStatusUpdate(
+                        $submission_id,
+                        $guest_id,
+                        'approved',
+                        $admin_name
+                    );
+
+                    if (!$notification_result) {
+                        error_log("Failed to send approval notification to guest ID {$guest_id}");
+                    }
+                }
+
                 // Automatically reject other pending borrow requests for the same assets
                 if (!empty($asset_ids)) {
                     // Find all pending submissions that contain any of these asset_ids
@@ -148,6 +167,36 @@ if ($success && $action === 'accept') {
                         }
                     }
                 }
+            }
+        }
+    }
+    $fetch_stmt->close();
+} elseif ($action === 'decline') {
+    // Handle rejection
+    $fetch_sql = "SELECT guest_id FROM borrow_form_submissions WHERE id = ?";
+    $fetch_stmt = $conn->prepare($fetch_sql);
+    $fetch_stmt->bind_param('i', $submission_id);
+    $fetch_stmt->execute();
+    $result = $fetch_stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $submission_data = $result->fetch_assoc();
+        
+        // Send in-app notification to guest about rejection
+        $guest_id = $submission_data['guest_id'] ?? null;
+        if ($guest_id) {
+            $notification = new GuestNotification($conn);
+            $admin_name = $_SESSION['username'] ?? 'System Admin';
+
+            $notification_result = $notification->sendBorrowRequestStatusUpdate(
+                $submission_id,
+                $guest_id,
+                'rejected',
+                $admin_name
+            );
+
+            if (!$notification_result) {
+                error_log("Failed to send rejection notification to guest ID {$guest_id}");
             }
         }
     }
