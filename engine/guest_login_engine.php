@@ -50,6 +50,12 @@ $_SESSION['username'] = 'Guest';
 $_SESSION['role'] = 'guest';
 $_SESSION['guest_id'] = $guest_id; // Store persistent guest ID in session
 
+// Set additional session variables (will be empty for new guests or guests without profiles)
+$_SESSION['guest_email'] = '';
+$_SESSION['guest_name'] = '';
+$_SESSION['guest_contact'] = '';
+$_SESSION['guest_barangay'] = '';
+
 // Update last login and session count
 $update_stmt = $conn->prepare("UPDATE guests SET last_login = NOW(), session_count = session_count + 1 WHERE guest_id = ?");
 $update_stmt->bind_param("s", $guest_id);

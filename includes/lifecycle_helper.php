@@ -8,7 +8,7 @@ function ensureLifecycleTable($conn) {
     $sql = "CREATE TABLE IF NOT EXISTS asset_lifecycle_events (
         id INT AUTO_INCREMENT PRIMARY KEY,
         asset_id INT NOT NULL,
-        event_type ENUM('ACQUIRED','ASSIGNED','TRANSFERRED','DISPOSAL_LISTED','DISPOSED','RED_TAGGED') NOT NULL,
+        event_type ENUM('ACQUIRED','ASSIGNED','BORROWED','RETURNED','TRANSFERRED','DISPOSAL_LISTED','DISPOSED','RED_TAGGED') NOT NULL,
         ref_table VARCHAR(64) NULL,
         ref_id INT NULL,
         from_employee_id INT NULL,

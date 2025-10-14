@@ -32,6 +32,40 @@ $defaults = [
     'approved_by_title' => 'MUN. ADMIN'
 ];
 
+// If session variables are empty but guest has a profile, fetch from database
+if (isset($_SESSION['guest_id']) && (empty($defaults['name']) || empty($defaults['contact']) || empty($defaults['barangay']))) {
+    $guest_id = $_SESSION['guest_id'];
+    $stmt = $conn->prepare("SELECT name, email, contact, barangay FROM guests WHERE guest_id = ?");
+    $stmt->bind_param("s", $guest_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $guest_data = $result->fetch_assoc();
+        $defaults['name'] = $guest_data['name'] ?? $defaults['name'];
+        $defaults['contact'] = $guest_data['contact'] ?? $defaults['contact'];
+        $defaults['barangay'] = $guest_data['barangay'] ?? $defaults['barangay'];
+
+        // Also update session variables for future use
+        $_SESSION['guest_name'] = $defaults['name'];
+        $_SESSION['guest_contact'] = $defaults['contact'];
+        $_SESSION['guest_barangay'] = $defaults['barangay'];
+        $_SESSION['guest_email'] = $guest_data['email'] ?? '';
+    }
+    $stmt->close();
+}
+
+// Debug: Check if session variables are set
+/*
+echo "<!-- DEBUG INFO:<br>";
+echo "Session guest_name: " . ($_SESSION['guest_name'] ?? 'NOT SET') . "<br>";
+echo "Session guest_contact: " . ($_SESSION['guest_contact'] ?? 'NOT SET') . "<br>";
+echo "Session guest_barangay: " . ($_SESSION['guest_barangay'] ?? 'NOT SET') . "<br>";
+echo "Defaults name: " . $defaults['name'] . "<br>";
+echo "Defaults contact: " . $defaults['contact'] . "<br>";
+echo "Defaults barangay: " . $defaults['barangay'] . "<br>";
+echo "-->";
+*/
+
 // If form posted, read values
 $data = array_merge($defaults, $_POST ?? []);
 

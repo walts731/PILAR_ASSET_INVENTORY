@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/lifecycle_helper.php';
 session_start();
 
 // Ensure user is logged in and is an admin
@@ -63,6 +64,19 @@ try {
     $stmt_a->bind_param("i", $asset_id);
     $stmt_a->execute();
     $stmt_a->close();
+
+    // Log lifecycle event for returned asset
+    logLifecycleEvent(
+        $asset_id,
+        'RETURNED',
+        'borrow_requests',
+        $borrow_request_id,
+        null, // from_employee_id (returning from user)
+        null, // to_employee_id (returning to inventory)
+        null, // from_office_id
+        null, // to_office_id
+        "Asset returned to inventory (Request #{$borrow_request_id})"
+    );
 
     // 5. Check if all items for this borrow request are returned
     $stmt_check = $conn->prepare("SELECT COUNT(*) FROM borrow_request_items WHERE borrow_request_id = ? AND status = 'assigned'");
