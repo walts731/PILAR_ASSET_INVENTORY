@@ -171,18 +171,20 @@ function processBorrowSubmission($conn) {
 
     // Insert into borrow_form_submissions table
     $sql = "INSERT INTO borrow_form_submissions
-            (submission_number, guest_session_id, guest_email, guest_name, date_borrowed, schedule_return, barangay, contact,
+            (submission_number, guest_session_id, guest_id, guest_email, guest_name, date_borrowed, schedule_return, barangay, contact,
              releasing_officer, approved_by, items, status, submitted_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())";
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())";
 
     $stmt = $conn->prepare($sql);
     $items_json = json_encode($items);
     $guest_session_id = session_id();
+    $guest_id = $_SESSION['guest_id'] ?? null; // Use persistent guest ID
     $guest_email = $_SESSION['guest_email'] ?? null;
 
-    $stmt->bind_param('sssssssssss',
+    $stmt->bind_param('ssssssssssss',
         $submission_number,
         $guest_session_id,
+        $guest_id,
         $guest_email,
         $guest_name,
         $date_borrowed,
@@ -238,6 +240,7 @@ function generateSubmissionNumber($conn) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Borrow Slip - Fillable</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <style>
     body{background:#f7f7f9}
     .slip-card{max-width:900px;margin:20px auto;padding:18px;background:#fff;border:1px solid #ddd}

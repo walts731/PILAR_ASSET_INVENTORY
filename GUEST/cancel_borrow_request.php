@@ -23,13 +23,19 @@ if (!$submission_id) {
     exit();
 }
 
-// Get current guest session ID
-$guest_session_id = session_id();
+// Get current guest's persistent ID
+$guest_id = $_SESSION['guest_id'] ?? null;
 
-// Verify that the submission belongs to the current guest
-$verify_sql = "SELECT id FROM borrow_form_submissions WHERE id = ? AND guest_session_id = ? AND status = 'pending'";
+if (!$guest_id) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Guest session expired']);
+    exit();
+}
+
+// Verify that the submission belongs to the current guest using persistent guest_id
+$verify_sql = "SELECT id FROM borrow_form_submissions WHERE id = ? AND guest_id = ? AND status = 'pending'";
 $verify_stmt = $conn->prepare($verify_sql);
-$verify_stmt->bind_param('is', $submission_id, $guest_session_id);
+$verify_stmt->bind_param('is', $submission_id, $guest_id);
 $verify_stmt->execute();
 $verify_result = $verify_stmt->get_result();
 

@@ -12,13 +12,17 @@ if (!isset($_SESSION['is_guest']) || $_SESSION['is_guest'] !== true) {
 function getBorrowingHistory($conn) {
     $history = [];
 
-    // Get current guest session ID
-    $guest_session_id = session_id();
+    // Get current guest's persistent ID
+    $guest_id = $_SESSION['guest_id'] ?? null;
 
-    // Query submissions only for the current guest session
-    $sql = "SELECT * FROM borrow_form_submissions WHERE guest_session_id = ? ORDER BY submitted_at DESC";
+    if (!$guest_id) {
+        return $history; // Return empty if no persistent guest ID
+    }
+
+    // Query submissions only for the current guest using persistent guest_id
+    $sql = "SELECT * FROM borrow_form_submissions WHERE guest_id = ? ORDER BY submitted_at DESC";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('s', $guest_session_id);
+    $stmt->bind_param('s', $guest_id);
     $stmt->execute();
     $result = $stmt->get_result();
 
