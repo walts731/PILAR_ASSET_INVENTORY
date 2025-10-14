@@ -372,17 +372,21 @@ if (isset($conn) && $conn instanceof mysqli) {
                                         <button class="btn btn-outline-danger btn-sm cancel-btn" data-submission-id="<?= $item['submission_id'] ?>">
                                             <i class="bi bi-x-circle me-1"></i>Cancel Request
                                         </button>
-                                    <?php elseif ($item['status'] === 'approved'): ?>
+                                    <?php elseif (in_array($item['status'], ['approved', 'borrowed'])): ?>
+                                        <button class="btn btn-outline-success btn-sm return-btn" data-submission-id="<?= $item['submission_id'] ?>">
+                                            <i class="bi bi-arrow-return-left me-1"></i>Return Item
+                                        </button>
+                                    <?php elseif ($item['status'] === 'returned'): ?>
                                         <span class="text-success small">
-                                            <i class="bi bi-check-circle me-1"></i>Ready for pickup
-                                        </span>
-                                    <?php elseif ($item['status'] === 'borrowed' && !$item['actual_return']): ?>
-                                        <span class="text-primary small">
-                                            <i class="bi bi-clock me-1"></i>Currently borrowed
+                                            <i class="bi bi-check-circle-fill me-1"></i>Item returned
                                         </span>
                                     <?php elseif ($item['status'] === 'cancelled'): ?>
                                         <span class="text-secondary small">
                                             <i class="bi bi-x-octagon me-1"></i>Request cancelled
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="text-muted small">
+                                            <i class="bi bi-info-circle me-1"></i>Status: <?= ucfirst($item['status']) ?>
                                         </span>
                                     <?php endif; ?>
                                     
@@ -398,7 +402,7 @@ if (isset($conn) && $conn instanceof mysqli) {
 
             <!-- Summary Stats -->
             <div class="row mt-4">
-                <div class="col-md-6 col-lg-3 mb-3">
+                <div class="col-6 col-md-4 col-lg-2 mb-3">
                     <div class="card text-center">
                         <div class="card-body">
                             <h4 class="text-warning">
@@ -414,7 +418,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-3 mb-3">
+                <div class="col-6 col-md-4 col-lg-2 mb-3">
                     <div class="card text-center">
                         <div class="card-body">
                             <h4 class="text-info">
@@ -430,7 +434,23 @@ if (isset($conn) && $conn instanceof mysqli) {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-3 mb-3">
+                <div class="col-6 col-md-4 col-lg-2 mb-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-primary">
+                                <?php
+                                $borrowedCount = 0;
+                                foreach ($borrowing_history as $item) {
+                                    if ($item['status'] === 'borrowed') $borrowedCount++;
+                                }
+                                echo $borrowedCount;
+                                ?>
+                            </h4>
+                            <p class="mb-0 small text-muted">Borrowed</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2 mb-3">
                     <div class="card text-center">
                         <div class="card-body">
                             <h4 class="text-secondary">
@@ -446,7 +466,23 @@ if (isset($conn) && $conn instanceof mysqli) {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-3 mb-3">
+                <div class="col-6 col-md-4 col-lg-2 mb-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-success">
+                                <?php
+                                $returnedCount = 0;
+                                foreach ($borrowing_history as $item) {
+                                    if ($item['status'] === 'returned') $returnedCount++;
+                                }
+                                echo $returnedCount;
+                                ?>
+                            </h4>
+                            <p class="mb-0 small text-muted">Returned</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2 mb-3">
                     <div class="card text-center">
                         <div class="card-body">
                             <h4 class="text-info"><?= count($borrowing_history) ?></h4>
@@ -500,6 +536,15 @@ if (isset($conn) && $conn instanceof mysqli) {
                         button.innerHTML = originalText;
                     });
                 }
+            }
+
+            // Handle return request
+            if (e.target.classList.contains('return-btn') || e.target.closest('.return-btn')) {
+                const button = e.target.classList.contains('return-btn') ? e.target : e.target.closest('.return-btn');
+                const submissionId = button.getAttribute('data-submission-id');
+                
+                // Redirect to return form instead of showing confirmation
+                window.location.href = 'return.php?submission_id=' + submissionId;
             }
         });
 
