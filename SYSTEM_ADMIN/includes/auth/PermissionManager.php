@@ -13,62 +13,104 @@ class PermissionManager {
             return;
         }
         
-        $userId = $_SESSION['user_id'];
-        
-        // Check if permissions are already loaded in session
+        // Load from session if available
         if (isset($_SESSION['user_permissions'])) {
             $this->permissions = $_SESSION['user_permissions'];
             return;
         }
         
-        // Load role-based permissions
-        $query = "SELECT p.name 
-                 FROM permissions p
-                 JOIN role_permissions rp ON p.id = rp.permission_id
-                 JOIN user_roles ur ON rp.role_id = ur.role_id
-                 WHERE ur.user_id = ?";
+        $userId = $_SESSION['user_id'];
+        $this->permissions = [];
         
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("i", $userId);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        // Get user's role
+        $role = $this->getUserRole($userId);
         
-        while ($row = $result->fetch_assoc()) {
-            $this->permissions[$row['name']] = true;
+        // If user is system admin, grant all permissions
+        if ($role === 'SYSTEM_ADMIN') {
+            $this->grantAllPermissions();
+            return;
         }
+        
+        // Load role-based permissions
+        $this->loadRolePermissions($role);
         
         // Load user-specific permissions (overrides)
-        $query = "SELECT p.name 
-                 FROM user_permissions up
-                 JOIN permissions p ON up.permission = p.name
-                 WHERE up.user_id = ?";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("i", $userId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        while ($row = $result->fetch_assoc()) {
-            $this->permissions[$row['name']] = true;
-        }
+        $this->loadUserSpecificPermissions($userId);
         
         // Store in session for future requests
         $_SESSION['user_permissions'] = $this->permissions;
     }
     
+    private function getUserRole($userId) {
+        $stmt = $this->conn->prepare("SELECT role FROM users WHERE id = ?");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result->fetch_assoc();
+        return $user ? $user['role'] : null;
+    }
+    
+    private function grantAllPermissions() {
+        $result = $this->conn->query("SELECT name FROM permissions");
+        while ($row = $result->fetch_assoc()) {
+            $this->permissions[$row['name']] = true;
+        }
+    }
+    
+    private function loadRolePermissions($role) {
+        $stmt = $this->conn->prepare("
+            SELECT p.name 
+            FROM permissions p
+            JOIN role_permissions rp ON p.id = rp.permission_id
+            JOIN roles r ON rp.role_id = r.id
+            WHERE r.name = ?
+        ");
+        $stmt->bind_param("s", $role);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        while ($row = $result->fetch_assoc()) {
+            $this->permissions[$row['name']] = true;
+        }
+    }
+    
+    private function loadUserSpecificPermissions($userId) {
+        $stmt = $this->conn->prepare("
+            SELECT p.name 
+            FROM user_permissions up
+            JOIN permissions p ON up.permission = p.name
+            WHERE up.user_id = ?
+        ");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        while ($row = $result->fetch_assoc()) {
+            $this->permissions[$row['name']] = true;
+        }
+    }
+    
     public function hasPermission($permission) {
-        // Super admin has all permissions
-        if (isset($_SESSION['is_super_admin']) && $_SESSION['is_super_admin']) {
+        // System admin has all permissions
+        if (isset($_SESSION['role']) && $_SESSION['role'] === 'SYSTEM_ADMIN') {
             return true;
         }
-        
         return isset($this->permissions[$permission]);
     }
     
     public function requirePermission($permission) {
         if (!$this->hasPermission($permission)) {
-            $_SESSION['error'] = "You don't have permission to access this page.";
-            header('Location: /unauthorized.php');
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'You do not have permission to perform this action.'
+                ]);
+            } else {
+                $_SESSION['error'] = "You don't have permission to access this page.";
+                header('Location: /unauthorized.php');
+            }
             exit();
         }
     }

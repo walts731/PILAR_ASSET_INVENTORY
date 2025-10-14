@@ -1,6 +1,17 @@
 <?php
 session_start();
 require_once '../connect.php';
+require_once __DIR__ . '/includes/auth/PermissionManager.php';
+
+// Initialize PermissionManager
+$permissionManager = new PermissionManager($conn);
+
+// Check if user has permission to manage users
+if (!$permissionManager->hasPermission('manage_users')) {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'You do not have permission to manage users.']);
+    exit();
+}
 
 // Set JSON content type
 header('Content-Type: application/json');
