@@ -147,15 +147,19 @@ function processBorrowSubmission($conn) {
 
     // Insert into borrow_form_submissions table
     $sql = "INSERT INTO borrow_form_submissions
-            (submission_number, guest_name, date_borrowed, schedule_return, barangay, contact,
+            (submission_number, guest_session_id, guest_email, guest_name, date_borrowed, schedule_return, barangay, contact,
              releasing_officer, approved_by, items, status, submitted_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())";
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())";
 
     $stmt = $conn->prepare($sql);
     $items_json = json_encode($items);
+    $guest_session_id = session_id();
+    $guest_email = $_SESSION['guest_email'] ?? null;
 
-    $stmt->bind_param('sssssssss',
+    $stmt->bind_param('sssssssssss',
         $submission_number,
+        $guest_session_id,
+        $guest_email,
         $guest_name,
         $date_borrowed,
         $schedule_return,

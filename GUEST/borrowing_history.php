@@ -12,9 +12,15 @@ if (!isset($_SESSION['is_guest']) || $_SESSION['is_guest'] !== true) {
 function getBorrowingHistory($conn) {
     $history = [];
 
-    // Query all submissions (in a real app, you'd filter by guest email or session)
-    $sql = "SELECT * FROM borrow_form_submissions ORDER BY submitted_at DESC";
-    $result = $conn->query($sql);
+    // Get current guest session ID
+    $guest_session_id = session_id();
+
+    // Query submissions only for the current guest session
+    $sql = "SELECT * FROM borrow_form_submissions WHERE guest_session_id = ? ORDER BY submitted_at DESC";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('s', $guest_session_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
         while ($submission = $result->fetch_assoc()) {
@@ -56,6 +62,7 @@ function getBorrowingHistory($conn) {
         }
     }
 
+    $stmt->close();
     return $history;
 }
 

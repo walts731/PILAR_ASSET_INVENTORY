@@ -25,12 +25,14 @@ $test_items = [
 ];
 
 $sql = "INSERT INTO borrow_form_submissions
-        (submission_number, guest_name, date_borrowed, schedule_return, barangay, contact,
+        (submission_number, guest_session_id, guest_email, guest_name, date_borrowed, schedule_return, barangay, contact,
          releasing_officer, approved_by, items, status, submitted_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())";
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())";
 
 $stmt = $conn->prepare($sql);
-$submission_number = 'BFS-' . date('Ymd') . '-999';
+$submission_number = 'BFS-' . date('Ymd') . '-SESS'; // Use different number for session test
+$guest_session_id = session_id(); // Use current session ID for testing
+$guest_email = 'guest@pilar.gov.ph';
 $guest_name = 'Test Guest User';
 $date_borrowed = date('Y-m-d');
 $schedule_return = date('Y-m-d', strtotime('+7 days'));
@@ -41,9 +43,18 @@ $approved_by = 'Test Approver';
 $items_json = json_encode($test_items);
 $status = 'pending';
 
-$stmt->bind_param('sssssssss',
-    $submission_number, $guest_name, $date_borrowed, $schedule_return,
-    $barangay, $contact, $releasing_officer, $approved_by, $items_json
+$stmt->bind_param('sssssssssss',
+    $submission_number,
+    $guest_session_id,
+    $guest_email,
+    $guest_name,
+    $date_borrowed,
+    $schedule_return,
+    $barangay,
+    $contact,
+    $releasing_officer,
+    $approved_by,
+    $items_json
 );
 
 if ($stmt->execute()) {
