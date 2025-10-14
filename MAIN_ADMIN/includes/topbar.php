@@ -532,6 +532,7 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
+<script src="js/notifications.js"></script>
 
 <!-- Global Asset Details Modal -->
 <div class="modal fade" id="globalAssetModal" tabindex="-1" aria-labelledby="globalAssetModalLabel" aria-hidden="true">

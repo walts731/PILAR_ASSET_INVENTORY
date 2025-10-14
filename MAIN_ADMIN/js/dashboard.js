@@ -71,25 +71,35 @@ function updateDateTime() {
       });
     });
 
-    const themeToggle = document.getElementById('themeToggle');
-    const themeIcon = document.getElementById('themeIcon');
+    // Theme toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
 
-    // Load saved mode
-    if (localStorage.getItem('theme') === 'dark') {
-      document.body.classList.add('dark-mode');
-      themeIcon.classList.replace('bi-moon-fill', 'bi-sun-fill');
-    }
+        // Apply theme from localStorage if set
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            if (themeIcon) {
+                themeIcon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+            }
+        }
 
-    themeToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      const isDark = document.body.classList.contains('dark-mode');
-
-      // Swap icons
-      themeIcon.classList.toggle('bi-moon-fill', !isDark);
-      themeIcon.classList.toggle('bi-sun-fill', isDark);
-
-      // Save preference
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        // Only add event listener if theme toggle exists
+        if (themeToggle) {
+            themeToggle.addEventListener('click', function() {
+                const isDark = !document.body.classList.contains('dark-mode');
+                document.body.classList.toggle('dark-mode', isDark);
+                
+                // Update icon if it exists
+                if (themeIcon) {
+                    themeIcon.classList.toggle('bi-moon-fill', !isDark);
+                    themeIcon.classList.toggle('bi-sun-fill', isDark);
+                }
+                
+                // Save preference
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            });
+        }
     });
 
     $(document).ready(function () {
@@ -275,14 +285,24 @@ function handleBulkAction(action) {
   window.location.href = `${action}_bulk.php?ids=${encodeURIComponent(ids)}&office=${encodeURIComponent(office)}`;
 }
 
-document.getElementById('bulkBorrowBtn').addEventListener('click', () => handleBulkAction('borrow'));
-document.getElementById('bulkReleaseBtn').addEventListener('click', () => handleBulkAction('release'));
-document.getElementById('bulkTransferBtn').addEventListener('click', () => handleBulkAction('transfer'));
-document.getElementById('bulkReturnBtn').addEventListener('click', () => handleBulkAction('return'));
+// Add event listeners for bulk action buttons if they exist
+const bulkBorrowBtn = document.getElementById('bulkBorrowBtn');
+const bulkReleaseBtn = document.getElementById('bulkReleaseBtn');
+const bulkTransferBtn = document.getElementById('bulkTransferBtn');
+const bulkReturnBtn = document.getElementById('bulkReturnBtn');
 
-setTimeout(() => {
-  alertBox.classList.add('d-none');
-}, 4000);
+if (bulkBorrowBtn) bulkBorrowBtn.addEventListener('click', () => handleBulkAction('borrow'));
+if (bulkReleaseBtn) bulkReleaseBtn.addEventListener('click', () => handleBulkAction('release'));
+if (bulkTransferBtn) bulkTransferBtn.addEventListener('click', () => handleBulkAction('transfer'));
+if (bulkReturnBtn) bulkReturnBtn.addEventListener('click', () => handleBulkAction('return'));
+
+// Hide alert box after 4 seconds if it exists
+const alertBox = document.querySelector('.alert');
+if (alertBox) {
+  setTimeout(() => {
+    alertBox.classList.add('d-none');
+  }, 4000);
+}
 
 
 function formatDateFormal(dateStr) {
