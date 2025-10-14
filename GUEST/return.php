@@ -390,8 +390,8 @@ function processReturnSubmission($conn) {
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="guest_dashboard.php">
-                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        <a class="nav-link" href="scan_qr.php">
+                            <i class="bi bi-qr-code-scan me-1"></i> QR Scanner
                         </a>
                     </li>
                     <li class="nav-item">

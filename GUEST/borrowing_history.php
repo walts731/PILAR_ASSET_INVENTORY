@@ -246,20 +246,47 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <img src="../img/<?= htmlspecialchars($system['logo']) ?>" alt="Logo" width="32" height="32" class="me-2">
                 <?= htmlspecialchars($system['system_title']) ?>
             </a>
-            
-            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
-                <a href="scan_qr.php" class="btn btn-outline-success me-2">
-                    <i class="bi bi-qr-code-scan me-1"></i>QR Scanner
-                </a>
-                <a href="browse_assets.php" class="btn btn-outline-info me-2">
-                    <i class="bi bi-grid-3x3-gap me-1"></i>Browse
-                </a>
-                <a href="guest_dashboard.php" class="btn btn-outline-primary me-2">
-                    <i class="bi bi-house me-1"></i>Dashboard
-                </a>
-                <a href="../logout.php" class="btn btn-outline-danger">
-                    <i class="bi bi-box-arrow-right me-1"></i>Logout
-                </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="guest_dashboard.php">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="scan_qr.php">
+                            <i class="bi bi-qr-code-scan me-1"></i> QR Scanner
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="browse_assets.php">
+                            <i class="bi bi-grid-3x3-gap me-1"></i> Browse Assets
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="borrowing_history.php">
+                            <i class="bi bi-clock-history me-1"></i> My Requests
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="borrow.php">
+                            <i class="bi bi-cart me-1"></i> Borrow Cart
+                            <?php if (isset($_SESSION['borrow_cart']) && count($_SESSION['borrow_cart']) > 0): ?>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    <?= count($_SESSION['borrow_cart']) ?>
+                                </span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" href="../logout.php">
+                            <i class="bi bi-box-arrow-right me-1"></i> Logout
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>

@@ -618,8 +618,8 @@ function generateSubmissionNumber($conn) {
                 $qty = $items[$i]['qty'] ?? '';
                 $remark = $items[$i]['remarks'] ?? '';
                 echo "<tr>";
-                echo "<td><input type=\"text\" name=\"things[]\" class=\"form-control\" value=\"".h($thing)."\"></td>";
-                echo "<td><input type=\"text\" name=\"qty[]\" class=\"form-control\" value=\"".h($qty)."\"></td>";
+                echo "<td><input type=\"text\" name=\"things[]\" class=\"form-control\" value=\"".h($thing)."\" readonly></td>";
+                echo "<td><input type=\"text\" name=\"qty[]\" class=\"form-control\" value=\"".h($qty)."\" readonly></td>";
                 echo "<td><input type=\"text\" name=\"remarks[]\" class=\"form-control\" value=\"".h($remark)."\"></td>";
                 echo "</tr>";
             }
@@ -629,7 +629,7 @@ function generateSubmissionNumber($conn) {
       </div>
 
        <div class="col-md-4 text-start">
-          <button type="button" class="btn btn-sm btn-outline-secondary mt-2 no-print" onclick="addRow()">Add Item Row</button>
+          
           <button type="button" class="btn btn-sm btn-outline-danger mt-2 no-print" onclick="removeRow()">Remove Row</button>
         </div>
 
@@ -679,8 +679,8 @@ function addRow(){
   const tbody = document.getElementById('itemsTable');
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td><input type="text" name="things[]" class="form-control"></td>
-    <td><input type="text" name="qty[]" class="form-control"></td>
+    <td><input type="text" name="things[]" class="form-control" readonly></td>
+    <td><input type="text" name="qty[]" class="form-control" readonly></td>
     <td><input type="text" name="remarks[]" class="form-control"></td>
   `;
   tbody.appendChild(tr);
