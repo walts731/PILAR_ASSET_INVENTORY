@@ -167,6 +167,8 @@ $stmt->close();
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
   <script src="js/dashboard.js"></script>
   <script>
     $(function() {
@@ -214,19 +216,63 @@ $stmt->close();
         });
       });
 
-      // Handle print button
-      $(document).on('click', '#printFormBtn', function() {
-        const printContent = $('#formDetailsContent').html();
-        const originalContent = document.body.innerHTML;
+      // Handle print button (capture only the modal content area)
+$(document).on('click', '#printFormBtn', function() {
+  const contentDiv = document.querySelector('#formDetailsContent');
 
-        document.body.innerHTML = printContent;
-        window.print();
-        document.body.innerHTML = originalContent;
+  html2canvas(contentDiv, {
+    scale: 2, // high resolution
+    useCORS: true,
+    backgroundColor: '#ffffff'
+  }).then(canvas => {
+    const imageData = canvas.toDataURL('image/png');
 
-        // Reinitialize Bootstrap modal after restoring content
-        const modal = new bootstrap.Modal(document.getElementById('viewFormModal'));
-        modal.show();
-      });
+    // Open a new window for printing
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    printWindow.document.open();
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Borrow Form Print</title>
+        <style>
+          body {
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background: #fff;
+          }
+          img {
+            width: 100%;
+            height: auto;
+          }
+          @media print {
+            body {
+              margin: 0;
+              background: #fff;
+            }
+            img {
+              width: 100%;
+              height: auto;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <img src="${imageData}" alt="Borrow Form Snapshot" />
+        <script>
+          window.onload = function() {
+            window.print();
+            window.onafterprint = function() { window.close(); };
+          };
+        <\/script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  });
+});
+
 
       // Handle accept button
       $(document).on('click', '.accept-btn', function() {
