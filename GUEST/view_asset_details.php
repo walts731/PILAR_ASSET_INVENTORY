@@ -408,26 +408,51 @@ $stmt->close();
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="#">
+            <a class="navbar-brand d-flex align-items-center" href="guest_dashboard.php">
                 <img src="../img/<?= htmlspecialchars($system['logo']) ?>" alt="Logo" width="32" height="32" class="me-2">
                 <?= htmlspecialchars($system['system_title']) ?>
             </a>
-            
-            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
-                <span class="guest-badge me-3">
-                    <i class="bi bi-person-circle me-1"></i>Guest User
-                </span>
-                <a href="borrow.php" class="btn btn-outline-info me-2 position-relative">
-                    <i class="bi bi-cart me-1"></i>Borrow Cart
-                    <?php if (isset($_SESSION['borrow_cart']) && count($_SESSION['borrow_cart']) > 0): ?>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            <?= count($_SESSION['borrow_cart']) ?>
-                        </span>
-                    <?php endif; ?>
-                </a>
-                <a href="../logout.php" class="btn btn-logout">
-                    <i class="bi bi-box-arrow-right me-1"></i>Logout
-                </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="guest_dashboard.php">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="scan_qr.php">
+                            <i class="bi bi-qr-code-scan me-1"></i> QR Scanner
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="browse_assets.php">
+                            <i class="bi bi-grid-3x3-gap me-1"></i> Browse Assets
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="borrowing_history.php">
+                            <i class="bi bi-clock-history me-1"></i> My Requests
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="borrow.php">
+                            <i class="bi bi-cart me-1"></i> Borrow Cart
+                            <?php if (isset($_SESSION['borrow_cart']) && count($_SESSION['borrow_cart']) > 0): ?>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    <?= count($_SESSION['borrow_cart']) ?>
+                                </span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" href="../logout.php">
+                            <i class="bi bi-box-arrow-right me-1"></i> Logout
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
@@ -568,12 +593,16 @@ $stmt->close();
                             </div>
                             <div class="card-body">
                                 <div class="d-grid gap-2">
-                                    <button type="button" class="btn btn-outline-primary borrow-asset-btn" data-asset-id="<?= (int)$asset['id'] ?>">
-                                        <i class="bi bi-box-arrow-in-right me-2"></i>Borrow Asset
-                                    </button>
-                                    <a href="borrow.php" class="btn btn-outline-secondary">
-                                        <i class="bi bi-cart me-2"></i>View Borrow Cart
-                                    </a>
+                                    <?php if ($asset['status'] === 'serviceable'): ?>
+                                        <button type="button" class="btn btn-outline-primary borrow-asset-btn" data-asset-id="<?= (int)$asset['id'] ?>">
+                                            <i class="bi bi-box-arrow-in-right me-2"></i>Borrow Asset
+                                        </button>
+                                    <?php else: ?>
+                                        <button type="button" class="btn btn-outline-secondary" disabled>
+                                            <i class="bi bi-x-circle me-2"></i>Not Available (<?= ucfirst($asset['status']) ?>)
+                                        </button>
+                                    <?php endif; ?>
+                                    
                                 </div>
                             </div>
                         </div>

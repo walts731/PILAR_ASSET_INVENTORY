@@ -21,16 +21,50 @@ function h($s){ return htmlspecialchars($s ?? ''); }
 
 // Default values for demo
 $defaults = [
-    'name' => 'Engr. Ocmor',
+    'name' => $_SESSION['guest_name'] ?? '',
     'date_borrowed' => date('Y-m-d'),
     'schedule_return' => date('Y-m-d', strtotime('+7 days')),
-    'contact' => '',
-    'barangay' => '',
+    'contact' => $_SESSION['guest_contact'] ?? '',
+    'barangay' => $_SESSION['guest_barangay'] ?? '',
     'releasing_officer' => 'IVAN CHRISTOPHER R. MILLABAS',
     'releasing_officer_title' => 'PARK MAINTENANCE FOREMAN',
-    'approved_by' => 'CAROLYN C. S. - RONEL',
+    'approved_by' => 'CAROLYN C. SY-REYES',
     'approved_by_title' => 'MUN. ADMIN'
 ];
+
+// If session variables are empty but guest has a profile, fetch from database
+if (isset($_SESSION['guest_id']) && (empty($defaults['name']) || empty($defaults['contact']) || empty($defaults['barangay']))) {
+    $guest_id = $_SESSION['guest_id'];
+    $stmt = $conn->prepare("SELECT name, email, contact, barangay FROM guests WHERE guest_id = ?");
+    $stmt->bind_param("s", $guest_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $guest_data = $result->fetch_assoc();
+        $defaults['name'] = $guest_data['name'] ?? $defaults['name'];
+        $defaults['contact'] = $guest_data['contact'] ?? $defaults['contact'];
+        $defaults['barangay'] = $guest_data['barangay'] ?? $defaults['barangay'];
+
+        // Also update session variables for future use
+        $_SESSION['guest_name'] = $defaults['name'];
+        $_SESSION['guest_contact'] = $defaults['contact'];
+        $_SESSION['guest_barangay'] = $defaults['barangay'];
+        $_SESSION['guest_email'] = $guest_data['email'] ?? '';
+    }
+    $stmt->close();
+}
+
+// Debug: Check if session variables are set
+/*
+echo "<!-- DEBUG INFO:<br>";
+echo "Session guest_name: " . ($_SESSION['guest_name'] ?? 'NOT SET') . "<br>";
+echo "Session guest_contact: " . ($_SESSION['guest_contact'] ?? 'NOT SET') . "<br>";
+echo "Session guest_barangay: " . ($_SESSION['guest_barangay'] ?? 'NOT SET') . "<br>";
+echo "Defaults name: " . $defaults['name'] . "<br>";
+echo "Defaults contact: " . $defaults['contact'] . "<br>";
+echo "Defaults barangay: " . $defaults['barangay'] . "<br>";
+echo "-->";
+*/
 
 // If form posted, read values
 $data = array_merge($defaults, $_POST ?? []);
@@ -100,21 +134,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 // Function to process borrow request submission
 function processBorrowSubmission($conn) {
     // Get form data
-    $guest_name = trim($_POST['name'] ?? '');
+    $guest_name = trim($_SESSION['guest_name'] ?? '');
     $date_borrowed = $_POST['date_borrowed'] ?? '';
     $schedule_return = $_POST['schedule_return'] ?? '';
-    $contact = trim($_POST['contact'] ?? '');
-    $barangay = trim($_POST['barangay'] ?? '');
+    $contact = trim($_SESSION['guest_contact'] ?? '');
+    $barangay = trim($_SESSION['guest_barangay'] ?? '');
     $releasing_officer = trim($_POST['releasing_officer'] ?? '');
     $approved_by = trim($_POST['approved_by'] ?? '');
 
     // Validate required fields
     $errors = [];
-    if (empty($guest_name)) $errors[] = "Name is required";
+    if (empty($guest_name)) $errors[] = "Please complete your profile with your name";
     if (empty($date_borrowed)) $errors[] = "Date borrowed is required";
     if (empty($schedule_return)) $errors[] = "Schedule of return is required";
-    if (empty($contact)) $errors[] = "Contact number is required";
-    if (empty($barangay)) $errors[] = "Barangay is required";
+    if (empty($contact)) $errors[] = "Please complete your profile with your contact number";
+    if (empty($barangay)) $errors[] = "Please complete your profile with your barangay";
     if (empty($releasing_officer)) $errors[] = "Releasing officer is required";
     if (empty($approved_by)) $errors[] = "Approved by is required";
 
@@ -532,7 +566,7 @@ function generateSubmissionNumber($conn) {
       <div class="row g-2 mb-2">
         <div class="col-md-6">
           <label class="form-label">Name <span style="color: red;">*</span></label>
-          <input type="text" name="name" class="form-control" value="" required>
+          <input type="text" name="name" class="form-control" value="<?php echo h($data['name']); ?>" readonly>
         </div>
         <div class="col-md-3">
           <label class="form-label">Date Borrowed <span style="color: red;">*</span></label>
@@ -549,12 +583,12 @@ function generateSubmissionNumber($conn) {
         
         <div class="col-md-6">
           <label class="form-label">Barangay <span style="color: red;">*</span></label>
-          <input type="text" name="barangay" class="form-control" value="<?php echo h($data['barangay']); ?>" required>
+          <input type="text" name="barangay" class="form-control" value="<?php echo h($data['barangay']); ?>" readonly>
         </div>
 
         <div class="col-md-6">
           <label class="form-label">Contact No. <span style="color: red;">*</span></label>
-          <input type="text" name="contact" class="form-control" value="<?php echo h($data['contact']); ?>" required>
+          <input type="text" name="contact" class="form-control" value="<?php echo h($data['contact']); ?>" readonly>
         </div>
        
       </div>
@@ -584,8 +618,8 @@ function generateSubmissionNumber($conn) {
                 $qty = $items[$i]['qty'] ?? '';
                 $remark = $items[$i]['remarks'] ?? '';
                 echo "<tr>";
-                echo "<td><input type=\"text\" name=\"things[]\" class=\"form-control\" value=\"".h($thing)."\"></td>";
-                echo "<td><input type=\"text\" name=\"qty[]\" class=\"form-control\" value=\"".h($qty)."\"></td>";
+                echo "<td><input type=\"text\" name=\"things[]\" class=\"form-control\" value=\"".h($thing)."\" readonly></td>";
+                echo "<td><input type=\"text\" name=\"qty[]\" class=\"form-control\" value=\"".h($qty)."\" readonly></td>";
                 echo "<td><input type=\"text\" name=\"remarks[]\" class=\"form-control\" value=\"".h($remark)."\"></td>";
                 echo "</tr>";
             }
@@ -595,7 +629,7 @@ function generateSubmissionNumber($conn) {
       </div>
 
        <div class="col-md-4 text-start">
-          <button type="button" class="btn btn-sm btn-outline-secondary mt-2 no-print" onclick="addRow()">Add Item Row</button>
+          
           <button type="button" class="btn btn-sm btn-outline-danger mt-2 no-print" onclick="removeRow()">Remove Row</button>
         </div>
 
@@ -645,8 +679,8 @@ function addRow(){
   const tbody = document.getElementById('itemsTable');
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td><input type="text" name="things[]" class="form-control"></td>
-    <td><input type="text" name="qty[]" class="form-control"></td>
+    <td><input type="text" name="things[]" class="form-control" readonly></td>
+    <td><input type="text" name="qty[]" class="form-control" readonly></td>
     <td><input type="text" name="remarks[]" class="form-control"></td>
   `;
   tbody.appendChild(tr);

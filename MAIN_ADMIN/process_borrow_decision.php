@@ -1,5 +1,6 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/lifecycle_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -58,6 +59,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
                 throw new Exception("Failed to update borrow request status.");
             }
             $updateRequest->close();
+
+            // Log lifecycle event for borrowed asset
+            logLifecycleEvent(
+                $asset_id,
+                'BORROWED',
+                'borrow_requests',
+                $request_id,
+                null, // from_employee_id (admin processing)
+                null, // to_employee_id (internal borrowing)
+                null, // from_office_id
+                null, // to_office_id
+                "Asset borrowed internally (Request #{$request_id}, Quantity: {$borrow_quantity})"
+            );
 
             $_SESSION['success_message'] = "Borrow request approved successfully. Asset status updated.";
 

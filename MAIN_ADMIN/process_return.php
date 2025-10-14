@@ -1,5 +1,7 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/lifecycle_helper.php';
+require_once '../includes/classes/Notification.php';
 session_start();
 
 // Ensure user is logged in and is an admin
@@ -63,6 +65,33 @@ try {
     $stmt_a->bind_param("i", $asset_id);
     $stmt_a->execute();
     $stmt_a->close();
+
+    // Log lifecycle event for returned asset
+    logLifecycleEvent(
+        $asset_id,
+        'RETURNED',
+        'borrow_requests',
+        $borrow_request_id,
+        null, // from_employee_id (returning from user)
+        null, // to_employee_id (returning to inventory)
+        null, // from_office_id
+        null, // to_office_id
+        "Asset returned to inventory (Request #{$borrow_request_id})"
+    );
+
+    // Send notification to MAIN_ADMIN users about internal return
+    $notification = new Notification($conn);
+    $title = "Internal Asset Return Notification";
+    $message = "An asset has been returned to inventory. Borrow Request #{$borrow_request_id}";
+    $notification->create(
+        'asset_returned',
+        $title,
+        $message,
+        'borrow_requests',
+        $borrow_request_id,
+        null, // Send to all admins
+        7 // Expires in 7 days
+    );
 
     // 5. Check if all items for this borrow request are returned
     $stmt_check = $conn->prepare("SELECT COUNT(*) FROM borrow_request_items WHERE borrow_request_id = ? AND status = 'assigned'");

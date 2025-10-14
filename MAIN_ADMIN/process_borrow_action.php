@@ -1,5 +1,7 @@
 <?php
 require_once '../connect.php';
+require_once '../includes/lifecycle_helper.php';
+require_once '../includes/email_helper.php';
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -43,15 +45,16 @@ $stmt->close();
 // If accepting the request, update asset statuses to 'borrowed'
 if ($success && $action === 'accept') {
     // Fetch the items from the submission
-    $fetch_sql = "SELECT items FROM borrow_form_submissions WHERE id = ?";
+    $fetch_sql = "SELECT guest_name, items FROM borrow_form_submissions WHERE id = ?";
     $fetch_stmt = $conn->prepare($fetch_sql);
     $fetch_stmt->bind_param('i', $submission_id);
     $fetch_stmt->execute();
     $result = $fetch_stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $items = json_decode($row['items'], true);
+        $submission_data = $result->fetch_assoc();
+        $borrower_name = $submission_data['guest_name'] ?? 'Unknown Guest';
+        $items = json_decode($submission_data['items'], true);
 
         if ($items && is_array($items)) {
             // Extract asset_ids from items
@@ -73,6 +76,37 @@ if ($success && $action === 'accept') {
                     $update_stmt->bind_param($types, ...$asset_ids);
                     $update_stmt->execute();
                     $update_stmt->close();
+                }
+
+                // Log lifecycle events for borrowed assets
+                foreach ($asset_ids as $asset_id) {
+                    logLifecycleEvent(
+                        $asset_id,
+                        'BORROWED',
+                        'borrow_form_submissions',
+                        $submission_id,
+                        null, // from_employee_id (admin processing)
+                        null, // to_employee_id (guest borrowing, no specific employee)
+                        null, // from_office_id
+                        null, // to_office_id
+                        "Asset borrowed by {$borrower_name} (Submission #{$submission_id})"
+                    );
+                }
+
+                // Send approval email to guest
+                $guest_email = $submission_data['guest_email'] ?? null;
+                if (!empty($guest_email)) {
+                    $email_result = sendBorrowApprovalEmail(
+                        $guest_email,
+                        $borrower_name,
+                        $submission_data['submission_number'] ?? 'N/A',
+                        $items
+                    );
+
+                    if (!$email_result['success']) {
+                        // Log email failure but don't fail the approval process
+                        error_log("Failed to send approval email to {$guest_email}: " . $email_result['message']);
+                    }
                 }
 
                 // Automatically reject other pending borrow requests for the same assets
