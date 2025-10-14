@@ -3,6 +3,7 @@
 // Single-file fillable borrow slip using Bootstrap 5
 // Save this file to a PHP-enabled server (e.g. XAMPP htdocs) and open in browser.
 
+session_start();
 require_once '../connect.php';
 
 $system = [
@@ -34,6 +35,38 @@ $defaults = [
 // If form posted, read values
 $data = array_merge($defaults, $_POST ?? []);
 
+// Check if borrow cart has items to pre-populate form
+$cart_items = [];
+if (isset($_SESSION['borrow_cart']) && !empty($_SESSION['borrow_cart'])) {
+    $cart_items = $_SESSION['borrow_cart'];
+} elseif (isset($_GET['asset_id']) && !empty($_GET['asset_id'])) {
+    // Legacy support: if asset_id is provided directly, fetch and add to cart
+    $asset_id = intval($_GET['asset_id']);
+    
+    // Fetch asset details
+    $asset_sql = "SELECT a.id, a.description, a.inventory_tag, a.property_no, a.category, c.category_name 
+                  FROM assets a 
+                  LEFT JOIN categories c ON a.category = c.id 
+                  WHERE a.id = ? AND a.status != 'disposed'";
+    
+    $asset_stmt = $conn->prepare($asset_sql);
+    $asset_stmt->bind_param('i', $asset_id);
+    $asset_stmt->execute();
+    $asset_result = $asset_stmt->get_result();
+    
+    if ($asset_result->num_rows > 0) {
+        $asset = $asset_result->fetch_assoc();
+        $cart_items[] = [
+            'asset_id' => $asset['id'],
+            'description' => $asset['description'],
+            'inventory_tag' => $asset['inventory_tag'],
+            'property_no' => $asset['property_no'],
+            'category_name' => $asset['category_name']
+        ];
+    }
+    $asset_stmt->close();
+}
+
 // Items come from arrays in POST (things[], qty[], remarks[])
 $items = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -46,6 +79,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $r = trim($remarks[$i] ?? '');
         if ($t === '' && $q === '' && $r === '') continue; // skip empty rows
         $items[] = ['thing' => $t, 'qty' => $q, 'remarks' => $r];
+    }
+} elseif (!empty($cart_items)) {
+    // Pre-populate with cart items if no POST data
+    foreach ($cart_items as $cart_item) {
+        $items[] = [
+            'thing' => $cart_item['description'],
+            'qty' => '1',
+            'remarks' => ''  // Leave remarks blank
+        ];
     }
 }
 
@@ -250,6 +292,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link position-relative" href="borrow.php">
+                            <i class="bi bi-cart me-1"></i> Borrow Cart
+                            <?php if (isset($_SESSION['borrow_cart']) && count($_SESSION['borrow_cart']) > 0): ?>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    <?= count($_SESSION['borrow_cart']) ?>
+                                </span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#contactModal">
                             <i class="bi bi-question-circle me-1"></i> Help
                         </a>
@@ -263,6 +315,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </nav>
+    
+    <!-- Cart Status -->
+    <?php if (!empty($cart_items)): ?>
+    <div class="container py-2">
+        <div class="alert alert-info d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-cart-check me-2"></i>
+                <strong>Borrow Cart:</strong> <?= count($cart_items) ?> asset(s) ready to borrow
+            </div>
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-danger me-2" onclick="clearBorrowCart()">
+                    <i class="bi bi-trash me-1"></i>Clear Cart
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.location.href='browse_assets.php'">
+                    <i class="bi bi-plus-circle me-1"></i>Add More Assets
+                </button>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
 <div class="container py-4">
   <div class="slip-card">
     <form id="borrowForm" method="post">
@@ -291,7 +364,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="row g-2 mb-2">
         <div class="col-md-6">
           <label class="form-label">Name</label>
-          <input type="text" name="name" class="form-control" value="<?php echo h($data['name']); ?>">
+          <input type="text" name="name" class="form-control" value="">
         </div>
         <div class="col-md-3">
           <label class="form-label">Date Borrowed</label>
@@ -378,6 +451,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 
 <script>
+// Clear borrow cart function
+function clearBorrowCart() {
+    if (confirm('Are you sure you want to clear all assets from the borrow cart?')) {
+        $.post('borrow_cart_manager.php', {
+            action: 'clear'
+        })
+        .done(function(response) {
+            const data = typeof response === 'string' ? JSON.parse(response) : response;
+            if (data.success) {
+                location.reload(); // Reload to update the UI
+            } else {
+                alert('Failed to clear borrow cart');
+            }
+        })
+        .fail(function() {
+            alert('An error occurred while clearing the borrow cart');
+        });
+    }
+}
+
 // Small helpers to add/remove rows in the items table
 function addRow(){
   const tbody = document.getElementById('itemsTable');

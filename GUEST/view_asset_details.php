@@ -417,6 +417,14 @@ $stmt->close();
                 <span class="guest-badge me-3">
                     <i class="bi bi-person-circle me-1"></i>Guest User
                 </span>
+                <a href="borrow.php" class="btn btn-outline-info me-2 position-relative">
+                    <i class="bi bi-cart me-1"></i>Borrow Cart
+                    <?php if (isset($_SESSION['borrow_cart']) && count($_SESSION['borrow_cart']) > 0): ?>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            <?= count($_SESSION['borrow_cart']) ?>
+                        </span>
+                    <?php endif; ?>
+                </a>
                 <a href="../logout.php" class="btn btn-logout">
                     <i class="bi bi-box-arrow-right me-1"></i>Logout
                 </a>
@@ -560,8 +568,11 @@ $stmt->close();
                             </div>
                             <div class="card-body">
                                 <div class="d-grid gap-2">
-                                    <a href="borrow.php?asset_id=<?= (int)$asset['id'] ?>" class="btn btn-outline-primary">
+                                    <button type="button" class="btn btn-outline-primary borrow-asset-btn" data-asset-id="<?= (int)$asset['id'] ?>">
                                         <i class="bi bi-box-arrow-in-right me-2"></i>Borrow Asset
+                                    </button>
+                                    <a href="borrow.php" class="btn btn-outline-secondary">
+                                        <i class="bi bi-cart me-2"></i>View Borrow Cart
                                     </a>
                                 </div>
                             </div>
@@ -639,6 +650,53 @@ $stmt->close();
 
         // Load lifecycle events on page load
         $(document).ready(function() {
+            // Borrow Asset button click handler
+            $(document).on('click', '.borrow-asset-btn', function(e) {
+                e.preventDefault();
+                const button = $(this);
+                const assetId = button.data('asset-id');
+                
+                // Show loading state
+                button.prop('disabled', true);
+                button.html('<i class="bi bi-hourglass-split me-2"></i>Adding...');
+                
+                // Send AJAX request to add asset to borrow cart
+                $.post('borrow_cart_manager.php', {
+                    action: 'add',
+                    asset_id: assetId
+                })
+                .done(function(response) {
+                    const data = typeof response === 'string' ? JSON.parse(response) : response;
+                    
+                    if (data.success) {
+                        // Show success state briefly
+                        button.removeClass('btn-outline-primary').addClass('btn-success');
+                        button.html('<i class="bi bi-check-circle me-2"></i>Added to Cart!');
+                        
+                        // Update cart count if there's a cart counter element
+                        if ($('.borrow-cart-count').length) {
+                            $('.borrow-cart-count').text(data.count);
+                        }
+                        
+                        // Redirect to borrow form after short delay
+                        setTimeout(function() {
+                            window.location.href = 'borrow.php';
+                        }, 1000);
+                    } else {
+                        alert(data.message || 'Failed to add asset to borrow cart');
+                        // Reset button
+                        button.prop('disabled', false);
+                        button.html('<i class="bi bi-box-arrow-in-right me-2"></i>Borrow Asset');
+                    }
+                })
+                .fail(function() {
+                    alert('An error occurred while adding asset to borrow cart');
+                    // Reset button
+                    button.prop('disabled', false);
+                    button.html('<i class="bi bi-box-arrow-in-right me-2"></i>Borrow Asset');
+                });
+            });
+
             // Add to IIRUP button click handler
             $(document).on('click', '.add-to-iirup-btn', function(e) {
                 e.preventDefault();
