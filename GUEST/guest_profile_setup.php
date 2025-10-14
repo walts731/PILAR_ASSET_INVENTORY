@@ -182,7 +182,7 @@ $conn->close();
                                     Email Address <span class="required-asterisk">*</span>
                                 </label>
                                 <input type="email" class="form-control" id="email" name="email"
-                                       value="<?= htmlspecialchars($guest_data['email'] ?? '') ?>"
+                                       value=""
                                        placeholder="Enter your email address" required>
                                 <div class="form-text">We'll use this to send you updates about your requests</div>
                             </div>

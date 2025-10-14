@@ -157,7 +157,7 @@ $low_stock_count = count($low_stock_items);
   <div class="order-1">
     <button id="toggleSidebar" class="btn btn-outline-primary">
       <i class="bi bi-chevron-left" id="toggleIcon"></i>
-      <span class="d-none d-sm-inline">Toggle Sidebar</span>
+      <span class="d-none d-sm-inline"></span>
     </button>
   </div>
 
