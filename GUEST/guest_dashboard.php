@@ -224,7 +224,8 @@ if (isset($conn) && $conn instanceof mysqli) {
             
             <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
                 <span class="guest-badge me-3">
-                    <i class="bi bi-person-circle me-1"></i>Guest User
+                    <i class="bi bi-person-circle me-1"></i>
+                    <?php echo htmlspecialchars($_SESSION['guest_name'] ?? 'Guest User'); ?>
                 </span>
                 <a href="#" class="btn btn-logout" data-bs-toggle="modal" data-bs-target="#logoutModal" data-intro="Click here to safely log out of the system." data-step="10">
                     <i class="bi bi-box-arrow-right me-1"></i>Logout
@@ -243,7 +244,8 @@ if (isset($conn) && $conn instanceof mysqli) {
                         <div class="row align-items-center">
                             <div class="col-md-8">
                                 <h2 class="card-title mb-2">
-                                    <i class="bi bi-hand-thumbs-up me-2"></i>Welcome, Guest!
+                                    <i class="bi bi-hand-thumbs-up me-2"></i>
+                                    Welcome, <?php echo htmlspecialchars($_SESSION['guest_name'] ?? 'Guest'); ?>!
                                 </h2>
                                 <p class="card-text mb-3">
                                     You can browse and borrow available assets using our QR scanner or asset browser. 

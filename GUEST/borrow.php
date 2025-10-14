@@ -21,11 +21,11 @@ function h($s){ return htmlspecialchars($s ?? ''); }
 
 // Default values for demo
 $defaults = [
-    'name' => 'Engr. Ocmor',
+    'name' => $_SESSION['guest_name'] ?? '',
     'date_borrowed' => date('Y-m-d'),
     'schedule_return' => date('Y-m-d', strtotime('+7 days')),
-    'contact' => '',
-    'barangay' => '',
+    'contact' => $_SESSION['guest_contact'] ?? '',
+    'barangay' => $_SESSION['guest_barangay'] ?? '',
     'releasing_officer' => 'IVAN CHRISTOPHER R. MILLABAS',
     'releasing_officer_title' => 'PARK MAINTENANCE FOREMAN',
     'approved_by' => 'CAROLYN C. S. - RONEL',
@@ -100,21 +100,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 // Function to process borrow request submission
 function processBorrowSubmission($conn) {
     // Get form data
-    $guest_name = trim($_POST['name'] ?? '');
+    $guest_name = trim($_SESSION['guest_name'] ?? '');
     $date_borrowed = $_POST['date_borrowed'] ?? '';
     $schedule_return = $_POST['schedule_return'] ?? '';
-    $contact = trim($_POST['contact'] ?? '');
-    $barangay = trim($_POST['barangay'] ?? '');
+    $contact = trim($_SESSION['guest_contact'] ?? '');
+    $barangay = trim($_SESSION['guest_barangay'] ?? '');
     $releasing_officer = trim($_POST['releasing_officer'] ?? '');
     $approved_by = trim($_POST['approved_by'] ?? '');
 
     // Validate required fields
     $errors = [];
-    if (empty($guest_name)) $errors[] = "Name is required";
+    if (empty($guest_name)) $errors[] = "Please complete your profile with your name";
     if (empty($date_borrowed)) $errors[] = "Date borrowed is required";
     if (empty($schedule_return)) $errors[] = "Schedule of return is required";
-    if (empty($contact)) $errors[] = "Contact number is required";
-    if (empty($barangay)) $errors[] = "Barangay is required";
+    if (empty($contact)) $errors[] = "Please complete your profile with your contact number";
+    if (empty($barangay)) $errors[] = "Please complete your profile with your barangay";
     if (empty($releasing_officer)) $errors[] = "Releasing officer is required";
     if (empty($approved_by)) $errors[] = "Approved by is required";
 
@@ -532,7 +532,7 @@ function generateSubmissionNumber($conn) {
       <div class="row g-2 mb-2">
         <div class="col-md-6">
           <label class="form-label">Name <span style="color: red;">*</span></label>
-          <input type="text" name="name" class="form-control" value="" required>
+          <input type="text" name="name" class="form-control" value="<?php echo h($data['name']); ?>" readonly>
         </div>
         <div class="col-md-3">
           <label class="form-label">Date Borrowed <span style="color: red;">*</span></label>
@@ -549,12 +549,12 @@ function generateSubmissionNumber($conn) {
         
         <div class="col-md-6">
           <label class="form-label">Barangay <span style="color: red;">*</span></label>
-          <input type="text" name="barangay" class="form-control" value="<?php echo h($data['barangay']); ?>" required>
+          <input type="text" name="barangay" class="form-control" value="<?php echo h($data['barangay']); ?>" readonly>
         </div>
 
         <div class="col-md-6">
           <label class="form-label">Contact No. <span style="color: red;">*</span></label>
-          <input type="text" name="contact" class="form-control" value="<?php echo h($data['contact']); ?>" required>
+          <input type="text" name="contact" class="form-control" value="<?php echo h($data['contact']); ?>" readonly>
         </div>
        
       </div>
