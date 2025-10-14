@@ -52,6 +52,14 @@ if ($result->num_rows === 0) {
 $submission = $result->fetch_assoc();
 $stmt->close();
 
+// Check if status is returned and fetch return slip data
+$return_slip_data = null;
+if (strtolower($submission['status']) === 'returned') {
+  // For guest borrowing system, we don't have separate return slip data
+  // The return slip is just the borrow form marked as returned
+  $return_slip_data = true; // Flag to indicate we should show return slip
+}
+
 // Format status badge
 $status = strtolower($submission['status']);
 $badge_class = 'bg-secondary';
@@ -59,6 +67,7 @@ if ($status === 'pending') $badge_class = 'bg-warning text-dark';
 elseif ($status === 'approved') $badge_class = 'bg-success';
 elseif ($status === 'rejected') $badge_class = 'bg-danger';
 elseif ($status === 'completed') $badge_class = 'bg-info';
+elseif ($status === 'returned') $badge_class = 'bg-primary';
 
 // Generate printable form HTML (similar to GUEST/borrow.php)
 $content = '<style>
@@ -207,6 +216,100 @@ $content .= '
     </div>
   </div>
 </div>';
+
+if ($return_slip_data) {
+  $content .= '<div class="print-form" style="page-break-before: always; margin-top: 40px;">
+  <div class="row align-items-center mb-3">
+    <div class="col-auto">
+      <img src="' . htmlspecialchars('../img/' . $system['logo']) . '" alt="Municipal Logo" class="seal">
+    </div>
+    <div class="col">
+      <div class="text-center">
+        <div style="font-weight:700">Republic of the Philippines</div>
+        <div style="font-weight:700">Province of Sorsogon</div>
+        <div style="font-size:18px;font-weight:800">LOCAL GOVERNMENT UNIT OF PILAR</div>
+      </div>
+    </div>
+    <div class="col-auto text-end document-code">
+      <div>Document Code:</div>
+      <div><strong>PS-DIT-01-F03-01-01</strong></div>
+      <div class="mt-2">Effective Date:</div>
+      <div><strong>22 May 2023</strong></div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Return Slip Title -->
+  <div class="text-center mb-3">
+    <h5 style="font-weight: 700; text-decoration: underline;">RETURN SLIP</h5>
+  </div>
+
+  <div class="table-responsive mb-3">
+    <table class="table table-bordered table-fixed">
+      <thead class="table-light text-center align-middle">
+        <tr>
+          <th style="width:50%">ASSET DESCRIPTION</th>
+          <th style="width:15%">QTY</th>
+          <th style="width:20%">CONDITION</th>
+          <th style="width:15%">REMARKS</th>
+        </tr>
+      </thead>
+      <tbody>';
+
+  // Parse items from JSON for return slip
+  $items = json_decode($submission['items'], true);
+  if ($items && is_array($items)) {
+    foreach ($items as $item) {
+      $content .= '<tr>';
+      $content .= '<td>' . htmlspecialchars($item['thing'] ?? '') . '</td>';
+      $content .= '<td>' . htmlspecialchars($item['qty'] ?? '') . '</td>';
+      $content .= '<td>Returned</td>';
+      $content .= '<td>Items returned to inventory</td>';
+      $content .= '</tr>';
+    }
+  } else {
+    $content .= '<tr><td colspan="4" class="text-center text-muted">No items found</td></tr>';
+  }
+
+  $content .= '
+      </tbody>
+    </table>
+  </div>
+
+  <div class="row g-2 mb-2">
+    <div class="col-md-6">
+      <label class="form-label fw-bold">Returned by:</label>
+      <div class="border-bottom border-dark pb-1">' . htmlspecialchars($submission['guest_name']) . '</div>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-bold">Return Date:</label>
+      <div class="border-bottom border-dark pb-1">' . date('M j, Y', strtotime($submission['updated_at'])) . '</div>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-bold">Status:</label>
+      <div class="border-bottom border-dark pb-1">Returned</div>
+    </div>
+  </div>
+
+  <div class="row g-2 align-items-end mb-3">
+   <div class="col-md-4">
+      <label class="form-label fw-bold">Received by:</label>
+      <div class="border-bottom border-dark pb-1" style="height: 25px;"></div>
+    </div>
+    <div class="col-md-5">
+      <label class="form-label fw-bold">Date Received:</label>
+      <div class="border-bottom border-dark pb-1" style="height: 25px;"></div>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-bold">Signature:</label>
+      <div class="border-bottom border-dark pb-1" style="height: 25px;"></div>
+    </div>
+  </div>
+</div>';
+}
+
+$content .= '</div>';
 
 echo json_encode(['success' => true, 'content' => $content]);
 

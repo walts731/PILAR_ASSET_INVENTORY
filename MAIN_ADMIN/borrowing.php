@@ -112,6 +112,7 @@ $stmt->close();
                         elseif ($status === 'approved') $badgeClass = 'bg-success';
                         elseif ($status === 'rejected') $badgeClass = 'bg-danger';
                         elseif ($status === 'completed') $badgeClass = 'bg-info';
+                        elseif ($status === 'returned') $badgeClass = 'bg-primary';
                         ?>
                         <span class="badge <?= $badgeClass ?>"><?= ucfirst($status) ?></span>
                       </td>
@@ -205,9 +206,18 @@ $stmt->close();
     // Check the status inside the content
     let statusText = $('#formDetailsContent').find('.badge').text().trim().toLowerCase();
 
-    // Show Print button only if status is "approved"
+    // Update modal title based on content
+    if (statusText === 'returned') {
+      $('#viewFormModalLabel').text('Borrow Form & Return Slip Details');
+    } else {
+      $('#viewFormModalLabel').text('Borrow Form Details');
+    }
+
+    // Show Print button for approved and returned statuses
     if (statusText === 'approved') {
-      $('#printFormBtn').show();
+      $('#printFormBtn').show().html('<i class="bi bi-printer me-1"></i>Print Borrow Form');
+    } else if (statusText === 'returned') {
+      $('#printFormBtn').show().html('<i class="bi bi-printer me-1"></i>Print Return Slip');
     } else {
       $('#printFormBtn').hide();
     }
@@ -231,6 +241,9 @@ $stmt->close();
       // Handle print button (capture only the modal content area)
 $(document).on('click', '#printFormBtn', function() {
   const contentDiv = document.querySelector('#formDetailsContent');
+  const statusText = $('#formDetailsContent').find('.badge').text().trim().toLowerCase();
+  const isReturnSlip = statusText === 'returned';
+  const title = isReturnSlip ? 'Return Slip Print' : 'Borrow Form Print';
 
   html2canvas(contentDiv, {
     scale: 2, // high resolution
@@ -246,32 +259,48 @@ $(document).on('click', '#printFormBtn', function() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Borrow Form Print</title>
+        <title>${title}</title>
         <style>
           body {
             margin: 0;
-            padding: 0;
+            padding: 20px;
             text-align: center;
             background: #fff;
+            font-family: Arial, sans-serif;
+          }
+          .print-header {
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
           }
           img {
             width: 100%;
             height: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
           }
           @media print {
             body {
               margin: 0;
+              padding: 10px;
               background: #fff;
+            }
+            .print-header {
+              font-size: 16px;
             }
             img {
               width: 100%;
               height: auto;
+              border: none;
+              border-radius: 0;
             }
           }
         </style>
       </head>
       <body>
-        <img src="${imageData}" alt="Borrow Form Snapshot" />
+        <div class="print-header">${isReturnSlip ? 'RETURN SLIP' : 'BORROW FORM'}</div>
+        <img src="${imageData}" alt="${title} Snapshot" />
         <script>
           window.onload = function() {
             window.print();

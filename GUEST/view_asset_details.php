@@ -577,9 +577,7 @@ $stmt->close();
                                             <i class="bi bi-x-circle me-2"></i>Not Available (<?= ucfirst($asset['status']) ?>)
                                         </button>
                                     <?php endif; ?>
-                                    <a href="borrow.php" class="btn btn-outline-secondary">
-                                        <i class="bi bi-cart me-2"></i>View Borrow Cart
-                                    </a>
+                                    
                                 </div>
                             </div>
                         </div>
