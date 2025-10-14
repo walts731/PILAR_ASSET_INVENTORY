@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/header.php';
+require_once 'includes/topbar.php';
 require_once '../includes/classes/Notification.php';
 
 $notification = new Notification($conn);
