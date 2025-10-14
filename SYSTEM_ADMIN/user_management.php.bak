@@ -1,21 +1,31 @@
 <?php
 require_once '../connect.php';
 session_start();
+require_once __DIR__ . '/includes/auth/PermissionManager.php';
 
-// TEMPORARILY DISABLED PERMISSION CHECKS
-// require_once __DIR__ . '/includes/auth/PermissionManager.php';
-// $permissionManager = new PermissionManager($conn);
+// Initialize PermissionManager
+$permissionManager = new PermissionManager($conn);
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../index.php");
+// Set JSON header
+header('Content-Type: application/json');
+
+// Check permission
+if (!$permissionManager->hasPermission('view_users')) {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access.']);
     exit();
 }
 
-// Log access for debugging
-error_log("User " . ($_SESSION['username'] ?? 'unknown') . " accessed user_management.php with role: " . ($_SESSION['role'] ?? 'none'));
+if (!isset($_SESSION['user_id'])) {
+  header("Location: ../index.php");
+  exit();
+}
 
-// Ensure system table has default_user_password column (idempotent)
+// Ensure only super_admin or SYSTEM_ADMIN can access this page
+$currentRole = strtolower($_SESSION['role'] ?? '');
+if (!in_array($currentRole, ['super_admin', 'system_admin'])) {
+  header("Location: system_admin_dashboard.php");
+  exit();
+}
 
 // Ensure system table has default_user_password column (idempotent)
 $conn->query("CREATE TABLE IF NOT EXISTS system (
