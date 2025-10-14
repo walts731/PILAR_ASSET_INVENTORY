@@ -1,7 +1,6 @@
 <?php
 session_start();
 require_once "../connect.php";
-require_once "../includes/classes/GuestBorrowing.php";
 
 // Check if user is a guest
 if (!isset($_SESSION['is_guest']) || $_SESSION['is_guest'] !== true) {
@@ -9,14 +8,59 @@ if (!isset($_SESSION['is_guest']) || $_SESSION['is_guest'] !== true) {
     exit();
 }
 
-// Initialize GuestBorrowing
-$guestBorrowing = new GuestBorrowing($conn);
+// Function to get borrowing history from borrow_form_submissions table
+function getBorrowingHistory($conn) {
+    $history = [];
 
-// Get guest email from session (assuming it's set during guest login)
-$guestEmail = $_SESSION['guest_email'] ?? '';
+    // Query all submissions (in a real app, you'd filter by guest email or session)
+    $sql = "SELECT * FROM borrow_form_submissions ORDER BY submitted_at DESC";
+    $result = $conn->query($sql);
 
-// Get the guest's borrowing history
-$borrowingHistory = $guestBorrowing->getGuestBorrowingHistory($guestEmail);
+    if ($result->num_rows > 0) {
+        while ($submission = $result->fetch_assoc()) {
+            $items = json_decode($submission['items'], true);
+
+            // Create a separate history item for each asset in the submission
+            foreach ($items as $index => $item) {
+                $history_item = [
+                    'id' => $submission['id'] . '_' . $index, // Composite ID for uniqueness
+                    'submission_id' => $submission['id'],
+                    'submission_number' => $submission['submission_number'],
+                    'guest_name' => $submission['guest_name'],
+                    'contact' => $submission['contact'],
+                    'barangay' => $submission['barangay'],
+                    'date_borrowed' => $submission['date_borrowed'],
+                    'schedule_return' => $submission['schedule_return'],
+                    'releasing_officer' => $submission['releasing_officer'],
+                    'approved_by' => $submission['approved_by'],
+                    'asset_name' => $item['thing'],
+                    'asset_tag' => $item['inventory_tag'],
+                    'property_no' => $item['property_no'],
+                    'category' => $item['category'],
+                    'quantity' => $item['qty'],
+                    'remarks' => $item['remarks'] ?? '',
+                    'status' => $submission['status'],
+                    'request_date' => $submission['submitted_at'],
+                    'submitted_at' => $submission['submitted_at'],
+                    'updated_at' => $submission['updated_at'],
+                    // Add some default values for timeline compatibility
+                    'expected_return_date' => $submission['schedule_return'],
+                    'borrowed_date' => null,
+                    'return_date' => $submission['schedule_return'],
+                    'actual_return' => null,
+                    'purpose' => 'Borrow request from guest'
+                ];
+
+                $history[] = $history_item;
+            }
+        }
+    }
+
+    return $history;
+}
+
+// Get the guest's borrowing history from the new table
+$borrowingHistory = getBorrowingHistory($conn);
 
 // Check for success message from form submission
 $successMessage = '';
@@ -83,7 +127,7 @@ if (isset($conn) && $conn instanceof mysqli) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Borrowing History - <?= htmlspecialchars($system['system_title']) ?></title>
+    <title>Borrow Form Submissions - <?= htmlspecialchars($system['system_title']) ?></title>
     
     <!-- Bootstrap CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -212,23 +256,23 @@ if (isset($conn) && $conn instanceof mysqli) {
         <!-- Page Header -->
         <div class="text-center mb-4">
             <h2 class="text-white mb-2">
-                <i class="bi bi-clock-history me-2"></i>Borrowing History
+                <i class="bi bi-clock-history me-2"></i>Borrow Form Submissions
             </h2>
-            <p class="text-white-50">Track your asset borrowing requests and returns</p>
+            <p class="text-white-50">Track your borrow form submissions and their status</p>
         </div>
 
         <!-- Borrowing History -->
         <?php if (empty($borrowing_history)): ?>
             <div class="empty-state">
                 <i class="bi bi-inbox" style="font-size: 4rem; color: #6c757d; margin-bottom: 1rem;"></i>
-                <h4>No Borrowing History</h4>
-                <p class="text-muted mb-4">You haven't made any borrowing requests yet.</p>
+                <h4>No Borrow Form Submissions</h4>
+                <p class="text-muted mb-4">You haven't submitted any borrow forms yet.</p>
                 <div class="d-flex gap-2 justify-content-center">
-                    <a href="scan_qr.php" class="btn btn-primary">
-                        <i class="bi bi-qr-code-scan me-1"></i>Scan QR Code
-                    </a>
-                    <a href="browse_assets.php" class="btn btn-outline-primary">
+                    <a href="browse_assets.php" class="btn btn-primary">
                         <i class="bi bi-grid-3x3-gap me-1"></i>Browse Assets
+                    </a>
+                    <a href="borrow.php" class="btn btn-outline-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Submit Borrow Form
                     </a>
                 </div>
             </div>
@@ -240,9 +284,20 @@ if (isset($conn) && $conn instanceof mysqli) {
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <div>
-                                        <h5 class="card-title mb-1"><?= htmlspecialchars($item['asset_name']) ?></h5>
+                                        <h5 class="card-title mb-1">
+                                            <?= htmlspecialchars($item['asset_name']) ?>
+                                            <small class="text-muted">(Request: <?= htmlspecialchars($item['submission_number']) ?>)</small>
+                                        </h5>
                                         <p class="text-muted mb-0">
-                                            <small><i class="bi bi-tag me-1"></i><?= htmlspecialchars($item['asset_tag']) ?></small>
+                                            <small><i class="bi bi-tag me-1"></i><?= htmlspecialchars($item['asset_tag'] ?: 'No Tag') ?></small>
+                                            <?php if (!empty($item['property_no'])): ?>
+                                                | <small><i class="bi bi-hash me-1"></i><?= htmlspecialchars($item['property_no']) ?></small>
+                                            <?php endif; ?>
+                                        </p>
+                                        <p class="text-muted mb-0 small">
+                                            <strong>Guest:</strong> <?= htmlspecialchars($item['guest_name']) ?> |
+                                            <strong>Contact:</strong> <?= htmlspecialchars($item['contact']) ?> |
+                                            <strong>Barangay:</strong> <?= htmlspecialchars($item['barangay']) ?>
                                         </p>
                                     </div>
                                     <span class="status-badge status-<?= $item['status'] ?>">
@@ -251,7 +306,16 @@ if (isset($conn) && $conn instanceof mysqli) {
                                 </div>
 
                                 <div class="mb-3">
-                                    <strong>Purpose:</strong> <?= htmlspecialchars($item['purpose']) ?>
+                                    <strong>Category:</strong> <?= htmlspecialchars($item['category'] ?: 'N/A') ?> |
+                                    <strong>Quantity:</strong> <?= htmlspecialchars($item['quantity']) ?>
+                                    <?php if (!empty($item['remarks'])): ?>
+                                        <br><strong>Remarks:</strong> <?= htmlspecialchars($item['remarks']) ?>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div class="mb-3">
+                                    <strong>Releasing Officer:</strong> <?= htmlspecialchars($item['releasing_officer']) ?><br>
+                                    <strong>Approved By:</strong> <?= htmlspecialchars($item['approved_by']) ?>
                                 </div>
 
                                 <!-- Timeline -->
@@ -259,11 +323,11 @@ if (isset($conn) && $conn instanceof mysqli) {
                                     <div class="timeline-item completed">
                                         <div class="d-flex justify-content-between">
                                             <span><strong>Request Submitted</strong></span>
-                                            <span class="text-muted"><?= date('M j, Y', strtotime($item['request_date'])) ?></span>
+                                            <span class="text-muted"><?= date('M j, Y g:i A', strtotime($item['submitted_at'])) ?></span>
                                         </div>
                                     </div>
 
-                                    <?php if ($item['status'] === 'approved' || $item['status'] === 'borrowed' || $item['status'] === 'returned'): ?>
+                                    <?php if (in_array($item['status'], ['approved', 'completed'])): ?>
                                         <div class="timeline-item completed mt-2">
                                             <div class="d-flex justify-content-between">
                                                 <span><strong>Request Approved</strong></span>
@@ -272,29 +336,18 @@ if (isset($conn) && $conn instanceof mysqli) {
                                         </div>
                                     <?php endif; ?>
 
-                                    <?php if ($item['borrowed_date']): ?>
+                                    <div class="timeline-item <?php echo (in_array($item['status'], ['completed', 'approved'])) ? 'completed' : 'pending'; ?> mt-2">
+                                        <div class="d-flex justify-content-between">
+                                            <span><strong>Expected Return</strong></span>
+                                            <span class="text-muted"><?= date('M j, Y', strtotime($item['schedule_return'])) ?></span>
+                                        </div>
+                                    </div>
+
+                                    <?php if ($item['status'] === 'completed'): ?>
                                         <div class="timeline-item completed mt-2">
                                             <div class="d-flex justify-content-between">
-                                                <span><strong>Asset Borrowed</strong></span>
-                                                <span class="text-muted"><?= date('M j, Y', strtotime($item['borrowed_date'])) ?></span>
-                                            </div>
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <?php if ($item['return_date'] && !$item['actual_return']): ?>
-                                        <div class="timeline-item pending mt-2">
-                                            <div class="d-flex justify-content-between">
-                                                <span><strong>Expected Return</strong></span>
-                                                <span class="text-muted"><?= date('M j, Y', strtotime($item['return_date'])) ?></span>
-                                            </div>
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <?php if ($item['actual_return']): ?>
-                                        <div class="timeline-item completed mt-2">
-                                            <div class="d-flex justify-content-between">
-                                                <span><strong>Asset Returned</strong></span>
-                                                <span class="text-muted"><?= date('M j, Y', strtotime($item['actual_return'])) ?></span>
+                                                <span><strong>Items Returned</strong></span>
+                                                <span class="text-muted">Completed</span>
                                             </div>
                                         </div>
                                     <?php endif; ?>
@@ -331,7 +384,15 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <div class="col-md-3 mb-3">
                     <div class="card text-center">
                         <div class="card-body">
-                            <h4 class="text-warning"><?= count(array_filter($borrowing_history, fn($item) => $item['status'] === 'pending')) ?></h4>
+                            <h4 class="text-warning">
+                                <?php
+                                $pendingCount = 0;
+                                foreach ($borrowing_history as $item) {
+                                    if ($item['status'] === 'pending') $pendingCount++;
+                                }
+                                echo $pendingCount;
+                                ?>
+                            </h4>
                             <p class="mb-0 small text-muted">Pending Requests</p>
                         </div>
                     </div>
@@ -339,16 +400,32 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <div class="col-md-3 mb-3">
                     <div class="card text-center">
                         <div class="card-body">
-                            <h4 class="text-primary"><?= count(array_filter($borrowing_history, fn($item) => $item['status'] === 'borrowed')) ?></h4>
-                            <p class="mb-0 small text-muted">Currently Borrowed</p>
+                            <h4 class="text-info">
+                                <?php
+                                $approvedCount = 0;
+                                foreach ($borrowing_history as $item) {
+                                    if ($item['status'] === 'approved') $approvedCount++;
+                                }
+                                echo $approvedCount;
+                                ?>
+                            </h4>
+                            <p class="mb-0 small text-muted">Approved</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3 mb-3">
                     <div class="card text-center">
                         <div class="card-body">
-                            <h4 class="text-success"><?= count(array_filter($borrowing_history, fn($item) => $item['status'] === 'returned')) ?></h4>
-                            <p class="mb-0 small text-muted">Returned</p>
+                            <h4 class="text-success">
+                                <?php
+                                $completedCount = 0;
+                                foreach ($borrowing_history as $item) {
+                                    if ($item['status'] === 'completed') $completedCount++;
+                                }
+                                echo $completedCount;
+                                ?>
+                            </h4>
+                            <p class="mb-0 small text-muted">Completed</p>
                         </div>
                     </div>
                 </div>
@@ -356,7 +433,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                     <div class="card text-center">
                         <div class="card-body">
                             <h4 class="text-info"><?= count($borrowing_history) ?></h4>
-                            <p class="mb-0 small text-muted">Total Requests</p>
+                            <p class="mb-0 small text-muted">Total Items Requested</p>
                         </div>
                     </div>
                 </div>

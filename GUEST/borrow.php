@@ -105,158 +105,102 @@ function processBorrowSubmission($conn) {
     $schedule_return = $_POST['schedule_return'] ?? '';
     $contact = trim($_POST['contact'] ?? '');
     $barangay = trim($_POST['barangay'] ?? '');
-    
-    // Get cart items for asset validation
-    $cart_items = $_SESSION['borrow_cart'] ?? [];
-    
+    $releasing_officer = trim($_POST['releasing_officer'] ?? '');
+    $approved_by = trim($_POST['approved_by'] ?? '');
+
     // Validate required fields
     $errors = [];
     if (empty($guest_name)) $errors[] = "Name is required";
     if (empty($date_borrowed)) $errors[] = "Date borrowed is required";
     if (empty($schedule_return)) $errors[] = "Schedule of return is required";
     if (empty($contact)) $errors[] = "Contact number is required";
+    if (empty($barangay)) $errors[] = "Barangay is required";
+    if (empty($releasing_officer)) $errors[] = "Releasing officer is required";
+    if (empty($approved_by)) $errors[] = "Approved by is required";
+
+    // Get cart items for asset validation
+    $cart_items = $_SESSION['borrow_cart'] ?? [];
     if (empty($cart_items)) $errors[] = "No assets selected for borrowing";
-    
+
     if (!empty($errors)) {
         $_SESSION['borrow_errors'] = $errors;
         header("Location: borrow.php");
         exit();
     }
-    
-    // Generate request number
-    $request_number = generateRequestNumber($conn);
-    
-    // Prepare data for insertion
-    $purpose = "Borrow request from guest user";
-    if (!empty($barangay)) {
-        $purpose .= " - Barangay: " . $barangay;
-    }
-    
-    // Set default guest email if not set in session
-    $guest_email = $_SESSION['guest_email'] ?? 'guest@pilar.gov.ph';
-    
-    // Insert into guest_borrowing_requests table
-    $request_sql = "INSERT INTO guest_borrowing_requests 
-                    (request_number, guest_name, guest_email, guest_contact, guest_organization, purpose, 
-                     request_date, expected_return_date, status, created_at, updated_at) 
-                    VALUES (?, ?, ?, ?, '', ?, ?, ?, 'pending', NOW(), NOW())";
-    
-    $stmt = $conn->prepare($request_sql);
-    $stmt->bind_param('sssssss', 
-        $request_number,
-        $guest_name,
-        $guest_email,
-        $contact,
-        $purpose,
-        $date_borrowed,
-        $schedule_return
-    );
-    
-    if (!$stmt->execute()) {
-        $_SESSION['borrow_errors'] = ["Failed to create borrow request"];
-        header("Location: borrow.php");
-        exit();
-    }
-    
-    $request_id = $conn->insert_id;
-    $stmt->close();
-    
-    // Process items from form (things, qty, remarks arrays)
-    $things = $_POST['things'] ?? [];
-    $qtys = $_POST['qty'] ?? [];
-    $remarks = $_POST['remarks'] ?? [];
-    
-    $items_processed = 0;
-    
-    // Use cart items if available, otherwise use form data
-    if (!empty($cart_items)) {
-        // Insert cart items
-        foreach ($cart_items as $cart_item) {
-            $asset_id = $cart_item['asset_id'];
-            $quantity = 1; // Default to 1 for cart items
-            $notes = ''; // Cart items don't have remarks initially
-            
-            $item_sql = "INSERT INTO guest_borrowing_items 
-                        (request_id, asset_id, quantity, notes, created_at, updated_at) 
-                        VALUES (?, ?, ?, ?, NOW(), NOW())";
-            
-            $item_stmt = $conn->prepare($item_sql);
-            $item_stmt->bind_param('iiis', $request_id, $asset_id, $quantity, $notes);
-            
-            if ($item_stmt->execute()) {
-                $items_processed++;
-            }
-            $item_stmt->close();
-        }
-    } else {
-        // Insert items from form arrays
-        for ($i = 0; $i < count($things); $i++) {
-            $thing = trim($things[$i] ?? '');
-            $qty = intval($qtys[$i] ?? 1);
-            $remark = trim($remarks[$i] ?? '');
-            
-            if (empty($thing)) continue; // Skip empty rows
-            
-            // Try to find asset by description (this is a fallback if no cart data)
-            $asset_sql = "SELECT id FROM assets WHERE description = ? AND status != 'disposed' LIMIT 1";
-            $asset_stmt = $conn->prepare($asset_sql);
-            $asset_stmt->bind_param('s', $thing);
-            $asset_stmt->execute();
-            $asset_result = $asset_stmt->get_result();
-            
-            if ($asset_result->num_rows > 0) {
-                $asset = $asset_result->fetch_assoc();
-                $asset_id = $asset['id'];
-                
-                $item_sql = "INSERT INTO guest_borrowing_items 
-                            (request_id, asset_id, quantity, notes, created_at, updated_at) 
-                            VALUES (?, ?, ?, ?, NOW(), NOW())";
-                
-                $item_stmt = $conn->prepare($item_sql);
-                $item_stmt->bind_param('iiis', $request_id, $asset_id, $qty, $remark);
-                
-                if ($item_stmt->execute()) {
-                    $items_processed++;
-                }
-                $item_stmt->close();
-            }
-            $asset_stmt->close();
-        }
-    }
-    
-    if ($items_processed > 0) {
-        // Clear the borrow cart after successful submission
-        $_SESSION['borrow_cart'] = [];
-        
-        // Add success message in the format expected by borrowing_history.php
-        $_SESSION['borrow_success'] = [
-            'message' => 'Your borrowing request has been submitted successfully!',
-            'request_number' => $request_number
+
+    // Generate submission number
+    $submission_number = generateSubmissionNumber($conn);
+
+    // Prepare items data from cart
+    $items = [];
+    foreach ($cart_items as $cart_item) {
+        $items[] = [
+            'asset_id' => $cart_item['asset_id'],
+            'thing' => $cart_item['description'],
+            'inventory_tag' => $cart_item['inventory_tag'] ?? '',
+            'property_no' => $cart_item['property_no'] ?? '',
+            'category' => $cart_item['category_name'] ?? '',
+            'qty' => '1',
+            'remarks' => ''
         ];
-        
-        // Redirect to history page
-        header("Location: borrowing_history.php");
-        exit();
-    } else {
-        // If no items were processed, delete the request and show error
-        $conn->query("DELETE FROM guest_borrowing_requests WHERE id = $request_id");
-        $_SESSION['borrow_errors'] = ["No valid assets found to borrow"];
+    }
+
+    // Insert into borrow_form_submissions table
+    $sql = "INSERT INTO borrow_form_submissions
+            (submission_number, guest_name, date_borrowed, schedule_return, barangay, contact,
+             releasing_officer, approved_by, items, status, submitted_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())";
+
+    $stmt = $conn->prepare($sql);
+    $items_json = json_encode($items);
+
+    $stmt->bind_param('sssssssss',
+        $submission_number,
+        $guest_name,
+        $date_borrowed,
+        $schedule_return,
+        $barangay,
+        $contact,
+        $releasing_officer,
+        $approved_by,
+        $items_json
+    );
+
+    if (!$stmt->execute()) {
+        $_SESSION['borrow_errors'] = ["Failed to submit borrow form"];
+        $stmt->close();
         header("Location: borrow.php");
         exit();
     }
+
+    $submission_id = $conn->insert_id;
+    $stmt->close();
+
+    // Clear the borrow cart after successful submission
+    $_SESSION['borrow_cart'] = [];
+
+    // Add success message
+    $_SESSION['borrow_success'] = [
+        'message' => 'Your borrowing request has been submitted successfully!',
+        'request_number' => $submission_number
+    ];
+
+    // Redirect to history page
+    header("Location: borrowing_history.php");
+    exit();
 }
 
 // Function to generate unique request number
-function generateRequestNumber($conn) {
+function generateSubmissionNumber($conn) {
     $date = date('Ymd');
     $counter = 1;
     
     do {
-        $request_number = sprintf("GBR-%s-%03d", $date, $counter);
+        $submission_number = sprintf("BFS-%s-%03d", $date, $counter);
         $counter++;
-    } while ($conn->query("SELECT id FROM guest_borrowing_requests WHERE request_number = '$request_number'")->num_rows > 0);
+    } while ($conn->query("SELECT id FROM borrow_form_submissions WHERE submission_number = '$submission_number'")->num_rows > 0);
     
-    return $request_number;
+    return $submission_number;
 }
 ?>
 <!doctype html>
@@ -639,7 +583,7 @@ function generateRequestNumber($conn) {
 
       <div class="d-flex justify-content-end gap-2 mb-3">
          <span style="color: red;">*</span> Required fields
-        <button type="submit" class="btn btn-success">Submit</button>
+        <button type="submit" name="submit" class="btn btn-success">Submit</button>
         <button type="reset" class="btn btn-secondary">Reset</button>
       </div>
     </form>
