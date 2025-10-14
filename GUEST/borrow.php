@@ -122,6 +122,30 @@ function processBorrowSubmission($conn) {
     $cart_items = $_SESSION['borrow_cart'] ?? [];
     if (empty($cart_items)) $errors[] = "No assets selected for borrowing";
 
+    // Check for duplicate pending requests for the same assets
+    if (!empty($cart_items)) {
+        $cart_asset_ids = array_column($cart_items, 'asset_id');
+        
+        // Get all pending borrow submissions
+        $pending_sql = "SELECT id, items FROM borrow_form_submissions WHERE status = 'pending'";
+        $pending_result = $conn->query($pending_sql);
+        
+        if ($pending_result) {
+            while ($pending_row = $pending_result->fetch_assoc()) {
+                $pending_items = json_decode($pending_row['items'], true);
+                if ($pending_items && is_array($pending_items)) {
+                    foreach ($pending_items as $pending_item) {
+                        if (isset($pending_item['asset_id']) && in_array($pending_item['asset_id'], $cart_asset_ids)) {
+                            $errors[] = "Asset already requested - one of the assets in your cart is already part of a pending borrow request";
+                            break 2; // Break out of both loops
+                        }
+                    }
+                }
+            }
+            $pending_result->free();
+        }
+    }
+
     if (!empty($errors)) {
         $_SESSION['borrow_errors'] = $errors;
         header("Location: borrow.php");
@@ -147,18 +171,20 @@ function processBorrowSubmission($conn) {
 
     // Insert into borrow_form_submissions table
     $sql = "INSERT INTO borrow_form_submissions
-            (submission_number, guest_session_id, guest_email, guest_name, date_borrowed, schedule_return, barangay, contact,
+            (submission_number, guest_session_id, guest_id, guest_email, guest_name, date_borrowed, schedule_return, barangay, contact,
              releasing_officer, approved_by, items, status, submitted_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())";
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())";
 
     $stmt = $conn->prepare($sql);
     $items_json = json_encode($items);
     $guest_session_id = session_id();
+    $guest_id = $_SESSION['guest_id'] ?? null; // Use persistent guest ID
     $guest_email = $_SESSION['guest_email'] ?? null;
 
-    $stmt->bind_param('sssssssssss',
+    $stmt->bind_param('ssssssssssss',
         $submission_number,
         $guest_session_id,
+        $guest_id,
         $guest_email,
         $guest_name,
         $date_borrowed,
@@ -214,6 +240,7 @@ function generateSubmissionNumber($conn) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Borrow Slip - Fillable</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <style>
     body{background:#f7f7f9}
     .slip-card{max-width:900px;margin:20px auto;padding:18px;background:#fff;border:1px solid #ddd}
@@ -468,7 +495,7 @@ function generateSubmissionNumber($conn) {
     <?php if (isset($_SESSION['borrow_errors']) && !empty($_SESSION['borrow_errors'])): ?>
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <strong>Please fix the following errors:</strong>
+           
             <ul class="mb-0 mt-2">
                 <?php foreach ($_SESSION['borrow_errors'] as $error): ?>
                     <li><?= htmlspecialchars($error) ?></li>

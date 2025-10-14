@@ -12,13 +12,17 @@ if (!isset($_SESSION['is_guest']) || $_SESSION['is_guest'] !== true) {
 function getBorrowingHistory($conn) {
     $history = [];
 
-    // Get current guest session ID
-    $guest_session_id = session_id();
+    // Get current guest's persistent ID
+    $guest_id = $_SESSION['guest_id'] ?? null;
 
-    // Query submissions only for the current guest session
-    $sql = "SELECT * FROM borrow_form_submissions WHERE guest_session_id = ? ORDER BY submitted_at DESC";
+    if (!$guest_id) {
+        return $history; // Return empty if no persistent guest ID
+    }
+
+    // Query submissions only for the current guest using persistent guest_id
+    $sql = "SELECT * FROM borrow_form_submissions WHERE guest_id = ? ORDER BY submitted_at DESC";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('s', $guest_session_id);
+    $stmt->bind_param('s', $guest_id);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -81,6 +85,7 @@ $statusCounts = [
     'pending' => 0,
     'approved' => 0,
     'rejected' => 0,
+    'cancelled' => 0,
     'active' => 0,
     'completed' => 0,
     'overdue' => 0,
@@ -191,6 +196,7 @@ if (isset($conn) && $conn instanceof mysqli) {
         .status-borrowed { background: var(--primary-color); color: white; }
         .status-returned { background: var(--success-color); color: white; }
         .status-overdue { background: var(--danger-color); color: white; }
+        .status-cancelled { background: #6c757d; color: white; }
 
         .timeline-item {
             position: relative;
@@ -363,7 +369,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                                 <!-- Action Buttons -->
                                 <div class="mt-3 d-flex gap-2">
                                     <?php if ($item['status'] === 'pending'): ?>
-                                        <button class="btn btn-outline-danger btn-sm" onclick="cancelRequest(<?= $item['id'] ?>)">
+                                        <button class="btn btn-outline-danger btn-sm cancel-btn" data-submission-id="<?= $item['submission_id'] ?>">
                                             <i class="bi bi-x-circle me-1"></i>Cancel Request
                                         </button>
                                     <?php elseif ($item['status'] === 'approved'): ?>
@@ -373,6 +379,10 @@ if (isset($conn) && $conn instanceof mysqli) {
                                     <?php elseif ($item['status'] === 'borrowed' && !$item['actual_return']): ?>
                                         <span class="text-primary small">
                                             <i class="bi bi-clock me-1"></i>Currently borrowed
+                                        </span>
+                                    <?php elseif ($item['status'] === 'cancelled'): ?>
+                                        <span class="text-secondary small">
+                                            <i class="bi bi-x-octagon me-1"></i>Request cancelled
                                         </span>
                                     <?php endif; ?>
                                     
@@ -388,7 +398,7 @@ if (isset($conn) && $conn instanceof mysqli) {
 
             <!-- Summary Stats -->
             <div class="row mt-4">
-                <div class="col-md-3 mb-3">
+                <div class="col-md-6 col-lg-3 mb-3">
                     <div class="card text-center">
                         <div class="card-body">
                             <h4 class="text-warning">
@@ -404,7 +414,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-6 col-lg-3 mb-3">
                     <div class="card text-center">
                         <div class="card-body">
                             <h4 class="text-info">
@@ -420,23 +430,23 @@ if (isset($conn) && $conn instanceof mysqli) {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-6 col-lg-3 mb-3">
                     <div class="card text-center">
                         <div class="card-body">
-                            <h4 class="text-success">
+                            <h4 class="text-secondary">
                                 <?php
-                                $completedCount = 0;
+                                $cancelledCount = 0;
                                 foreach ($borrowing_history as $item) {
-                                    if ($item['status'] === 'completed') $completedCount++;
+                                    if ($item['status'] === 'cancelled') $cancelledCount++;
                                 }
-                                echo $completedCount;
+                                echo $cancelledCount;
                                 ?>
                             </h4>
-                            <p class="mb-0 small text-muted">Completed</p>
+                            <p class="mb-0 small text-muted">Cancelled</p>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-6 col-lg-3 mb-3">
                     <div class="card text-center">
                         <div class="card-body">
                             <h4 class="text-info"><?= count($borrowing_history) ?></h4>
@@ -452,13 +462,46 @@ if (isset($conn) && $conn instanceof mysqli) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        function cancelRequest(requestId) {
-            if (confirm('Are you sure you want to cancel this borrowing request?')) {
-                // Here you would send an AJAX request to cancel the request
-                alert('Request cancelled successfully.');
-                location.reload();
+        // Handle cancel request
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('cancel-btn') || e.target.closest('.cancel-btn')) {
+                const button = e.target.classList.contains('cancel-btn') ? e.target : e.target.closest('.cancel-btn');
+                const submissionId = button.getAttribute('data-submission-id');
+                
+                if (confirm('Are you sure you want to cancel this borrowing request?')) {
+                    // Disable button and show loading
+                    button.disabled = true;
+                    const originalText = button.innerHTML;
+                    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Cancelling...';
+                    
+                    // Send AJAX request to cancel the request
+                    fetch('cancel_borrow_request.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: 'submission_id=' + submissionId
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Request cancelled successfully.');
+                            location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                            button.disabled = false;
+                            button.innerHTML = originalText;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while cancelling the request.');
+                        button.disabled = false;
+                        button.innerHTML = originalText;
+                    });
+                }
             }
-        }
+        });
 
         function viewDetails(requestId) {
             // Here you would show detailed information about the request
