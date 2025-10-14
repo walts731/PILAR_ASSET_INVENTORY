@@ -74,6 +74,46 @@ if ($success && $action === 'accept') {
                     $update_stmt->execute();
                     $update_stmt->close();
                 }
+
+                // Automatically reject other pending borrow requests for the same assets
+                if (!empty($asset_ids)) {
+                    // Find all pending submissions that contain any of these asset_ids
+                    $conflict_placeholders = str_repeat('?,', count($asset_ids) - 1) . '?';
+                    $conflict_sql = "SELECT id, items FROM borrow_form_submissions
+                                   WHERE status = 'pending' AND id != ?";
+                    $conflict_stmt = $conn->prepare($conflict_sql);
+                    $conflict_stmt->bind_param('i', $submission_id);
+                    $conflict_stmt->execute();
+                    $conflict_result = $conflict_stmt->get_result();
+
+                    $conflicting_submission_ids = [];
+                    while ($conflict_row = $conflict_result->fetch_assoc()) {
+                        $conflict_items = json_decode($conflict_row['items'], true);
+                        if ($conflict_items && is_array($conflict_items)) {
+                            foreach ($conflict_items as $item) {
+                                if (isset($item['asset_id']) && in_array((int)$item['asset_id'], $asset_ids)) {
+                                    $conflicting_submission_ids[] = $conflict_row['id'];
+                                    break; // Found a conflict, no need to check other items in this submission
+                                }
+                            }
+                        }
+                    }
+                    $conflict_stmt->close();
+
+                    // Reject all conflicting submissions
+                    if (!empty($conflicting_submission_ids)) {
+                        $reject_placeholders = str_repeat('?,', count($conflicting_submission_ids) - 1) . '?';
+                        $reject_sql = "UPDATE borrow_form_submissions SET status = 'rejected', updated_at = NOW() WHERE id IN ($reject_placeholders)";
+                        $reject_stmt = $conn->prepare($reject_sql);
+
+                        if ($reject_stmt) {
+                            $reject_types = str_repeat('i', count($conflicting_submission_ids));
+                            $reject_stmt->bind_param($reject_types, ...$conflicting_submission_ids);
+                            $reject_stmt->execute();
+                            $reject_stmt->close();
+                        }
+                    }
+                }
             }
         }
     }
