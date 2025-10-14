@@ -122,6 +122,30 @@ function processBorrowSubmission($conn) {
     $cart_items = $_SESSION['borrow_cart'] ?? [];
     if (empty($cart_items)) $errors[] = "No assets selected for borrowing";
 
+    // Check for duplicate pending requests for the same assets
+    if (!empty($cart_items)) {
+        $cart_asset_ids = array_column($cart_items, 'asset_id');
+        
+        // Get all pending borrow submissions
+        $pending_sql = "SELECT id, items FROM borrow_form_submissions WHERE status = 'pending'";
+        $pending_result = $conn->query($pending_sql);
+        
+        if ($pending_result) {
+            while ($pending_row = $pending_result->fetch_assoc()) {
+                $pending_items = json_decode($pending_row['items'], true);
+                if ($pending_items && is_array($pending_items)) {
+                    foreach ($pending_items as $pending_item) {
+                        if (isset($pending_item['asset_id']) && in_array($pending_item['asset_id'], $cart_asset_ids)) {
+                            $errors[] = "Asset already requested - one of the assets in your cart is already part of a pending borrow request";
+                            break 2; // Break out of both loops
+                        }
+                    }
+                }
+            }
+            $pending_result->free();
+        }
+    }
+
     if (!empty($errors)) {
         $_SESSION['borrow_errors'] = $errors;
         header("Location: borrow.php");
@@ -468,7 +492,7 @@ function generateSubmissionNumber($conn) {
     <?php if (isset($_SESSION['borrow_errors']) && !empty($_SESSION['borrow_errors'])): ?>
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <strong>Please fix the following errors:</strong>
+           
             <ul class="mb-0 mt-2">
                 <?php foreach ($_SESSION['borrow_errors'] as $error): ?>
                     <li><?= htmlspecialchars($error) ?></li>
