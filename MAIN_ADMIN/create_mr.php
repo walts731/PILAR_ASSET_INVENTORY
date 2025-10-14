@@ -2016,12 +2016,20 @@ if ($baseSerial !== '') {
                 }
 
                 if (categorySelect && codeInput) {
-                    // Note: Asset code is now generated server-side on page load like inventory_tag
-                    // This provides proper incrementing behavior on each page refresh
+                    // Note: Asset code is now dynamically generated when category changes
+                    // This provides immediate feedback to users while maintaining server incrementing
                     categorySelect.addEventListener('change', function() {
-                        // Asset code will be generated server-side on form submission
-                        // No client-side generation needed - maintains server incrementing
+                        const selected = categorySelect.options[categorySelect.selectedIndex];
+                        if (!selected) return;
+                        const catCode = selected.getAttribute('data-code') || '';
+                        if (catCode) {
+                            // Update the asset code dynamically based on selected category
+                            codeInput.value = buildCodeFromCategory(catCode);
+                        }
                     });
+                    
+                    // Prefill code on page load if category is already selected
+                    maybePrefillCode();
                     
                     // Asset code and serial number are now generated server-side on page load
                     // This ensures proper incrementing behavior like inventory_tag
