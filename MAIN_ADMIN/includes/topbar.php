@@ -153,12 +153,12 @@ $low_stock_count = count($low_stock_items);
   }
 </style>
 <div class="topbar d-flex flex-wrap justify-content-between align-items-center p-2 gap-2">
-  <!-- Dashboard Button -->
+  <!-- Sidebar Toggle -->
   <div class="order-1">
-    <a href="admin_dashboard.php" class="btn btn-outline-primary">
-      <i class="bi bi-house-door"></i>
-      <span class="d-none d-sm-inline">Dashboard</span>
-    </a>
+    <button id="toggleSidebar" class="btn btn-outline-primary">
+      <i class="bi bi-chevron-left" id="toggleIcon"></i>
+      <span class="d-none d-sm-inline">Toggle Sidebar</span>
+    </button>
   </div>
 
   <!-- Page Title & Breadcrumb -->
