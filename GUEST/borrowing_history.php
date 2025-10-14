@@ -67,7 +67,7 @@ function getBorrowingHistory($conn) {
 }
 
 // Get the guest's borrowing history from the new table
-$borrowingHistory = getBorrowingHistory($conn);
+$borrowing_history = getBorrowingHistory($conn);
 
 // Check for success message from form submission
 $successMessage = '';
