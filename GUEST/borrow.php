@@ -91,7 +91,173 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// If the user clicked "Print Slip" we will render a printable version below (same file)
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
+    // Process the borrow request submission
+    processBorrowSubmission($conn);
+}
+
+// Function to process borrow request submission
+function processBorrowSubmission($conn) {
+    // Get form data
+    $guest_name = trim($_POST['name'] ?? '');
+    $date_borrowed = $_POST['date_borrowed'] ?? '';
+    $schedule_return = $_POST['schedule_return'] ?? '';
+    $contact = trim($_POST['contact'] ?? '');
+    $barangay = trim($_POST['barangay'] ?? '');
+    
+    // Get cart items for asset validation
+    $cart_items = $_SESSION['borrow_cart'] ?? [];
+    
+    // Validate required fields
+    $errors = [];
+    if (empty($guest_name)) $errors[] = "Name is required";
+    if (empty($date_borrowed)) $errors[] = "Date borrowed is required";
+    if (empty($schedule_return)) $errors[] = "Schedule of return is required";
+    if (empty($contact)) $errors[] = "Contact number is required";
+    if (empty($cart_items)) $errors[] = "No assets selected for borrowing";
+    
+    if (!empty($errors)) {
+        $_SESSION['borrow_errors'] = $errors;
+        header("Location: borrow.php");
+        exit();
+    }
+    
+    // Generate request number
+    $request_number = generateRequestNumber($conn);
+    
+    // Prepare data for insertion
+    $purpose = "Borrow request from guest user";
+    if (!empty($barangay)) {
+        $purpose .= " - Barangay: " . $barangay;
+    }
+    
+    // Set default guest email if not set in session
+    $guest_email = $_SESSION['guest_email'] ?? 'guest@pilar.gov.ph';
+    
+    // Insert into guest_borrowing_requests table
+    $request_sql = "INSERT INTO guest_borrowing_requests 
+                    (request_number, guest_name, guest_email, guest_contact, guest_organization, purpose, 
+                     request_date, expected_return_date, status, created_at, updated_at) 
+                    VALUES (?, ?, ?, ?, '', ?, ?, ?, 'pending', NOW(), NOW())";
+    
+    $stmt = $conn->prepare($request_sql);
+    $stmt->bind_param('sssssss', 
+        $request_number,
+        $guest_name,
+        $guest_email,
+        $contact,
+        $purpose,
+        $date_borrowed,
+        $schedule_return
+    );
+    
+    if (!$stmt->execute()) {
+        $_SESSION['borrow_errors'] = ["Failed to create borrow request"];
+        header("Location: borrow.php");
+        exit();
+    }
+    
+    $request_id = $conn->insert_id;
+    $stmt->close();
+    
+    // Process items from form (things, qty, remarks arrays)
+    $things = $_POST['things'] ?? [];
+    $qtys = $_POST['qty'] ?? [];
+    $remarks = $_POST['remarks'] ?? [];
+    
+    $items_processed = 0;
+    
+    // Use cart items if available, otherwise use form data
+    if (!empty($cart_items)) {
+        // Insert cart items
+        foreach ($cart_items as $cart_item) {
+            $asset_id = $cart_item['asset_id'];
+            $quantity = 1; // Default to 1 for cart items
+            $notes = ''; // Cart items don't have remarks initially
+            
+            $item_sql = "INSERT INTO guest_borrowing_items 
+                        (request_id, asset_id, quantity, notes, created_at, updated_at) 
+                        VALUES (?, ?, ?, ?, NOW(), NOW())";
+            
+            $item_stmt = $conn->prepare($item_sql);
+            $item_stmt->bind_param('iiis', $request_id, $asset_id, $quantity, $notes);
+            
+            if ($item_stmt->execute()) {
+                $items_processed++;
+            }
+            $item_stmt->close();
+        }
+    } else {
+        // Insert items from form arrays
+        for ($i = 0; $i < count($things); $i++) {
+            $thing = trim($things[$i] ?? '');
+            $qty = intval($qtys[$i] ?? 1);
+            $remark = trim($remarks[$i] ?? '');
+            
+            if (empty($thing)) continue; // Skip empty rows
+            
+            // Try to find asset by description (this is a fallback if no cart data)
+            $asset_sql = "SELECT id FROM assets WHERE description = ? AND status != 'disposed' LIMIT 1";
+            $asset_stmt = $conn->prepare($asset_sql);
+            $asset_stmt->bind_param('s', $thing);
+            $asset_stmt->execute();
+            $asset_result = $asset_stmt->get_result();
+            
+            if ($asset_result->num_rows > 0) {
+                $asset = $asset_result->fetch_assoc();
+                $asset_id = $asset['id'];
+                
+                $item_sql = "INSERT INTO guest_borrowing_items 
+                            (request_id, asset_id, quantity, notes, created_at, updated_at) 
+                            VALUES (?, ?, ?, ?, NOW(), NOW())";
+                
+                $item_stmt = $conn->prepare($item_sql);
+                $item_stmt->bind_param('iiis', $request_id, $asset_id, $qty, $remark);
+                
+                if ($item_stmt->execute()) {
+                    $items_processed++;
+                }
+                $item_stmt->close();
+            }
+            $asset_stmt->close();
+        }
+    }
+    
+    if ($items_processed > 0) {
+        // Clear the borrow cart after successful submission
+        $_SESSION['borrow_cart'] = [];
+        
+        // Add success message in the format expected by borrowing_history.php
+        $_SESSION['borrow_success'] = [
+            'message' => 'Your borrowing request has been submitted successfully!',
+            'request_number' => $request_number
+        ];
+        
+        // Redirect to history page
+        header("Location: borrowing_history.php");
+        exit();
+    } else {
+        // If no items were processed, delete the request and show error
+        $conn->query("DELETE FROM guest_borrowing_requests WHERE id = $request_id");
+        $_SESSION['borrow_errors'] = ["No valid assets found to borrow"];
+        header("Location: borrow.php");
+        exit();
+    }
+}
+
+// Function to generate unique request number
+function generateRequestNumber($conn) {
+    $date = date('Ymd');
+    $counter = 1;
+    
+    do {
+        $request_number = sprintf("GBR-%s-%03d", $date, $counter);
+        $counter++;
+    } while ($conn->query("SELECT id FROM guest_borrowing_requests WHERE request_number = '$request_number'")->num_rows > 0);
+    
+    return $request_number;
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -301,11 +467,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <?php endif; ?>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#contactModal">
-                            <i class="bi bi-question-circle me-1"></i> Help
-                        </a>
-                    </li>
+                   
                     <li class="nav-item">
                         <a class="nav-link text-danger" href="../logout.php">
                             <i class="bi bi-box-arrow-right me-1"></i> Logout
@@ -338,6 +500,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="container py-4">
   <div class="slip-card">
+    
+    <!-- Display Success/Error Messages -->
+    <?php if (isset($_SESSION['borrow_success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <?php 
+            if (is_array($_SESSION['borrow_success'])) {
+                echo htmlspecialchars($_SESSION['borrow_success']['message']) . ' Request #' . htmlspecialchars($_SESSION['borrow_success']['request_number']);
+            } else {
+                echo htmlspecialchars($_SESSION['borrow_success']);
+            }
+            ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['borrow_success']); ?>
+    <?php endif; ?>
+    
+    <?php if (isset($_SESSION['borrow_errors']) && !empty($_SESSION['borrow_errors'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-2">
+                <?php foreach ($_SESSION['borrow_errors'] as $error): ?>
+                    <li><?= htmlspecialchars($error) ?></li>
+                <?php endforeach; ?>
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['borrow_errors']); ?>
+    <?php endif; ?>
+
     <form id="borrowForm" method="post">
       <div class="row align-items-center mb-3">
         <div class="col-auto">
@@ -363,16 +556,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <div class="row g-2 mb-2">
         <div class="col-md-6">
-          <label class="form-label">Name</label>
-          <input type="text" name="name" class="form-control" value="">
+          <label class="form-label">Name <span style="color: red;">*</span></label>
+          <input type="text" name="name" class="form-control" value="" required>
         </div>
         <div class="col-md-3">
-          <label class="form-label">Date Borrowed</label>
-          <input type="date" name="date_borrowed" class="form-control" value="<?php echo h($data['date_borrowed']); ?>">
+          <label class="form-label">Date Borrowed <span style="color: red;">*</span></label>
+          <input type="date" name="date_borrowed" class="form-control" value="<?php echo h($data['date_borrowed']); ?>" required>
         </div>
         <div class="col-md-3">
-          <label class="form-label">Schedule of Return</label>
-          <input type="date" name="schedule_return" class="form-control" value="<?php echo h($data['schedule_return']); ?>">
+          <label class="form-label">Schedule of Return <span style="color: red;">*</span></label>
+          <input type="date" name="schedule_return" class="form-control" value="<?php echo h($data['schedule_return']); ?>" required>
         </div>
         
       </div>
@@ -380,13 +573,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="row g-2 align-items-end mb-3">
         
         <div class="col-md-6">
-          <label class="form-label">Barangay</label>
-          <input type="text" name="barangay" class="form-control" value="<?php echo h($data['barangay']); ?>">
+          <label class="form-label">Barangay <span style="color: red;">*</span></label>
+          <input type="text" name="barangay" class="form-control" value="<?php echo h($data['barangay']); ?>" required>
         </div>
 
         <div class="col-md-6">
-          <label class="form-label">Contact No.</label>
-          <input type="text" name="contact" class="form-control" value="<?php echo h($data['contact']); ?>">
+          <label class="form-label">Contact No. <span style="color: red;">*</span></label>
+          <input type="text" name="contact" class="form-control" value="<?php echo h($data['contact']); ?>" required>
         </div>
        
       </div>
@@ -433,18 +626,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <div class="row mb-3">
         <div class="col-md-6 text-center">
-          <label class="form-label">Releasing Officer</label>
-          <input type="text" name="releasing_officer" class="form-control" value="<?php echo h($data['releasing_officer']); ?>">
+          <label class="form-label">Releasing Officer <span style="color: red;">*</span></label>
+          <input type="text" name="releasing_officer" class="form-control" value="<?php echo h($data['releasing_officer']); ?>" required>
           <small class="text-muted"><?php echo h($data['releasing_officer_title']); ?></small>
         </div>
         <div class="col-md-6 text-center">
-          <label class="form-label">Approved by</label>
-          <input type="text" name="approved_by" class="form-control" value="<?php echo h($data['approved_by']); ?>">
+          <label class="form-label">Approved by <span style="color: red;">*</span></label>
+          <input type="text" name="approved_by" class="form-control" value="<?php echo h($data['approved_by']); ?>" required>
           <small class="text-muted"><?php echo h($data['approved_by_title']); ?></small>
         </div>
       </div>
 
       <div class="d-flex justify-content-end gap-2 mb-3">
+         <span style="color: red;">*</span> Required fields
         <button type="submit" class="btn btn-success">Submit</button>
         <button type="reset" class="btn btn-secondary">Reset</button>
       </div>
