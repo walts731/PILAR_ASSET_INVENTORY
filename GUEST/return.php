@@ -4,6 +4,7 @@
 
 session_start();
 require_once '../connect.php';
+require_once '../includes/lifecycle_helper.php';
 
 // Check if user is a guest
 if (!isset($_SESSION['is_guest']) || $_SESSION['is_guest'] !== true) {
@@ -157,6 +158,22 @@ function processReturnSubmission($conn) {
                 $update_assets_stmt->bind_param($types, ...$asset_ids);
                 $update_assets_stmt->execute();
                 $update_assets_stmt->close();
+            }
+
+            // Log lifecycle events for returned assets
+            $borrower_name = $_SESSION['guest_name'] ?? 'Unknown Guest';
+            foreach ($asset_ids as $asset_id) {
+                logLifecycleEvent(
+                    $asset_id,
+                    'RETURNED',
+                    'borrow_form_submissions',
+                    $submission_id,
+                    null, // from_employee_id (guest returning)
+                    null, // to_employee_id (returning to inventory)
+                    null, // from_office_id
+                    null, // to_office_id
+                    "Asset returned by {$borrower_name} (Submission #{$submission_id})"
+                );
             }
         }
     }
