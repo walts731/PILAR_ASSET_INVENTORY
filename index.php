@@ -304,12 +304,7 @@ require_once "engine/login_engine.php";
                             <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
                         </button>
 
-                        <!-- Guest Sign In -->
-                        <div class="text-center mt-3">
-                            <a href="engine/guest_login_engine.php" class="btn btn-outline-secondary w-100">
-                                <i class="bi bi-person"></i> Sign in as Guest
-                            </a>
-                        </div>
+                       
 
                         <div class="mt-3 text-center text-muted">
                             By signing in, you agree to our <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a> and <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms</a>.

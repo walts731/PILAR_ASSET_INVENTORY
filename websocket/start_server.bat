@@ -1,3 +1,0 @@
-@echo off
-echo Starting WebSocket Server...
-php -f websocket/NotificationServer.php
