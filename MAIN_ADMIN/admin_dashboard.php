@@ -421,14 +421,22 @@ try {
           </div>
         </div>
 
-        <!-- Most Borrowed Items (Line Chart) -->
+        <!-- Most Borrowed Items (Top 10 Bar Chart) -->
         <div class="col-md-6 mb-4">
           <div class="card shadow-sm border-0">
             <div class="card-header bg-white border-0 py-3">
-              <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Most Borrowed Items</h5>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h5 class="mb-0"><i class="bi bi-bar-chart-steps me-2"></i>Top 10 Borrowed Items</h5>
+                  <small class="text-muted">Highest borrow counts (all time)</small>
+                </div>
+                <span class="badge bg-light text-secondary border">Top 10</span>
+              </div>
             </div>
             <div class="card-body">
-              <canvas id="borrowedChart" height="200"></canvas>
+              <div class="position-relative" style="min-height: 260px;">
+                <canvas id="borrowedChart" height="220"></canvas>
+              </div>
             </div>
           </div>
         </div>
@@ -713,93 +721,98 @@ try {
         });
       });
 
-      // ✅ Sample Data for Most Borrowed Items (static for now)
-      const borrowedCtx = document.getElementById('borrowedChart').getContext('2d');
-      // Create subtle gradients for better aesthetics
-      const grad1 = borrowedCtx.createLinearGradient(0, 0, 0, 200);
-      grad1.addColorStop(0, 'rgba(13, 110, 253, 0.35)');
-      grad1.addColorStop(1, 'rgba(13, 110, 253, 0.05)');
-      const grad2 = borrowedCtx.createLinearGradient(0, 0, 0, 200);
-      grad2.addColorStop(0, 'rgba(25, 135, 84, 0.35)');
-      grad2.addColorStop(1, 'rgba(25, 135, 84, 0.05)');
-      const grad3 = borrowedCtx.createLinearGradient(0, 0, 0, 200);
-      grad3.addColorStop(0, 'rgba(255, 193, 7, 0.35)');
-      grad3.addColorStop(1, 'rgba(255, 193, 7, 0.05)');
+      // ✅ Sample Data for Most Borrowed Items (Top 10 bar chart for now)
+      (function() {
+        const canvas = document.getElementById('borrowedChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
 
-      new Chart(borrowedCtx, {
-        type: 'line',
-        data: {
-          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-          datasets: [
-            {
-              label: 'Chairs',
-              data: [5, 10, 8, 12],
+        const topBorrowed = [
+          { item: 'Chairs', count: 58 },
+          { item: 'Projectors', count: 42 },
+          { item: 'Laptops', count: 37 },
+          { item: 'Microphones', count: 31 },
+          { item: 'Tablets', count: 28 },
+          { item: 'Desktop PCs', count: 24 },
+          { item: 'Printers', count: 21 },
+          { item: 'Cameras', count: 17 },
+          { item: 'Extension Cords', count: 15 },
+          { item: 'Sound System', count: 13 }
+        ];
+
+        const labels = topBorrowed.map(entry => entry.item);
+        const values = topBorrowed.map(entry => entry.count);
+
+        const barGradient = ctx.createLinearGradient(0, 0, 0, 240);
+        barGradient.addColorStop(0, 'rgba(13, 110, 253, 0.9)');
+        barGradient.addColorStop(1, 'rgba(13, 110, 253, 0.2)');
+
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Borrow Count',
+              data: values,
+              backgroundColor: barGradient,
               borderColor: 'rgba(13, 110, 253, 1)',
-              backgroundColor: grad1,
-              pointBackgroundColor: '#fff',
-              pointBorderColor: 'rgba(13, 110, 253, 1)',
-              pointRadius: 3,
-              fill: true,
-              tension: 0.35
-            },
-            {
-              label: 'Projectors',
-              data: [2, 6, 4, 7],
-              borderColor: 'rgba(25, 135, 84, 1)',
-              backgroundColor: grad2,
-              pointBackgroundColor: '#fff',
-              pointBorderColor: 'rgba(25, 135, 84, 1)',
-              pointRadius: 3,
-              fill: true,
-              tension: 0.35
-            },
-            {
-              label: 'Laptops',
-              data: [3, 4, 6, 9],
-              borderColor: 'rgba(255, 193, 7, 1)',
-              backgroundColor: grad3,
-              pointBackgroundColor: '#fff',
-              pointBorderColor: 'rgba(255, 193, 7, 1)',
-              pointRadius: 3,
-              fill: true,
-              tension: 0.35
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: 'rgba(33, 37, 41, 0.9)',
-              titleColor: '#fff',
-              bodyColor: '#fff',
-              padding: 10,
-              cornerRadius: 8,
-              displayColors: false
-            }
+              borderWidth: 1,
+              borderRadius: 6,
+              maxBarThickness: 32
+            }]
           },
-          scales: {
-            x: {
-              ticks: { color: '#6c757d', font: { size: 12 } },
-              grid: { display: false }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: 'rgba(33, 37, 41, 0.9)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 12,
+                cornerRadius: 8,
+                displayColors: false,
+                callbacks: {
+                  title: items => items[0]?.label || '',
+                  label: ctx => `Borrowed: ${ctx.parsed.y}x`
+                }
+              }
             },
-            y: {
-              beginAtZero: true,
-              title: {
-                display: true,
-                text: 'Items Borrowed',
-                color: '#495057',
-                font: { size: 12, weight: '600' }
+            scales: {
+              x: {
+                ticks: {
+                  color: '#6c757d',
+                  font: { size: 12 },
+                  callback(value, index) {
+                    const label = this.getLabelForValue(index);
+                    return label.length > 16 ? label.slice(0, 16) + '…' : label;
+                  }
+                },
+                grid: { display: false }
               },
-              ticks: { color: '#6c757d', font: { size: 12 } },
-              grid: { color: 'rgba(0,0,0,0.05)' }
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Borrow Count',
+                  color: '#495057',
+                  font: { size: 12, weight: '600' }
+                },
+                ticks: {
+                  color: '#6c757d',
+                  font: { size: 12 }
+                },
+                grid: { color: 'rgba(0,0,0,0.05)' }
+              }
+            },
+            animation: {
+              duration: 800,
+              easing: 'easeOutQuart'
             }
-          },
-          animation: { duration: 800, easing: 'easeOutQuart' }
-        }
-      });
+          }
+        });
+      })();
 
       // Fuel Inventory Chart (Doughnut)
       (function() {
