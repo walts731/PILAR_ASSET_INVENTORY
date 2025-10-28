@@ -18,16 +18,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    $username = trim($_POST['username'] ?? '');
-    
-    if (empty($username)) {
-        echo json_encode(['success' => false, 'message' => 'Please enter your username.']);
+    if (empty($_SERVER['HTTP_HOST']) || !preg_match('/^[a-z0-9.-]+$/i', $_SERVER['HTTP_HOST'])) {
+        throw new Exception('Invalid request origin');
+    }
+
+    $email = trim($_POST['email'] ?? '');
+
+    if (empty($email)) {
+        echo json_encode(['success' => false, 'message' => 'Please enter your email address.']);
         exit;
     }
     
     // Check if user exists and is active
-    $stmt = $conn->prepare("SELECT id, email, fullname FROM users WHERE username = ? AND status = 'active'");
-    $stmt->bind_param("s", $username);
+    $stmt = $conn->prepare("SELECT id, username, email, fullname FROM users WHERE email = ? AND status = 'active'");
+    $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -35,11 +39,11 @@ try {
         // Don't reveal if username exists or not for security
         echo json_encode([
             'success' => true, 
-            'message' => 'If your username exists, a password reset link has been sent to your registered email address.'
+            'message' => 'If your email exists, a password reset link has been sent to your registered email address.'
         ]);
         
         // Log failed attempt
-        logAuthActivity('PASSWORD_RESET_FAILED', "Password reset attempted for non-existent or inactive username: {$username}");
+        logAuthActivity('PASSWORD_RESET_FAILED', "Password reset attempted for non-existent or inactive email: {$email}");
         exit;
     }
     
@@ -59,11 +63,11 @@ try {
     $updateStmt->close();
     
     // Send password reset email
-    $emailResult = sendPasswordResetEmail($user['email'], $username, $token);
+    $emailResult = sendPasswordResetEmail($user['email'], $user['username'], $token);
     
     if ($emailResult['success']) {
         // Log successful password reset request
-        logAuthActivity('PASSWORD_RESET_REQUESTED', "Password reset link sent to user: {$username}", $user['id'], $username);
+        logAuthActivity('PASSWORD_RESET_REQUESTED', "Password reset link sent to user: {$user['username']}", $user['id'], $user['username']);
         
         echo json_encode([
             'success' => true,
@@ -71,7 +75,7 @@ try {
         ]);
     } else {
         // Log email failure but don't reveal details to user
-        logAuthActivity('PASSWORD_RESET_EMAIL_FAILED', "Password reset email failed for user: {$username} - {$emailResult['message']}", $user['id'], $username);
+        logAuthActivity('PASSWORD_RESET_EMAIL_FAILED', "Password reset email failed for user: {$user['username']} - {$emailResult['message']}", $user['id'], $user['username']);
         
         echo json_encode([
             'success' => false,

@@ -201,6 +201,54 @@ Please do not reply to this email.
 }
 
 /**
+ * Send password reset email with secure token
+ * @param string $email Recipient email
+ * @param string $username Recipient username/fullname display
+ * @param string $token Secure reset token
+ * @return array
+ */
+function sendPasswordResetEmail($email, $username, $token) {
+    try {
+        $mail = configurePHPMailer();
+
+        $mail->addAddress($email);
+        $mail->Subject = 'Password Reset Request - PILAR Asset Inventory';
+
+        $baseURL = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']);
+        $resetURL = rtrim($baseURL, '/\\') . '/reset_password.php?token=' . urlencode($token);
+
+        $mail->isHTML(true);
+        $mail->Body = "
+            <h2>Password Reset Request</h2>
+            <p>Hello {$username},</p>
+            <p>You have requested to reset your password for PILAR Asset Inventory System.</p>
+            <p><a href='{$resetURL}' style='background:#0b5ed7;color:#fff;padding:10px 20px;text-decoration:none;border-radius:5px;'>Reset Password</a></p>
+            <p>If the button doesn't work, copy and paste this URL: {$resetURL}</p>
+            <p>This link will expire in 1 hour.</p>
+            <p>If you didn't request this reset, please ignore this email.</p>
+        ";
+
+        $mail->AltBody = "Password Reset Request\n\nHello {$username},\n\n" .
+            "You have requested to reset your password for PILAR Asset Inventory System.\n\n" .
+            "Reset link: {$resetURL}\n\n" .
+            "This link will expire in 1 hour. If you didn't request this reset, please ignore this email.";
+
+        $mail->send();
+
+        return [
+            'success' => true,
+            'message' => 'Password reset email sent successfully'
+        ];
+    } catch (Exception $e) {
+        error_log('Password reset email failed: ' . $e->getMessage());
+        return [
+            'success' => false,
+            'message' => 'Failed to send password reset email: ' . $e->getMessage()
+        ];
+    }
+}
+
+/**
  * Send borrow request approval email
  * @param string $email Guest's email address
  * @param string $guestName Guest's full name

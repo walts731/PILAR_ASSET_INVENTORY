@@ -334,14 +334,14 @@ require_once "engine/login_engine.php";
                     <form id="forgotPasswordForm">
                         <div class="text-center mb-4">
                             <i class="bi bi-envelope-exclamation text-primary" style="font-size: 3rem;"></i>
-                            <h6 class="mt-2 text-muted">Enter your username to receive a password reset link</h6>
+                            <h6 class="mt-2 text-muted">Enter your email address to receive a password reset link</h6>
                         </div>
 
                         <div class="mb-3">
-                            <label for="resetUsername" class="form-label">Username</label>
+                            <label for="resetEmail" class="form-label">Email Address</label>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                <input type="text" class="form-control" id="resetUsername" name="username" placeholder="Enter your username" required>
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control" id="resetEmail" name="email" placeholder="Enter your email" required>
                             </div>
                         </div>
 
@@ -439,12 +439,18 @@ require_once "engine/login_engine.php";
         document.getElementById('forgotPasswordForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            const username = document.getElementById('resetUsername').value.trim();
+            const email = document.getElementById('resetEmail').value.trim();
             const alertDiv = document.getElementById('forgotPasswordAlert');
             const submitBtn = document.getElementById('sendResetBtn');
 
-            if (!username) {
-                showAlert('Please enter your username.', 'warning');
+            if (!email) {
+                showAlert('Please enter your email address.', 'warning');
+                return;
+            }
+
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                showAlert('Please enter a valid email address.', 'warning');
                 return;
             }
 
@@ -458,7 +464,7 @@ require_once "engine/login_engine.php";
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: 'username=' + encodeURIComponent(username)
+                    body: 'email=' + encodeURIComponent(email)
                 })
                 .then(response => response.json())
                 .then(data => {
