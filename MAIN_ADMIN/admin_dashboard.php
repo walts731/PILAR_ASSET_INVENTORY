@@ -589,20 +589,26 @@ try {
               x: {
                 ticks: {
                   color: '#6c757d',
-                  font: { size: 12 },
+                  font: { size: 11 },
                   callback: function(value, index) {
                     const label = this.getLabelForValue(index);
-                    return label.length > 18 ? label.slice(0, 18) + '…' : label;
+                    return label.length > 15 ? label.slice(0, 15) + '…' : label;
                   }
                 },
                 grid: { display: false }
               },
               y: {
                 beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Number of Assets',
+                  color: '#495057',
+                  font: { size: 11, weight: '600' }
+                },
                 ticks: {
                   color: '#6c757d',
-                  font: { size: 12 },
-                  callback: (v) => formatNumber(v)
+                  font: { size: 11 },
+                  stepSize: 1
                 },
                 grid: { color: 'rgba(0,0,0,0.05)' }
               }
@@ -781,6 +787,12 @@ try {
             },
             y: {
               beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Items Borrowed',
+                color: '#495057',
+                font: { size: 12, weight: '600' }
+              },
               ticks: { color: '#6c757d', font: { size: 12 } },
               grid: { color: 'rgba(0,0,0,0.05)' }
             }
@@ -1095,6 +1107,12 @@ try {
               },
               y: {
                 beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Number of Assets',
+                  color: '#495057',
+                  font: { size: 11, weight: '600' }
+                },
                 ticks: {
                   color: '#6c757d',
                   font: { size: 11 },
@@ -1108,6 +1126,42 @@ try {
               easing: 'easeOutQuart'
             }
           }
+        });
+
+        // Add tooltip functionality
+        $('.clickable-card').each(function() {
+          const filter = $(this).data('filter');
+          const type = $(this).data('type') || 'asset';
+          let tooltipText = type === 'consumable' ? 'View all consumables' : 'View all assets';
+          
+          if (type === 'consumable') {
+            switch(filter) {
+              case 'available':
+                tooltipText = 'View available consumables';
+                break;
+              case 'unavailable':
+                tooltipText = 'View unavailable consumables';
+                break;
+              case 'low_stock':
+                tooltipText = 'View low stock consumables';
+                break;
+            }
+          } else {
+            switch(filter) {
+              case 'available':
+                tooltipText = 'View serviceable assets';
+                break;
+              case 'borrowed':
+                tooltipText = 'View borrowed assets';
+                break;
+              case 'unserviceable':
+                tooltipText = 'View unserviceable assets';
+                break;
+            }
+          }
+          
+          $(this).attr('title', tooltipText);
+          $(this).tooltip();
         });
       })();
 
