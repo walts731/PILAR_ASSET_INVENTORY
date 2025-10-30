@@ -315,6 +315,21 @@ if ($mr_item_id) {
     $stmt_check2->close();
 }
 
+if ($existing_mr_check) {
+    if (!empty($asset_id)) {
+        if ($stmtExistingMr = $conn->prepare("SELECT mr_id FROM mr_details WHERE asset_id = ? ORDER BY mr_id DESC LIMIT 1")) {
+            $stmtExistingMr->bind_param('i', $asset_id);
+            if ($stmtExistingMr->execute()) {
+                $resExistingMr = $stmtExistingMr->get_result();
+                if ($resExistingMr && ($mrRow = $resExistingMr->fetch_assoc())) {
+                    $existing_mr_id = (int)$mrRow['mr_id'];
+                }
+            }
+            $stmtExistingMr->close();
+        }
+    }
+}
+
 // Generate automatic inventory tag using the new tag format system
 require_once '../includes/tag_format_helper.php';
 
@@ -814,56 +829,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     if ($existing_mr_check) {
-        // UPDATE
-        $stmt_upd = $conn->prepare("UPDATE mr_details SET 
-            office_location = ?, description = ?, model_no = ?, serial_no = ?, serviceable = ?, unserviceable = ?, unit_quantity = ?, unit = ?, acquisition_date = ?, acquisition_cost = ?, person_accountable = ?, end_user = ?, acquired_date = ?, counted_date = ?, inventory_tag = ?
-            WHERE (item_id = ? OR (? IS NULL AND item_id IS NULL)) AND asset_id = ?");
-        $stmt_upd->bind_param(
-            "ssssiiissssssssiii",
-            $office_location,
-            $description,
-            $model_no,
-            $serial_no,
-            $serviceable,
-            $unserviceable,
-            $unit_quantity,
-            $unit,
-            $acquisition_date,
-            $acquisition_cost,
-            $person_accountable_name,
-            $end_user,
-            $acquired_date,
-            $counted_date,
-            $inventory_tag,
-            $mr_item_id,
-            $mr_item_id,
-            $asset_id_form
-        );
-        if ($stmt_upd->execute()) {
-            // Persist Property No., Inventory Tag, and Employee ID to the item-level asset record
-            $stmt_ai = $conn->prepare("UPDATE assets SET property_no = ?, inventory_tag = ?, employee_id = ? WHERE id = ?");
-            $stmt_ai->bind_param("ssii", $property_no, $inventory_tag_gen, $employee_id, $asset_id_form);
-            if (!$stmt_ai->execute()) {
-                $_SESSION['error_message'] = "Failed to update asset details: " . $stmt_ai->error;
-            }
-            $stmt_ai->close();
-            // Send notification email and log (UPDATE path)
-            $mrIdForLog = null;
-            if ($stFind = $conn->prepare("SELECT mr_id FROM mr_details WHERE (item_id = ? OR (? IS NULL AND item_id IS NULL)) AND asset_id = ? ORDER BY mr_id DESC LIMIT 1")) {
-                $stFind->bind_param('iii', $mr_item_id, $mr_item_id, $asset_id_form);
-                $stFind->execute();
-                $rsFind = $stFind->get_result();
-                if ($rsFind && ($rowF = $rsFind->fetch_assoc())) { $mrIdForLog = (int)$rowF['mr_id']; }
-                $stFind->close();
-            }
-            sendMrEmailAndLog($conn, $employee_id, $person_accountable_name, $asset_id_form, $mrIdForLog, $office_location, $inventory_tag_gen, $description, $property_no, $serial_no);
-            $_SESSION['success_message'] = "MR Details successfully updated!";
-            header("Location: create_mr.php?asset_id=" . $asset_id_form);
-            exit();
-        } else {
-            $_SESSION['error_message'] = "Error updating MR: " . $stmt_upd->error;
+        $_SESSION['error_message'] = 'An MR record already exists for this item. Editing is disabled on this page.';
+        $redirectUrl = 'create_mr.php';
+        if (!empty($asset_id_form)) {
+            $redirectUrl .= '?asset_id=' . urlencode((string)$asset_id_form);
         }
-        $stmt_upd->close();
+        header('Location: ' . $redirectUrl);
+        exit();
     } else {
         // INSERT
         $stmt_insert = $conn->prepare("INSERT INTO mr_details 
@@ -1113,7 +1085,7 @@ if ($baseSerial !== '') {
             }
 
             if ($existing_mr_check) {
-                echo '<div class="alert alert-info">An MR record already exists for this item. You can review and edit the details below.</div>';
+                echo '<div class="alert alert-warning">An MR record already exists for this item. Editing is disabled on this page. Please use the existing MR record for any updates.</div>';
             }
             ?>
 
