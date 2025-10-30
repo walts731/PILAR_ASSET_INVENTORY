@@ -229,15 +229,6 @@ $totalValueDisplay = $assetTotals['total_value'] > 0 ? number_format($assetTotal
         <?php include 'includes/topbar.php'; ?>
 
         <div class="container-fluid mt-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-                <a href="employees.php" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Back to Employees
-                </a>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-light text-dark">Employee ID: <?= (int)$employee['employee_id'] ?></span>
-                    <span class="badge bg-light text-dark">Employee No: <?= htmlspecialchars($employee['employee_no']) ?></span>
-                </div>
-            </div>
 
             <div class="employee-header mb-4">
                 <div class="row align-items-center g-4">
@@ -363,8 +354,7 @@ $totalValueDisplay = $assetTotals['total_value'] > 0 ? number_format($assetTotal
                         </div>
                         <div class="col-md-6">
                             <div class="border rounded p-3 h-100">
-                                <div class="text-muted small">Assigned Office ID</div>
-                                <div class="fw-semibold"><?= $employee['office_id'] ? (int)$employee['office_id'] : 'Not set' ?></div>
+                                
                                 <div class="text-muted small mt-3">Date Added</div>
                                 <div class="fw-semibold"><?= formatDateDisplay($employee['date_added']) ?></div>
                             </div>
