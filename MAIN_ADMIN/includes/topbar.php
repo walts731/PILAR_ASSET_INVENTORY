@@ -289,7 +289,7 @@ $low_stock_count = count($low_stock_items);
     <!-- Global Search -->
     <div class="position-relative" style="min-width: 260px;">
       <input id="globalSearchInput" type="search" class="form-control form-control-sm shadow-soft"
-        placeholder="Search assets (description, tag, property, serial)" autocomplete="off">
+        placeholder="Search assets or employees" autocomplete="off">
       <div id="globalSearchResults"
         class="position-absolute w-100 bg-white border rounded shadow-sm list-group"
         style="top: 100%; left: 0; z-index: 2050; display: none; max-height: 50vh; overflow-y: auto; color: #212529;"></div>
@@ -468,15 +468,28 @@ document.addEventListener('DOMContentLoaded', function() {
       box.innerHTML = '<div class="p-2 text-muted small">No results</div>';
     } else {
       box.innerHTML = list.map(it => {
+        if (it.type === 'employee') {
+          const subtitleParts = [
+            it.employee_no ? 'Employee No: ' + esc(it.employee_no) : null,
+            it.office_name ? 'Office: ' + esc(it.office_name) : null,
+            it.status ? 'Status: ' + esc(it.status) : null,
+            it.clearance_status ? 'Clearance: ' + esc(it.clearance_status) : null
+          ].filter(Boolean);
+          return `<a href="#" class="list-group-item list-group-item-action global-search-item" data-type="employee" data-id="${it.id}">
+                    <div class="fw-semibold"><i class="bi bi-person me-2"></i>${esc(it.name)}</div>
+                    <div class="small text-muted">${esc(subtitleParts.join(' • ') || 'Employee')}</div>
+                  </a>`;
+        }
+
         const line2 = [
-  it.property_no ? 'Property No: ' + esc(it.property_no) : 'Property No: —',
-  it.inventory_tag ? 'Inventory Tag: ' + esc(it.inventory_tag) : null,
-  it.serial_no ? 'Serial No: ' + esc(it.serial_no) : null,
-  it.ics_no ? 'ICS: ' + esc(it.ics_no) : null,
-  it.par_no ? 'PAR: ' + esc(it.par_no) : null
-].filter(Boolean).join(' • ');
-        return `<a href="#" class="list-group-item list-group-item-action global-search-item" data-id="${it.id}">
-                  <div class="fw-semibold">${esc(it.description)}</div>
+          it.property_no ? 'Property No: ' + esc(it.property_no) : 'Property No: —',
+          it.inventory_tag ? 'Inventory Tag: ' + esc(it.inventory_tag) : null,
+          it.serial_no ? 'Serial No: ' + esc(it.serial_no) : null,
+          it.ics_no ? 'ICS: ' + esc(it.ics_no) : null,
+          it.par_no ? 'PAR: ' + esc(it.par_no) : null
+        ].filter(Boolean).join(' • ');
+        return `<a href="#" class="list-group-item list-group-item-action global-search-item" data-type="asset" data-id="${it.id}">
+                  <div class="fw-semibold"><i class="bi bi-box-seam me-2"></i>${esc(it.description)}</div>
                   <div class="small text-muted">${esc(line2)}</div>
                 </a>`;
       }).join('');
@@ -518,16 +531,21 @@ document.addEventListener('DOMContentLoaded', function() {
     e.preventDefault();
 
     const id = a.getAttribute('data-id');
-    
+    const type = a.getAttribute('data-type') || 'asset';
+
     // Hide search results
     box.style.display = 'none';
-    
+
     // Clear search input
     input.value = '';
     lastQ = '';
-    
-    // Redirect to view_asset_details.php
-    window.location.href = `view_asset_details.php?id=${encodeURIComponent(id)}`;
+
+    // Redirect based on type
+    if (type === 'employee') {
+      window.location.href = `view_employee_details.php?id=${encodeURIComponent(id)}`;
+    } else {
+      window.location.href = `view_asset_details.php?id=${encodeURIComponent(id)}`;
+    }
   });
 })();
 </script>

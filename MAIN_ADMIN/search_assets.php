@@ -83,6 +83,7 @@ while ($row = $res->fetch_assoc()) {
   }
 
   $rows[] = [
+    'type' => 'asset',
     'id' => (int)$row['id'],
     'description' => $row['description'],
     'inventory_tag' => $row['inventory_tag'],
@@ -94,5 +95,55 @@ while ($row = $res->fetch_assoc()) {
   ];
 }
 $stmt->close();
+
+// Search employees (name, employee no, office)
+$empSql = "
+  SELECT 
+    e.employee_id,
+    e.employee_no,
+    e.name,
+    e.status,
+    e.email,
+    e.date_added,
+    o.office_name,
+    CASE 
+      WHEN EXISTS (
+        SELECT 1
+        FROM mr_details m
+        JOIN assets a2 ON a2.id = m.asset_id
+        WHERE m.person_accountable = e.name
+          AND (a2.status IS NULL OR LOWER(a2.status) <> 'unserviceable')
+      ) THEN 'uncleared'
+      ELSE 'cleared'
+    END AS clearance_status
+  FROM employees e
+  LEFT JOIN offices o ON e.office_id = o.id
+  WHERE 
+    e.name LIKE ?
+    OR e.employee_no LIKE ?
+    OR o.office_name LIKE ?
+  ORDER BY e.name ASC
+  LIMIT 10
+";
+
+if ($empStmt = $conn->prepare($empSql)) {
+  $empStmt->bind_param('sss', $like, $like, $like);
+  $empStmt->execute();
+  $empRes = $empStmt->get_result();
+  while ($row = $empRes->fetch_assoc()) {
+    $rows[] = [
+      'type' => 'employee',
+      'id' => (int)$row['employee_id'],
+      'name' => $row['name'],
+      'employee_no' => $row['employee_no'],
+      'office_name' => $row['office_name'],
+      'status' => $row['status'],
+      'clearance_status' => $row['clearance_status'],
+      'email' => $row['email'],
+      'date_added' => $row['date_added'],
+    ];
+  }
+  $empStmt->close();
+}
 
 echo json_encode(['results' => $rows]);
