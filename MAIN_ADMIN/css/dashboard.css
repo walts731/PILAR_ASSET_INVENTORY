@@ -409,3 +409,123 @@ body, .container, .card, .navbar, .table, input, select, textarea, .dropdown-men
   .page-wrapper {
     flex: 1 0 auto;
   }
+
+@media (max-width: 1199.98px) {
+  .main {
+    padding: 24px 20px;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    margin-left: 0;
+    padding: 16px 20px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  }
+
+  .sidebar .scrollable-nav {
+    height: auto;
+    max-height: none;
+  }
+
+  .sidebar.sidebar-hidden {
+    display: none;
+  }
+
+  .main {
+    margin-left: 0;
+    padding: 20px 16px;
+  }
+
+  .topbar {
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 12px 16px;
+  }
+
+  .topbar .order-3,
+  .topbar .order-sm-2 {
+    width: 100%;
+  }
+
+  .topbar .order-2 {
+    width: 100%;
+    justify-content: center !important;
+  }
+
+  .topbar .order-3 h5 {
+    text-align: center !important;
+  }
+
+  .global-search-wrapper {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .global-search-wrapper #globalSearchInput {
+    width: 100%;
+  }
+
+  .main-expanded {
+    margin-left: 0 !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .topbar {
+    border-radius: 0.75rem;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  #datetime {
+    width: 100%;
+    text-align: center;
+  }
+
+  .topbar .btn,
+  .topbar a,
+  .topbar button {
+    padding: 0.375rem 0.75rem;
+  }
+
+  .container-fluid {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .global-search-wrapper {
+    order: 4;
+  }
+
+  .global-search-wrapper #globalSearchResults {
+    max-height: 40vh;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .card .card-body.d-flex.align-items-center {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.75rem;
+  }
+
+  .card .card-body.d-flex.align-items-center > .me-3 {
+    margin-right: 0.5rem !important;
+  }
+
+  .card .card-body {
+    text-align: left;
+  }
+
+  .row.g-3 > [class*="col-"] {
+    margin-bottom: 0.5rem;
+  }
+
+  .topbar {
+    padding: 10px;
+  }
+}
