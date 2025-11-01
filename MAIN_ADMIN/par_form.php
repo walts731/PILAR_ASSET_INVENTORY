@@ -86,645 +86,428 @@ if ($st_prop = $conn->prepare("SELECT format_template FROM tag_formats WHERE tag
     $st_prop->close();
 }
 ?>
+<style>
+    body { background: #f4f6f9; }
+    .par-page-wrapper { padding: 2.5rem 0 3.5rem; background: linear-gradient(135deg, rgba(226,232,240,0.5), rgba(148,163,184,0.25)); }
+    .par-paper { position: relative; max-width: 960px; margin: 0 auto; background: #fff; border: 1px solid #d9dee6; border-radius: 14px; padding: 2.75rem 3rem; box-shadow: 0 18px 45px rgba(15,23,42,0.15); }
+    .par-paper::before { content: ""; position: absolute; inset: 14px; border: 1px solid rgba(148,163,184,0.25); border-radius: 10px; pointer-events: none; }
+    .par-paper .form-control, .par-paper .form-select { padding: 0.35rem 0.55rem; font-size: 0.85rem; min-height: 2.1rem; border-radius: 6px; }
+    .par-paper .form-control.text-center, .par-paper .form-control.text-end { padding-right: 0.55rem; padding-left: 0.55rem; }
+    .par-form-section-title { font-size: 0.82rem; letter-spacing: 0.12em; text-transform: uppercase; color: #6c757d; font-weight: 700; margin-bottom: 0.85rem; }
+    .par-heading-divider { margin: 1.75rem 0; border: none; border-top: 2px solid rgba(100,116,139,0.35); }
+    .par-table-wrapper { border: 1px solid #ced4da; border-radius: 10px; overflow: hidden; background: #fff; }
+    .par-table-wrapper table { margin-bottom: 0; font-size: 0.72rem; }
+    .par-table-wrapper thead th { background: #f8fafc; font-size: 0.72rem; vertical-align: middle; padding: 0.4rem 0.32rem; color: #334155; }
+    .par-table-wrapper tbody td, .par-table-wrapper tfoot td { padding: 0.35rem 0.32rem; }
+    .par-table-wrapper input.form-control, .par-table-wrapper select.form-select { padding: 0.2rem 0.4rem; min-height: 1.7rem; font-size: 0.72rem; }
+    .par-table-wrapper .input-group-text, .par-table-wrapper .btn { font-size: 0.72rem; padding: 0.2rem 0.45rem; }
+    .par-signature-table input.form-control { border: none; border-radius: 0; border-bottom: 1px solid #adb5bd; background: transparent; }
+    .par-signature-table input.form-control:focus { box-shadow: none; border-color: #495057; }
+    @media (max-width: 991.98px) { .par-page-wrapper { padding: 1.75rem 1rem 2.5rem; } .par-paper { padding: 2rem 1.6rem; border-radius: 10px; } .par-paper::before { inset: 10px; border-radius: 8px; } }
+    @media print { body { background: #fff !important; } .par-page-wrapper { padding: 0; background: transparent; } .par-paper { max-width: 100%; padding: 20mm; border-radius: 0; border: none; box-shadow: none; } .par-paper::before, .navigation-controls, .alert, .btn { display: none !important; } }
+</style>
+<?php if (!empty($_SESSION['flash'])): ?>
+    <?php
+    $flash = $_SESSION['flash'];
+    $type = isset($flash['type']) ? strtolower($flash['type']) : 'info';
+    $allowed = ['primary','secondary','success','danger','warning','info','light','dark'];
+    if (!in_array($type, $allowed, true)) { $type = 'info'; }
+    ?>
+    <div class="alert alert-<?= htmlspecialchars($type) ?> alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($flash['message'] ?? 'Action completed.') ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <?php unset($_SESSION['flash']); ?>
+<?php endif; ?>
 
-<div class="d-flex justify-content-end mb-3">
-    <a href="saved_par.php?id=<?= htmlspecialchars($form_id) ?>" class="btn btn-info">
-        <i class="bi bi-folder-check"></i> View Saved PAR
-    </a>
-</div>
-<div class="container mt-3">
-    <?php if (!empty($_SESSION['flash'])): ?>
-        <?php
-        $flash = $_SESSION['flash'];
-        $type = isset($flash['type']) ? strtolower($flash['type']) : 'info';
-        $allowed = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
-        if (!in_array($type, $allowed, true)) {
-            $type = 'info';
-        }
-        ?>
-        <div class="alert alert-<?= htmlspecialchars($type) ?> alert-dismissible fade show" role="alert">
-            <?= htmlspecialchars($flash['message'] ?? 'Action completed.') ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        <?php unset($_SESSION['flash']); ?>
-    <?php endif; ?>
+<div class="par-page-wrapper">
+    <div class="navigation-controls d-flex justify-content-end mb-3">
+        <a href="saved_par.php?id=<?= htmlspecialchars($form_id) ?>" class="btn btn-info">
+            <i class="bi bi-folder-check"></i> View Saved PAR
+        </a>
+    </div>
 
+    <div class="par-paper">
+        <form method="post" action="save_par_form.php" enctype="multipart/form-data" class="w-100" onsubmit="return checkDuplicates()">
+            <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
 
-    <form method="post" action="save_par_form.php" enctype="multipart/form-data" onsubmit="return checkDuplicates()">
-        <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
+            <div class="mb-4 text-center">
+                <?php if (!empty($par_data['header_image'])): ?>
+                    <img src="../img/<?= htmlspecialchars($par_data['header_image']) ?>" class="img-fluid mb-2" style="max-width: 100%; height: auto; object-fit: contain;">
+                    <input type="hidden" name="header_image" value="<?= htmlspecialchars($par_data['header_image']) ?>">
+                <?php else: ?>
+                    <p class="text-muted mb-0">No header image available</p>
+                <?php endif; ?>
+                <input type="file" id="headerImageFile" name="header_image_file" accept="image/*" hidden>
+            </div>
 
+            <hr class="par-heading-divider">
 
-        <div class="mb-3 text-center">
-            <?php if (!empty($par_data['header_image'])): ?>
-                <img src="../img/<?= htmlspecialchars($par_data['header_image']) ?>"
-                     class="img-fluid mb-3"
-                     style="max-width: 100%; height: auto; object-fit: contain;">
-                <!-- ✅ Hidden input so header_image is included when saving -->
-                <input type="hidden" name="header_image" value="<?= htmlspecialchars($par_data['header_image']) ?>">
-            <?php endif; ?>
-        </div>
+            <div class="par-form-section-title">Property Acknowledgment Receipt Details</div>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Entity Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control shadow-sm" name="entity_name" id="entityName" value="<?= htmlspecialchars($par_data['entity_name'] ?? '') ?>" placeholder="Enter entity name" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Office / Location <span class="text-danger">*</span></label>
+                    <select class="form-select shadow-sm" name="office_id" id="destinationOffice" required>
+                        <option value="" disabled <?= empty($par_data['office_id']) ? 'selected' : '' ?>>Select office</option>
+                        <option value="outside_lgu">Outside LGU</option>
+                        <?php foreach ($offices as $office): ?>
+                            <option value="<?= htmlspecialchars($office['id']) ?>" <?= (isset($par_data['office_id']) && (string)$par_data['office_id'] === (string)$office['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($office['office_name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Fund Cluster <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control shadow-sm" name="fund_cluster" value="<?= htmlspecialchars($par_data['fund_cluster'] ?? '') ?>" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">PAR No. (Auto-generated)</label>
+                    <div class="input-group shadow-sm">
+                        <input type="text" class="form-control border-0" id="parNoField" name="par_no" value="<?= previewTag('par_no') ?>" readonly>
+                        <span class="input-group-text bg-light border-0"><i class="bi bi-magic" title="Auto-generated"></i></span>
+                    </div>
+                    <small class="text-muted">This number will be automatically assigned when you save the form.</small>
+                </div>
+            </div>
 
-
-        <table class="table table-bordered align-middle text-start" style="table-layout: fixed;">
-            <tbody>
-                <!-- Office/Location Row -->
-                <tr>
-                    <td colspan="2">
-                        <div class="row">
-                            <div class="col-md-3"></div>
-                            <div class="col-md-6 text-center">
-                                <label class="form-label fw-semibold mb-0">Office/Location</label>
-                                <select name="office_id" class="form-select text-center shadow" required>
-                                    <option value="" disabled selected>Select Office</option>
-                                    <option value="outside_lgu">Outside LGU</option>
-                                    <?php foreach ($offices as $office): ?>
-                                        <option value="<?= htmlspecialchars($office['id']) ?>">
-                                            <?= htmlspecialchars($office['office_name']) ?>
-                                        </option>
+            <div class="par-form-section-title mt-5">Inventory Line Items</div>
+            <div class="par-table-wrapper mb-4">
+                <table class="table table-bordered text-center align-middle" id="parItemsTable">
+                    <thead>
+                        <tr>
+                            <th>QUANTITY</th>
+                            <th>UNIT</th>
+                            <th style="width: 28%;">DESCRIPTION</th>
+                            <th>PROPERTY NO.</th>
+                            <th>DATE ACQUIRED</th>
+                            <th>UNIT PRICE</th>
+                            <th>AMOUNT</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="par-items-body">
+                        <tr data-row-index="0">
+                            <td><input type="number" class="form-control quantity-field text-end shadow-sm" name="items[0][quantity]" min="1" required></td>
+                            <td>
+                                <select name="items[0][unit]" class="form-select text-center shadow-sm" required>
+                                    <option value="" disabled selected>Select unit</option>
+                                    <?php foreach ($units as $unit): ?>
+                                        <option value="<?= htmlspecialchars($unit['unit_name']) ?>" <?= (strtolower($unit['unit_name']) === 'unit') ? 'selected' : '' ?>><?= htmlspecialchars($unit['unit_name']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
-                            </div>
-                            <div class="col-md-3"></div>
-                        </div>
-                    </td>
-                </tr>
-
-                <!-- Entity Name and Blank -->
-                <tr>
-                    <td>
-                        <label class="form-label fw-semibold mb-0">Entity Name <span style="color: red;">*</span></label>
-                        <input type="text" id="parEntityName" name="entity_name" class="form-control shadow" required>
-                    </td>
-                    <td>
-                        <!-- Blank right cell -->
-                    </td>
-                </tr>
-
-                <!-- Fund Cluster and PAR No. -->
-                <tr>
-                    <td>
-                        <label class="form-label fw-semibold mb-0">Fund Cluster <span style="color: red;">*</span></label>
-                        <input type="text" name="fund_cluster" class="form-control shadow" required>
-                    </td>
-                    <td>
-                        <label class="form-label fw-semibold mb-0">PAR No. (Auto-generated)</label>
-                        <div class="input-group">
-                            <input type="text" id="parNoField" name="par_no" class="form-control shadow" value="<?= previewTag('par_no') ?>" readonly>
-                            <span class="input-group-text">
-                                <i class="bi bi-magic" title="Auto-generated"></i>
-                            </span>
-                        </div>
-                        <small class="text-muted">This number will be automatically assigned when you save the form.</small>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-        <!-- ITEM TABLE -->
-        <table class="table align-middle text-center mt-4" style="table-layout: fixed; ">
-            <thead>
-                <tr>
-                    <th>QUANTITY</th>
-                    <th>UNIT</th>
-                    <th style="width: 30%;">DESCRIPTION</th>
-                    <th style="width: 200px;">PROPERTY NO</th>
-                    <th>DATE ACQUIRED</th>
-                    <th>UNIT PRICE</th>
-                    <th>AMOUNT</th>
-                    <th><!-- Remove column header --></th>
-                </tr>
-            </thead>
-            <tbody id="itemTableBody">
-                <?php for ($i = 0; $i < 1; $i++): ?>
-                    <tr>
-                        <td><input type="number" name="items[<?= $i ?>][quantity]" class="form-control text-end shadow" id="qtyInput<?= $i ?>" min="1" required></td>
-                        <td>
-                            <select name="items[<?= $i ?>][unit]" class="form-select text-center shadow">
-                                <option value="">Select Unit</option>
-                                <?php foreach ($units as $unit): ?>
-                                    <option value="<?= htmlspecialchars($unit['unit_name']) ?>" <?= (strtolower($unit['unit_name']) === 'unit') ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($unit['unit_name']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </td>
-                        <td class="position-relative" style="width: 30%;">
-                            <div class="input-group">
-                                <input type="text" name="items[<?= $i ?>][description]" class="form-control form-control-lg shadow" id="descInput<?= $i ?>" placeholder="Type description..." required>
-                                <input type="hidden" name="items[<?= $i ?>][asset_id]" id="assetId<?= $i ?>">
-                                <button type="button" class="btn p-0 m-0 border-0 bg-transparent" onclick="clearDescription(<?= $i ?>)" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
-                                    <span class="badge rounded-circle bg-secondary text-white" style="font-size: 0.75rem;">×</span>
-                                </button>
-                            </div>
-                        </td>
-                        <td style="width: 280px;">
-                            <input type="text" name="items[<?= $i ?>][property_no]" id="propNo<?= $i ?>" class="form-control shadow propNoInput" value="" placeholder="Auto-generated on Save" readonly style="min-width: 200px; font-family: monospace;">
-                            
-                        </td>
-                        <td><input type="date" name="items[<?= $i ?>][date_acquired]" class="form-control shadow" id="acqDate<?= $i ?>" required></td>
-                        <td style="position: relative;">
-                            <span style="
-                                    position: absolute;
-                                    top: 50%;
-                                    left: 10px;
-                                    transform: translateY(-50%);
-                                    pointer-events: none;
-                                    color: inherit;
-                                    font-size: 1rem;
-                                ">₱</span>
-                            <input
-                                type="number"
-                                name="items[<?= $i ?>][unit_price]"
-                                class="form-control text-end shadow"
-                                step="0.01"
-                                id="unitCost<?= $i ?>"
-                                style="padding-left: 1.5rem;" required>
-                        </td>
-                        <td style="position: relative;">
-                            <span style="
-                                    position: absolute;
-                                    top: 50%;
-                                    left: 10px;
-                                    transform: translateY(-50%);
-                                    pointer-events: none;
-                                    color: inherit;
-                                    font-size: 1rem;
-                                ">₱</span>
-                            <input
-                                type="number"
-                                name="items[<?= $i ?>][amount]"
-                                class="form-control text-end shadow"
-                                step="0.01"
-                                id="amount<?= $i ?>"
-                                readonly
-                                style="padding-left: 1.5rem;" required>
-                        </td>
-                        <td><!-- No remove button for first row --></td>
-                    </tr>
-                <?php endfor; ?>
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="6" class="text-end fw-bold">Total:</td>
-                    <td style="position: relative;">
-                        <span style="
-                                position: absolute;
-                                top: 50%;
-                                left: 10px;
-                                transform: translateY(-50%);
-                                pointer-events: none;
-                                color: inherit;
-                                font-size: 1rem;
-                            ">₱</span>
-                        <input
-                            type="text"
-                            id="totalAmount"
-                            class="form-control text-end fw-bold shadow"
-                            readonly
-                            style="padding-left: 1.5rem; width: 150px;">
-                    </td>
-                    <td></td>
-                </tr>
-            </tfoot>
-        </table>
-        <button type="button" class="btn btn-primary mt-2" onclick="addRow()">+ Add Item</button>
-
-        <hr class="mt-5 mb-4">
-
-        <div class="row mt-4 mb-3">
-            <!-- Left: Received by -->
-            <div class="col-md-6 text-center">
-                <p class="fw-semibold">Received by: <span style="color: red;">*</span></p>
-                <input type="text" class="form-control text-center fw-semibold shadow" name="received_by_name"
-                    placeholder="Signature over Printed Name" required>
-                <small class="text-muted">Signature over Printed Name – Received By</small>
-
-                <div class="mt-3">
-                    <label for="position_office_left">Position / Office: <span style="color: red;">*</span></label>
-                    <input type="text" class="form-control text-center shadow" name="position_office_left" placeholder="Enter Position/Office" required>
-                </div>
-                <div class="mt-3">
-                    <label>Date:</label>
-                    <input type="date" name="date_received_left"
-                        class="form-control shadow">
-                </div>
+                            </td>
+                            <td class="position-relative">
+                                <input type="text" class="form-control description-field shadow-sm" name="items[0][description]" placeholder="Type description..." style="padding-right: 2rem;" required>
+                                <button type="button" class="clear-description" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: transparent; border: none; font-weight: bold; font-size: 1rem; line-height: 1; color: #888; cursor: pointer;">&times;</button>
+                                <input type="hidden" name="items[0][asset_id]" value="" class="asset-id-field">
+                            </td>
+                            <td><input type="text" class="form-control prop-no-input shadow-sm" name="items[0][property_no]" placeholder="Auto-generated on save" readonly></td>
+                            <td><input type="date" class="form-control shadow-sm" name="items[0][date_acquired]" value="<?= htmlspecialchars($par_data['date_received_left'] ?? '') ?>" required></td>
+                            <td class="position-relative"><span class="position-absolute top-50 start-0 translate-middle-y ps-2">₱</span><input type="number" class="form-control unit-cost-field text-end shadow-sm" name="items[0][unit_price]" step="0.01" style="padding-left: 1.5rem;" required></td>
+                            <td class="position-relative"><span class="position-absolute top-50 start-0 translate-middle-y ps-2">₱</span><input type="number" class="form-control amount-field text-end shadow-sm" name="items[0][amount]" step="0.01" style="padding-left: 1.5rem;" readonly required></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" class="text-end fw-bold">Total:</td>
+                            <td colspan="2" class="position-relative"><span class="position-absolute top-50 start-0 translate-middle-y ps-2">₱</span><input type="number" id="grandTotal" class="form-control text-end fw-bold shadow-sm" style="padding-left: 1.5rem;" readonly></td>
+                            <td class="text-start"><button type="button" id="addRowBtn" class="btn btn-primary btn-sm">+ Add Row</button></td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
 
-            <!-- Right: Issued by -->
-            <div class="col-md-6 text-center">
-                <p class="fw-semibold">Issued by: <span style="color: red;">*</span></p>
-                <input type="text" class="form-control text-center fw-semibold shadow" name="issued_by_name"
-                    placeholder="Signature over Printed Name"
-                    value="<?= htmlspecialchars($par_data['issued_by_name'] ?? '') ?>">
-                <small class="text-muted">Signature over Printed Name – Issued By</small>
+            <div class="par-form-section-title mb-3">Signatories</div>
+            <table class="table table-borderless par-signature-table" style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr class="fw-semibold text-uppercase text-muted small">
+                    <td style="width: 50%; text-align: left;">Received by <span class="text-danger">*</span></td>
+                    <td style="width: 50%; text-align: left;">Issued by <span class="text-danger">*</span></td>
+                </tr>
+                <tr>
+                    <td class="px-3">
+                        <input type="text" name="received_by_name" class="form-control text-center fw-bold" value="<?= htmlspecialchars($par_data['received_by_name'] ?? '') ?>" placeholder="Signature over Printed Name" required>
+                        <small class="text-muted d-block mt-1">Signature over Printed Name – Received By</small>
+                    </td>
+                    <td class="px-3">
+                        <input type="text" name="issued_by_name" class="form-control text-center fw-bold" value="<?= htmlspecialchars($par_data['issued_by_name'] ?? '') ?>" placeholder="Signature over Printed Name" required>
+                        <small class="text-muted d-block mt-1">Signature over Printed Name – Issued By</small>
+                    </td>
+                </tr>
+                <tr class="pt-3">
+                    <td class="px-3"><input type="text" name="position_office_left" class="form-control text-center" value="<?= htmlspecialchars($par_data['position_office_left'] ?? '') ?>" placeholder="Position / Office" required></td>
+                    <td class="px-3"><input type="text" name="position_office_right" class="form-control text-center" value="<?= htmlspecialchars($par_data['position_office_right'] ?? '') ?>" placeholder="Position / Office" required></td>
+                </tr>
+                <tr>
+                    <td class="px-3 pt-4"><input type="date" name="date_received_left" class="form-control text-center" value="<?= htmlspecialchars($par_data['date_received_left'] ?? '') ?>"></td>
+                    <td class="px-3 pt-4"><input type="date" name="date_received_right" class="form-control text-center" value="<?= htmlspecialchars($par_data['date_received_right'] ?? '') ?>"></td>
+                </tr>
+            </table>
 
-                <div class="mt-3">
-                    <label for="position_office_right">Position / Office: <span style="color: red;">*</span></label>
-                    <input type="text" class="form-control text-center shadow" name="position_office_right"
-                        value="<?= htmlspecialchars($par_data['position_office_right'] ?? '') ?>">
-                </div>
-                <div class="mt-3">
-                    <label>Date:</label>
-                    <input type="date" name="date_received_right"
-                        class="form-control shadow">
-                </div>
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <small class="text-muted"><span class="text-danger">*</span> Required fields</small>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-send-check-fill"></i> Save</button>
             </div>
-        </div>
-
-        <small class="text-muted"><span style="color: red;">*</span> Required Fields</small>
-
-        <div class="text-start mt-3">
-  <button type="submit" class="btn btn-primary">
-    <i class="bi bi-send-check-fill"></i> Save
-  </button>
+        </form>
+    </div>
 </div>
 
-    </form>
-</div>
-
-<?php include 'modals/par_duplicate_modal.php' ?>
+<?php include 'modals/par_duplicate_modal.php'; ?>
 <script>
-    // Dynamic PAR preview using selected office and date
-    const PAR_TEMPLATE = <?= json_encode($par_template) ?>;
-    const SERVER_PAR_PREVIEW = <?= json_encode(previewTag('par_no')) ?>;
-    const PROPERTY_TEMPLATE = <?= json_encode($property_template) ?>;
-    // Preview of the next property number from server counter (does not increment counter)
-    const PROPERTY_PREVIEW_NEXT = <?= json_encode(previewTag('property_no')) ?>;
-    function deriveOfficeAcronym(name) {
-        if (!name) return 'OFFICE';
-        const parts = String(name).trim().toUpperCase().split(/\s+/);
-        let ac = parts.map(p => (p[0] || '').replace(/[^A-Z0-9]/g,'')).join('');
-        if (!ac) ac = String(name).replace(/[^A-Z0-9]/g,'').toUpperCase();
-        return ac || 'OFFICE';
-    }
-    function replaceDatePlaceholdersLocal(tpl){
-        const now = new Date();
-        const Y = now.getFullYear().toString();
-        const M = String(now.getMonth()+1).padStart(2,'0');
-        const D = String(now.getDate()).padStart(2,'0');
-        return tpl
-            .replace(/\{YYYY\}|YYYY/g, Y)
-            .replace(/\{YY\}|YY/g, Y.slice(-2))
-            .replace(/\{MM\}|MM/g, M)
-            .replace(/\{DD\}|DD/g, D)
-            .replace(/\{YYYYMM\}|YYYYMM/g, Y+M)
-            .replace(/\{YYYYMMDD\}|YYYYMMDD/g, Y+M+D);
-    }
-    // Braced-only date replacement to avoid touching non-braced tokens when computing property previews
-    function replaceDatePlaceholdersBraced(tpl){
-        const now = new Date();
-        const Y = now.getFullYear().toString();
-        const M = String(now.getMonth()+1).padStart(2,'0');
-        const D = String(now.getDate()).padStart(2,'0');
-        return tpl
-            .replace(/\{YYYY\}/g, Y)
-            .replace(/\{YY\}/g, Y.slice(-2))
-            .replace(/\{MM\}/g, M)
-            .replace(/\{DD\}/g, D)
-            .replace(/\{YYYYMM\}/g, Y+M)
-            .replace(/\{YYYYMMDD\}/g, Y+M+D);
-    }
-    function computeParPreview(){
-        const field = document.getElementById('parNoField');
-        if (!field) return;
-        // Determine OFFICE display from select or entity name
-        const sel = document.querySelector('select[name="office_id"]');
-        let officeDisp = 'OFFICE';
-        if (sel) {
-            const opt = sel.options[sel.selectedIndex];
-            const txt = opt ? (opt.text || '') : '';
-            const en = document.getElementById('parEntityName');
-            if (en && en.value.trim()) {
-                officeDisp = en.value.trim();
-            } else if (sel.value && sel.value !== 'outside_lgu') {
-                officeDisp = (txt || '').trim() || 'OFFICE';
-            } else {
-                officeDisp = 'OFFICE';
+    document.addEventListener('DOMContentLoaded', function () {
+        const SERVER_PAR_PREVIEW = <?= json_encode(previewTag('par_no')) ?>;
+        const PROPERTY_TEMPLATE = <?= json_encode($property_template) ?>;
+        const PROPERTY_PREVIEW_NEXT = <?= json_encode(previewTag('property_no')) ?>;
+
+        const destinationOffice = document.getElementById('destinationOffice');
+        const entityNameInput = document.getElementById('entityName');
+        const parNoField = document.getElementById('parNoField');
+        const tableBody = document.getElementById('par-items-body');
+        const addRowBtn = document.getElementById('addRowBtn');
+        const grandTotalField = document.getElementById('grandTotal');
+        const duplicateModalElement = document.getElementById('duplicateModal');
+        const duplicateModal = duplicateModalElement ? new bootstrap.Modal(duplicateModalElement) : null;
+        let rowIndex = tableBody ? tableBody.querySelectorAll('tr').length : 0;
+
+        function showDuplicateModal() {
+            if (duplicateModal) duplicateModal.show();
+        }
+
+        function replaceDatePlaceholdersBraced(tpl) {
+            const now = new Date();
+            const Y = now.getFullYear().toString();
+            const M = String(now.getMonth() + 1).padStart(2, '0');
+            const D = String(now.getDate()).padStart(2, '0');
+            return (tpl || '')
+                .replace(/\{YYYY\}/g, Y)
+                .replace(/\{YY\}/g, Y.slice(-2))
+                .replace(/\{MM\}/g, M)
+                .replace(/\{DD\}/g, D)
+                .replace(/\{YYYYMM\}/g, Y + M)
+                .replace(/\{YYYYMMDD\}/g, Y + M + D);
+        }
+
+        function buildOfficeDisplay() {
+            if (!destinationOffice) return 'OFFICE';
+            const val = destinationOffice.value;
+            const selectedText = destinationOffice.options[destinationOffice.selectedIndex]?.text?.trim() || '';
+            if (val === 'outside_lgu') {
+                return entityNameInput && entityNameInput.value.trim() ? entityNameInput.value.trim() : 'Outside LGU';
             }
-        }
-        // Use server-provided next preview to keep correct increment, only swap OFFICE and strip braces
-        let base = SERVER_PAR_PREVIEW || '';
-        let updated = (base || '').replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
-        updated = updated.replace(/[{}]/g, '');
-        field.readOnly = true;
-        field.required = false;
-        field.placeholder = '';
-        field.value = updated;
-    }
-    function buildOfficeDisplay(){
-        const sel = document.querySelector('select[name="office_id"]');
-        let officeDisp = 'OFFICE';
-        if (sel) {
-            const opt = sel.options[sel.selectedIndex];
-            const txt = opt ? (opt.text || '') : '';
-            const en = document.getElementById('parEntityName');
-            if (en && en.value.trim()) {
-                officeDisp = en.value.trim();
-            } else if (sel.value && sel.value !== 'outside_lgu') {
-                officeDisp = (txt || '').trim() || 'OFFICE';
-            } else {
-                officeDisp = 'OFFICE';
+            if (entityNameInput && entityNameInput.value.trim()) {
+                return entityNameInput.value.trim();
             }
-        }
-        return officeDisp;
-    }
-    // Replace any contiguous # run with zero-padded sequence number of same width
-    function applyDigitSequence(tpl, seq){
-        return (tpl || '').replace(/(#+)/g, (m) => {
-            const width = m.length;
-            const s = String(seq);
-            if (s.length >= width) return s; // overflow: no pad
-            return '0'.repeat(width - s.length) + s;
-        });
-    }
-    function computePropertyPreviews(){
-        const inputs = document.querySelectorAll('.propNoInput');
-        if (!inputs || inputs.length === 0) return;
-        const baseTpl = PROPERTY_TEMPLATE || '';
-        if (!baseTpl) return; // no template configured; keep placeholders
-
-        const officeDisp = buildOfficeDisplay();
-
-        // Build a processed template with date and OFFICE replaced, but keep the {###} placeholder to locate sequence
-        let processedTpl = replaceDatePlaceholdersBraced(baseTpl);
-        processedTpl = processedTpl.replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
-
-        const seqMatch = processedTpl.match(/\{(#+)\}/);
-        if (!seqMatch) {
-            // No increment placeholder in template; just render same for all rows
-            const rendered = processedTpl.replace(/[{}]/g, '');
-            inputs.forEach(inp => { inp.value = rendered; });
-            return;
+            return val ? (selectedText || 'OFFICE') : 'OFFICE';
         }
 
-        const seqWidth = seqMatch[1].length;
-        const seqStartIdx = seqMatch.index;
-        const seqTokenLen = seqMatch[0].length; // includes braces
-
-        const prefixRaw = processedTpl.substring(0, seqStartIdx);
-        const suffixRaw = processedTpl.substring(seqStartIdx + seqTokenLen);
-
-        // Clean braces from prefix/suffix to align with preview rendering
-        const clean = (s) => (s || '').replace(/[{}]/g, '');
-        const prefixClean = clean(prefixRaw);
-        const suffixClean = clean(suffixRaw);
-
-        // Derive starting number from the server-provided next preview
-        const preview = String(PROPERTY_PREVIEW_NEXT || '').trim();
-        let startNum = 1;
-        if (preview) {
-            // Prefer the last numeric run with length >= seqWidth (to avoid picking year YYYY)
-            const runs = Array.from(preview.matchAll(/\d+/g));
-            let pick = null;
-            for (let i = runs.length - 1; i >= 0; i--) {
-                if (runs[i][0].length >= seqWidth) { pick = runs[i]; break; }
-            }
-            if (!pick && runs.length) pick = runs[runs.length - 1];
-            if (pick) {
-                startNum = parseInt(pick[0], 10) || 1;
-            }
+        function computeParPreview() {
+            if (!parNoField) return;
+            const officeDisp = buildOfficeDisplay();
+            let updated = String(SERVER_PAR_PREVIEW || '').replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
+            updated = updated.replace(/[{}]/g, '');
+            parNoField.readOnly = true;
+            parNoField.required = false;
+            parNoField.placeholder = '';
+            parNoField.value = updated;
         }
 
-        function pad(n, w){
-            const s = String(n);
-            return s.length >= w ? s : '0'.repeat(w - s.length) + s;
-        }
-
-        inputs.forEach((inp, idx) => {
-            const curNum = startNum + idx;
-            const seqStr = pad(curNum, seqWidth);
-            inp.value = prefixClean + seqStr + suffixClean;
-        });
-    }
-    document.addEventListener('DOMContentLoaded', ()=>{
-        const sel = document.querySelector('select[name="office_id"]');
-        const en = document.getElementById('parEntityName');
-        if (sel) sel.addEventListener('change', function(){
-            // Always sync Entity Name with selected office (editable afterwards)
-            const opt = this.options[this.selectedIndex];
-            const txt = (opt ? (opt.text || '') : '').trim();
-            if (en) {
-                if (this.value && this.value !== 'outside_lgu') {
-                    en.readOnly = false; // keep editable
-                    en.required = false;
-                    en.placeholder = '';
-                    en.value = txt; // always update to selected office
-                } else {
-                    // Outside LGU: clear and require manual entry
-                    en.readOnly = false;
-                    en.required = true;
-                    en.value = '';
-                    en.placeholder = 'Enter external entity name';
-                    en.focus();
-                }
-            }
-            computeParPreview();
-            computePropertyPreviews();
-        });
-        if (en) en.addEventListener('input', function(){
-            computeParPreview();
-            computePropertyPreviews();
-        });
-        computeParPreview();
-        computePropertyPreviews();
-    });
-
-    let rowIndex = 1; // Start after the initial 1 row
-    let selectedDescriptions = new Set(); // Track selected asset descriptions
-
-    function addRow() {
-        const tbody = document.getElementById('itemTableBody');
-        const newRow = document.createElement('tr');
-
-        newRow.innerHTML = `
-        <td><input type="number" name="items[${rowIndex}][quantity]" class="form-control text-end shadow" id="qtyInput${rowIndex}" min="1" required></td>
-        <td>
-            <select name="items[${rowIndex}][unit]" class="form-select text-center shadow" required>
-                <option value="">Select Unit</option>
-                <?php foreach ($units as $unit): ?>
-                    <option value="<?= htmlspecialchars($unit['unit_name']) ?>" <?= (strtolower($unit['unit_name']) === 'unit') ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($unit['unit_name']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </td>
-        <td class="position-relative">
-            <div class="input-group">
-                <input type="text" name="items[${rowIndex}][description]" class="form-control form-control-lg shadow" id="descInput${rowIndex}" placeholder="Type description..." required>
-                <input type="hidden" name="items[${rowIndex}][asset_id]" id="assetId${rowIndex}">
-                <button type="button" class="btn p-0 m-0 border-0 bg-transparent" onclick="clearDescription(${rowIndex})" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
-                    <span class="badge rounded-circle bg-secondary text-white" style="font-size: 0.75rem;">×</span>
-                </button>
-            </div>
-        </td>
-        <td style="width: 280px;">
-            <input type="text" name="items[${rowIndex}][property_no]" id="propNo${rowIndex}" class="form-control shadow propNoInput" value="" placeholder="Auto-generated on Save" readonly style="min-width: 260px; font-family: monospace;">
-            
-        </td>
-        <td><input type="date" name="items[${rowIndex}][date_acquired]" class="form-control shadow" id="acqDate${rowIndex}" required></td>
-        <td style="position: relative; width: 150px;">
-            <span style="
-                position: absolute;
-                top: 50%;
-                left: 10px;
-                transform: translateY(-50%);
-                pointer-events: none;
-                color: inherit;
-                font-size: 1rem;">₱</span>
-            <input
-                type="number"
-                name="items[${rowIndex}][unit_price]"
-                class="form-control text-end shadow"
-                step="0.01"
-                id="unitCost${rowIndex}"
-                style="padding-left: 1.5rem; width: 100%;" required>
-        </td>
-        <td style="position: relative; width: 150px;">
-            <span style="
-                position: absolute;
-                top: 50%;
-                left: 10px;
-                transform: translateY(-50%);
-                pointer-events: none;
-                color: inherit;
-                font-size: 1rem;">₱</span>
-            <input
-                type="number"
-                name="items[${rowIndex}][amount]"
-                class="form-control text-end fw-semibold shadow"
-                step="0.01"
-                id="amount${rowIndex}"
-                readonly
-                style="padding-left: 1.5rem; width: 100%;" required>
-        </td>
-        <td>
-            <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">Remove</button>
-        </td>
-        `;
-
-        tbody.appendChild(newRow);
-
-        attachRowEvents(rowIndex);
-        updateTotalAmount();
-        // refresh property preview for new row as well
-        computePropertyPreviews();
-        rowIndex++;
-    }
-
-    function attachRowEvents(i) {
-        const descInput = document.getElementById('descInput' + i);
-        const unitCostInput = document.getElementById('unitCost' + i);
-        const qtyInput = document.getElementById('qtyInput' + i);
-        const acqDateInput = document.getElementById('acqDate' + i);
-        const amountInput = document.getElementById('amount' + i);
-        const assetIdInput = document.getElementById('assetId' + i);
-
-        // Auto-calculate amount
-        qtyInput.addEventListener('input', calculateAmount);
-        unitCostInput.addEventListener('input', calculateAmount);
-
-        function calculateAmount() {
-            const qty = parseFloat(qtyInput.value) || 0;
-            const unitPrice = parseFloat(unitCostInput.value) || 0;
-            const total = qty * unitPrice;
-            amountInput.value = total.toFixed(2);
-            updateTotalAmount();
-        }
-
-        descInput.addEventListener('change', function() {
-            const val = descInput.value.trim();
-            assetIdInput.value = ""; // reset first
-
-            // Check all other description inputs for duplicates (by id prefix)
-            const descInputs = document.querySelectorAll('[id^="descInput"]');
-            let duplicateFound = false;
-            descInputs.forEach((input) => {
-                if (input !== descInput && input.value.trim() === val && val !== '') {
-                    duplicateFound = true;
-                }
-            });
-            if (duplicateFound) {
-                showDuplicateModal();
-                descInput.value = '';
+        function computePropertyPreviews() {
+            const inputs = tableBody ? tableBody.querySelectorAll('.prop-no-input') : [];
+            if (!inputs.length) return;
+            if (!PROPERTY_TEMPLATE) {
+                inputs.forEach(input => { if (!input.value) input.placeholder = 'Auto-generated on save'; });
                 return;
             }
-            updateTotalAmount();
-        });
-    }
-
-    // Attach to initial rows
-    for (let i = 0; i < rowIndex; i++) {
-        const desc = document.getElementById('descInput' + i)?.value;
-        if (desc) selectedDescriptions.add(desc); // Track existing selections
-        attachRowEvents(i);
-    }
-
-    function updateTotalAmount() {
-        let total = 0;
-        for (let i = 0; i < rowIndex; i++) {
-            const amountInput = document.getElementById('amount' + i);
-            if (amountInput && amountInput.value) {
-                total += parseFloat(amountInput.value) || 0;
+            const officeDisp = buildOfficeDisplay();
+            let processedTpl = replaceDatePlaceholdersBraced(PROPERTY_TEMPLATE).replace(/\bOFFICE\b|\{OFFICE\}/g, officeDisp);
+            const seqMatch = processedTpl.match(/\{(#+)\}/);
+            if (!seqMatch) {
+                const rendered = processedTpl.replace(/[{}]/g, '');
+                inputs.forEach(inp => { inp.value = rendered; });
+                return;
             }
-        }
-        document.getElementById('totalAmount').value = total.toFixed(2);
-    }
+            const seqToken = seqMatch[0];
+            const seqWidth = seqMatch[1].length;
+            const parts = processedTpl.split(seqToken);
+            const clean = s => (s || '').replace(/[{}]/g, '');
+            const prefix = clean(parts[0] || '');
+            const suffix = clean(parts[1] || '');
 
-    // Remove row except first
-    function removeRow(button) {
-        const row = button.closest('tr');
-        if (row) {
-            row.remove();
-            updateTotalAmount();
-            // Recompute property number previews to keep sequence contiguous
+            let startNum = 1;
+            const preview = String(PROPERTY_PREVIEW_NEXT || '').trim();
+            if (preview) {
+                const runs = Array.from(preview.matchAll(/\d+/g));
+                let pick = null;
+                for (let i = runs.length - 1; i >= 0; i--) {
+                    if (runs[i][0].length >= seqWidth) { pick = runs[i]; break; }
+                }
+                if (!pick && runs.length) pick = runs[runs.length - 1];
+                if (pick) startNum = parseInt(pick[0], 10) || 1;
+            }
+
+            inputs.forEach((input, idx) => {
+                const seq = String(startNum + idx).padStart(seqWidth, '0');
+                input.value = `${prefix}${seq}${suffix}`;
+            });
+        }
+
+        function updateRowAmount(row) {
+            if (!row) return;
+            const quantity = parseFloat(row.querySelector('input[name$="[quantity]"]')?.value) || 0;
+            const unitCost = parseFloat(row.querySelector('input[name$="[unit_price]"]')?.value) || 0;
+            const amountField = row.querySelector('input[name$="[amount]"]');
+            if (amountField) amountField.value = (quantity * unitCost).toFixed(2);
+            updateGrandTotal();
+        }
+
+        function updateGrandTotal() {
+            if (!tableBody || !grandTotalField) return;
+            let sum = 0;
+            tableBody.querySelectorAll('input[name$="[amount]"]').forEach(input => { sum += parseFloat(input.value) || 0; });
+            grandTotalField.value = sum.toFixed(2);
+        }
+
+        function clearRow(row) {
+            if (!row) return;
+            row.querySelectorAll('input').forEach(input => {
+                if (input.classList.contains('prop-no-input')) {
+                    input.value = '';
+                } else if (!input.readOnly || input.classList.contains('amount-field')) {
+                    input.value = '';
+                }
+            });
+            row.querySelectorAll('select').forEach(select => { if (select.options.length) select.selectedIndex = 0; });
+            updateRowAmount(row);
             computePropertyPreviews();
         }
-    }
 
-    // Final duplicate check on form submission
-    function checkDuplicates() {
-        const descInputs = document.querySelectorAll('[id^="descInput"]');
-        const seen = new Set();
+        function removeRow(row) {
+            if (!row) return;
+            if (tableBody.querySelectorAll('tr').length === 1) {
+                clearRow(row);
+                return;
+            }
+            row.remove();
+            updateGrandTotal();
+            computePropertyPreviews();
+        }
 
-        for (let input of descInputs) {
+        function handleDescriptionChange(input) {
             const val = input.value.trim();
-            if (val !== '') {
-                if (seen.has(val)) {
-                    alert("Duplicate asset descriptions found.");
-                    return false;
-                }
-                seen.add(val);
+            if (!val) return;
+            const duplicate = Array.from(tableBody.querySelectorAll('.description-field')).some(field => field !== input && field.value.trim().toLowerCase() === val.toLowerCase());
+            if (duplicate) {
+                showDuplicateModal();
+                input.value = '';
+                updateRowAmount(input.closest('tr'));
             }
         }
-        return true;
-    }
 
-    function showDuplicateModal() {
-        const duplicateModal = new bootstrap.Modal(document.getElementById('duplicateModal'));
-        duplicateModal.show();
-    }
-
-    function clearDescription(index) {
-        const descInput = document.getElementById('descInput' + index);
-        const value = descInput.value.trim();
-
-        if (value && selectedDescriptions.has(value)) {
-            selectedDescriptions.delete(value);
+        function createRow(index) {
+            const wrapper = document.createElement('tbody');
+            wrapper.innerHTML = `
+                <tr data-row-index="${index}">
+                    <td><input type="number" class="form-control quantity-field text-end shadow-sm" name="items[${index}][quantity]" min="1" required></td>
+                    <td>
+                        <select name="items[${index}][unit]" class="form-select text-center shadow-sm" required>
+                            <option value="" disabled selected>Select unit</option>
+                            <?php foreach ($units as $unit): ?>
+                                <option value="<?= htmlspecialchars($unit['unit_name']) ?>" <?= (strtolower($unit['unit_name']) === 'unit') ? 'selected' : '' ?>><?= htmlspecialchars($unit['unit_name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                    <td class="position-relative">
+                        <input type="text" class="form-control description-field shadow-sm" name="items[${index}][description]" placeholder="Type description..." style="padding-right: 2rem;" required>
+                        <button type="button" class="clear-description" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: transparent; border: none; font-weight: bold; font-size: 1rem; line-height: 1; color: #888; cursor: pointer;">&times;</button>
+                        <input type="hidden" name="items[${index}][asset_id]" value="" class="asset-id-field">
+                    </td>
+                    <td><input type="text" class="form-control prop-no-input shadow-sm" name="items[${index}][property_no]" placeholder="Auto-generated on save" readonly></td>
+                    <td><input type="date" class="form-control shadow-sm" name="items[${index}][date_acquired]" required></td>
+                    <td class="position-relative"><span class="position-absolute top-50 start-0 translate-middle-y ps-2">₱</span><input type="number" class="form-control unit-cost-field text-end shadow-sm" name="items[${index}][unit_price]" step="0.01" style="padding-left: 1.5rem;" required></td>
+                    <td class="position-relative"><span class="position-absolute top-50 start-0 translate-middle-y ps-2">₱</span><input type="number" class="form-control amount-field text-end shadow-sm" name="items[${index}][amount]" step="0.01" style="padding-left: 1.5rem;" readonly required></td>
+                    <td><button type="button" class="btn btn-outline-danger btn-sm remove-row">Remove</button></td>
+                </tr>`;
+            return wrapper.firstElementChild;
         }
 
-        descInput.value = '';
+        if (tableBody) {
+            tableBody.addEventListener('input', function (event) {
+                if (event.target.matches('input[name$="[quantity]"], input[name$="[unit_price]"]')) {
+                    updateRowAmount(event.target.closest('tr'));
+                }
+            });
+            tableBody.addEventListener('change', function (event) {
+                if (event.target.classList.contains('description-field')) handleDescriptionChange(event.target);
+            });
+            tableBody.addEventListener('click', function (event) {
+                if (event.target.closest('.clear-description')) {
+                    clearRow(event.target.closest('tr'));
+                } else if (event.target.closest('.remove-row')) {
+                    removeRow(event.target.closest('tr'));
+                }
+            });
+        }
 
-        // Also clear related fields
-        const qtyInput = document.getElementById('qtyInput' + index);
-        const unitCostInput = document.getElementById('unitCost' + index);
-        const acqDateInput = document.getElementById('acqDate' + index);
-        const amountInput = document.getElementById('amount' + index);
+        if (addRowBtn) {
+            addRowBtn.addEventListener('click', function () {
+                const newRow = createRow(rowIndex);
+                tableBody.appendChild(newRow);
+                rowIndex++;
+                computePropertyPreviews();
+            });
+        }
 
-        if (qtyInput) qtyInput.value = '';
-        if (unitCostInput) unitCostInput.value = '';
-        if (acqDateInput) acqDateInput.value = '';
-        if (amountInput) amountInput.value = '';
+        function handleDestinationChange() {
+            if (!destinationOffice || !entityNameInput) return;
+            const val = destinationOffice.value;
+            const selectedText = destinationOffice.options[destinationOffice.selectedIndex]?.text?.trim() || '';
+            if (val === 'outside_lgu') {
+                entityNameInput.readOnly = false;
+                entityNameInput.required = true;
+                if (!entityNameInput.value.trim()) entityNameInput.placeholder = 'Enter external entity name';
+            } else if (val) {
+                entityNameInput.readOnly = false;
+                entityNameInput.required = false;
+                entityNameInput.placeholder = '';
+                entityNameInput.value = selectedText;
+            } else {
+                entityNameInput.readOnly = false;
+                entityNameInput.required = false;
+                entityNameInput.placeholder = '';
+            }
+            computeParPreview();
+            computePropertyPreviews();
+        }
 
-        updateTotalAmount();
-    }
+        if (destinationOffice) destinationOffice.addEventListener('change', handleDestinationChange);
+        if (entityNameInput) entityNameInput.addEventListener('input', function () {
+            computeParPreview();
+            computePropertyPreviews();
+        });
+
+        computeParPreview();
+        computePropertyPreviews();
+        updateGrandTotal();
+
+        window.checkDuplicates = function () {
+            if (!tableBody) return true;
+            const seen = new Set();
+            const descriptions = tableBody.querySelectorAll('.description-field');
+            for (const input of descriptions) {
+                const value = input.value.trim().toLowerCase();
+                if (!value) continue;
+                if (seen.has(value)) {
+                    showDuplicateModal();
+                    return false;
+                }
+                seen.add(value);
+            }
+            return true;
+        };
+    });
 </script>
