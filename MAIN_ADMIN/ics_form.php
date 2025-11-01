@@ -114,6 +114,43 @@ $is_main_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'MAIN_ADMIN';
         box-shadow: 0 18px 45px rgba(15, 23, 42, 0.15);
     }
 
+    .ics-paper .form-control,
+    .ics-paper .form-select {
+        padding: 0.35rem 0.55rem;
+        font-size: 0.85rem;
+        min-height: 2.1rem;
+        border-radius: 6px;
+    }
+
+    .ics-paper .form-control.text-center,
+    .ics-paper .form-control.text-end {
+        padding-right: 0.55rem;
+        padding-left: 0.55rem;
+    }
+
+    .ics-paper .input-group-text {
+        font-size: 0.85rem;
+        padding: 0.35rem 0.55rem;
+    }
+
+    .ics-table-wrapper input.form-control,
+    .ics-table-wrapper select.form-select {
+        padding: 0.2rem 0.4rem;
+        min-height: 1.7rem;
+        font-size: 0.72rem;
+    }
+
+    .ics-table-wrapper .input-group-text,
+    .ics-table-wrapper .btn {
+        font-size: 0.72rem;
+        padding: 0.2rem 0.45rem;
+    }
+
+    .ics-table-wrapper .position-absolute.top-50 {
+        left: 4px;
+        font-size: 0.68rem;
+    }
+
     .ics-paper::before {
         content: "";
         position: absolute;
@@ -147,19 +184,28 @@ $is_main_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'MAIN_ADMIN';
 
     .ics-table-wrapper table {
         margin-bottom: 0;
+        font-size: 0.72rem;
     }
 
     .ics-table-wrapper thead th {
         background: #f8fafc;
-        font-size: 0.82rem;
+        font-size: 0.72rem;
         vertical-align: middle;
-        padding: 0.75rem 0.5rem;
+        padding: 0.4rem 0.32rem;
         color: #334155;
     }
 
     .ics-table-wrapper tbody td,
     .ics-table-wrapper tfoot td {
-        padding: 0.6rem 0.55rem;
+        padding: 0.35rem 0.32rem;
+    }
+
+    .ics-paper .form-control,
+    .ics-paper .form-select {
+        padding: 0.35rem 0.55rem;
+        border-radius: 0;
+        border-bottom: 1px solid #adb5bd;
+        background: transparent;
     }
 
     .ics-signature-table input.form-control {
