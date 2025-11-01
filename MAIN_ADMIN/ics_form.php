@@ -93,6 +93,129 @@ if ($thrRes && $thrRes->num_rows > 0) {
 $is_main_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'MAIN_ADMIN';
 
 ?>
+<style>
+    body {
+        background: #f4f6f9;
+    }
+
+    .ics-page-wrapper {
+        padding: 2.5rem 0 3.5rem;
+        background: linear-gradient(135deg, rgba(226, 232, 240, 0.5), rgba(148, 163, 184, 0.25));
+    }
+
+    .ics-paper {
+        position: relative;
+        max-width: 960px;
+        margin: 0 auto;
+        background: #ffffff;
+        border: 1px solid #d9dee6;
+        border-radius: 14px;
+        padding: 2.75rem 3rem;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.15);
+    }
+
+    .ics-paper::before {
+        content: "";
+        position: absolute;
+        inset: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        border-radius: 10px;
+        pointer-events: none;
+    }
+
+    .ics-form-section-title {
+        font-size: 0.82rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #6c757d;
+        font-weight: 700;
+        margin-bottom: 0.85rem;
+    }
+
+    .ics-heading-divider {
+        margin: 1.75rem 0;
+        border: none;
+        border-top: 2px solid rgba(100, 116, 139, 0.35);
+    }
+
+    .ics-table-wrapper {
+        border: 1px solid #ced4da;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #ffffff;
+    }
+
+    .ics-table-wrapper table {
+        margin-bottom: 0;
+    }
+
+    .ics-table-wrapper thead th {
+        background: #f8fafc;
+        font-size: 0.82rem;
+        vertical-align: middle;
+        padding: 0.75rem 0.5rem;
+        color: #334155;
+    }
+
+    .ics-table-wrapper tbody td,
+    .ics-table-wrapper tfoot td {
+        padding: 0.6rem 0.55rem;
+    }
+
+    .ics-signature-table input.form-control {
+        border: none;
+        border-radius: 0;
+        border-bottom: 1px solid #adb5bd;
+        background: transparent;
+    }
+
+    .ics-signature-table input.form-control:focus {
+        box-shadow: none;
+        border-color: #495057;
+    }
+
+    @media (max-width: 991.98px) {
+        .ics-page-wrapper {
+            padding: 1.75rem 1rem 2.5rem;
+        }
+
+        .ics-paper {
+            padding: 2rem 1.6rem;
+            border-radius: 10px;
+        }
+
+        .ics-paper::before {
+            inset: 10px;
+            border-radius: 8px;
+        }
+    }
+
+    @media print {
+        body {
+            background: #ffffff !important;
+        }
+
+        .ics-page-wrapper {
+            padding: 0;
+            background: transparent;
+        }
+
+        .ics-paper {
+            max-width: 100%;
+            padding: 20mm;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+        }
+
+        .ics-paper::before,
+        .navigation-controls,
+        .alert,
+        .btn {
+            display: none !important;
+        }
+    }
+</style>
 <?php if (!empty($_SESSION['flash'])): ?>
     <?php
     $flash = $_SESSION['flash'];
@@ -109,48 +232,43 @@ $is_main_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'MAIN_ADMIN';
     </div>
     <?php unset($_SESSION['flash']); ?>
 <?php endif; ?>
-<!-- Top-right button -->
-<div class="d-flex justify-content-end mb-3">
-    <a href="saved_ics.php?id=<?= htmlspecialchars($form_id) ?>" class="btn btn-info">
-        <i class="bi bi-folder-check"></i> View Saved ICS
-    </a>
-</div>
-<div class="card mt-4">
-    <div class="card-body">
-        <!-- Inventory Custodian Slip Heading -->
+<div class="ics-page-wrapper">
+    <div class="navigation-controls d-flex justify-content-end mb-3">
+        <a href="saved_ics.php?id=<?= htmlspecialchars($form_id) ?>" class="btn btn-info">
+            <i class="bi bi-folder-check"></i> View Saved ICS
+        </a>
+    </div>
 
-        <form method="post" action="save_ics_items.php" enctype="multipart/form-data">
+    <div class="ics-paper">
+        <form method="post" action="save_ics_items.php" enctype="multipart/form-data" class="w-100">
             <input type="hidden" name="form_id" value="<?= htmlspecialchars($form_id) ?>">
-            <!-- ICS Form ID from database -->
             <input type="hidden" name="ics_id" value="<?= htmlspecialchars($ics_data['id'] ?? '') ?>">
-            <div class="mb-3 text-center">
+
+            <div class="mb-4 text-center">
                 <?php if (!empty($ics_data['header_image'])): ?>
                     <img src="../img/<?= htmlspecialchars($ics_data['header_image']) ?>"
                         class="img-fluid mb-2"
                         style="max-width: 100%; height: auto; object-fit: contain;">
-
-                    <!-- Hidden input ensures it gets submitted -->
                     <input type="hidden" name="header_image" value="<?= htmlspecialchars($ics_data['header_image']) ?>">
                 <?php else: ?>
-                    <p class="text-muted">No header image available</p>
+                    <p class="text-muted mb-0">No header image available</p>
                 <?php endif; ?>
-                <!-- Hidden file input to keep field available without visible UI -->
                 <input type="file" id="headerImageFile" name="header_image_file" accept="image/*" style="display:none;" hidden>
             </div>
 
-            <div class="row mb-3">
-                <!-- ENTITY NAME -->
-                <div class="col-6">
-                    <label class="form-label fw-semibold">ENTITY NAME</label>
-                    <input type="text" class="form-control shadow" name="entity_name" id="entityName" value="<?= htmlspecialchars($ics_data['entity_name'] ?? '') ?>" placeholder="Enter entity name">
-                </div>
+            <hr class="ics-heading-divider">
 
-                <!-- OFFICE -->
-                <div class="col-6">
+            <div class="ics-form-section-title">Custodian Slip Details</div>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">ENTITY NAME</label>
+                    <input type="text" class="form-control shadow-sm" name="entity_name" id="entityName" value="<?= htmlspecialchars($ics_data['entity_name'] ?? '') ?>" placeholder="Enter entity name">
+                </div>
+                <div class="col-md-6">
                     <label class="form-label fw-semibold">
-                        DESTINATION <span style="color: red;">*</span>
+                        DESTINATION <span class="text-danger">*</span>
                     </label>
-                    <select class="form-select shadow" name="office_id" id="destinationOffice" required>
+                    <select class="form-select shadow-sm" name="office_id" id="destinationOffice" required>
                         <option value="" disabled selected>Select office</option>
                         <option value="outside_lgu">Outside LGU</option>
                         <?php foreach ($office_options as $office): ?>
@@ -160,21 +278,15 @@ $is_main_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'MAIN_ADMIN';
                         <?php endforeach; ?>
                     </select>
                 </div>
-            </div>
-
-            <div class="row">
-                <!-- FUND CLUSTER -->
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">FUND CLUSTER <span style="color: red;">*</span></label>
-                    <input type="text" class="form-control shadow" name="fund_cluster" required>
+                    <label class="form-label fw-semibold">FUND CLUSTER <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control shadow-sm" name="fund_cluster" required>
                 </div>
-
-                <!-- ICS NO -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">ICS NO. (Auto-generated)</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control shadow" id="icsNoField" name="ics_no" value="<?= previewTag('ics_no') ?>" readonly>
-                        <span class="input-group-text">
+                    <div class="input-group shadow-sm">
+                        <input type="text" class="form-control border-0" id="icsNoField" name="ics_no" value="<?= previewTag('ics_no') ?>" readonly>
+                        <span class="input-group-text bg-light border-0">
                             <i class="bi bi-magic" title="Auto-generated"></i>
                         </span>
                     </div>
@@ -182,169 +294,129 @@ $is_main_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'MAIN_ADMIN';
                 </div>
             </div>
 
-            <!-- Items Table -->
-            <table class="table table-bordered text-center align-middle mt-3" id="icsTable">
-                <thead>
-                    <tr>
-                        <th rowspan="2">QUANTITY</th>
-                        <th rowspan="2">UNIT</th>
-                        <th colspan="2">AMOUNT</th>
-                        <th rowspan="2">DESCRIPTION</th>
-                        <th rowspan="2">ITEM NO</th>
-                        <th rowspan="2">ESTIMATED USEFUL LIFE</th>
-                        <th rowspan="2">ACTIONS</th>
-                    </tr>
-                    <tr>
-                        <th>UNIT COST</th>
-                        <th>TOTAL COST</th>
-                    </tr>
-                </thead>
-                <tbody id="ics-items-body">
-                    <?php for ($i = 0; $i < 1; $i++): ?>
+            <div class="ics-form-section-title mt-5">Inventory Line Items</div>
+            <div class="ics-table-wrapper mb-4">
+                <table class="table table-bordered text-center align-middle" id="icsTable">
+                    <thead>
                         <tr>
-                            <td><input type="number" class="form-control quantity-field shadow" name="quantity[]" min="1" required></td>
-                            <td>
-                                <select class="form-select shadow" name="unit[]" required>
-                                    <option value="" disabled>Select unit</option>
-                                    <?php foreach ($unit_options as $unit): ?>
-                                        <option value="<?= htmlspecialchars($unit) ?>" <?= (strtolower($unit) === 'unit') ? 'selected' : '' ?>><?= htmlspecialchars($unit) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </td>
-                            <td style="position: relative;">
-                                <span style="
-    position: absolute;
-    top: 50%;
-    left: 10px;
-    transform: translateY(-50%);
-    pointer-events: none;
-    color: inherit;
-    font-size: 1rem;">₱</span>
-                                <input type="number" class="form-control text-end shadow" step="0.01" name="unit_cost[]" max="<?= htmlspecialchars(number_format($ics_max, 2, '.', '')) ?>" style="padding-left: 1.5rem;" required>
-                            </td>
-                            <td style="position: relative;">
-                                <span style="
-    position: absolute;
-    top: 50%;
-    left: 10px;
-    transform: translateY(-50%);
-    pointer-events: none;
-    color: inherit;
-    font-size: 1rem;">₱</span>
-                                <input type="number" class="form-control total_cost text-end shadow" name="total_cost[]" step="0.01" readonly style="padding-left: 1.5rem;">
-                            </td>
-
-                            <td style="position: relative;">
-                                <input type="text" class="form-control description-field shadow"
-                                    name="description[]"
-                                    placeholder="Type description..."
-                                    style="padding-right: 2rem;" required>
-                                <button type="button"
-                                    class="clear-description"
-                                    style="
-        position: absolute;
-        right: 5px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: transparent;
-        border: none;
-        font-weight: bold;
-        font-size: 1rem;
-        line-height: 1;
-        color: #888;
-        cursor: pointer;
-    ">&times;</button>
-                            </td>
-
-                            <td><input type="text" class="form-control shadow item-no-field" name="item_no[]" value="1" readonly required></td>
-                            <td><input type="text" class="form-control shadow" name="estimated_useful_life[]" required></td>
-                            <td><!-- No remove button for first row --></td>
+                            <th rowspan="2">QUANTITY</th>
+                            <th rowspan="2">UNIT</th>
+                            <th colspan="2">AMOUNT</th>
+                            <th rowspan="2">DESCRIPTION</th>
+                            <th rowspan="2">ITEM NO</th>
+                            <th rowspan="2">ESTIMATED USEFUL LIFE</th>
+                            <th rowspan="2">ACTIONS</th>
                         </tr>
-                    <?php endfor; ?>
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="3" class="text-end fw-bold"></td>
-                        <td style="position: relative;">
-                            <span style="
-    position: absolute;
-    top: 50%;
-    left: 10px;
-    transform: translateY(-50%);
-    pointer-events: none;
-    color: inherit;
-    font-size: 1rem;">₱</span>
-                            <input type="number" id="grandTotal" class="form-control fw-bold text-end shadow" readonly style="padding-left: 1.5rem;">
-                        </td>
+                        <tr>
+                            <th>UNIT COST</th>
+                            <th>TOTAL COST</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ics-items-body">
+                        <?php for ($i = 0; $i < 1; $i++): ?>
+                            <tr>
+                                <td><input type="number" class="form-control quantity-field shadow-sm" name="quantity[]" min="1" required></td>
+                                <td>
+                                    <select class="form-select shadow-sm" name="unit[]" required>
+                                        <option value="" disabled>Select unit</option>
+                                        <?php foreach ($unit_options as $unit): ?>
+                                            <option value="<?= htmlspecialchars($unit) ?>" <?= (strtolower($unit) === 'unit') ? 'selected' : '' ?>><?= htmlspecialchars($unit) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+                                <td class="position-relative">
+                                    <span class="position-absolute top-50 start-0 translate-middle-y ps-2">₱</span>
+                                    <input type="number" class="form-control text-end shadow-sm" step="0.01" name="unit_cost[]" max="<?= htmlspecialchars(number_format($ics_max, 2, '.', '')) ?>" style="padding-left: 1.5rem;" required>
+                                </td>
+                                <td class="position-relative">
+                                    <span class="position-absolute top-50 start-0 translate-middle-y ps-2">₱</span>
+                                    <input type="number" class="form-control total_cost text-end shadow-sm" name="total_cost[]" step="0.01" readonly style="padding-left: 1.5rem;">
+                                </td>
+                                <td class="position-relative">
+                                    <input type="text" class="form-control description-field shadow-sm"
+                                        name="description[]"
+                                        placeholder="Type description..."
+                                        style="padding-right: 2rem;" required>
+                                    <button type="button"
+                                        class="clear-description"
+                                        style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: transparent; border: none; font-weight: bold; font-size: 1rem; line-height: 1; color: #888; cursor: pointer;">&times;</button>
+                                </td>
+                                <td><input type="text" class="form-control shadow-sm item-no-field" name="item_no[]" value="1" readonly required></td>
+                                <td><input type="text" class="form-control shadow-sm" name="estimated_useful_life[]" required></td>
+                                <td><!-- No remove button for first row --></td>
+                            </tr>
+                        <?php endfor; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold"></td>
+                            <td class="position-relative">
+                                <span class="position-absolute top-50 start-0 translate-middle-y ps-2">₱</span>
+                                <input type="number" id="grandTotal" class="form-control fw-bold text-end shadow-sm" readonly style="padding-left: 1.5rem;">
+                            </td>
+                            <td colspan="3" class="text-start">
+                                <button type="button" id="addRowBtn" class="btn btn-primary btn-sm">+ Add Row</button>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
 
-                        <td colspan="3" class="text-start">
-                            <button type="button" id="addRowBtn" class="btn btn-primary btn-sm">+ Add Row</button>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-
-            <!-- Footer Section -->
-            <table class="table table-borderless mt-5" style="width:100%; text-align:center; border-collapse: collapse;">
-                <tr>
-                    <td style="width:50%; text-align:left; font-weight:bold;">Received from: <span style="color: red;">*</span></td>
-                    <td style="width:50%; text-align:left; font-weight:bold;">Received by: <span style="color: red;">*</span></td>
+            <div class="ics-form-section-title mb-3">Signatories</div>
+            <table class="table table-borderless ics-signature-table" style="width:100%; text-align:center; border-collapse: collapse;">
+                <tr class="fw-semibold text-uppercase text-muted small">
+                    <td style="width:50%; text-align:left;">Received from <span class="text-danger">*</span></td>
+                    <td style="width:50%; text-align:left;">Received by <span class="text-danger">*</span></td>
                 </tr>
                 <tr>
-                    <td style="text-align:center;">
+                    <td class="px-3">
                         <input type="text" name="received_from_name"
-                            class="form-control text-center fw-bold shadow"
+                            class="form-control text-center fw-bold"
                             value="<?= htmlspecialchars($ics_data['received_from_name']) ?>"
                             placeholder="Enter name"
-                            style="text-decoration:underline;" required>
+                            required>
                     </td>
-                    <td style="text-align:center;">
+                    <td class="px-3">
                         <input type="text" name="received_by_name"
-                            class="form-control text-center fw-bold shadow"
+                            class="form-control text-center fw-bold"
                             value=""
                             placeholder="Enter name"
-                            style="text-decoration:underline;" required>
+                            required>
                     </td>
                 </tr>
-                <tr>
-                    <td style="text-align:center;">
+                <tr class="pt-3">
+                    <td class="px-3">
                         <input type="text" name="received_from_position"
-                            class="form-control text-center shadow"
+                            class="form-control text-center"
                             value="<?= htmlspecialchars($ics_data['received_from_position']) ?>"
                             placeholder="Enter position">
                     </td>
-                    <td style="text-align:center;">
+                    <td class="px-3">
                         <input type="text" name="received_by_position"
-                            class="form-control text-center shadow"
+                            class="form-control text-center"
                             value=""
                             placeholder="Enter position">
                     </td>
                 </tr>
                 <tr>
-                    <td style="height:30px;"></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td style="text-align:center;">
+                    <td class="px-3 pt-4">
                         <input type="date" name="received_from_date"
-                            class="form-control text-center shadow"
+                            class="form-control text-center"
                             value="">
                     </td>
-                    <td style="text-align:center;">
+                    <td class="px-3 pt-4">
                         <input type="date" name="received_by_date"
-                            class="form-control text-center shadow"
+                            class="form-control text-center"
                             value="">
                     </td>
                 </tr>
             </table>
-            <span style="color: red;">*</span> Required fields
-            <div>
-                <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-send-check-fill"></i>Save</button>
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <small class="text-muted"><span class="text-danger">*</span> Required fields</small>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-send-check-fill"></i> Save</button>
             </div>
-
-
         </form>
-
     </div>
 </div>
 
