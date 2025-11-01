@@ -1,0 +1,6 @@
+[2025-11-01 04:58:14] [::1] [Notice] Notice: session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\PILAR_ASSET_INVENTORY\MAIN_ADMIN\borrow.php on line 5
+Request: /pilar_asset_inventory/MAIN_ADMIN/borrow.php
+--------------------------------------------------------------------------------
+[2025-11-01 04:58:38] [::1] [Notice] Notice: session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\PILAR_ASSET_INVENTORY\MAIN_ADMIN\borrow.php on line 5
+Request: /pilar_asset_inventory/MAIN_ADMIN/borrow.php
+--------------------------------------------------------------------------------
