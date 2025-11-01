@@ -208,289 +208,258 @@ if (!empty($_SESSION['flash'])) {
 }
 ?>
 
-<!-- Header with Saved ITR Button -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h4 class="mb-0">Inventory Transfer Receipt (ITR) Form</h4>
-  <a href="saved_itr.php" class="btn btn-info">
-    <i class="bi bi-file-earmark-text me-2"></i>Saved ITR
-  </a>
-</div>
+<style>
+    body { background: #f4f6f9; }
+    .itr-page-wrapper { padding: 2.5rem 0 3.5rem; background: linear-gradient(135deg, rgba(226,232,240,0.5), rgba(148,163,184,0.25)); }
+    .itr-paper { position: relative; max-width: 1050px; margin: 0 auto; background: #fff; border: 1px solid #d9dee6; border-radius: 14px; padding: 2.75rem 3rem; box-shadow: 0 18px 45px rgba(15,23,42,0.15); }
+    .itr-paper::before { content: ""; position: absolute; inset: 14px; border: 1px solid rgba(148,163,184,0.25); border-radius: 10px; pointer-events: none; }
+    .itr-paper .form-control, .itr-paper .form-select { padding: 0.35rem 0.55rem; font-size: 0.85rem; min-height: 2.1rem; border-radius: 6px; }
+    .itr-section-title { font-size: 0.82rem; letter-spacing: 0.12em; text-transform: uppercase; color: #6c757d; font-weight: 700; margin-bottom: 0.85rem; }
+    .itr-divider { margin: 1.75rem 0; border: none; border-top: 2px solid rgba(100,116,139,0.35); }
+    .itr-table-wrapper { border: 1px solid #ced4da; border-radius: 10px; overflow: hidden; background: #ffffff; }
+    .itr-table-wrapper table { margin-bottom: 0; font-size: 0.74rem; }
+    .itr-table-wrapper thead th { background: #f8fafc; font-size: 0.72rem; vertical-align: middle; padding: 0.45rem 0.35rem; color: #334155; }
+    .itr-table-wrapper tbody td, .itr-table-wrapper tfoot td { padding: 0.35rem 0.35rem; }
+    .itr-table-wrapper input.form-control, .itr-table-wrapper select.form-select { padding: 0.22rem 0.4rem; min-height: 1.7rem; font-size: 0.72rem; }
+    .itr-table-wrapper .btn, .itr-table-wrapper .input-group-text { font-size: 0.72rem; padding: 0.2rem 0.45rem; }
+    .itr-signature-table input.form-control { border: none; border-radius: 0; border-bottom: 1px solid #adb5bd; background: transparent; }
+    .itr-signature-table input.form-control:focus { box-shadow: none; border-color: #495057; }
+    @media (max-width: 991.98px) { .itr-page-wrapper { padding: 1.75rem 1rem 2.5rem; } .itr-paper { padding: 2rem 1.6rem; border-radius: 10px; } .itr-paper::before { inset: 10px; border-radius: 8px; } }
+    @media print { body { background: #ffffff !important; } .itr-page-wrapper { padding: 0; background: transparent; } .itr-paper { max-width: 100%; padding: 20mm; border-radius: 0; border: none; box-shadow: none; } .itr-paper::before, .navigation-controls, .alert, .btn { display: none !important; } }
+</style>
 
-<form id="itrItemsForm" method="POST" action="save_itr_items.php" enctype="multipart/form-data" class="mb-4">
-  <input type="hidden" name="itr_id" value="<?= (int)$itr_id ?>">
-  <input type="hidden" name="form_id" value="<?= (int)$form_id ?>">
-
-  <!-- ITR Header -->
-  <div class="card shadow-sm mb-3">
-    <div class="card-body">
-      <!-- ITR Header Image Display -->
-      <div class="mb-3 text-center">
-        <?php if (!empty($itr['header_image'])): ?>
-          <img src="../img/<?= htmlspecialchars($itr['header_image']) ?>"
-            class="img-fluid mb-2"
-            style="max-width: 100%; height: auto; object-fit: contain;">
-
-          <!-- Hidden input ensures it gets submitted -->
-          <input type="hidden" name="header_image" value="<?= htmlspecialchars($itr['header_image']) ?>">
-        <?php else: ?>
-          <p class="text-muted">No header image available</p>
-        <?php endif; ?>
-      </div>
-
-
-      <div class="row g-3 mt-2">
-        <div class="col-md-4">
-          <label for="itr_office" class="form-label">Office (sets Entity Name)</label>
-          <select id="itr_office" name="office_id" class="form-select shadow">
-            <option value="">Select office...</option>
-            <?php foreach ($itr_offices as $o): ?>
-              <option value="<?= (int)$o['id'] ?>"><?= htmlspecialchars($o['office_name']) ?></option>
-            <?php endforeach; ?>
-          </select>
-          <div class="form-text">Changing this fills the Entity Name and ITR No preview.</div>
-        </div>
-        <div class="col-md-4">
-          <label for="entity_name" class="form-label">Entity Name <span style="color: red;">*</span></label>
-          <input type="text" id="entity_name" name="entity_name" class="form-control shadow" placeholder="Enter Entity Name" required>
-        </div>
-        <div class="col-md-4">
-          <label for="fund_cluster" class="form-label">Fund Cluster <span style="color: red;">*</span></label>
-          <input type="text" id="fund_cluster" name="fund_cluster" class="form-control shadow" placeholder="Enter Fund Cluster" value="<?= htmlspecialchars($_GET['fund_cluster'] ?? ($itr['fund_cluster'] ?? '')) ?>" required>
-        </div>
-        <div class="col-md-4">
-          <label for="date" class="form-label">Date</label>
-          <input type="date" id="date" name="date" class="form-control shadow" value="<?= htmlspecialchars($itr['date']) ?>">
-        </div>
-        <div class="col-md-6">
-          <label for="from_accountable_officer" class="form-label">From Accountable Officer <span style="color: red;">*</span></label>
-          <div class="input-group">
-            <input type="text" id="from_accountable_officer" name="from_accountable_officer" class="form-control shadow" list="employeesWithAssetsList" placeholder="Select employee with MR assets..." value="<?= htmlspecialchars($itr['from_accountable_officer']) ?>" required>
-            <button type="button" class="btn btn-outline-secondary" id="clear_from_accountable" title="Clear field" aria-label="Clear From Accountable Officer">
-              <i class="bi bi-x-circle"></i>
-            </button>
-          </div>
-          <datalist id="employeesWithAssetsList">
-            <?php foreach ($employees_with_assets as $emp): ?>
-              <option value="<?= htmlspecialchars($emp['name']) ?>" data-employee-id="<?= $emp['employee_id'] ?>"></option>
-            <?php endforeach; ?>
-          </datalist>
-          <div class="form-text">
-            <small class="text-muted">Only employees with MR assets are shown. Assets datalist will filter based on selection.</small>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <label for="to_accountable_officer" class="form-label">To Accountable Officer <span style="color: red;">*</span></label>
-          <div class="input-group">
-            <input type="text" id="to_accountable_officer" name="to_accountable_officer" class="form-control shadow" list="employeesList" placeholder="Type to search employees..." required>
-            <button type="button" class="btn btn-outline-secondary" id="clear_to_accountable" title="Clear field" aria-label="Clear To Accountable Officer">
-              <i class="bi bi-x-circle"></i>
-            </button>
-          </div>
-          <datalist id="employeesList">
-            <?php foreach ($employees as $ename): ?>
-              <option value="<?= htmlspecialchars($ename) ?>"></option>
-            <?php endforeach; ?>
-          </datalist>
-          <div class="form-text">
-            <small class="text-muted">Will auto-fill "Received By" field below</small>
-          </div>
-        </div>
-
-        <!-- Transfer type radios -->
-<div class="col-md-6">
-  <label class="form-label d-block">Transfer Type <span style="color: red;">*</span></label>
-  <?php
-  // Determine selected transfer type
-  $raw_transfer = trim((string)($itr['transfer_type'] ?? ''));
-  $parts = array_map('trim', array_filter(explode(',', $raw_transfer)));
-  $selectedType = $parts[0] ?? '';
-  $known = ['Donation', 'Reassignment', 'Relocate'];
-  $otherValue = '';
-
-  // If the value is invalid or empty, default to "Reassignment"
-  if (!in_array($selectedType, array_merge($known, ['Others']), true)) {
-    $selectedType = 'Reassignment';
-  }
-
-  // Show "Others" text field only if "Others" is actually selected
-  if ($selectedType === 'Others') {
-    $otherValue = htmlspecialchars($itr['transfer_type_other'] ?? '');
-  }
-  ?>
-
-  <?php foreach ($known as $k): ?>
-    <div class="form-check form-check-inline">
-      <input class="form-check-input transfer-type" type="radio" name="transfer_type" id="tt_<?= strtolower($k) ?>" value="<?= $k ?>" <?= ($selectedType === $k) ? 'checked' : '' ?>>
-      <label class="form-check-label" for="tt_<?= strtolower($k) ?>"><?= $k ?></label>
+<div class="itr-page-wrapper">
+    <div class="navigation-controls d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Inventory Transfer Receipt (ITR) Form</h4>
+        <a href="saved_itr.php" class="btn btn-info">
+            <i class="bi bi-folder-check"></i> View Saved ITR
+        </a>
     </div>
-  <?php endforeach; ?>
 
-  <div class="form-check form-check-inline">
-    <input class="form-check-input" type="radio" id="tt_others" name="transfer_type" value="Others" <?= ($selectedType === 'Others') ? 'checked' : '' ?>>
-    <label class="form-check-label" for="tt_others">Others</label>
-  </div>
+    <div class="itr-paper">
+        <form id="itrItemsForm" method="POST" action="save_itr_items.php" enctype="multipart/form-data" class="w-100" onsubmit="return checkItrDuplicateDescriptions()">
+            <input type="hidden" name="itr_id" value="<?= (int)$itr_id ?>">
+            <input type="hidden" name="form_id" value="<?= (int)$form_id ?>">
 
-  <div id="transfer_type_other_wrap" class="mt-2" style="display: <?= ($selectedType === 'Others') ? 'block' : 'none' ?>;">
-    <input type="text" id="transfer_type_other" name="transfer_type_other" class="form-control shadow" placeholder="Specify other transfer type" value="<?= $otherValue ?>">
-  </div>
-</div>
+            <div class="mb-4 text-center">
+                <?php if (!empty($itr['header_image'])): ?>
+                    <img src="../img/<?= htmlspecialchars($itr['header_image']) ?>" class="img-fluid mb-2" style="max-width: 100%; height: auto; object-fit: contain;">
+                    <input type="hidden" name="header_image" value="<?= htmlspecialchars($itr['header_image']) ?>">
+                <?php else: ?>
+                    <p class="text-muted mb-0">No header image available</p>
+                <?php endif; ?>
+            </div>
 
+            <hr class="itr-divider">
 
-        <div class="col-md-6">
-          <label for="itr_no" class="form-label">ITR No. (Auto-generated)</label>
-          <div class="input-group">
-            <input type="text" id="itr_no" name="itr_no" class="form-control shadow" value="<?= previewTag('itr_no') ?>" readonly>
-            <span class="input-group-text">
-              <i class="bi bi-magic" title="Auto-generated"></i>
-            </span>
-          </div>
-          <small class="text-muted">This number will be automatically assigned when you save the form.</small>
-        </div>
-
-        <!-- End User Field -->
-        <div class="col-md-6">
-          <label for="end_user" class="form-label">End User <span style="color: red;">*</span></label>
-          <input type="text" id="end_user" name="end_user" class="form-control shadow" placeholder="Enter end user name..." value="" required>
-          <div class="form-text">This will update the end user for all assets being transferred in this ITR.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card shadow-sm mt-3">
-    <div class="card-body">
-      <table class="table table-bordered" id="itrItemsTable">
-        <thead>
-          <tr>
-            <th style="width:15%">Date Acquired</th>
-            <th style="width:10%">Item No.</th>
-            <th style="width:20%">ICS & PAR No./Date</th>
-            <th style="width:35%">Description</th>
-            <th style="width:15%">Unit Price</th>
-            <th style="width:10%">Condition of Inventory</th>
-            <th style="width:5%">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php
-          $rowCount = max(1, count($items)); // at least 1 row
-          for ($i = 0; $i < $rowCount; $i++):
-            $item = $items[$i] ?? ['date_acquired' => '', 'property_no' => '', 'description' => '', 'amount' => '', 'condition_of_PPE' => ''];
-          ?>
-            <tr>
-              <td><input type="date" name="date_acquired[]" class="form-control shadow" value="<?= htmlspecialchars($item['date_acquired']) ?>" required></td>
-              <td><input type="text" name="item_no[]" class="form-control shadow" value="1" required></td>
-              <td><input type="text" name="property_no[]" class="form-control property-search shadow" value="<?= htmlspecialchars($item['property_no']) ?>" autocomplete="off" required></td>
-              <td>
-                <input type="hidden" name="asset_id[]" value="<?= htmlspecialchars($item['asset_id'] ?? '') ?>">
-                <input type="text" name="description[]"
-                  class="form-control asset-search shadow"
-                  list="assetsList"
-                  placeholder="Search description or property no" 
-                  value="<?= htmlspecialchars($item['description']) ?>" autocomplete="off" required>
-              </td>
-
-              <td><input type="number" step="0.01" name="amount[]" class="form-control shadow" value="<?= htmlspecialchars($item['amount']) ?>" required></td>
-              <td><input type="text" name="condition_of_PPE[]" class="form-control shadow" value="<?= htmlspecialchars($item['condition_of_PPE']) ?>" autocomplete="off" required></td>
-              <td>
-                <!-- First row: no Remove, keep Clear; actions inline -->
-                <div class="d-inline-flex align-items-center">
-                  <button type="button" class="btn btn-sm btn-warning clear-row" title="Clear Fields">
-                    <i class="bi bi-eraser"></i>
-                  </button>
+            <div class="itr-section-title">ITR Header Details</div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Office <span class="text-danger">*</span></label>
+                    <select id="itr_office" name="office_id" class="form-select shadow-sm">
+                        <option value="" disabled selected>Select office...</option>
+                        <?php foreach ($itr_offices as $o): ?>
+                            <option value="<?= (int)$o['id'] ?>" <?= (isset($itr['office_id']) && (string)$itr['office_id'] === (string)$o['id']) ? 'selected' : '' ?>><?= htmlspecialchars($o['office_name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small class="text-muted">Applies to entity name and tag preview.</small>
                 </div>
-              </td>
-            </tr>
-          <?php endfor; ?>
-        </tbody>
-      </table>
-      <button type="button" id="addRow" class="btn btn-primary btn-sm mt-2"><i class="bi bi-plus"></i> Add Row</button>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Entity Name <span class="text-danger">*</span></label>
+                    <input type="text" id="entity_name" name="entity_name" class="form-control shadow-sm" value="<?= htmlspecialchars($itr['entity_name'] ?? '') ?>" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Fund Cluster <span class="text-danger">*</span></label>
+                    <input type="text" id="fund_cluster" name="fund_cluster" class="form-control shadow-sm" value="<?= htmlspecialchars($_GET['fund_cluster'] ?? ($itr['fund_cluster'] ?? '')) ?>" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Date Prepared</label>
+                    <input type="date" id="date" name="date" class="form-control shadow-sm" value="<?= htmlspecialchars($itr['date']) ?>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">From Accountable Officer <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input type="text" id="from_accountable_officer" name="from_accountable_officer" class="form-control shadow-sm" list="employeesWithAssetsList" placeholder="Select employee with MR assets..." value="<?= htmlspecialchars($itr['from_accountable_officer']) ?>" required>
+                        <button type="button" class="btn btn-outline-secondary" id="clear_from_accountable" title="Clear field" aria-label="Clear From Accountable Officer"><i class="bi bi-x-circle"></i></button>
+                    </div>
+                    <datalist id="employeesWithAssetsList">
+                        <?php foreach ($employees_with_assets as $emp): ?>
+                            <option value="<?= htmlspecialchars($emp['name']) ?>" data-employee-id="<?= $emp['employee_id'] ?>"></option>
+                        <?php endforeach; ?>
+                    </datalist>
+                    <small class="text-muted">Assets list filters to this officer.</small>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">To Accountable Officer <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input type="text" id="to_accountable_officer" name="to_accountable_officer" class="form-control shadow-sm" list="employeesList" placeholder="Type to search employees..." value="<?= htmlspecialchars($itr['to_accountable_officer']) ?>" required>
+                        <button type="button" class="btn btn-outline-secondary" id="clear_to_accountable" title="Clear field" aria-label="Clear To Accountable Officer"><i class="bi bi-x-circle"></i></button>
+                    </div>
+                    <datalist id="employeesList">
+                        <?php foreach ($employees as $ename): ?>
+                            <option value="<?= htmlspecialchars($ename) ?>"></option>
+                        <?php endforeach; ?>
+                    </datalist>
+                    <small class="text-muted">Auto-fills Received By.</small>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">ITR No. (Auto-generated)</label>
+                    <div class="input-group shadow-sm">
+                        <input type="text" id="itr_no" name="itr_no" class="form-control border-0" value="<?= previewTag('itr_no') ?>" readonly>
+                        <span class="input-group-text bg-light border-0"><i class="bi bi-magic" title="Auto-generated"></i></span>
+                    </div>
+                    <small class="text-muted">Assigned automatically on save.</small>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">End User <span class="text-danger">*</span></label>
+                    <input type="text" id="end_user" name="end_user" class="form-control shadow-sm" placeholder="Enter end user name..." value="<?= htmlspecialchars($itr['end_user'] ?? '') ?>" required>
+                    <small class="text-muted">Will update all transferred assets.</small>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold d-block">Transfer Type <span class="text-danger">*</span></label>
+                    <div class="d-flex flex-wrap gap-3">
+                        <?php
+                        $transferOptions = ['Donation', 'Reassignment', 'Relocate', 'Others'];
+                        $selectedType = in_array($itr['transfer_type'] ?? '', $transferOptions, true) ? $itr['transfer_type'] : 'Reassignment';
+                        foreach ($transferOptions as $option): ?>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="transfer_type" id="tt_<?= strtolower($option) ?>" value="<?= $option ?>" <?= ($selectedType === $option) ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="tt_<?= strtolower($option) ?>"><?= $option ?></label>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div id="transfer_type_other_wrap" class="mt-2" style="display: <?= ($selectedType === 'Others') ? 'block' : 'none' ?>;">
+                        <input type="text" id="transfer_type_other" name="transfer_type_other" class="form-control shadow-sm" placeholder="Specify other transfer type" value="<?= htmlspecialchars($itr['transfer_type_other'] ?? '') ?>">
+                    </div>
+                </div>
+            </div>
 
-      <!-- Asset datalist for search - will be populated dynamically based on selected employee -->
-      <datalist id="assetsList">
-        <!-- Options will be populated by JavaScript based on selected From Accountable Officer -->
-      </datalist>
+            <div class="itr-section-title mt-5">Transferred Assets</div>
+            <div class="itr-table-wrapper mb-4">
+                <table class="table table-bordered text-center align-middle" id="itrItemsTable">
+                    <thead>
+                        <tr>
+                            <th>Date Acquired</th>
+                            <th>Item No.</th>
+                            <th>ICS / PAR No.</th>
+                            <th style="width: 32%;">Description</th>
+                            <th>Unit Price</th>
+                            <th>Condition</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itr-items-body">
+                        <?php
+                        $rowCount = max(1, count($items));
+                        for ($i = 0; $i < $rowCount; $i++):
+                            $item = $items[$i] ?? ['date_acquired' => '', 'property_no' => '', 'description' => '', 'amount' => '', 'condition_of_PPE' => ''];
+                        ?>
+                            <tr data-row-index="<?= $i ?>">
+                                <td><input type="date" name="date_acquired[]" class="form-control shadow-sm" value="<?= htmlspecialchars($item['date_acquired']) ?>" required></td>
+                                <td><input type="text" name="item_no[]" class="form-control shadow-sm item-no-field" value="<?= $i + 1 ?>" readonly></td>
+                                <td><input type="text" name="property_no[]" class="form-control shadow-sm property-field" value="<?= htmlspecialchars($item['property_no']) ?>" readonly></td>
+                                <td class="position-relative">
+                                    <input type="hidden" name="asset_id[]" value="<?= htmlspecialchars($item['asset_id'] ?? '') ?>" class="asset-id-field">
+                                    <input type="text" name="description[]" class="form-control shadow-sm description-field" list="assetsList" placeholder="Search description or property number" value="<?= htmlspecialchars($item['description']) ?>" required>
+                                    <button type="button" class="clear-description" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: transparent; border: none; font-weight: bold; font-size: 1rem; color: #888; cursor: pointer;">&times;</button>
+                                </td>
+                                <td class="position-relative"><span class="position-absolute top-50 start-0 translate-middle-y ps-2">₱</span><input type="number" step="0.01" name="amount[]" class="form-control shadow-sm amount-field text-end" value="<?= htmlspecialchars($item['amount']) ?>" style="padding-left: 1.5rem;" required></td>
+                                <td><input type="text" name="condition_of_PPE[]" class="form-control shadow-sm condition-field" value="<?= htmlspecialchars($item['condition_of_PPE']) ?>" required></td>
+                                <td class="text-center">
+                                    <div class="d-inline-flex align-items-center gap-2">
+                                        <?php if ($i === 0): ?>
+                                            <button type="button" class="btn btn-sm btn-warning clear-row" title="Clear Row"><i class="bi bi-eraser"></i></button>
+                                        <?php else: ?>
+                                            <button type="button" class="btn btn-sm btn-danger remove-row" title="Remove Row"><i class="bi bi-trash"></i></button>
+                                            <button type="button" class="btn btn-sm btn-warning clear-row" title="Clear Row"><i class="bi bi-eraser"></i></button>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endfor; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" class="text-end fw-semibold">Total Amount:</td>
+                            <td class="position-relative"><span class="position-absolute top-50 start-0 translate-middle-y ps-2">₱</span><input type="number" id="grandTotal" class="form-control text-end fw-bold shadow-sm" style="padding-left: 1.5rem;" readonly></td>
+                            <td colspan="2" class="text-start"><button type="button" id="addRowBtn" class="btn btn-primary btn-sm">+ Add Row</button></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
 
-      <!-- Hidden script data for all assets -->
-      <script type="application/json" id="allAssetsData">
-        <?php
-        // Include ICS/PAR linkage and fund clusters for auto-fill
-        $all_assets = [];
-        $assets_sql = "
-          SELECT 
-            a.id, a.description, a.property_no, a.acquisition_date, a.value, a.status, a.employee_id,
-            a.ics_id, a.par_id,
-            f.fund_cluster AS ics_fund_cluster,
-            p.fund_cluster AS par_fund_cluster
-          FROM assets a
-          LEFT JOIN ics_form f ON a.ics_id = f.id
-          LEFT JOIN par_form p ON a.par_id = p.id
-          WHERE a.type='asset' AND a.employee_id IS NOT NULL
-          ORDER BY a.description ASC
-        ";
-        if ($assets_q = $conn->query($assets_sql)) {
-          while ($a = $assets_q->fetch_assoc()) {
-            $all_assets[] = $a;
-          }
-        }
-        echo json_encode($all_assets);
-        ?>
-      </script>
+            <datalist id="assetsList"></datalist>
+            <script type="application/json" id="allAssetsData">
+                <?php
+                $all_assets = [];
+                $assets_sql = "
+                    SELECT a.id, a.description, a.property_no, a.acquisition_date, a.value, a.status, a.employee_id,
+                           a.ics_id, a.par_id,
+                           f.fund_cluster AS ics_fund_cluster,
+                           p.fund_cluster AS par_fund_cluster
+                    FROM assets a
+                    LEFT JOIN ics_form f ON a.ics_id = f.id
+                    LEFT JOIN par_form p on a.par_id = p.id
+                    WHERE a.type='asset' AND a.employee_id IS NOT NULL
+                    ORDER BY a.description ASC
+                ";
+                if ($assets_q = $conn->query($assets_sql)) {
+                    while ($a = $assets_q->fetch_assoc()) {
+                        $all_assets[] = $a;
+                    }
+                }
+                echo json_encode($all_assets);
+                ?>
+            </script>
+
+            <div class="itr-section-title mt-5">Reason for Transfer</div>
+            <div class="mb-4">
+                <textarea id="reason_for_transfer" name="reason_for_transfer" class="form-control shadow-sm" rows="3" placeholder="Enter reason for transfer..." required><?= htmlspecialchars($itr['reason_for_transfer'] ?? '') ?></textarea>
+            </div>
+
+            <div class="itr-section-title mb-3">Signatories</div>
+            <table class="table table-borderless itr-signature-table" style="width: 100%; text-align: center;">
+                <thead class="text-muted text-uppercase small fw-semibold">
+                    <tr>
+                        <td style="width: 25%; text-align: left;">Approved By</td>
+                        <td style="width: 25%; text-align: left;">Released By</td>
+                        <td style="width: 25%; text-align: left;">Received By</td>
+                        <td style="width: 25%; text-align: left;">Designation & Date</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="px-2">
+                            <input type="text" name="approved_by" class="form-control text-center fw-semibold" value="<?= htmlspecialchars($itr['approved_by'] ?? '') ?>" required>
+                            <input type="text" name="approved_designation" class="form-control text-center" value="<?= htmlspecialchars($itr['approved_designation'] ?? '') ?>" placeholder="Designation" required>
+                            <input type="date" name="approved_date" class="form-control text-center" value="<?= htmlspecialchars($itr['approved_date'] ?? '') ?>">
+                        </td>
+                        <td class="px-2">
+                            <input type="text" name="released_by" class="form-control text-center fw-semibold" value="<?= htmlspecialchars($itr['released_by'] ?? '') ?>" required>
+                            <input type="text" name="released_designation" class="form-control text-center" value="<?= htmlspecialchars($itr['released_designation'] ?? '') ?>" placeholder="Designation" required>
+                            <input type="date" name="released_date" class="form-control text-center" value="<?= htmlspecialchars($itr['released_date'] ?? '') ?>">
+                        </td>
+                        <td class="px-2">
+                            <input type="text" id="received_by" name="received_by" class="form-control text-center fw-semibold" list="employeesList" value="<?= htmlspecialchars($itr['received_by'] ?? '') ?>" required>
+                            <input type="text" name="received_designation" class="form-control text-center" value="<?= htmlspecialchars($itr['received_designation'] ?? '') ?>" placeholder="Designation" required>
+                            <input type="date" name="received_date" class="form-control text-center" value="<?= htmlspecialchars($itr['received_date'] ?? '') ?>">
+                        </td>
+                        <td class="px-2 align-middle">
+                            <small class="text-muted">Ensure designation and dates are filled for each signer.</small>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <small class="text-muted"><span class="text-danger">*</span> Required fields</small>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save</button>
+            </div>
+        </form>
     </div>
-  </div>
-
-
-
-  <!-- Reason for Transfer -->
-  <div class="card shadow-sm mt-3">
-    <div class="card-body">
-      <label for="reason_for_transfer" class="form-label">Reason for Transfer <span style="color: red;">*</span></label>
-      <textarea id="reason_for_transfer" name="reason_for_transfer" class="form-control shadow" rows="3" placeholder="Enter reason for transfer..." required></textarea>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <div class="card shadow-sm mt-3">
-    <div class="card-body">
-      <div class="row g-3">
-        <?php foreach (['approved', 'released', 'received'] as $role): ?>
-          <div class="col-md-4">
-            <label class="form-label"><?= ucfirst($role) ?> By <span style="color: red;">*</span></label>
-            <?php if ($role === 'received'): ?>
-              <div class="input-group">
-                <input type="text" id="<?= $role ?>_by" name="<?= $role ?>_by" class="form-control shadow" list="employeesList" value="<?= htmlspecialchars($itr[$role . '_by']) ?>" required>
-                <button type="button" class="btn btn-outline-secondary" id="clear_received_by" title="Clear field" aria-label="Clear Received By">
-                  <i class="bi bi-x-circle"></i>
-                </button>
-              </div>
-              <div class="form-text">
-                <small class="text-muted">Auto-fills from "To Accountable Officer" selection</small>
-              </div>
-            <?php else: ?>
-              <input type="text" name="<?= $role ?>_by" class="form-control shadow" value="<?= htmlspecialchars($itr[$role . '_by']) ?>" required>
-            <?php endif; ?>
-            <label class="form-label mt-2"><?= ucfirst($role) ?> Designation <span style="color: red;">*</span></label>
-            <input type="text" name="<?= $role ?>_designation" class="form-control shadow" value="<?= htmlspecialchars($itr[$role . '_designation']) ?>" required>
-            <label class="form-label mt-2"><?= ucfirst($role) ?> Date</label>
-            <input type="date" name="<?= $role ?>_date" class="form-control shadow" value="">
-          </div>
-        <?php endforeach; ?>
-      </div>
-    </div>
-  </div>
-
-  <p class="small mt-4"> <span style="color: red;">*</span> Required fields</p>
-
-
-  <!-- Single Save Button -->
-<div class="d-flex justify-content-start gap-2 mt-3 text-start">
-  <button type="submit" class="btn btn-primary">
-    <i class="bi bi-save"></i> Save
-  </button>
 </div>
 
-
-</form>
+<?php include 'modals/par_duplicate_modal.php'; ?>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -741,7 +710,11 @@ if (!empty($_SESSION['flash'])) {
 
     // Table logic
     const table = document.getElementById('itrItemsTable').querySelector('tbody');
+    const addRowBtn = document.getElementById('addRowBtn');
     const selectedAssetIds = new Set(); // Track selected assets to prevent duplicates
+    const grandTotalField = document.getElementById('grandTotal');
+    const duplicateModalEl = document.getElementById('duplicateModal');
+    const duplicateModal = duplicateModalEl ? new bootstrap.Modal(duplicateModalEl) : null;
 
     // Handle preselected asset from URL parameters
     <?php if ($preselected_asset): ?>
@@ -782,7 +755,7 @@ if (!empty($_SESSION['flash'])) {
     }
 
     function clearAssetRow(row) {
-      const descriptionInput = row.querySelector('input[name="description[]"]');
+      const descriptionInput = row.querySelector('.description-field');
       const assetId = descriptionInput && descriptionInput.dataset.selectedAssetId;
       if (assetId) {
         selectedAssetIds.delete(assetId);
@@ -801,6 +774,7 @@ if (!empty($_SESSION['flash'])) {
         if (input.name === 'item_no[]') return; // keep item numbering
         input.value = '';
       });
+      row.querySelector('.condition-field')?.setAttribute('placeholder', '');
 
       // If no assets remain selected anywhere in the table, clear Fund Cluster regardless of origin
       if (selectedAssetIds.size === 0) {
@@ -878,13 +852,13 @@ if (!empty($_SESSION['flash'])) {
 
         // Update hidden input with asset_id
         const row = input.closest('tr');
-        const assetIdInput = row.querySelector('input[name="asset_id[]"]');
+        const assetIdInput = row.querySelector('.asset-id-field');
         if (assetIdInput) assetIdInput.value = assetId;
 
         // Fill other fields from selected option
         const dateInput = row.querySelector('input[name="date_acquired[]"]');
-        const propInput = row.querySelector('input[name="property_no[]"]');
-        const amountInput = row.querySelector('input[name="amount[]"]');
+        const propInput = row.querySelector('.property-field');
+        const amountInput = row.querySelector('.amount-field');
         if (dateInput) dateInput.value = option.dataset.acquisition_date || '';
         
         // Format property number as ICS/PAR based on value
@@ -900,7 +874,8 @@ if (!empty($_SESSION['flash'])) {
         if (amountInput) amountInput.value = option.dataset.value || '';
 
         // Set condition based on asset status
-        row.querySelector('input[name="condition_of_PPE[]"]').value = getConditionFromStatus(option.dataset.status);
+        const conditionField = row.querySelector('.condition-field');
+        if (conditionField) conditionField.value = getConditionFromStatus(option.dataset.status);
 
         // Auto-fill ITR header Fund Cluster if empty (prefer PAR's fund cluster, else ICS)
         const fundClusterInput = document.getElementById('fund_cluster');
@@ -919,53 +894,85 @@ if (!empty($_SESSION['flash'])) {
         input.dataset.selectedAssetId = assetId;
         option.style.display = 'none';
         selectedAssetIds.add(assetId);
+        updateGrandTotal();
       }
     }
 
-    // Renumber Item No. based on current row order (1-based)
+    table.addEventListener('input', function(e) {
+      if (e.target.classList.contains('description-field')) {
+        onDescriptionSelected(e.target);
+      }
+      if (e.target.classList.contains('amount-field')) {
+        updateGrandTotal();
+      }
+    });
+
+    window.checkItrDuplicateDescriptions = function() {
+      const descriptions = Array.from(table.querySelectorAll('.description-field'))
+        .map(input => input.value.trim().toLowerCase())
+        .filter(Boolean);
+      const seen = new Set();
+      for (const value of descriptions) {
+        if (seen.has(value)) {
+          if (duplicateModal) duplicateModal.show();
+          return false;
+        }
+        seen.add(value);
+      }
+      return true;
+    };
+
+    function buildRowTemplate() {
+      return `
+        <td><input type="date" name="date_acquired[]" class="form-control shadow-sm" required></td>
+        <td><input type="text" name="item_no[]" class="form-control shadow-sm item-no-field" readonly></td>
+        <td><input type="text" name="property_no[]" class="form-control shadow-sm property-field" readonly></td>
+        <td class="position-relative">
+            <input type="hidden" name="asset_id[]" value="" class="asset-id-field">
+            <input type="text" name="description[]" class="form-control shadow-sm description-field" list="assetsList" placeholder="Search description or property number" required>
+            <button type="button" class="clear-description" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: transparent; border: none; font-weight: bold; font-size: 1rem; color: #888; cursor: pointer;">&times;</button>
+        </td>
+        <td class="position-relative"><span class="position-absolute top-50 start-0 translate-middle-y ps-2">₱</span><input type="number" step="0.01" name="amount[]" class="form-control shadow-sm amount-field text-end" style="padding-left: 1.5rem;" required></td>
+        <td><input type="text" name="condition_of_PPE[]" class="form-control shadow-sm condition-field" required></td>
+        <td class="text-center">
+            <div class="d-inline-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-danger remove-row" title="Remove Row"><i class="bi bi-trash"></i></button>
+                <button type="button" class="btn btn-sm btn-warning clear-row" title="Clear Row"><i class="bi bi-eraser"></i></button>
+            </div>
+        </td>`;
+    }
+
+    function updateGrandTotal() {
+      if (!grandTotalField) return;
+      let sum = 0;
+      table.querySelectorAll('.amount-field').forEach(input => {
+        sum += parseFloat(input.value) || 0;
+      });
+      grandTotalField.value = sum.toFixed(2);
+    }
+
     function renumberItemNos() {
       const rows = table.querySelectorAll('tr');
       rows.forEach((row, index) => {
-        const input = row.querySelector('input[name="item_no[]"]');
-        if (input) input.value = String(index + 1);
+        const itemNoInput = row.querySelector('.item-no-field');
+        if (itemNoInput) itemNoInput.value = index + 1;
       });
     }
 
-    // Initial numbering
-    renumberItemNos();
-
-    document.getElementById('addRow').addEventListener('click', function() {
-      const newRow = document.createElement('tr');
-      newRow.innerHTML = `
-        <td><input type="date" name="date_acquired[]" class="form-control shadow"></td>
-        <td><input type="text" name="item_no[]" class="form-control shadow" value=""></td>
-        <td><input type="text" name="property_no[]" class="form-control property-search shadow"></td>
-        <td>
-          <input type="hidden" name="asset_id[]" value="">
-          <input type="text" name="description[]" class="form-control asset-search shadow" list="assetsList" placeholder="Search description or property no">
-        </td>
-        <td><input type="number" step="0.01" name="amount[]" class="form-control shadow"></td>
-        <td><input type="text" name="condition_of_PPE[]" class="form-control shadow"></td>
-        <td class="text-center">
-  <div class="d-inline-flex align-items-center gap-1">
-    <button type="button" class="btn btn-sm btn-danger remove-row" title="Remove Row">
-      <i class="bi bi-trash"></i>
-    </button>
-    <button type="button" class="btn btn-sm btn-warning clear-row" title="Clear Fields">
-      <i class="bi bi-eraser"></i>
-    </button>
-  </div>
-</td>
-
-      `;
-      table.appendChild(newRow);
-      renumberItemNos();
-    });
+    if (addRowBtn) {
+      addRowBtn.addEventListener('click', function() {
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = buildRowTemplate();
+        table.appendChild(newRow);
+        renumberItemNos();
+      });
+    }
 
     table.addEventListener('click', function(e) {
       const row = e.target.closest('tr');
       if (e.target.classList.contains('clear-row') || e.target.closest('.clear-row')) {
         clearAssetRow(row);
+        updateGrandTotal();
       } else if (e.target.classList.contains('remove-row') || e.target.closest('.remove-row')) {
         // Remove row functionality - ensure at least one row remains
         const allRows = table.querySelectorAll('tr');
@@ -974,18 +981,20 @@ if (!empty($_SESSION['flash'])) {
           clearAssetRow(row);
           row.remove();
           renumberItemNos();
+          updateGrandTotal();
         } else {
           // If it's the last row, just clear it instead of removing
           clearAssetRow(row);
           alert('Cannot remove the last row. At least one row is required.');
         }
+      } else if (e.target.classList.contains('clear-description')) {
+        e.preventDefault();
+        clearAssetRow(row);
+        renumberItemNos();
+        updateGrandTotal();
       }
     });
 
-    table.addEventListener('input', function(e) {
-      if (e.target.classList.contains('asset-search')) {
-        onDescriptionSelected(e.target);
-      }
-    });
+    updateGrandTotal();
   });
 </script>
