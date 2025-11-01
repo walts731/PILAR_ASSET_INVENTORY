@@ -20,14 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $action = $_POST['action'] ?? '';
 $submission_id = (int)($_POST['submission_id'] ?? 0);
 
-if (!$submission_id || !in_array($action, ['accept', 'decline'])) {
+if (!$submission_id || !in_array($action, ['accept', 'return'])) {
   http_response_code(400);
   echo json_encode(['success' => false, 'message' => 'Invalid request parameters']);
   exit();
 }
 
 // Determine new status
-$new_status = ($action === 'accept') ? 'approved' : 'rejected';
+$new_status = ($action === 'accept') ? 'approved' : 'returned';
 
 // Update the borrow form submission
 $sql = "UPDATE borrow_form_submissions SET status = ?, updated_at = NOW() WHERE id = ?";
@@ -171,9 +171,9 @@ if ($success && $action === 'accept') {
         }
     }
     $fetch_stmt->close();
-} elseif ($action === 'decline') {
-    // Handle rejection
-    $fetch_sql = "SELECT b.*, g.email as guest_email, g.name as guest_name FROM borrow_form_submissions b LEFT JOIN guests g ON b.guest_id = g.guest_id WHERE b.id = ?";
+} elseif ($action === 'return') {
+    // Mark assets as returned and log lifecycle
+    $fetch_sql = "SELECT guest_name, items FROM borrow_form_submissions WHERE id = ?";
     $fetch_stmt = $conn->prepare($fetch_sql);
     $fetch_stmt->bind_param('i', $submission_id);
     $fetch_stmt->execute();
@@ -181,43 +181,42 @@ if ($success && $action === 'accept') {
 
     if ($result->num_rows > 0) {
         $submission_data = $result->fetch_assoc();
-
-        // Decode items for email
+        $borrower_name = $submission_data['guest_name'] ?? 'Unknown Guest';
         $items = json_decode($submission_data['items'], true);
 
-        // Send email notification to guest about rejection
-        $guest_email = $submission_data['guest_email'] ?? null;
-        $borrower_name = $submission_data['guest_name'] ?? 'Guest';
-
-        if ($guest_email) {
-            $email_result = sendBorrowRejectionEmail(
-                $guest_email,
-                $borrower_name,
-                $submission_data['submission_number'] ?? 'N/A',
-                $items
-            );
-
-            if (!$email_result['success']) {
-                // Log email failure but don't fail the rejection process
-                error_log("Failed to send rejection email to {$guest_email}: " . $email_result['message']);
+        if ($items && is_array($items)) {
+            $asset_ids = [];
+            foreach ($items as $item) {
+                if (!empty($item['asset_id'])) {
+                    $asset_ids[] = (int) $item['asset_id'];
+                }
             }
-        }
 
-        // Send in-app notification to guest about rejection
-        $guest_id = $submission_data['guest_id'] ?? null;
-        if ($guest_id) {
-            $notification = new GuestNotification($conn);
-            $admin_name = $_SESSION['username'] ?? 'System Admin';
+            if (!empty($asset_ids)) {
+                $placeholders = str_repeat('?,', count($asset_ids) - 1) . '?';
+                $update_assets_sql = "UPDATE assets SET status = 'serviceable', last_updated = NOW() WHERE id IN ($placeholders)";
+                $update_stmt = $conn->prepare($update_assets_sql);
 
-            $notification_result = $notification->sendBorrowRequestStatusUpdate(
-                $submission_id,
-                $guest_id,
-                'rejected',
-                $admin_name
-            );
+                if ($update_stmt) {
+                    $types = str_repeat('i', count($asset_ids));
+                    $update_stmt->bind_param($types, ...$asset_ids);
+                    $update_stmt->execute();
+                    $update_stmt->close();
+                }
 
-            if (!$notification_result) {
-                error_log("Failed to send rejection notification to guest ID {$guest_id}");
+                foreach ($asset_ids as $asset_id) {
+                    logLifecycleEvent(
+                        $asset_id,
+                        'RETURNED',
+                        'borrow_form_submissions',
+                        $submission_id,
+                        null,
+                        null,
+                        null,
+                        null,
+                        "Asset returned by {$borrower_name} (Submission #{$submission_id})"
+                    );
+                }
             }
         }
     }
@@ -225,7 +224,7 @@ if ($success && $action === 'accept') {
 }
 
 if ($success) {
-  echo json_encode(['success' => true, 'message' => 'Borrow request ' . ($action === 'accept' ? 'approved' : 'declined') . ' successfully']);
+  echo json_encode(['success' => true, 'message' => 'Borrow request ' . ($action === 'accept' ? 'approved' : 'marked as returned') . ' successfully']);
 } else {
   http_response_code(500);
   echo json_encode(['success' => false, 'message' => 'Failed to update borrow request']);

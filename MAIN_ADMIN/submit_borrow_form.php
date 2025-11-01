@@ -293,7 +293,7 @@ try {
         $columns[] = 'status';
         $placeholders[] = '?';
         $types .= 's';
-        $values[] = 'pending';
+        $values[] = 'approved';
     }
 
     $sql = 'INSERT INTO borrow_form_submissions (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $placeholders) . ')';
@@ -308,7 +308,7 @@ try {
 }
 
 $displayNumber = $submissionNumber ?? sprintf('BFS-%05d', $insertedId);
-$_SESSION['success'] = 'Borrow request submitted successfully. Submission #' . $displayNumber . '.';
+$_SESSION['success'] = 'Borrow request submitted successfully and marked as approved. Submission #' . $displayNumber . '.';
 
 header('Location: borrowing.php');
 exit();

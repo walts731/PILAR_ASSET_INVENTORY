@@ -124,12 +124,9 @@ $stmt->close();
                           <button class="btn btn-sm btn-info view-btn" data-id="<?= $r['id'] ?>" title="View Details">
                             <i class="bi bi-eye"></i>
                           </button>
-                          <?php if ($status === 'pending'): ?>
-                            <button class="btn btn-sm btn-success accept-btn" data-id="<?= $r['id'] ?>" title="Accept">
-                              <i class="bi bi-check-circle"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger decline-btn" data-id="<?= $r['id'] ?>" title="Decline">
-                              <i class="bi bi-x-circle"></i>
+                          <?php if (in_array($status, ['approved', 'pending'], true)): ?>
+                            <button class="btn btn-sm btn-secondary mark-return-btn" data-id="<?= $r['id'] ?>" title="Mark as Returned">
+                              <i class="bi bi-arrow-return-left"></i>
                             </button>
                           <?php endif; ?>
                         </div>
@@ -240,6 +237,38 @@ $stmt->close();
         });
       });
 
+      // Handle mark as returned button
+      $(document).on('click', '.mark-return-btn', function() {
+        const submissionId = $(this).data('id');
+        const btn = $(this);
+
+        if (confirm('Mark this submission as returned?')) {
+          btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i>');
+
+          $.ajax({
+            url: 'process_borrow_action.php',
+            method: 'POST',
+            data: {
+              action: 'return',
+              submission_id: submissionId
+            },
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                location.reload();
+              } else {
+                alert('Error: ' + response.message);
+                btn.prop('disabled', false).html('<i class="bi bi-arrow-return-left"></i>');
+              }
+            },
+            error: function() {
+              alert('An error occurred. Please try again.');
+              btn.prop('disabled', false).html('<i class="bi bi-arrow-return-left"></i>');
+            }
+          });
+        }
+      });
+
       // Handle print button (capture only the modal content area)
 $(document).on('click', '#printFormBtn', function() {
   const contentDiv = document.querySelector('#formDetailsContent');
@@ -317,69 +346,6 @@ $(document).on('click', '#printFormBtn', function() {
 });
 
 
-      // Handle accept button
-      $(document).on('click', '.accept-btn', function() {
-        const submissionId = $(this).data('id');
-        const btn = $(this);
-        
-        if (confirm('Are you sure you want to accept this borrow request?')) {
-          btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i>');
-          
-          $.ajax({
-            url: 'process_borrow_action.php',
-            method: 'POST',
-            data: { 
-              action: 'accept', 
-              submission_id: submissionId 
-            },
-            dataType: 'json',
-            success: function(response) {
-              if (response.success) {
-                location.reload();
-              } else {
-                alert('Error: ' + response.message);
-                btn.prop('disabled', false).html('<i class="bi bi-check-circle"></i>');
-              }
-            },
-            error: function() {
-              alert('An error occurred. Please try again.');
-              btn.prop('disabled', false).html('<i class="bi bi-check-circle"></i>');
-            }
-          });
-        }
-      });
-
-      // Handle decline button
-      $(document).on('click', '.decline-btn', function() {
-        const submissionId = $(this).data('id');
-        const btn = $(this);
-        
-        if (confirm('Are you sure you want to decline this borrow request?')) {
-          btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i>');
-          
-          $.ajax({
-            url: 'process_borrow_action.php',
-            method: 'POST',
-            data: { 
-              action: 'decline', 
-              submission_id: submissionId 
-            },
-            dataType: 'json',
-            success: function(response) {
-              if (response.success) {
-                location.reload();
-              } else {
-                alert('Error: ' + response.message);
-                btn.prop('disabled', false).html('<i class="bi bi-x-circle"></i>');
-              }
-            },
-            error: function() {
-              alert('An error occurred. Please try again.');
-              btn.prop('disabled', false).html('<i class="bi bi-x-circle"></i>');
-            }
-          });
-        }
-      });
     });
   </script>
 </body>
