@@ -303,6 +303,16 @@ try {
 
     $insertedId = $conn->insert_id;
     $stmt->close();
+
+    if (!empty($assetIds)) {
+        $updatePlaceholders = implode(',', array_fill(0, count($assetIds), '?'));
+        $updateSql = "UPDATE assets SET status = 'borrowed', last_updated = NOW() WHERE id IN ({$updatePlaceholders})";
+        $updateStmt = $conn->prepare($updateSql);
+        $updateTypes = str_repeat('i', count($assetIds));
+        $updateStmt->bind_param($updateTypes, ...$assetIds);
+        $updateStmt->execute();
+        $updateStmt->close();
+    }
 } catch (mysqli_sql_exception $e) {
     redirectWithFlash('error', 'Failed to save borrow request. Please try again.');
 }
