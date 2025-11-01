@@ -71,7 +71,7 @@ while ($row = $officeRes->fetch_assoc()) {
     $assetsByOfficeData['data'][] = (int)$row['asset_count'];
 }
 
-// ✅ Fetch Assets by Category Data
+// Fetch Assets by Category Data
 $assetsByCategoryData = ["labels" => [], "data" => []];
 $categoryRes = $conn->query("
     SELECT c.category_name, COUNT(a.id) as asset_count
@@ -87,7 +87,50 @@ while ($row = $categoryRes->fetch_assoc()) {
     $assetsByCategoryData['data'][] = (int)$row['asset_count'];
 }
 
-// ✅ Fetch 5 Most Recent Activities with fullname
+// Fetch Most Borrowed Items Data
+$borrowedItemsData = ["labels" => [], "data" => []];
+$borrowCounts = [];
+$borrowLabels = [];
+$borrowRes = $conn->query("SELECT items FROM borrow_form_submissions WHERE items IS NOT NULL AND items <> ''");
+if ($borrowRes) {
+  while ($row = $borrowRes->fetch_assoc()) {
+    $items = json_decode($row['items'], true);
+    if (!$items || !is_array($items)) {
+      continue;
+    }
+
+    foreach ($items as $item) {
+      $rawLabel = trim((string)($item['thing'] ?? ''));
+      if ($rawLabel === '') {
+        $rawLabel = 'Unnamed Asset';
+      }
+
+      $key = strtolower($rawLabel);
+      if (!isset($borrowCounts[$key])) {
+        $borrowCounts[$key] = 0;
+        $borrowLabels[$key] = $rawLabel;
+      }
+
+      $qty = isset($item['qty']) ? (int)$item['qty'] : 0;
+      if ($qty <= 0) {
+        $qty = 1;
+      }
+
+      $borrowCounts[$key] += $qty;
+    }
+  }
+  $borrowRes->close();
+}
+
+if (!empty($borrowCounts)) {
+  arsort($borrowCounts);
+  foreach (array_slice($borrowCounts, 0, 10, true) as $key => $count) {
+    $borrowedItemsData['labels'][] = $borrowLabels[$key] ?? ucfirst($key);
+    $borrowedItemsData['data'][] = (int)$count;
+  }
+}
+
+// Fetch 5 Most Recent Activities with fullname
 $auditRows = [];
 $activityError = '';
 try {
@@ -538,6 +581,7 @@ try {
       const consumedData = <?= json_encode($consumedData, JSON_NUMERIC_CHECK); ?>;
       const assetsByOfficeData = <?= json_encode($assetsByOfficeData, JSON_NUMERIC_CHECK); ?>;
       const assetsByCategoryData = <?= json_encode($assetsByCategoryData, JSON_NUMERIC_CHECK); ?>;
+      const borrowedItemsData = <?= json_encode($borrowedItemsData, JSON_NUMERIC_CHECK); ?>;
 
       // Build a processed view with Top N selection (client-side slice)
       const topNSelect = document.getElementById('consumedTopN');
@@ -721,27 +765,26 @@ try {
         });
       });
 
-      // ✅ Sample Data for Most Borrowed Items (Top 10 bar chart for now)
+      // ✅ Most Borrowed Items Chart
       (function() {
         const canvas = document.getElementById('borrowedChart');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
+        const container = canvas.parentElement;
 
-        const topBorrowed = [
-          { item: 'Chairs', count: 58 },
-          { item: 'Projectors', count: 42 },
-          { item: 'Laptops', count: 37 },
-          { item: 'Microphones', count: 31 },
-          { item: 'Tablets', count: 28 },
-          { item: 'Desktop PCs', count: 24 },
-          { item: 'Printers', count: 21 },
-          { item: 'Cameras', count: 17 },
-          { item: 'Extension Cords', count: 15 },
-          { item: 'Sound System', count: 13 }
-        ];
+        const labels = Array.isArray(borrowedItemsData.labels) ? borrowedItemsData.labels : [];
+        const values = Array.isArray(borrowedItemsData.data) ? borrowedItemsData.data : [];
 
-        const labels = topBorrowed.map(entry => entry.item);
-        const values = topBorrowed.map(entry => entry.count);
+        if (!labels.length) {
+          const placeholder = document.createElement('div');
+          placeholder.className = 'text-center text-muted py-5';
+          placeholder.innerHTML = '<i class="bi bi-info-circle me-2"></i>No borrow records available yet.';
+          if (container) {
+            container.innerHTML = '';
+            container.appendChild(placeholder);
+          }
+          return;
+        }
 
         const barGradient = ctx.createLinearGradient(0, 0, 0, 240);
         barGradient.addColorStop(0, 'rgba(13, 110, 253, 0.9)');
