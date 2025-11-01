@@ -69,6 +69,9 @@ elseif ($status === 'rejected') $badge_class = 'bg-danger';
 elseif ($status === 'completed') $badge_class = 'bg-info';
 elseif ($status === 'returned') $badge_class = 'bg-primary';
 
+// Handle legacy submission number column removal
+$display_submission_number = $submission['submission_number'] ?? ('BFS-' . str_pad((string)$submission['id'], 5, '0', STR_PAD_LEFT));
+
 // Generate printable form HTML (similar to GUEST/borrow.php)
 $content = '<style>
 .print-form {
@@ -211,7 +214,7 @@ $content .= '
         <span class="badge ' . $badge_class . ' fs-6">' . ucfirst($status) . '</span>
       </div>
       <div class="text-muted small mt-2">
-        Submission #' . htmlspecialchars($submission['submission_number']) . ' • Submitted: ' . date('M j, Y g:i A', strtotime($submission['submitted_at'])) . '
+        Submission #' . htmlspecialchars($display_submission_number) . ' • Submitted: ' . date('M j, Y g:i A', strtotime($submission['submitted_at'])) . '
       </div>
     </div>
   </div>

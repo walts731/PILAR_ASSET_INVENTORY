@@ -15,7 +15,6 @@ $page = 'borrow';
 // Build base SQL
 $baseSql = "SELECT 
               id,
-              submission_number,
               guest_name,
               date_borrowed,
               schedule_return,
