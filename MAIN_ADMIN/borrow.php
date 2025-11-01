@@ -11,11 +11,38 @@ $page = 'borrow-form';
 $pageTitle = 'Borrow Assets Form';
 
 $assets = [];
-$assetResult = $conn->query("SELECT id, asset_name, property_no, inventory_tag, description, quantity FROM assets WHERE status = 'available' AND quantity > 0 ORDER BY asset_name ASC");
+$assetResult = $conn->query("SELECT id, asset_name, property_no, inventory_tag, description, quantity FROM assets WHERE type = 'asset' AND status = 'serviceable' AND quantity > 0 ORDER BY asset_name ASC");
 if ($assetResult) {
     $assets = $assetResult->fetch_all(MYSQLI_ASSOC);
     $assetResult->free();
 }
+
+$assetsByLabel = [];
+foreach ($assets as &$asset) {
+    $identifiers = [];
+    if (!empty($asset['property_no'])) {
+        $identifiers[] = 'Property: ' . $asset['property_no'];
+    }
+    if (!empty($asset['inventory_tag'])) {
+        $identifiers[] = 'Tag: ' . $asset['inventory_tag'];
+    }
+    $identifiers[] = 'ID: ' . $asset['id'];
+
+    $asset['display_label'] = $asset['asset_name'] . ' • ' . implode(' • ', $identifiers);
+
+    $assetMeta = [
+        'id' => (int) $asset['id'],
+        'name' => $asset['asset_name'],
+        'property_no' => $asset['property_no'],
+        'inventory_tag' => $asset['inventory_tag'],
+        'description' => $asset['description'],
+        'quantity' => (int) $asset['quantity'],
+        'label' => $asset['display_label'],
+    ];
+
+    $assetsByLabel[$asset['display_label']] = $assetMeta;
+}
+unset($asset);
 
 // Generate CSRF token
 if (empty($_SESSION['csrf_token'])) {
@@ -131,8 +158,7 @@ if (empty($_SESSION['csrf_token'])) {
                         <table class="table table-bordered items-table" id="borrowItemsTable">
                             <thead>
                                 <tr>
-                                    <th style="width: 28%;">Asset</th>
-                                    <th>Description</th>
+                                    <th>Description / Asset</th>
                                     <th style="width: 12%;">Available</th>
                                     <th style="width: 14%;">Quantity</th>
                                     <th style="width: 18%;">Remarks</th>
@@ -142,25 +168,13 @@ if (empty($_SESSION['csrf_token'])) {
                             <tbody>
                                 <tr>
                                     <td>
-                                        <select name="items[0][asset_id]" class="form-select asset-select" required>
-                                            <option value="" disabled selected>Select asset...</option>
-                                            <?php foreach ($assets as $asset): ?>
-                                                <option value="<?= (int)$asset['id'] ?>"
-                                                        data-available="<?= (int)$asset['quantity'] ?>"
-                                                        data-description="<?= htmlspecialchars($asset['description']) ?>"
-                                                        data-property="<?= htmlspecialchars($asset['property_no'] ?? 'N/A') ?>"
-                                                        data-tag="<?= htmlspecialchars($asset['inventory_tag'] ?? '') ?>">
-                                                    <?= htmlspecialchars($asset['asset_name']) ?>
-                                                    <?php if (!empty($asset['property_no'])): ?>
-                                                        (<?= htmlspecialchars($asset['property_no']) ?>)
-                                                    <?php elseif (!empty($asset['inventory_tag'])): ?>
-                                                        (<?= htmlspecialchars($asset['inventory_tag']) ?>)
-                                                    <?php endif; ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
+                                        <div class="position-relative mb-2">
+                                            <input type="hidden" name="items[0][asset_id]" class="asset-id-field">
+                                            <input type="text" class="form-control asset-search" list="assetsDatalist" placeholder="Start typing asset name or tag" autocomplete="off" required>
+                                            <div class="invalid-feedback">Please choose an asset from the list.</div>
+                                        </div>
+                                        <textarea class="form-control description-field" name="items[0][description]" rows="2" placeholder="Auto-filled from asset but editable"></textarea>
                                     </td>
-                                    <td><textarea class="form-control description-field" name="items[0][description]" rows="2" placeholder="Auto-filled from asset but editable"></textarea></td>
                                     <td class="text-center"><span class="badge bg-primary available-badge">0</span></td>
                                     <td><input type="number" name="items[0][quantity]" class="form-control quantity-field" min="1" value="1" required></td>
                                     <td><input type="text" name="items[0][remarks]" class="form-control" placeholder="Optional"></td>
@@ -170,6 +184,11 @@ if (empty($_SESSION['csrf_token'])) {
                                 </tr>
                             </tbody>
                         </table>
+                        <datalist id="assetsDatalist">
+                            <?php foreach ($assets as $asset): ?>
+                                <option value="<?= htmlspecialchars($asset['display_label']) ?>" data-id="<?= (int) $asset['id'] ?>"></option>
+                            <?php endforeach; ?>
+                        </datalist>
                     </div>
                     <div class="d-flex justify-content-between flex-wrap gap-3 mt-3">
                         <button type="button" class="btn btn-outline-primary" id="addRowBtn"><i class="bi bi-plus-circle"></i> Add Another Item</button>
@@ -208,6 +227,9 @@ if (empty($_SESSION['csrf_token'])) {
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    window.borrowAssets = <?= json_encode(array_values($assetsByLabel), JSON_UNESCAPED_UNICODE) ?>;
+</script>
+<script>
 $(function() {
     function updateRowAvailability(row, available) {
         row.find('.available-badge').text(available);
@@ -220,8 +242,8 @@ $(function() {
     }
 
     function renumberRows() {
-        $('#borrowItemsTable tbody tr').each(function(index) {
-            $(this).find('select, textarea, input').each(function() {
+        $('#borrowItemsTable tbody').children('tr').each(function(index) {
+            $(this).find('input, textarea').each(function() {
                 const name = $(this).attr('name');
                 if (name) {
                     const updated = name.replace(/items\[(\d+)\]/, 'items[' + index + ']');
@@ -232,51 +254,72 @@ $(function() {
         $('#totalItems').text($('#borrowItemsTable tbody tr').length);
     }
 
-    $(document).on('change', '.asset-select', function() {
-        const row = $(this).closest('tr');
-        const selected = $(this).find('option:selected');
-        const available = parseInt(selected.data('available'), 10) || 0;
-        const description = selected.data('description') || '';
-        const propertyNo = selected.data('property');
-        const inventoryTag = selected.data('tag');
-        const assetLabel = selected.text().trim();
-
-        let composed = description || assetLabel;
-        if (inventoryTag) {
-            composed += `\nInventory Tag: ${inventoryTag}`;
-        }
-        if (propertyNo && propertyNo !== 'N/A') {
-            composed += `\nProperty No: ${propertyNo}`;
+    function findAssetEntry(input) {
+        const label = input.val().trim();
+        if (!label) {
+            return null;
         }
 
-        row.find('.description-field').val(composed.trim());
-        updateRowAvailability(row, available);
-    });
+        return window.borrowAssets.find(asset => asset.label === label) || null;
+    }
+
+    function hydrateRowWithAsset(row, asset) {
+        const descriptionField = row.find('.description-field');
+        const assetIdField = row.find('.asset-id-field');
+
+        if (!asset) {
+            assetIdField.val('');
+            descriptionField.val('');
+            updateRowAvailability(row, 0);
+            return;
+        }
+
+        assetIdField.val(asset.id);
+
+        const details = [];
+        if (asset.description) {
+            details.push(asset.description);
+        } else {
+            details.push(asset.name);
+        }
+        if (asset.inventory_tag) {
+            details.push(`Inventory Tag: ${asset.inventory_tag}`);
+        }
+        if (asset.property_no) {
+            details.push(`Property No: ${asset.property_no}`);
+        }
+
+        descriptionField.val(details.join('\n'));
+        updateRowAvailability(row, asset.quantity);
+    }
+
+    function validateAssetInput(input) {
+        const row = input.closest('tr');
+        const assetEntry = findAssetEntry(input);
+
+        if (!assetEntry) {
+            input.addClass('is-invalid');
+            hydrateRowWithAsset(row, null);
+            return false;
+        }
+
+        input.removeClass('is-invalid');
+        hydrateRowWithAsset(row, assetEntry);
+        return true;
+    }
 
     $('#addRowBtn').on('click', function() {
         const rowCount = $('#borrowItemsTable tbody tr').length;
         const newRow = $(`
             <tr>
                 <td>
-                    <select name="items[${rowCount}][asset_id]" class="form-select asset-select" required>
-                        <option value="" disabled selected>Select asset...</option>
-                        <?php foreach ($assets as $asset): ?>
-                            <option value="<?= (int)$asset['id'] ?>"
-                                    data-available="<?= (int)$asset['quantity'] ?>"
-                                    data-description="<?= htmlspecialchars($asset['description']) ?>"
-                                    data-property="<?= htmlspecialchars($asset['property_no'] ?? 'N/A') ?>"
-                                    data-tag="<?= htmlspecialchars($asset['inventory_tag'] ?? '') ?>">
-                                <?= htmlspecialchars($asset['asset_name']) ?>
-                                <?php if (!empty($asset['property_no'])): ?>
-                                    (<?= htmlspecialchars($asset['property_no']) ?>)
-                                <?php elseif (!empty($asset['inventory_tag'])): ?>
-                                    (<?= htmlspecialchars($asset['inventory_tag']) ?>)
-                                <?php endif; ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <div class="position-relative mb-2">
+                        <input type="hidden" name="items[${rowCount}][asset_id]" class="asset-id-field">
+                        <input type="text" class="form-control asset-search" list="assetsDatalist" placeholder="Start typing asset name or tag" autocomplete="off" required>
+                        <div class="invalid-feedback">Please choose an asset from the list.</div>
+                    </div>
+                    <textarea class="form-control description-field" name="items[${rowCount}][description]" rows="2" placeholder="Auto-filled from asset but editable"></textarea>
                 </td>
-                <td><textarea class="form-control description-field" name="items[${rowCount}][description]" rows="2" placeholder="Auto-filled from asset but editable"></textarea></td>
                 <td class="text-center"><span class="badge bg-primary available-badge">0</span></td>
                 <td><input type="number" name="items[${rowCount}][quantity]" class="form-control quantity-field" min="1" value="1" required></td>
                 <td><input type="text" name="items[${rowCount}][remarks]" class="form-control" placeholder="Optional"></td>
@@ -299,24 +342,44 @@ $(function() {
         renumberRows();
     });
 
+    $(document).on('blur change', '.asset-search', function() {
+        validateAssetInput($(this));
+    });
+
+    $(document).on('input', '.asset-search', function() {
+        // Remove invalid flag while typing
+        $(this).removeClass('is-invalid');
+    });
+
     $('#borrowForm').on('submit', function(e) {
         const rows = $('#borrowItemsTable tbody tr');
         let valid = true;
+        const chosenAssetIds = new Set();
+
         rows.each(function() {
-            const select = $(this).find('.asset-select');
-            const available = parseInt(select.find('option:selected').data('available'), 10) || 0;
+            const assetInput = $(this).find('.asset-search');
+            const assetValid = validateAssetInput(assetInput);
+            const assetId = $(this).find('.asset-id-field').val();
+            const available = parseInt($(this).find('.available-badge').text(), 10) || 0;
             const quantity = parseInt($(this).find('.quantity-field').val(), 10) || 0;
-            if (!select.val()) {
+            if (!assetValid || !assetId) {
                 valid = false;
-                select.addClass('is-invalid');
+                assetInput.addClass('is-invalid');
+            } else if (chosenAssetIds.has(assetId)) {
+                valid = false;
+                assetInput.addClass('is-invalid');
+                assetInput.next('.invalid-feedback').text('This asset has already been selected.');
             } else {
-                select.removeClass('is-invalid');
+                chosenAssetIds.add(assetId);
+                assetInput.next('.invalid-feedback').text('Please choose an asset from the list.');
             }
+
+            const quantityField = $(this).find('.quantity-field');
             if (quantity === 0 || quantity > available) {
                 valid = false;
-                $(this).find('.quantity-field').addClass('is-invalid');
+                quantityField.addClass('is-invalid');
             } else {
-                $(this).find('.quantity-field').removeClass('is-invalid');
+                quantityField.removeClass('is-invalid');
             }
         });
 
