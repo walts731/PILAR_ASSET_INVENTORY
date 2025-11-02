@@ -229,8 +229,8 @@ if (!empty($_SESSION['flash'])) {
 </style>
 
 <div class="itr-page-wrapper">
-    <div class="navigation-controls d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Inventory Transfer Receipt (ITR) Form</h4>
+    <div class="navigation-controls d-flex justify-content-end align-items-center mb-3">
+        
         <a href="saved_itr.php" class="btn btn-info">
             <i class="bi bi-folder-check"></i> View Saved ITR
         </a>

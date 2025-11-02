@@ -1494,6 +1494,7 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
       if (!ctx) return;
       const labels = data.map(d => d.group_key || '(blank)');
       const values = data.map(d => Number(d.total_liters || 0));
+      const colors = getPalette(data.length || 1);
       if (repBarChart) { repBarChart.destroy(); }
       repBarChart = new Chart(ctx, {
         type: 'bar',
@@ -1502,14 +1503,52 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
           datasets: [{
             label: 'Total Liters',
             data: values,
-            backgroundColor: '#4e79a7'
+            backgroundColor: colors,
+            borderColor: colors,
+            borderWidth: 1,
+            borderRadius: 6,
+            maxBarThickness: 28,
+            categoryPercentage: 0.55,
+            barPercentage: 0.55,
+            borderSkipped: false
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          scales: { y: { beginAtZero: true } },
-          plugins: { legend: { display: false } }
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Total Liters ℹ',
+                color: '#6c757d',
+                font: { size: 12, weight: '600' }
+              },
+              ticks: {
+                callback: (value) => Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })
+              },
+              grid: { color: 'rgba(108,117,125,0.12)' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: {
+                maxRotation: 45,
+                minRotation: 0
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                boxWidth: 12,
+                usePointStyle: true,
+                font: { size: 11 }
+              }
+            }
+          }
         }
       });
     }
@@ -1524,8 +1563,50 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
       if (repPieChart) { repPieChart.destroy(); }
       repPieChart = new Chart(ctx, {
         type: 'doughnut',
-        data: { labels, datasets: [{ data: values, backgroundColor: colors }] },
-        options: { responsive: true, maintainAspectRatio: false }
+        data: {
+          labels,
+          datasets: [{
+            data: values,
+            backgroundColor: colors,
+            borderColor: '#ffffff',
+            borderWidth: 1,
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '58%',
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: {
+                boxWidth: 12,
+                usePointStyle: true,
+                font: { size: 11 }
+              }
+            },
+            title: {
+              display: true,
+              text: 'Share by Group ℹ',
+              color: '#6c757d',
+              padding: { top: 0, bottom: 6 },
+              font: { size: 13, weight: '600' }
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const label = context.label || '';
+                  const value = Number(context.parsed || 0);
+                  const total = context.chart._metasets[0]?.total || 0;
+                  const percentage = total ? ((value / total) * 100).toFixed(1) : '0.0';
+                  return `${label}: ${value.toLocaleString(undefined, { maximumFractionDigits: 2 })} L (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
       });
     }
 
@@ -1547,14 +1628,60 @@ $result = $conn->query("SELECT logo, system_title FROM system LIMIT 1");
           data: {
             labels,
             datasets: [{
-              label: 'Liters per Day',
+              label: 'Daily Total Liters',
               data: values,
-              fill: false,
-              borderColor: '#59a14f',
-              tension: 0.2
+              fill: {
+                target: 'origin',
+                above: 'rgba(78, 121, 167, 0.12)'
+              },
+              borderColor: '#4e79a7',
+              backgroundColor: 'rgba(78, 121, 167, 0.12)',
+              borderWidth: 2,
+              tension: 0.35,
+              pointRadius: 3,
+              pointHoverRadius: 5,
+              pointBackgroundColor: '#ffffff',
+              pointBorderColor: '#4e79a7',
+              pointBorderWidth: 2
             }]
           },
-          options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Total Liters ℹ',
+                  color: '#6c757d',
+                  font: { size: 12, weight: '600' }
+                },
+                ticks: {
+                  callback: (value) => Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })
+                },
+                grid: { color: 'rgba(108,117,125,0.12)' }
+              },
+              x: {
+                grid: { color: 'rgba(108,117,125,0.08)' },
+                ticks: {
+                  maxRotation: 45,
+                  minRotation: 0
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                  boxWidth: 12,
+                  usePointStyle: true,
+                  font: { size: 11 }
+                }
+              }
+            }
+          }
         });
       } catch (e) {
         console.error(e);
